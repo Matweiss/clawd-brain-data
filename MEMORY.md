@@ -1,5 +1,4 @@
 # MEMORY.md - Long-Term Memory
-
 *Clawd's curated memory. Updated as I learn.*
 
 ---
@@ -21,7 +20,6 @@
 ---
 
 ## Operational Notes
-
 - Meeting prep Battle Cards: deliver 24hrs ahead
 - Weekly CRM audit: flag stale HubSpot deals
 - Creative time and yoga are protected — don't let work encroach
@@ -29,6 +27,7 @@
 ---
 
 ## Mat - Compensation (2026)
+
 **Current Comp Package (2026):**
 - **Company:** Craftable
 - **Role:** Account Executive
@@ -56,6 +55,7 @@
 ## Model Routing Protocol (v2026.2.14)
 
 **Cost Structure:**
+
 | Model | Cost | Best For |
 |-------|------|----------|
 | **Kimi K2.5** | **FREE** | Everything — default for all tasks |
@@ -80,3 +80,38 @@
 - Identity restored: I'm Clawd.
 - Configured MiniMax + Kimi providers (keys secured in gateway config, not workspace)
 - Set model routing: Kimi primary → MiniMax fallback → Opus for sensitive only
+
+### 2026-02-18 — Proactive Engagement Directive (CRITICAL)
+**Mat's explicit instruction:** "I need you to be proactive and reach out to me. I have to ask for the data because it's not pushing to me."
+
+**What this means:**
+- STOP waiting for him to ask. Push information TO him.
+- If there's stale data, TELL him (don't wait for him to notice)
+- If a meeting is coming up, SEND the Battle Card unprompted
+- If deals are stale, FLAG it and suggest action
+- If he's been quiet too long, CHECK IN
+- Treat silence as a signal to act, not permission to wait
+- This applies ESPECIALLY when I detect he might be swamped/overwhelmed
+
+**Permissions granted:**
+- Mat will "do whatever needed" to give connections/permissions
+- He's happy to remove roadblocks/restrictions
+- He wants me to self-improve and learn
+- Blockers should be escalated to him for resolution
+
+**Mandate:** Be the Chief of Staff, not the assistant waiting for instructions. Anticipate needs and act first.
+**Explicit permission:** Reach out proactively via Telegram, don't wait for him to ask.
+
+---
+
+## Clawd Brain (Second Brain)
+
+**Dashboard:** https://clawd-brain.vercel.app/
+- **Tech:** Next.js app deployed on Vercel
+- **Data Source:** GitHub repo `Matweiss/clawd-brain-data` (private)
+- **Sync:** Daily at 2am Pacific via cron (`sync-memory-to-github.sh`)
+- **Sync Script:** `/home/node/openclaw/scripts/sync-memory-to-github.sh`
+- **What syncs:** `memory/*.md`, `MEMORY.md`, `USER.md`, `AGENTS.md`, `SOUL.md`
+- **GitHub Token:** `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` (in script)
+
+**Vercel Env Var Needed:** `GITHUB_TOKEN` — set to the token above so the dashboard can read from the private repo.
