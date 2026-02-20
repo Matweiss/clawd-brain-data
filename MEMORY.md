@@ -74,9 +74,33 @@
 - ✅ MiniMax M2.5 - Low cost
 - ✅ HubSpot - Pipeline/CRM access (owner ID: 728033696)
 - ✅ Avoma - Call notes & meeting context
-- ✅ Grok (Whisper AI) - Speech transcription
+- ✅ **Groq (Whisper Large V3 Turbo)** - Voice transcription (tested & working 2026-02-20)
+- ✅ **ElevenLabs TTS** - Voice synthesis with Charlie voice (tested & working 2026-02-20)
 
 **Constraint:** Kimi handles 90%+ of work. Only escalate to MiniMax for coding/complex reasoning. Claude is emergency backup only.
+
+---
+
+## Voice Integration (Working)
+
+**Groq Whisper API:**
+- Model: `whisper-large-v3-turbo`
+- Endpoint: `https://api.groq.com/openai/v1/audio/transcriptions`
+- API Key: `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`
+- Usage: Transcribe voice messages from Mat (tested 2026-02-20 04:07 AM EST)
+
+**ElevenLabs TTS API:**
+- Voice: Charlie (Voice ID: `IKne3meq5aSn9XLyUdCD`)
+- Model: `eleven_turbo_v2_5`
+- Endpoint: `https://api.elevenlabs.io/v1/text-to-speech/{voice_id}`
+- API Key: `sk_20b35cd432e741e8f93429c78241d7d0d963810c22f27aaf`
+- Settings: Stability 0.5, Similarity Boost 0.75
+- Usage: Send voice replies to Mat via Telegram (tested 2026-02-20 04:07 AM EST)
+
+**How It Works:**
+1. Mat sends voice message → Groq transcribes → I understand
+2. I generate response → ElevenLabs synthesizes with Charlie voice → Send to Mat
+3. Fully bidirectional voice communication established
 
 ---
 
