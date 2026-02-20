@@ -145,9 +145,9 @@ class AgentRunner:
             import subprocess
             
             # Escape quotes in message
-            safe_message = message.replace('"', '\\"')
+            safe_message = message.replace('"', '\\"').replace('$', '\\$')
             
-            cmd = f'openclaw message send --channel telegram --to {self.telegram_chat_id} --message "{safe_message}"'
+            cmd = f'openclaw message send --channel telegram --target {self.telegram_chat_id} --message "{safe_message}"'
             
             if silent:
                 cmd += ' --silent'
