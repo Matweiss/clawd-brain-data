@@ -1,0 +1,20 @@
+# Sensitive files (never commit these)
+API-CREDENTIALS.md
+google-token.json
+google-credentials.json
+*.key
+*.pem
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+
+# Node
+node_modules/
