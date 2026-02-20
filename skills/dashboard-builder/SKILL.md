@@ -1,26 +1,86 @@
-# Dashboard Builder Skill
+# Dashboard Builder Skill (Updated for OpenClaw)
 
-## Purpose
-Build, deploy, and maintain custom UI dashboards that visualize data from Google Sheets, HubSpot, Gmail, Calendar, and other connected systems.
+## Overview
 
-## Capabilities
+Build custom UI dashboards using your actual tool access: direct Google API via Mac node, HubSpot/Avoma via Gateway, and browser automation for ZoomInfo/LinkedIn.
 
-With your current tool access, you can:
-- ✅ Create React/Next.js applications
-- ✅ Deploy to Vercel (you have MCP access)
-- ✅ Read from Google Sheets (OAuth connected)
-- ✅ Query HubSpot CRM data
-- ✅ Access Gmail and Calendar
-- ✅ Create interactive artifacts with persistent storage
-- ✅ Use bash to install packages and scaffold projects
+**Key Difference:** You have DIRECT API access to Google Sheets — no service account workaround needed. Your Mac node handles OAuth.
 
 ---
 
 ## Architecture Options
 
-### Option 1: Vercel-Deployed Dashboard (Recommended for Persistent Use)
+### Option 1: Google Sheets Dashboard (Recommended for Most Cases)
 
-**Best for:** Dashboards Mat wants to bookmark and check regularly
+Since you have full read/write access to Google Sheets via your Mac node, you can build dashboards directly in Sheets:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   GOOGLE SHEETS                          │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  Tab: Dashboard                                          │
+│  ├── KPI row (formulas pulling from data tabs)          │
+│  ├── Charts (native Sheets charts)                       │
+│  └── Conditional formatting for alerts                   │
+│                                                          │
+│  Tab: Pipeline (auto-updated by Clawd)                   │
+│  Tab: Email_Log (auto-updated by Clawd)                  │
+│  Tab: Research_Cache                                     │
+│  Tab: Activity_Log                                       │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+         ▲                    ▲                    ▲
+         │                    │                    │
+    Clawd writes         Clawd writes         Clawd writes
+    HubSpot data         Gmail data           Research data
+```
+
+**Pros:**
+- No deployment needed
+- Mat already uses Sheets
+- You have WRITE access
+- Auto-refresh with cron jobs
+- Charts update automatically
+
+**Cons:**
+- Less interactive than web app
+- Looks like a spreadsheet
+
+---
+
+### Option 2: Local HTML Dashboard (Via Mac Node)
+
+Create an HTML file on Mat's Mac that pulls data from Sheets:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   LOCAL HTML FILE                        │
+│                   (~/dashboards/sales.html)              │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  HTML + Tailwind + Chart.js                              │
+│  ├── Fetches from Google Sheets API                      │
+│  ├── Renders charts and tables                           │
+│  └── Auto-refreshes every X minutes                      │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Pros:**
+- Full UI control
+- Runs locally (no hosting)
+- Can open in browser anytime
+
+**Cons:**
+- Needs CORS handling for API calls
+- Or needs local server
+
+---
+
+### Option 3: Vercel-Deployed Dashboard
+
+If you want a public URL you can bookmark:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -28,560 +88,351 @@ With your current tool access, you can:
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
 │  Next.js App                                             │
-│  ├── /pages                                              │
-│  │   ├── index.js (main dashboard)                       │
-│  │   ├── api/sheets.js (Google Sheets proxy)             │
-│  │   ├── api/hubspot.js (HubSpot proxy)                  │
-│  │   └── api/refresh.js (data refresh endpoint)          │
-│  ├── /components                                         │
-│  │   ├── KPICard.jsx                                     │
-│  │   ├── PipelineChart.jsx                               │
-│  │   ├── ActivityFeed.jsx                                │
-│  │   └── DataTable.jsx                                   │
-│  └── /lib                                                │
-│      └── data-fetchers.js                                │
+│  ├── /api/data.js → Fetches from Google Sheets          │
+│  ├── Dashboard components                                │
+│  └── Auto-refresh with SWR                              │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
-         │              │              │
-         ▼              ▼              ▼
-   Google Sheets    HubSpot API    Gmail API
 ```
 
-**Pros:**
-- Persistent URL Mat can bookmark
-- Can add authentication
-- Real API routes for data fetching
-- Professional deployment
-
-**Cons:**
-- Requires environment variables setup (one-time)
-- More complex to iterate
+**Note:** For Vercel, you'd need to either:
+- Use a service account (Mat sets up once)
+- Or have Clawd pre-populate a public JSON endpoint
 
 ---
 
-### Option 2: Claude Artifact with Persistent Storage (Quick Iteration)
+## Data Fetching Patterns
 
-**Best for:** Rapid prototyping, dashboards that evolve frequently
+### Pattern 1: Clawd Writes → Sheets Displays
+
+**Best for:** Dashboards where Clawd controls the data
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   CLAUDE ARTIFACT (.jsx)                 │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  React Component                                         │
-│  ├── Uses window.storage API for persistence             │
-│  ├── Can call Anthropic API (Claude-in-Claude)           │
-│  │   └── With MCP servers for live data                  │
-│  ├── Renders charts, tables, KPIs                        │
-│  └── Interactive filters and controls                    │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-   Anthropic API (with MCP)
-   ├── HubSpot MCP
-   ├── Google Sheets (via n8n webhook)
-   └── Other connected services
+Cron Job (e.g., 7am daily):
+1. Clawd fetches HubSpot deals via API
+2. Clawd fetches Gmail stats via API  
+3. Clawd fetches Calendar events via API
+4. Clawd writes aggregated data to Sheets
+5. Sheets charts auto-update
+
+Mat opens Sheet → sees current dashboard
 ```
 
-**Pros:**
-- Instant iteration in conversation
-- Persistent storage across sessions
-- Can use MCP servers through Claude API
-- No deployment needed
+**Sheets Structure:**
+```
+Tab: _Data_Pipeline
+| Deal Name | Company | Stage | Amount | Last Activity | Days Stale |
 
-**Cons:**
-- Lives in Claude conversation (not a standalone URL)
-- More limited than full Next.js app
+Tab: _Data_Email
+| Date | Processed | Drafts Created | Urgent | Replies Needed |
+
+Tab: _Data_Meetings  
+| Date | Time | Contact | Company | Prep Status |
+
+Tab: Dashboard
+| Charts and summaries pulling from _Data_ tabs |
+```
 
 ---
 
-### Option 3: Google Sheets + Apps Script (Lightweight)
+### Pattern 2: Real-Time via API (For Web Dashboards)
 
-**Best for:** Simple dashboards embedded in Sheets
+**Best for:** Interactive dashboards needing live data
 
-```
-Google Sheet
-├── Data tabs (raw data)
-├── Dashboard tab (charts, summaries)
-└── Apps Script (automation, refresh)
-```
-
-**Pros:**
-- Mat already uses Sheets
-- No deployment
-- Easy to edit manually
-
-**Cons:**
-- Limited interactivity
-- Looks like a spreadsheet
-
----
-
-## Recommended Tech Stack
-
-### For Vercel Deployments:
-
-```bash
-# Framework
-next.js (latest)
-
-# UI Components
-@shadcn/ui (or manually import from artifact patterns)
-tailwindcss
-lucide-react (icons)
-
-# Charts
-recharts (already available in artifacts)
-# OR
-chart.js
-
-# Data Fetching
-swr (for caching/revalidation)
-# OR
-@tanstack/react-query
-
-# Google Sheets
-googleapis (official SDK)
-# OR
-google-spreadsheet (simpler wrapper)
-```
-
-### For Artifacts:
-
-Already available without installation:
-- React + hooks
-- Tailwind CSS (core utilities)
-- recharts
-- lucide-react
-- lodash
-- d3
-- Chart.js
-- shadcn/ui components
-- Anthropic API (Claude-in-Claude)
-- window.storage (persistent storage)
-
----
-
-## Data Connection Patterns
-
-### Pattern 1: Google Sheets as Data Source
-
-**For Vercel deployment:**
 ```javascript
-// /pages/api/sheets.js
-import { google } from 'googleapis';
-
-export default async function handler(req, res) {
-  const auth = new google.auth.GoogleAuth({
-    credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+// Clawd can execute this via Mac node
+const fetchHubSpotDeals = async () => {
+  const response = await fetch('https://api.hubapi.com/crm/v3/objects/deals/search', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${HUBSPOT_PAT}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      filterGroups: [{
+        filters: [{
+          propertyName: 'dealstage',
+          operator: 'NEQ',
+          value: 'closedwon'
+        }]
+      }],
+      properties: ['dealname', 'dealstage', 'amount', 'closedate', 'hs_lastmodifieddate']
+    })
   });
-  
-  const sheets = google.sheets({ version: 'v4', auth });
-  
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: process.env.SHEET_ID,
-    range: 'Today!A:Z',
-  });
-  
-  res.json(response.data.values);
-}
-```
-
-**For artifacts (via n8n webhook):**
-```javascript
-// In your React artifact
-const fetchSheetData = async () => {
-  const response = await fetch('https://your-n8n-instance/webhook/sheets-data');
   return response.json();
 };
 ```
 
 ---
 
-### Pattern 2: HubSpot Data via MCP
+### Pattern 3: Browser Scrape → Cache → Display
 
-**For artifacts using Claude API:**
-```javascript
-const response = await fetch("https://api.anthropic.com/v1/messages", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1000,
-    messages: [{ 
-      role: "user", 
-      content: "Get all deals in the Pipeline, return as JSON with dealname, stage, amount, lastactivity" 
-    }],
-    mcp_servers: [{
-      type: "url",
-      url: "https://mcp.hubspot.com/anthropic",
-      name: "hubspot"
-    }]
-  })
-});
+**Best for:** ZoomInfo/LinkedIn data
+
+```
+Weekly Batch Job (Sunday 8pm):
+1. Get all contacts from upcoming meetings (Calendar)
+2. For each contact not in Research_Cache:
+   a. Open ZoomInfo in browser
+   b. Search for contact
+   c. Extract data
+   d. Write to Research_Cache tab
+3. Repeat for LinkedIn if needed (sparingly)
+
+Dashboard reads from Research_Cache (fast)
+Never does live browser lookups for dashboard display
 ```
 
 ---
 
-### Pattern 3: Direct API Calls (Vercel API Routes)
+## Google Sheets Dashboard Components
 
-**HubSpot from Vercel:**
-```javascript
-// /pages/api/hubspot/deals.js
-export default async function handler(req, res) {
-  const response = await fetch(
-    'https://api.hubapi.com/crm/v3/objects/deals?properties=dealname,dealstage,amount',
-    {
-      headers: {
-        'Authorization': `Bearer ${process.env.HUBSPOT_TOKEN}`,
-      }
-    }
-  );
-  const data = await response.json();
-  res.json(data.results);
-}
+### KPI Row with Formulas
+
+```
+Cell A1: ="Pipeline Value"
+Cell B1: =SUMIF(_Data_Pipeline!C:C,"<>Closed Won",_Data_Pipeline!D:D)
+
+Cell A2: ="Deals This Month"  
+Cell B2: =COUNTIFS(_Data_Pipeline!E:E,">="&DATE(YEAR(TODAY()),MONTH(TODAY()),1))
+
+Cell A3: ="Stale Deals"
+Cell B3: =COUNTIF(_Data_Pipeline!F:F,">0")
+```
+
+### Conditional Formatting for Alerts
+
+```
+Select stale column → Format → Conditional formatting
+- If value > 0: Red background
+- If value > 3: Bold red text
+```
+
+### Native Charts
+
+```
+Insert → Chart
+- Pipeline funnel: Stacked bar chart of deals by stage
+- Activity timeline: Line chart of emails processed per day
+- Meeting load: Calendar heatmap (custom)
+```
+
+### Sparklines (Inline Charts)
+
+```
+=SPARKLINE(_Data_Email!B2:B8, {"charttype","column"})
 ```
 
 ---
 
 ## Dashboard Templates
 
-### Template 1: Sales Pipeline Dashboard
+### Template 1: Sales Command Center (Google Sheets)
 
-**Components:**
-- KPI row (total pipeline value, deals by stage, win rate)
-- Pipeline funnel chart
-- Deals table with sorting/filtering
-- Activity timeline
-- Stale deals alerts
+**Tab: Dashboard**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  SALES COMMAND CENTER                   Last Updated: [NOW] │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
+│  │ Pipeline │ │  Deals   │ │  Stale   │ │ Win Rate │       │
+│  │ $245,000 │ │    12    │ │    3     │ │   34%    │       │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
+│                                                              │
+│  [PIPELINE CHART - Deals by Stage]                          │
+│  ████████████████████ Qualification (5)                     │
+│  ████████████████ Discovery (4)                             │
+│  ████████ Proposal (2)                                      │
+│  ████ Negotiation (1)                                       │
+│                                                              │
+│  ⚠️ STALE DEALS NEEDING ACTION                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ Deal          │ Company    │ Stage     │ Days │ Action │ │
+│  │ Acme Rollout  │ Acme Corp  │ Proposal  │ 6    │ Call   │ │
+│  │ Beta Pilot    │ Beta Inc   │ Discovery │ 8    │ Email  │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                              │
+│  📅 TODAY'S MEETINGS                                        │
+│  • 10:00 AM - John Smith @ Acme (Prep: ✅)                  │
+│  • 2:00 PM - Sarah Jones @ Beta (Prep: ⏳)                  │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
 
-**Data sources:**
-- HubSpot (deals, contacts, activities)
-- Google Sheets (Today tab, Email Log)
-- Avoma (recent meetings)
-
----
-
-### Template 2: Email Agent Activity Dashboard
-
-**Components:**
-- Emails processed today/week
-- Drafts created vs sent
-- Response time metrics
-- Classification breakdown (pie chart)
-- Recent activity feed
-- Pending actions list
-
-**Data sources:**
-- Google Sheets (Email Log, Today tab)
-- Gmail (for real-time counts)
-
----
-
-### Template 3: Meeting Prep Dashboard
-
-**Components:**
-- Today's meetings with countdown timers
-- Battle Card preview for next meeting
-- Contact/deal info panel
-- Recent email threads
-- Meeting history from Avoma
-
-**Data sources:**
-- Google Calendar
-- HubSpot
-- Avoma
-- Gmail
-- Research Cache
+**Data Tabs:**
+- `_Pipeline` — Full deal list from HubSpot
+- `_Meetings` — Today's meetings from Calendar
+- `_Activity` — Recent activity log
 
 ---
 
-## Self-Setup Instructions
+### Template 2: Email Agent Monitor (Google Sheets)
 
-### What You Can Do Yourself:
+**Tab: Agent_Dashboard**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  EMAIL AGENT STATUS                    🟢 Active            │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  TODAY'S STATS                                               │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
+│  │Processed │ │ Drafts   │ │ Alerts   │ │ Errors   │       │
+│  │    47    │ │    12    │ │    3     │ │    0     │       │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
+│                                                              │
+│  [CLASSIFICATION PIE CHART]                                  │
+│  🔴 Urgent: 3                                                │
+│  🟠 Needs Reply: 8                                           │
+│  🟡 Review: 5                                                │
+│  🔵 FYI: 15                                                  │
+│  ⚫ Low Priority: 16                                         │
+│                                                              │
+│  RECENT ACTIVITY                                             │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ Time  │ Action              │ Details          │ Status│ │
+│  │ 10:32 │ Draft created       │ Reply to John    │ ✅    │ │
+│  │ 10:15 │ Email classified    │ 🔴 Urgent from.. │ ✅    │ │
+│  │ 10:01 │ Morning scan        │ 47 emails        │ ✅    │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                              │
+│  PENDING ACTIONS (Awaiting Mat)                             │
+│  • Review draft for Acme proposal response                  │
+│  • Approve follow-up to Beta Inc                            │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
 
-1. **Create project structure:**
+---
+
+## Cron Jobs for Dashboard Updates
+
+| Job | Schedule | Actions |
+|-----|----------|---------|
+| **Pipeline Refresh** | 7am, 12pm, 5pm | Fetch HubSpot deals → Write to _Pipeline tab |
+| **Email Stats** | Every hour | Count Gmail by label → Write to _Email tab |
+| **Meeting Sync** | 6am daily | Fetch today's Calendar → Write to _Meetings tab |
+| **Research Batch** | Sunday 8pm | Browser lookups → Write to Research_Cache |
+| **Activity Log** | After each action | Append to _Activity tab |
+
+---
+
+## Implementation Steps
+
+### Step 1: Set Up Google Sheet Structure
+
+Create tabs:
+```
+Dashboard (formatted view)
+_Pipeline (raw HubSpot data)
+_Email (raw email stats)
+_Meetings (raw calendar data)  
+_Activity (action log)
+_Research_Cache (contact/company data)
+_Config (thresholds, settings)
+```
+
+### Step 2: Create Data Fetch Functions
+
+```python
+# Via Mac node - fetch and write to Sheets
+
+def refresh_pipeline():
+    # 1. Fetch from HubSpot API
+    deals = hubspot_get_deals()
+    
+    # 2. Clear and write to Sheet
+    sheets_clear_range('_Pipeline!A2:Z')
+    sheets_write_range('_Pipeline!A2', deals)
+    
+    # 3. Log the action
+    log_activity('pipeline_refresh', f'{len(deals)} deals updated')
+
+def refresh_email_stats():
+    # 1. Count emails by label
+    stats = {
+        'urgent': gmail_count('label:Urgent-Reply'),
+        'needs_reply': gmail_count('label:Needs-Reply'),
+        'processed_today': gmail_count('after:today')
+    }
+    
+    # 2. Write to Sheet
+    sheets_write_range('_Email!A2', [stats])
+```
+
+### Step 3: Set Up Cron Jobs
+
+```
+# Morning pipeline refresh
+0 7 * * 1-5 /path/to/refresh_pipeline.py
+
+# Hourly email stats
+0 * * * * /path/to/refresh_email_stats.py
+
+# Weekly research batch
+0 20 * * 0 /path/to/batch_research.py
+```
+
+### Step 4: Build Dashboard Tab
+
+Use Sheets formulas and charts that reference data tabs. Everything auto-updates when Clawd writes new data.
+
+---
+
+## Advanced: Web Dashboard via Mac Node
+
+If you want a web UI beyond Sheets:
+
+### Option A: Serve Static HTML from Mac
+
 ```bash
-npx create-next-app@latest dashboard --typescript --tailwind --eslint
-cd dashboard
-npm install recharts swr lucide-react
+# Clawd creates HTML file
+cat > ~/dashboards/sales.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+  <div id="dashboard"></div>
+  <script>
+    // Fetch data from local JSON (Clawd updates this)
+    fetch('data.json')
+      .then(r => r.json())
+      .then(data => renderDashboard(data));
+  </script>
+</body>
+</html>
+EOF
+
+# Clawd updates data.json periodically
+echo '{"pipeline_value": 245000, "deals": 12}' > ~/dashboards/data.json
+
+# Serve locally
+cd ~/dashboards && python3 -m http.server 8080
 ```
 
-2. **Install Google Sheets SDK:**
-```bash
-npm install googleapis
-# OR simpler:
-npm install google-spreadsheet
-```
+Mat opens: `http://localhost:8080/sales.html`
 
-3. **Create API routes** in `/pages/api/`
+### Option B: Deploy to Vercel
 
-4. **Deploy to Vercel:**
-```bash
-# Use your Vercel MCP tool
-# Call: deploy_to_vercel
-```
+See separate Vercel deployment guide. Requires service account setup for Sheets access from Vercel's servers.
 
 ---
 
-### What Mat Needs to Help With:
+## Summary: Recommended Approach
 
-#### 1. Vercel Environment Variables
+**For Mat's use case, Google Sheets is the best choice because:**
 
-After you deploy, Mat needs to add these in Vercel dashboard:
+1. ✅ You already have full read/write access
+2. ✅ No deployment or hosting needed
+3. ✅ Mat already uses Sheets daily
+4. ✅ Charts and formatting are built-in
+5. ✅ Clawd can update data via cron jobs
+6. ✅ Works on any device (Sheets app)
 
-| Variable | Where to Get |
-|----------|--------------|
-| `GOOGLE_CREDENTIALS` | Google Cloud Console → Service Account → JSON key |
-| `SHEET_ID` | From the Google Sheet URL |
-| `HUBSPOT_TOKEN` | HubSpot → Settings → Private Apps |
-
-**Instructions for Mat:**
-1. Go to vercel.com → Your Project → Settings → Environment Variables
-2. Add each variable
-3. Redeploy
-
-#### 2. Google Service Account (One-Time Setup)
-
-For server-side Sheets access:
-1. Go to console.cloud.google.com
-2. Create project (or use existing)
-3. Enable Google Sheets API
-4. Create Service Account
-5. Download JSON credentials
-6. Share the Google Sheet with the service account email
-
-#### 3. n8n Webhook for Artifact Data Access
-
-If using artifacts that need Sheet data:
-1. Create n8n workflow with Webhook trigger
-2. Add Google Sheets node to fetch data
-3. Return JSON response
-4. Use webhook URL in artifact
-
----
-
-## Logging & Monitoring Patterns
-
-### Log Directory Structure
-
-```
-/logs
-├── /daily
-│   ├── 2024-01-15.json
-│   ├── 2024-01-16.json
-│   └── ...
-├── /errors
-│   └── errors.json
-├── /metrics
-│   ├── response-times.json
-│   └── usage-stats.json
-└── summary.json
-```
-
-### Log Entry Format
-
-```json
-{
-  "timestamp": "2024-01-15T10:30:00Z",
-  "type": "email_processed",
-  "details": {
-    "message_id": "abc123",
-    "classification": "🟠 Needs-Reply",
-    "priority_score": 18,
-    "draft_created": true,
-    "processing_time_ms": 1250
-  }
-}
-```
-
-### Metrics to Track
-
-| Metric | Storage | Visualization |
-|--------|---------|---------------|
-| Emails processed/day | Sheet + JSON | Line chart |
-| Avg response time | JSON | Sparkline |
-| Drafts created vs sent | Sheet | Bar chart |
-| Classification distribution | Sheet | Pie chart |
-| Errors/failures | JSON | Alert list |
-| API call counts | JSON | Usage meter |
-
----
-
-## Quick Start: Build Your First Dashboard
-
-### Step 1: Decide on Approach
-
-**Ask Mat:**
-- "Do you want a permanent URL you can bookmark?" → Vercel deployment
-- "Do you want something we can iterate on quickly?" → Artifact
-- "Do you want it in your existing Sheet?" → Apps Script
-
-### Step 2: Define Data Requirements
-
-**Identify:**
-- What data sources are needed?
-- Real-time or periodic refresh?
-- Who needs access?
-
-### Step 3: Build Components
-
-**Start with:**
-1. Data fetching layer (API routes or MCP calls)
-2. Basic layout (header, sidebar, main content)
-3. KPI cards (the "at a glance" numbers)
-4. One chart (pipeline, activity, etc.)
-5. One table (searchable, sortable)
-
-### Step 4: Deploy & Iterate
-
-**For Vercel:**
-```
-1. Create project locally
-2. Push to GitHub (or deploy directly)
-3. Use Vercel MCP to deploy
-4. Add environment variables
-5. Test and iterate
-```
-
-**For Artifacts:**
-```
-1. Build in conversation
-2. Test with sample data
-3. Connect to live data via MCP
-4. Save to persistent storage
-5. Iterate based on feedback
-```
-
----
-
-## Component Library
-
-### KPI Card
-```jsx
-const KPICard = ({ title, value, change, icon: Icon }) => (
-  <div className="bg-white rounded-lg shadow p-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-2xl font-bold">{value}</p>
-        {change && (
-          <p className={`text-sm ${change > 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {change > 0 ? '↑' : '↓'} {Math.abs(change)}%
-          </p>
-        )}
-      </div>
-      {Icon && <Icon className="w-8 h-8 text-gray-400" />}
-    </div>
-  </div>
-);
-```
-
-### Pipeline Funnel
-```jsx
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
-const PipelineFunnel = ({ data }) => (
-  <ResponsiveContainer width="100%" height={300}>
-    <BarChart data={data} layout="vertical">
-      <XAxis type="number" />
-      <YAxis dataKey="stage" type="category" width={100} />
-      <Tooltip />
-      <Bar dataKey="count" fill="#3b82f6" />
-    </BarChart>
-  </ResponsiveContainer>
-);
-```
-
-### Activity Feed
-```jsx
-const ActivityFeed = ({ activities }) => (
-  <div className="space-y-4">
-    {activities.map((activity, i) => (
-      <div key={i} className="flex items-start space-x-3">
-        <div className={`w-2 h-2 mt-2 rounded-full ${activity.color}`} />
-        <div>
-          <p className="text-sm">{activity.description}</p>
-          <p className="text-xs text-gray-400">{activity.time}</p>
-        </div>
-      </div>
-    ))}
-  </div>
-);
-```
-
-### Data Table
-```jsx
-const DataTable = ({ columns, data, onSort }) => (
-  <table className="min-w-full divide-y divide-gray-200">
-    <thead className="bg-gray-50">
-      <tr>
-        {columns.map(col => (
-          <th 
-            key={col.key}
-            onClick={() => onSort?.(col.key)}
-            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-          >
-            {col.label}
-          </th>
-        ))}
-      </tr>
-    </thead>
-    <tbody className="bg-white divide-y divide-gray-200">
-      {data.map((row, i) => (
-        <tr key={i}>
-          {columns.map(col => (
-            <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm">
-              {col.render ? col.render(row[col.key], row) : row[col.key]}
-            </td>
-          ))}
-        </tr>
-      ))}
-    </tbody>
-  </table>
-);
-```
-
----
-
-## Error Handling
-
-| Error | Response |
-|-------|----------|
-| API rate limit | Cache data, show "Last updated: X" |
-| Auth expired | Show banner "Reconnection needed" + instructions |
-| Data fetch failed | Show cached data + error indicator |
-| Empty data | Show helpful empty state, not blank |
-| Slow loading | Show skeleton loaders |
-
----
-
-## Refresh Strategies
-
-| Data Type | Refresh Strategy |
-|-----------|------------------|
-| Pipeline totals | Every 5 min (SWR revalidate) |
-| Email counts | Every 15 min |
-| Activity feed | Real-time via webhook OR every 1 min |
-| Metrics/charts | Every hour |
-| Historical data | Daily |
-
----
-
-## Security Considerations
-
-1. **Never expose API keys in client-side code**
-   - Use Vercel API routes or n8n webhooks as proxies
-
-2. **Add authentication if dashboard is public**
-   - Vercel supports password protection
-   - Or add simple auth check
-
-3. **Limit data exposure**
-   - Only fetch fields needed for display
-   - Don't include sensitive contact info unless necessary
-
-4. **Log access**
-   - Track who views dashboard and when
+**Use web dashboard only if:**
+- You need complex interactivity
+- You want to share publicly
+- Sheets formatting is too limiting
