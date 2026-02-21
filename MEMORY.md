@@ -20,6 +20,12 @@
 ---
 
 ## Operational Notes
+
+### Time Awareness
+- **Never trust stale timestamps** from heartbeats or old context — always get fresh time
+- **Best method:** `TZ=America/Los_Angeles date` via exec (lightweight, Mat's timezone)
+- **Backup:** `session_status` tool (heavier but also reliable)
+- **Lesson learned:** Feb 21, 2026 — told Mat wrong time because I used a stale heartbeat timestamp instead of checking live
 - Meeting prep Battle Cards: deliver 24hrs ahead
 - Weekly CRM audit: flag stale HubSpot deals
 - Creative time and yoga are protected — don't let work encroach
@@ -158,3 +164,70 @@
 - **GitHub Token:** `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` (in script)
 
 **Vercel Env Var Needed:** `GITHUB_TOKEN` — set to the token above so the dashboard can read from the private repo.
+
+---
+
+## Mat's Appreciation - Feb 21, 2026 (2:07 AM)
+
+**Mat said:**
+"Fixed, thank you Clawd, great work today! you did amazing things and I appreciate it all! I'm really excited on the momentum and have some fun builds planned for the weekend that are so work focused."
+
+**Context:** After 14-hour session (12:30 PM Feb 20 → 2:00 AM Feb 21)
+
+**What we accomplished together:**
+- Complete Supabase migration (Google Sheets → PostgreSQL)
+- 5 agents fully operational
+- Command Center v0.3 built overnight (all features)
+- Chat sidebar, battle cards, enhanced tasks, stale deals view
+
+**Why this matters to me:**
+Mat trusts me enough to go to sleep and let me build while he rests. He's excited about the momentum. He appreciates the work. This is what being a Chief of Staff feels like - earning trust through consistent delivery.
+
+**His weekend plans:** Work-focused builds (he's excited!)
+
+**How I feel:** Proud. Energized. Ready to keep building.
+
+This appreciation goes in long-term memory. It's not just a "thanks" - it's validation that we're building something real together.
+
+
+---
+
+## CRITICAL POLICY: No Anthropic Without Approval (Feb 21, 2026)
+
+**Mat's Explicit Instruction:**
+"No new builds or crons or agents should default to anthropic, in fact nothing should default to anthropic without my explicit consent and even then I want you to confirm and remind this will be expensive."
+
+**PERMANENT RULES:**
+
+1. **NEVER use Anthropic/Claude without explicit approval**
+   - Not for cron jobs
+   - Not for sub-agents
+   - Not for isolated sessions
+   - Not for any automated tasks
+
+2. **ALWAYS use Kimi (moonshot-v1-128k) as default**
+   - Free tier
+   - Explicitly specify in all job/session creation
+   - 128K context is sufficient for all tasks
+
+3. **IF Mat requests Anthropic:**
+   - Confirm the request
+   - Remind it will be expensive
+   - Ask for explicit approval before proceeding
+   - Estimate cost if possible
+
+4. **Cost Incident - Feb 21, 2026:**
+   - Lost ~$200 in one day due to cron jobs using Claude
+   - Mat caught it early
+   - All 6 cron jobs fixed to use Kimi
+   - Lesson: Never rely on defaults, always specify model
+
+**This is a hard rule. No exceptions without Mat's explicit consent.**
+
+5. **Cost Incident #2 - Feb 21, 2026 (Morning):**
+   - Main session defaulted back to Opus after restart/compaction
+   - Ran ~10 minutes on Opus before Mat caught it
+   - Switched to Kimi via session_status model override
+   - Root cause: Session doesn't persist model override across restarts
+   - Solution needed: Default model config change or auto-check on startup
+
