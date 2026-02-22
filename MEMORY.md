@@ -58,6 +58,51 @@
 
 ---
 
+## Credential Restoration System (Feb 22, 2026 - LIVE)
+
+**If Clawd is moved to a new Docker instance:**
+
+1. **Extract backup:**
+   ```bash
+   tar -xzf clawd-workspace-backup-YYYY-MM-DD.tar.gz -C /data/.openclaw/workspace
+   ```
+
+2. **Restore credentials** (new Clawd runs this):
+   ```bash
+   bash /data/.openclaw/workspace/scripts/RESTORE-ALL-CREDENTIALS.sh
+   ```
+   - Prompts for 6 API keys
+   - Installs each one automatically
+   - Verifies GitHub connection
+
+3. **Update Vercel env vars** (you do this):
+   - Go to: https://vercel.com/clawd-command/settings/environment-variables
+   - Update: GITHUB_TOKEN, HUBSPOT_API_KEY, KIMI_API_KEY
+   - Redeploy
+
+4. **Full restoration** (~15 minutes)
+   - Memory/docs restored ✅
+   - Projects restored ✅
+   - Scripts ready ✅
+   - Integrations connected ✅
+
+**Documentation:**
+- `RESTORE-QUICK-START.md` — 3-step TL;DR
+- `RESTORE-CREDENTIALS-GUIDE.md` — detailed guide for each credential
+- `scripts/RESTORE-ALL-CREDENTIALS.sh` — automated restoration script
+
+**API Keys that need regeneration:**
+1. GitHub token (Matweiss/clawd-brain-data)
+2. HubSpot API key (owner: 728033696)
+3. Avoma API key
+4. Groq Whisper API key
+5. ElevenLabs API key
+6. Kimi API key
+
+Each has its own guide with regeneration links and locations.
+
+---
+
 ## Model Routing Protocol (v2026.2.22 - Kimi Integration)
 
 **Cost Structure:**
