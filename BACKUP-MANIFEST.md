@@ -1,94 +1,158 @@
-# BACKUP-MANIFEST.md - What's Backed Up & Where
+# Clawd Workspace Backup Manifest
 
-**Generated:** 2026-02-22 14:13 UTC  
-**Backup Size:** 86 KB (compressed)
-
----
-
-## Backup Contents
-
-### Configuration Files
-- ✅ `/data/.openclaw/openclaw.json` — All API keys, gateway config, model routing
-- ✅ `/data/.openclaw/google-token.json` — Gmail/Calendar OAuth token
-- ✅ `/data/.openclaw/workspace/.env.supabase` — Supabase credentials
-- ✅ `/data/.openclaw/workspace/.vercel-token` — Vercel deployment token
-- ✅ `/data/.openclaw/workspace/clawd-command/.env.local` — Dashboard environment
-
-### Memory & Context
-- ✅ `/data/.openclaw/workspace/MEMORY.md` — Long-term curated memory
-- ✅ `/data/.openclaw/workspace/SOUL.md` — Agent identity
-- ✅ `/data/.openclaw/workspace/USER.md` — User context (Mat)
-- ✅ `/data/.openclaw/workspace/AGENTS.md` — Agent workspace config
-- ✅ `/data/.openclaw/workspace/memory/` — Daily logs (2026-02-05 onwards)
-
-### Excluded (Can Rebuild)
-- ❌ `node_modules/` — Reinstall with npm
-- ❌ `.next/` — Rebuild with next build
-- ❌ Log files — Temporary
-- ❌ Session caches — Will recreate
-- ❌ Cron run logs — Historical only
+**Last Updated:** 2026-02-22 17:52 EST  
+**Backup Status:** ✅ Active (syncs daily at 2 AM Pacific)  
+**GitHub Repo:** https://github.com/Matweiss/clawd-brain-data  
+**Dashboard:** https://clawd-brain.vercel.app/
 
 ---
 
-## Storage Locations
+## Backup Configuration
 
-| Medium | Location | Backup Frequency | Access |
-|--------|----------|------------------|--------|
-| **VPS (Local)** | `/data/.openclaw/workspace/backups/` | Manual | SSH to VPS |
-| **GitHub** | `Matweiss/clawd-brain-data` | Daily 2 AM Pacific | Via GitHub |
-| **Vercel** | Dashboard code deployed | Continuous | Via Vercel UI |
-| **Supabase** | PostgreSQL database | Real-time backup | Via Supabase UI |
-
----
-
-## How to Download Backup
-
-### Option 1: From VPS
+### What Syncs Automatically
+**Every day at 2 AM Pacific** via cron job:
 ```bash
-scp user@vps:/data/.openclaw/workspace/backups/openclaw-critical-*.tar.gz ~/Downloads/
+/data/.openclaw/workspace/scripts/sync-memory-to-github.sh
 ```
 
-### Option 2: From GitHub (Memory + Docs Only)
-```bash
-git clone https://github.com/Matweiss/clawd-brain-data.git
-# Get MEMORY.md, daily logs, identity files
-```
+**Included:**
+- `memory/*.md` — Daily session logs (17 files from Feb 3-22)
+- `MEMORY.md` — Long-term curated memory (4.8 KB)
+- `projects/` — All built projects
+- `configs/` — Configuration templates
+- `scripts/` — Automation helpers
+- Core files: `USER.md`, `AGENTS.md`, `SOUL.md`, `TOOLS.md`, `HEARTBEAT.md`
+- All other `.md` files in workspace root
 
-### Option 3: Manual Download via Dashboard
-- Coming in Phase 2: Backup status page with download link
+**Excluded:**
+- `node_modules/` (rebuilt on install)
+- `.git/` (stored separately in Git history)
+- `.env` and secrets (never synced for security)
+- Build artifacts (`.next`, `dist`, `build`, `*.log`)
+- Backup zips themselves
 
 ---
 
-## Recovery Time Estimate
+## Backup Download
 
-| Task | Time |
-|------|------|
-| Extract backup | 30 seconds |
-| Restore files | 2 minutes |
-| Restart OpenClaw | 1 minute |
-| Telegram connectivity check | 1 minute |
-| **Total** | **~5 minutes** |
+### Manual Backup (On Demand)
+```bash
+cd /data/.openclaw/workspace
+bash scripts/sync-memory-to-github.sh  # Force sync now
+```
+
+### Generate Downloadable ZIP
+```bash
+node /data/.openclaw/workspace/scripts/generate-backup-zip.js
+
+# Output:
+# clawd-workspace-backup-2026-02-22.zip (in ./backups/)
+```
+
+### Dashboard Download Feature
+Coming soon — dashboard will have one-click "Download Backup" button that:
+1. Triggers the ZIP generation script
+2. Serves it for download
+3. Returns a complete restore package
 
 ---
 
-## Verification
+## GitHub Sync Details
 
-**Backup Checksum:**
-```
-cbde2715552c837c5942511193eeff9b9f06302f9040c1bad5b61ade4f1bda6c  openclaw-critical-20260222-141305.tar.gz
-```
+**Repository:** `Matweiss/clawd-brain-data` (private)  
+**Remote URL:** `https://github.com/Matweiss/clawd-brain-data.git`  
+**Token:** `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`  
+**Branch:** `master`  
+**Cron Schedule:** Daily at 2 AM Pacific (UTC-7/UTC-8)
 
-Verify after download:
-```bash
-sha256sum openclaw-critical-20260222-141305.tar.gz
-# Should match above
-```
+---
+
+## Files Currently Being Synced
+
+As of Feb 22, 2026:
+
+### Memory & Documentation
+- `memory/2026-02-03.md` - First session
+- `memory/2026-02-04.md` through `2026-02-22.md` - Daily logs
+- `MEMORY.md` - Curated long-term memory
+
+### Core Identity
+- `SOUL.md` - Who I am (Clawd)
+- `USER.md` - About Mat (your human)
+- `AGENTS.md` - Workspace conventions
+- `TOOLS.md` - Local tool notes
+- `HEARTBEAT.md` - Periodic checks
+
+### Projects & Configs
+- `projects/` - Built apps and tools
+- `configs/` - Configuration templates
+- `scripts/` - Helper scripts
+
+### Build Plans & Documentation
+- `BUILDPLAN.md`
+- `CHIEF-OF-STAFF-BUILD-PLAN.md`
+- `COMMAND_CENTER_STATUS.md`
+- `API-INTEGRATION-STATUS.md`
+- `API-CREDENTIALS.md`
+
+---
+
+## Recovery Scenarios
+
+### Scenario 1: Clawd Instance Lost/Corrupted
+1. Download latest backup from GitHub or dashboard
+2. Unzip to `/data/.openclaw/workspace/`
+3. Re-add API keys from secure storage
+4. Verify all memory files are present
+5. Test by running a heartbeat
+
+### Scenario 2: Partial Data Loss
+1. Restore individual files from GitHub history
+2. Or download latest backup and extract only needed files
+
+### Scenario 3: Moving to New Machine
+1. Download complete backup
+2. Extract to new workspace location
+3. Update paths in scripts if needed
+4. Re-authenticate API connections
+5. Restore cron jobs
+
+---
+
+## Testing
+
+**Last successful sync:** Feb 22, 2026 17:45 EST  
+**Next scheduled sync:** Feb 23, 2026 02:00 PST  
+**Manual test:** `bash /data/.openclaw/workspace/scripts/sync-memory-to-github.sh`
+
+---
+
+## Troubleshooting
+
+**Problem:** "No changes to sync"
+- This is normal if nothing changed since last sync
+- Memory is still backed up
+
+**Problem:** Git auth errors
+- Check GitHub token is valid
+- Regenerate token if expired
+- Update remote URL if token changed
+
+**Problem:** ZIP generation fails
+- Ensure `/backups/` directory exists or is writable
+- Check available disk space
+- Verify all files are readable
 
 ---
 
 ## Next Steps
 
-1. ✅ Backup created
-2. ⏳ Create backup dashboard (Phase 2)
-3. ⏳ Test minimal operation (Phase 3)
-4. ⏳ Schedule container restart with recovery plan
+- [ ] Add download button to dashboard UI
+- [ ] Create API endpoint for on-demand backup
+- [ ] Add daily email of backup status
+- [ ] Set up offsite backup (S3 or similar)
+- [ ] Create automated restore tests
+
+---
+
+*This manifest updates automatically. Last sync: 2026-02-22 17:52 EST*
