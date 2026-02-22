@@ -21,10 +21,10 @@
 
 ## Download Your Backup
 
-Visit the dashboard: **https://clawd-brain.vercel.app/**
+Visit the dashboard: **https://clawd-brain.vercel.app/documentation**
 
-1. Click **"Download Backup"** button
-2. Save `clawd-workspace-backup-YYYY-MM-DD.zip`
+1. Click **"Download Backup"** button (green button at top right)
+2. Save `clawd-workspace-backup-YYYY-MM-DD.tar.gz`
 3. Keep it safe — this is your complete Clawd identity
 
 ---
@@ -37,7 +37,7 @@ If you need to move to a new Clawd agent or recover from data loss:
 ```bash
 # On the new Clawd instance
 cd /data/.openclaw/workspace
-unzip clawd-workspace-backup-YYYY-MM-DD.zip -d .
+tar -xzf clawd-workspace-backup-YYYY-MM-DD.tar.gz
 
 # Verify files restored
 ls -la MEMORY.md USER.md SOUL.md
@@ -50,7 +50,7 @@ mkdir -p /data/.openclaw/workspace
 cd /data/.openclaw/workspace
 
 # Extract backup
-unzip /path/to/clawd-workspace-backup-YYYY-MM-DD.zip -d .
+tar -xzf /path/to/clawd-workspace-backup-YYYY-MM-DD.tar.gz
 
 # Install dependencies
 npm install  # if any projects require it

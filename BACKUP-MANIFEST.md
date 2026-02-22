@@ -41,12 +41,12 @@ cd /data/.openclaw/workspace
 bash scripts/sync-memory-to-github.sh  # Force sync now
 ```
 
-### Generate Downloadable ZIP
+### Generate Downloadable Backup Archive
 ```bash
 node /data/.openclaw/workspace/scripts/generate-backup-zip.js
 
 # Output:
-# clawd-workspace-backup-2026-02-22.zip (in ./backups/)
+# clawd-workspace-backup-2026-02-22.tar.gz (in ./backups/)
 ```
 
 ### Dashboard Download Feature
