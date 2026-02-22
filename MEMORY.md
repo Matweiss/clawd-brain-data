@@ -58,6 +58,31 @@
 
 ---
 
+## Complete Restoration System (Feb 22, 2026 - LIVE & FULLY AUTOMATED)
+
+**Everything is set up for seamless restoration to new Docker instances. Zero manual maintenance.**
+
+### Auto-Update Pipeline
+- Daily sync at 2 AM Pacific → all workspace files pushed to GitHub
+- Backup generation includes everything → latest state always captured
+- When you restore: download backup → run script → provide 6 API keys → done
+- **3 days of changes automatically included in restoration package**
+
+### Centralized Resources
+- **Dashboard:** https://clawd-brain.vercel.app/restore
+- **Quick Start:** Copy-paste prompt to new agent
+- **Auto-Sync:** Happens at 2 AM every day
+- **Documentation:** AUTO-UPDATE-SYSTEM.md explains the pipeline
+
+### For New Agent
+Give it the prompt from the Restoration Center dashboard:
+1. Go to: https://clawd-brain.vercel.app/restore
+2. Copy the "🤖 Prompt for New Agent"
+3. Paste into new agent's chat
+4. It will restore everything automatically
+
+---
+
 ## Restoration Center (Feb 22, 2026 - LIVE & CENTRALIZED)
 
 **All restoration guides are now in the dashboard for easy access:**
