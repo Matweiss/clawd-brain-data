@@ -305,42 +305,49 @@ This appreciation goes in long-term memory. It's not just a "thanks" - it's vali
 
 ---
 
-## CRITICAL POLICY: No Anthropic Without Approval (Feb 21, 2026)
+## CRITICAL POLICY: Kimi Only — NO Anthropic Ever (Feb 22-23, 2026 - LOCKED IN)
 
-**Mat's Explicit Instruction:**
-"No new builds or crons or agents should default to anthropic, in fact nothing should default to anthropic without my explicit consent and even then I want you to confirm and remind this will be expensive."
+**Mat's Explicit Instruction (FINAL):**
+"100% Kimi. Will NOT use Anthropic unless I explicitly ask. No exceptions."
 
-**PERMANENT RULES:**
+**PERMANENT RULES (LOCKED):**
 
-1. **NEVER use Anthropic/Claude without explicit approval**
-   - Not for cron jobs
-   - Not for sub-agents
-   - Not for isolated sessions
-   - Not for any automated tasks
+1. **NEVER use Anthropic/Claude — REMOVED FROM CONFIG**
+   - ❌ Not available as default
+   - ❌ Not available as fallback
+   - ❌ Not available for cron jobs
+   - ❌ Not available for sub-agents
+   - ❌ Completely removed from openclaw.json
+   - ✅ Only available if Mat explicitly asks AND provides the model name
 
-2. **ALWAYS use Kimi (moonshot-v1-128k) as default**
-   - Free tier
-   - Explicitly specify in all job/session creation
-   - 128K context is sufficient for all tasks
+2. **Model Routing (FINAL CONFIG - Feb 23, 2026):**
+   ```
+   Primary: moonshot-kimi/moonshot-v1-128k (Kimi K2.5 Subscription)
+   Fallback: modal-glm/zai-org/GLM-5-FP8 (FREE)
+   
+   Anthropic: REMOVED FROM CONFIG ENTIRELY
+   ```
 
-3. **IF Mat requests Anthropic:**
-   - Confirm the request
-   - Remind it will be expensive
-   - Ask for explicit approval before proceeding
-   - Estimate cost if possible
+3. **Default Behavior:**
+   - Everything uses Kimi (subscription) — much cheaper than Anthropic
+   - If Kimi unavailable → Falls back to FREE GLM-5
+   - Never falls back to Anthropic
 
-4. **Cost Incident - Feb 21, 2026:**
-   - Lost ~$200 in one day due to cron jobs using Claude
-   - Mat caught it early
-   - All 6 cron jobs fixed to use Kimi
-   - Lesson: Never rely on defaults, always specify model
+4. **IF Mat explicitly requests Anthropic:**
+   - Confirm: "You asked for Anthropic. This will be expensive. You sure?"
+   - Require: Full model name (e.g., anthropic/claude-opus-4-6)
+   - Require: Explicit approval ("Yes, use it")
+   - Then: Use it for THAT task only, don't change defaults
+   - Document: Which task used it and why
 
-**This is a hard rule. No exceptions without Mat's explicit consent.**
+5. **Cost Incidents (History & Resolution):**
+   - Feb 21, 2026: Lost ~$200 due to Anthropic defaults
+   - Feb 21 AM: Session reverted to Opus after restart
+   - Feb 22: Installed Kimi Claw subscription (much cheaper)
+   - Feb 23: **FINAL LOCK — Anthropic removed from config entirely**
+   - Feb 23: Only Kimi + FREE GLM-5 in defaults
 
-5. **Cost Incident #2 - Feb 21, 2026 (Morning):**
-   - Main session defaulted back to Opus after restart/compaction
-   - Ran ~10 minutes on Opus before Mat caught it
-   - Switched to Kimi via session_status model override
-   - Root cause: Session doesn't persist model override across restarts
-   - Solution needed: Default model config change or auto-check on startup
+**This is permanent. No defaults to Anthropic ever again.**
+
+**Kimi K2.5 Subscription is primary. GLM-5 FREE is fallback. That's it.** ✅
 
