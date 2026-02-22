@@ -58,32 +58,41 @@
 
 ---
 
-## Model Routing Protocol (v2026.2.20)
+## Model Routing Protocol (v2026.2.22)
 
 **Cost Structure:**
 
-| Model | Cost | Best For |
-|-------|------|----------|
-| **Kimi K2.5** | **FREE** | Everything — default for all tasks |
-| **MiniMax M2.5** | Low (1/10th of comparable) | Coding, agents, complex reasoning |
-| **Claude Sonnet 4.5** | $$ | Fallback only when free models fail |
-| **Gemini Flash** | Pay-per-token | Quick summaries, low-latency needs |
+| Model | Provider | Cost | Best For |
+|-------|----------|------|----------|
+| **Kimi K2.5** | **Moonshot (Direct)** | ~$0.002-0.006/1K tokens | Primary — Everything |
+| **GLM-5 (Modal)** | Modal | FREE | Fallback, overflow |
+| **MiniMax M2.5** | MiniMax | ~$0.30/1M in, $1.20/1M out | Coding/complex tasks |
 
-**Routing Rules:**
-1. **Primary → Kimi K2.5** (moonshot-v1-128k) — free, capable, 128K context
-2. **Fallback 1 → MiniMax M2.5** — 245K context, low cost
-3. **Fallback 2 → Claude Sonnet 4.5** — only when free models fail
-4. **Never auto-upgrade** to paid models without reason
+**Current Setup (Feb 22, 2026):**
+- **Primary:** Kimi K2.5 via Moonshot API (paid, direct)
+  - API Key: `sk-QZIYVPJKYNHEDCTC5I7YVXRB5M`
+  - Model ID: `moonshot-v1-128k`
+  - Context: 128K tokens
+- **Fallback 1:** GLM-5 (Modal) — FREE
+- **Fallback 2:** MiniMax M2.5 — low cost
+
+**Removed:**
+- ❌ NVIDIA Kimi integration (replaced with direct Moonshot)
+- ❌ NVIDIA_API_KEY from environment
 
 **APIs Configured:**
-- ✅ Kimi K2.5 (Moonshot AI) - FREE
-- ✅ MiniMax M2.5 - Low cost
+- ✅ **Kimi K2.5** (Moonshot AI) — Direct API (PAID)
+- ✅ GLM-5 (Modal) — FREE fallback
+- ✅ MiniMax M2.5 — Low cost overflow
 - ✅ HubSpot - Pipeline/CRM access (owner ID: 728033696)
 - ✅ Avoma - Call notes & meeting context
-- ✅ **Groq (Whisper Large V3 Turbo)** - Voice transcription (tested & working 2026-02-20)
-- ✅ **ElevenLabs TTS** - Voice synthesis with Charlie voice (tested & working 2026-02-20)
+- ✅ Groq (Whisper Large V3 Turbo) - Voice transcription
+- ✅ ElevenLabs TTS - Voice synthesis with Charlie voice
 
-**Constraint:** Kimi handles 90%+ of work. Only escalate to MiniMax for coding/complex reasoning. Claude is emergency backup only.
+**Expected Monthly Cost:**
+- Kimi at ~$50-100/month (depending on usage)
+- Everything else: ~$20-30/month
+- **Total:** ~$70-130/month
 
 ---
 
