@@ -58,6 +58,25 @@
 
 ---
 
+## Restoration Center (Feb 22, 2026 - LIVE & CENTRALIZED)
+
+**All restoration guides are now in the dashboard for easy access:**
+- **URL:** https://clawd-brain.vercel.app/restore
+- **Or:** Click "Restore" button on command center
+- **Features:**
+  - 3-step quick start guide
+  - All 6 API credentials documented
+  - Full troubleshooting & verification checklist
+  - Download all files for offline reference
+
+When you nuke current instance and restore to new Docker:
+1. Extract backup: `tar -xzf backup.tar.gz`
+2. Run: `bash /data/.openclaw/workspace/scripts/RESTORE-ALL-CREDENTIALS.sh`
+3. Update 3 Vercel env vars
+4. Done in ~30 minutes ✅
+
+---
+
 ## Credential Restoration System (Feb 22, 2026 - LIVE)
 
 **If Clawd is moved to a new Docker instance:**
