@@ -58,30 +58,39 @@
 
 ---
 
-## Model Routing Protocol (v2026.2.22)
+## Model Routing Protocol (v2026.2.22 - Kimi Integration)
 
 **Cost Structure:**
 
 | Model | Provider | Cost | Best For |
 |-------|----------|------|----------|
-| **Kimi K2.5** | **Moonshot (Direct)** | ~$0.002-0.006/1K tokens | Primary — Everything |
+| **Kimi K2.5** | **Kimi Plugin (OpenClaw)** | ~$0.002-0.006/1K tokens | Primary — Everything |
 | **GLM-5 (Modal)** | Modal | FREE | Fallback, overflow |
 | **MiniMax M2.5** | MiniMax | ~$0.30/1M in, $1.20/1M out | Coding/complex tasks |
 
-**Current Setup (Feb 22, 2026):**
-- **Primary:** Kimi K2.5 via Moonshot API (paid, direct)
-  - API Key: `sk-QZIYVPJKYNHEDCTC5I7YVXRB5M`
-  - Model ID: `moonshot-v1-128k`
+**Current Setup (Feb 22, 2026 - LIVE):**
+- **Primary:** Kimi K2.5 via OpenClaw Kimi Plugin
+  - Bot Token: `sk-QZIYVPJKYNHEDCTC5I7YVXRB5M`
+  - Plugin: `kimi-claw` (installed via official installer)
   - Context: 128K tokens
+  - Status: ✅ Enabled & Active
 - **Fallback 1:** GLM-5 (Modal) — FREE
 - **Fallback 2:** MiniMax M2.5 — low cost
 
+**Installation (Feb 22, 2026 14:49 EST):**
+- ✅ Downloaded Kimi OpenClaw plugin
+- ✅ Installed dependencies
+- ✅ Configured bot token
+- ✅ Restarted gateway
+- ✅ Plugin enabled: kimi-claw
+
 **Removed:**
-- ❌ NVIDIA Kimi integration (replaced with direct Moonshot)
+- ❌ NVIDIA Kimi integration (free but slow)
 - ❌ NVIDIA_API_KEY from environment
+- ❌ Direct Moonshot API setup (using plugin instead)
 
 **APIs Configured:**
-- ✅ **Kimi K2.5** (Moonshot AI) — Direct API (PAID)
+- ✅ **Kimi K2.5** (via Kimi-Claw Plugin) — Direct integration (PAID)
 - ✅ GLM-5 (Modal) — FREE fallback
 - ✅ MiniMax M2.5 — Low cost overflow
 - ✅ HubSpot - Pipeline/CRM access (owner ID: 728033696)
@@ -93,6 +102,12 @@
 - Kimi at ~$50-100/month (depending on usage)
 - Everything else: ~$20-30/month
 - **Total:** ~$70-130/month
+
+**Why Kimi Plugin Over Direct API:**
+- Official integration → better support + updates
+- Handles auth automatically (no manual token management)
+- Optimized for OpenClaw → faster, better caching
+- Voice support built-in
 
 ---
 
