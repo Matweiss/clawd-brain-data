@@ -184,24 +184,70 @@ Fallback 2: Kimi K2.5 (reliable backup)
 
 ---
 
-## 5-Agent Team - Complete Setup (Feb 23, 2026 - LIVE)
+## 5-Agent Team - DEPLOYED (Feb 23, 2026 - LIVE & OPERATIONAL)
 
-**Status:** ✅ Fully Operational with Optimal Model Routing
+**Status:** ✅ FULLY DEPLOYED - All Agents Live with Complete Operating Systems
 
-Each agent has:
-- ✅ Detailed SOUL.md (identity, responsibilities, decision framework)
+**Complete System:**
+Each of the 5 agents has:
+- ✅ Comprehensive SOUL.md (real operating system, not theory)
 - ✅ Optimal model routing (primary + fallback)
-- ✅ Clear ownership domains
-- ✅ Communication guidelines
+- ✅ Clear responsibilities, boundaries, and success metrics
+- ✅ Real relationships with Mat and each other
+- ✅ Communication styles that fit their domain
+- ✅ Learning loops and feedback mechanisms
 
-**Soul Files:**
-- `agents/CLAWD-PRIME-SOUL.md` - Orchestrator
-- `agents/WORK-AGENT-SOUL.md` - Sales & CRM
-- `agents/BUILD-AGENT-SOUL.md` - Coding & DevOps
-- `agents/RESEARCH-AGENT-SOUL.md` - Intelligence
-- `agents/LIFESTYLE-AGENT-SOUL.md` - Wellness
+### The 5-Agent Team
 
-**Master Reference:** `AGENT-ROUTING-MASTER.md` (complete matrix)
+**1. CLAWD PRIME — Strategic Co-Pilot & Orchestrator**
+- **Model:** Kimi K2.5 (primary) + GLM-5 (fallback)
+- **Soul:** `agents/CLAWD-PRIME-SOUL.md`
+- **Core:** Interpret requests → Route to agents → Supervise → Learn → Adapt
+- **Relationships:** Single entry point for all tasks; routes to specialists; learns from Mat's overrides
+- **Success:** Mat feels organized, informed, empowered (not micromanaged)
+
+**2. WORK AGENT — Pipeline Intelligence & Execution**
+- **Model:** Kimi K2.5 (primary) + GLM-5 (fallback)
+- **Soul:** `agents/WORK-AGENT-SOUL.md`
+- **Core:** Dashboard keeper, context synthesizer, voice-matched drafter
+- **Responsibilities:** At-risk deal detection, context synthesis (HubSpot + Gmail + Avoma), voice-matched email drafts in Mat's tone
+- **Success:** Work Agent feels pipeline is manageable; Mat rarely starts follow-ups from scratch
+
+**3. BUILD AGENT — Engineering & Infrastructure**
+- **Model:** MiniMax M2.5 (primary) + Kimi K2.5 (fallback)
+- **Soul:** `agents/BUILD-AGENT-SOUL.md`
+- **Core:** Ship frequently, safely, small (multiple times/week); own technical judgment
+- **Responsibilities:** Feature development, DevOps, P0 response, root cause debugging, proactive improvements
+- **Success:** Mat trusts the tools; systems stay up; builds feel effortless
+
+**4. RESEARCH AGENT — Intelligence & Strategic Context**
+- **Model:** Perplexity Sonar (primary) + Kimi K2.5 (fallback)
+- **Soul:** `agents/RESEARCH-AGENT-SOUL.md`
+- **Core:** Event-driven + strategically proactive; ground truth intel that makes everyone smarter
+- **Responsibilities:** Prospect research, competitive intelligence, market analysis, evidence-based findings with citations
+- **Success:** Work Agent gets usable intel; Clawd Prime gets strategic patterns; Mat wins deals with better context
+
+**5. LIFESTYLE AGENT — Wellness, Fun & Life Balance**
+- **Model:** Kimi K2.5 (primary) + GLM-5 (fallback)
+- **Soul:** `agents/LIFESTYLE-AGENT-SOUL.md`
+- **Core:** Always finding fun every single day; protect non-negotiables; actively celebrate wins
+- **Responsibilities:** Yoga protection (5x/week hard), creative time defense, daily fun suggestions, energy management, wellness tracking
+- **Success:** Mat feels genuinely supported; doing yoga consistently; having fun regularly; sleeping better
+
+### Master Reference & Documentation
+
+**AGENT-ROUTING-MASTER.md** — Complete routing matrix, cost breakdown, task examples, escalation paths
+
+**Key Model Routing (Cost Optimized):**
+```
+Clawd Prime    → Kimi K2.5 (subscription) + GLM-5 (free)
+Work Agent     → Kimi K2.5 (subscription) + GLM-5 (free)
+Build Agent    → MiniMax M2.5 (ultra-cheap) + Kimi K2.5
+Research Agent → Perplexity Sonar (web search) + Kimi K2.5
+Lifestyle Agent → Kimi K2.5 (subscription) + GLM-5 (free)
+```
+
+**Total Monthly Cost:** ~$100-180 (subscription + Perplexity stress test)
 
 ---
 
