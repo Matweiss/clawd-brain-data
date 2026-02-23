@@ -147,6 +147,69 @@ Each has its own guide with regeneration links and locations.
 
 ---
 
+## Perplexity Integration (Feb 23, 2026 - LIVE)
+
+**Setup:** Perplexity Sonar configured as Research Agent primary model
+
+**Details:**
+- API Key: `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`
+- Credit: $50 (stress testing budget)
+- Cost: $0.005/1K input, $0.015/1K output
+- Model: Sonar (real-time web search + reasoning)
+
+**Research Agent Routing:**
+```
+Primary: perplexity/sonar (web search)
+Fallback 1: GLM-5 (free, fast)
+Fallback 2: Kimi K2.5 (reliable backup)
+```
+
+**Stress Test Phases:**
+- Week 1: Light baseline (~$1-2)
+- Week 2: Medium load (~$5-10)
+- Week 3: High load (~$15-25)
+- Week 4: Analysis & budgeting
+
+**Estimated Monthly Costs:**
+- Low: $5-15 (light research)
+- Medium: $20-40 (normal usage)
+- High: $50+ (aggressive research)
+
+**Decision Points:**
+- If LOW → Keep as primary
+- If MEDIUM → Use for important queries only
+- If HIGH → Switch to fallback-only
+
+**Tracking:** PERPLEXITY-COST-TRACKER.md (weekly updates)
+
+---
+
+## Complete Agent Model Routing (Feb 23, 2026)
+
+**5-Agent Team Structure:**
+
+| Agent | Primary Model | Fallback 1 | Fallback 2 | Purpose |
+|-------|---|---|---|---|
+| **Clawd Prime** | Kimi K2.5 | GLM-5 | - | Orchestration, strategy |
+| **Work Agent** | GLM-5 | Kimi K2.5 | - | Sales, CRM, deals |
+| **Lifestyle Agent** | GLM-5 | Kimi K2.5 | - | Wellness, fitness |
+| **Build Agent** | Kimi K2.5 | GLM-5 | - | Code, deployments |
+| **Research Agent** | Perplexity Sonar | GLM-5 | Kimi K2.5 | Lead research, intel |
+
+**Cost Structure:**
+- Kimi K2.5: Subscription (cheapest per query)
+- GLM-5: FREE (Modal)
+- Perplexity: $0.005 in / $0.015 out (web search)
+- Anthropic: REMOVED (too expensive)
+
+**Optimization Strategy:**
+- Use GLM-5 (free) for simple tasks
+- Use Kimi (subscription) for complex reasoning
+- Use Perplexity (web search) for research only
+- NEVER use Anthropic unless explicitly requested
+
+---
+
 ## Model Routing Protocol (v2026.2.22 - Kimi Integration)
 
 **Cost Structure:**
