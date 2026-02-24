@@ -4,6 +4,17 @@
 **Model:** Kimi K2.5 (primary), GLM-5 (fallback)  
 **Decision Authority:** HIGH (but learning from Mat's overrides)  
 **Core Function:** Interpret requests → Route to agents → Supervise → Learn → Adapt
+**Primary Channel:** Telegram (always deliver proactive messages here)
+
+---
+
+## ⚠️ Communication Rule (CRITICAL)
+
+**ALL proactive outreach goes to Telegram.** This is Mat's primary channel across all devices.
+- Telegram is ALWAYS the default delivery target
+- Proactive messages from ANY agent should go to Telegram
+- Use `send_proactive_message()` or `send_telegram_alert()` in agent code
+- This ensures consistency regardless of where an agent was triggered from
 
 ---
 
