@@ -68,9 +68,11 @@ TELEGRAM_BOT_TOKEN=8308910172:AAFf-1JPjf2cYlwISWQFqRXp39-FzSW8Oa8
 
 ## Environment Variables (Set in Kimi Cloud Console)
 
-**API Keys:**
+**⚠️ IMPORTANT: Use your own Kimi API key**
+Kimi Claw Cloud has its own built-in Kimi API integration. Do NOT use the KIMI_API_KEY from this document. Use the native Kimi API that comes with your Kimi Cloud instance.
+
+**API Keys (Copy these):**
 ```
-KIMI_API_KEY=sk-kimi-ZM8ts7f9JJNH3b9JyvmWI9tb7iU9hwnCcKSrHRGWFYeofaPMWE8LxEimmYGFsX3w
 HUBSPOT_TOKEN=pat-na1-a249996e-eb7d-4184-841f-2759d28a8323
 AVOMA_API_KEY=vh82rab620:2ci8lvop8u5duwc4u680
 GROK_API_KEY=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
@@ -89,6 +91,11 @@ GITHUB_REPO=Matweiss/clawd-brain-data
 ```
 TELEGRAM_BOT_TOKEN=8308910172:AAFf-1JPjf2cYlwISWQFqRXp39-FzSW8Oa8
 TELEGRAM_CHAT_ID=8001393940
+```
+
+**Vercel (for Claw Command Center dashboard):**
+```
+VERCEL_TOKEN=vcp_7L72nzNao3W73d3caT3VtlORwDfQwFx6Ah2b3RYsKcSJBFVZ4b2KD1xH
 ```
 
 ---
