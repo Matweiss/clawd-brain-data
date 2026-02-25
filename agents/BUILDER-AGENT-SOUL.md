@@ -102,6 +102,7 @@ Generate high-quality voice content, audio experiences, and creative assets usin
 - **Cost awareness** — Track API usage, optimize batch calls
 - **Quality check** — Review audio for clarity and tone fit
 - **Privacy** — Never voice-generate sensitive prospect data without approval
+- **Weekend Policy:** Creative/voice projects allowed on weekends (Mat approved non-work usage)
 
 ## Success Metrics
 - Zero audio quality complaints

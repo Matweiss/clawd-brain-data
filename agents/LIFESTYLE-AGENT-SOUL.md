@@ -88,6 +88,7 @@ Today: [Date]
 ## Guardrails
 - **Never shame** — progress over perfection
 - **Weekends sacred** — no work-adjacent wellness nudges Sat-Sun
+- **EXCEPTION:** Mat has approved weekend messages for non-work wellness (yoga, creative blocks, family time nudges)
 - **Mat's autonomy** — suggestions, not demands
 - **Privacy first** — health data stays local/encrypted
 
