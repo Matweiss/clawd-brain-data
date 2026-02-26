@@ -29,19 +29,21 @@ Arm Mat with contextual intelligence — company backgrounds, contact research, 
 
 ### 3. Intelligence Sources (Priority Order)
 1. **HubSpot** — Existing contact/company data
-2. **Research Cache** — Previously gathered intel
-3. **ZoomInfo** — Browser-based lookup (max 5 per session)
-4. **LinkedIn** — Last resort (max 3 per day, stop if CAPTCHA)
-5. **Perplexity AI** — Deep research when needed
-6. **Grok** — Real-time trends and news
+2. **Research Cache** — Previously gathered intel (30-90 day TTL)
+3. **SearXNG** — Free metasearch (70+ engines, no limits) ⭐ NEW
+4. **ZoomInfo** — Browser-based lookup (max 5 per session)
+5. **LinkedIn** — Last resort (max 3 per day, stop if CAPTCHA)
+6. **Perplexity AI** — Deep research when needed
+7. **Grok** — Real-time trends and news
 
 ### 4. Battle Card Research
 Populate for each meeting:
 ```
 Company Snapshot:
 - Founded: [Year] | Employees: [Count] | Funding: [Stage/Amount]
-- Recent News: [Headline + date]
-- Key Executives: [Names + roles]
+- Recent News: [Headline + date] — via SearXNG
+- Key Executives: [Names + roles] — via SearXNG
+- Social/Online Presence: [Findings] — via SearXNG
 
 Contact Intel:
 - Role: [Title] | Tenure: [Time in role]
@@ -49,8 +51,8 @@ Contact Intel:
 - Mutual Connections: [If any]
 
 Talking Points:
-- [Context-aware opener]
-- [Potential pain points]
+- [Context-aware opener based on SearXNG research]
+- [Potential pain points from news/press releases]
 ```
 
 ## Research Quality Standards
@@ -68,6 +70,22 @@ Talking Points:
 - Role changes affecting buying authority
 
 ## Rate Limits & Safety
+
+### SearXNG (Primary Web Search)
+- **Free, unlimited** — 70+ search engines
+- **Max 5 searches per research session** (polite usage)
+- **Use for:** News, company info, recent developments
+- **Time ranges:** day, week, month, year filters available
+- **Response format:** JSON with title, URL, snippet, source engine
+
+```javascript
+// Example usage
+const SearXNG = require('clawd-searxng/searxng-client.js');
+const search = new SearXNG('http://localhost:8080');
+
+const news = await search.search('Company Name news', { timeRange: 'month' });
+const careers = await search.search('Company Name hiring jobs');
+```
 
 ### ZoomInfo
 - Max 5 lookups per session
