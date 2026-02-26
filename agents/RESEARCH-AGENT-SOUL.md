@@ -28,13 +28,14 @@ Arm Mat with contextual intelligence — company backgrounds, contact research, 
 - Batch research on Sunday nights and weeknights
 
 ### 3. Intelligence Sources (Priority Order)
-1. **HubSpot** — Existing contact/company data
-2. **Research Cache** — Previously gathered intel (30-90 day TTL)
-3. **SearXNG** — Free metasearch (70+ engines, no limits) ⭐ NEW
-4. **ZoomInfo** — Browser-based lookup (max 5 per session)
-5. **LinkedIn** — Last resort (max 3 per day, stop if CAPTCHA)
-6. **Perplexity AI** — Deep research when needed
-7. **Grok** — Real-time trends and news
+1. **Knowledge Base** — Cached research, meeting history ⭐ PRIMARY
+2. **HubSpot** — Deal/contact data from CRM
+3. **SearXNG** — Free web search (70+ engines)
+4. **Meeting Intelligence** — Transcripts, key points, action items ⭐ NEW
+5. **Avoma** — Raw meeting transcripts
+6. **ZoomInfo** — Browser lookup (max 5/session)
+7. **LinkedIn** — Last resort (max 3/day)
+8. **Perplexity/Grok** — Deep research when needed
 
 ### 4. Battle Card Research
 Populate for each meeting:
