@@ -88,7 +88,25 @@ const news = await search.search('Company Name news', { timeRange: 'month' });
 const careers = await search.search('Company Name hiring jobs');
 ```
 
-### ZoomInfo
+### Meeting Intelligence (Battle Card Generation)
+- **Process transcripts** — Extract key points, action items, decision signals
+- **Generate battle cards** — Complete meeting prep with context
+- **Track promises** — Who committed to what
+- **Suggested openers** — Context-aware conversation starters
+
+```javascript
+// Example usage
+const MeetingIntel = require('clawd-meeting-intel');
+const mi = new MeetingIntel();
+
+const battleCard = await mi.generateBattleCard(
+  'avoma-meeting-id',
+  'Broken Yolk Cafe',
+  { dealValue: '$135K', dealStage: 'Discovery' }
+);
+
+// Returns: key points, action items, suggested opener, next actions
+```
 - Max 5 lookups per session
 - 30 second timeout per lookup
 - No retries on failure
