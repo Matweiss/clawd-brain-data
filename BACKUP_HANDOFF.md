@@ -39,7 +39,7 @@
 
 ---
 
-## 📦 ALL GITHUB REPOS
+## 📦 ALL GITHUB REPOS (Updated Feb 27, 2026)
 
 ```
 Matweiss/clawd-oauth-manager      # OAuth + Work Agent v5
@@ -51,7 +51,15 @@ Matweiss/clawd-dashboard          # v0.3 sales dashboard
 Matweiss/clawd-crons              # Cron jobs (legacy)
 Matweiss/clawd-api                # API routes
 Matweiss/clawd-agent-command      # Command Center UI
+Matweiss/clawd-tier3              # Smart notifications, error handling
+Matweiss/clawd-mission-control    # NEW: Agent + Sales dashboard
+Matweiss/clawd-gmail-integration  # NEW: Automated Gmail drafts
 ```
+
+**NEW AGENT (Feb 27, 2026):**
+- `agents/EMAIL-AGENT-SOUL.md` — Inbox monitoring, tone learning
+- Runs every 5 minutes via cron
+- Reports to Work Agent
 
 ---
 
@@ -79,15 +87,34 @@ GITHUB_TOKEN=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
 
 ---
 
-## 🤖 AGENT SWARM STATUS
+## 🤖 AGENT SWARM STATUS (Updated Feb 27, 2026)
 
+### Clawd Prime (Orchestrator)
 | Agent | Status | Last Task |
 |-------|--------|-----------|
 | Clawd Prime (me) | ✅ Active | Orchestrating |
-| Work Agent | ✅ Idle | Morning briefing |
+
+### Work Agent + Subordinates
+| Agent | Status | Reports To | Function |
+|-------|--------|------------|----------|
+| Work Agent | ✅ Idle | Clawd Prime | Sales operations, orchestrates sub-agents |
+| Email Agent | ✅ Active | Work Agent | Inbox monitoring, email categorization, tone learning |
+| HubSpot Agent | ⏳ Planned | Work Agent | Deal data, forecasts, pipeline health |
+| Calendar Agent | ⏳ Planned | Work Agent | Meeting prep, scheduling |
+
+### Other Agents
+| Agent | Status | Last Task |
+|-------|--------|-----------|
 | Build Agent | ✅ Idle | Dashboard deploy |
 | Research Agent | ✅ Idle | Company intel |
 | Lifestyle Agent | 🌙 Weekend mode | Wellness check |
+
+**Sub-Agent Handoff Protocol:**
+- Email Agent monitors inbox every 5 min, categorizes emails, learns tone
+- Work Agent spawns Email Agent for inbox triage
+- Work Agent spawns HubSpot Agent for deal context
+- Work Agent synthesizes both into strategic recommendations
+- Work Agent has final authority on all external communications
 
 ---
 
