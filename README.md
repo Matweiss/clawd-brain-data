@@ -24,6 +24,32 @@ clawd-brain-data/
 └── README.md              # This file
 ```
 
+---
+
+## 📂 Important Document Collections
+
+### Lucra Employment
+- **Full Document Repository:** `docs/lucra-employment-document-repository.md`
+  - Offer Letter (countersigned)
+  - Commission Plan (countersigned)
+  - PIIA (countersigned)
+  - Compensation breakdown
+  - Next steps checklist
+
+- **Pitch Deck Summary:** `docs/lucra-pitch-deck-overview.md`
+  - Value proposition
+  - Target industries
+  - Key metrics (110% visit increase, 40% dwell time)
+  - Sales angles for Craftable prospects
+
+### Tools & Capabilities
+- **Voice Tools:** `memory/2026-03-07-voice-capabilities-update.md`
+  - TTS: Grok (✅), ElevenLabs (✅), Minimax (❌)
+  - STT: Groq Whisper transcription
+  - Transcription script: `/root/.openclaw/workspace/scripts/transcribe.sh`
+
+---
+
 ## 🔄 Daily Sync
 
 **Automatic commits:** Daily at 11:00 PM PT
