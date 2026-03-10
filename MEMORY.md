@@ -4,6 +4,58 @@ _Curated memories, lessons, and important context that persists across sessions.
 
 ---
 
+## System Configuration (March 2026)
+
+### API Integrations
+**Active:** Google OAuth (Gmail, Calendar, Docs, Sheets, Slides), GitHub (private repos), Vercel, Perplexity, Grok, Avoma, Telegram  
+**CRM:** Google Sheets (replaced HubSpot March 2026)  
+**Needs Setup:** ElevenLabs, Supabase  
+**Broken:** Minimax (Error 2049 - needs new key)
+
+### Google OAuth Details
+- Client ID: 391258212025-nafc7rponmj6i0ot2326j8ontcete0gn.apps.googleusercontent.com
+- Project: clawdasst
+- Scopes: Gmail, Calendar (mat@craftable.com ONLY), Docs, Sheets, Slides, Forms
+- Refresh token: Never expires (auto-refresh system deployed)
+
+### CRM: Google Sheets (Active March 2026+)
+**Replaced HubSpot** - Using Google Sheets as primary CRM for pipeline management.
+
+- **Sheet Name:** "Mat's Pipeline"
+- **Columns:** Company, Stage, Amount, Close Date, Last Contact, Notes, Next Action
+- **API:** Existing Google OAuth (sheets scope included)
+- **Access:** Shared with service account or accessible via OAuth
+
+### GitHub Access (Private Repos)
+Mat's repos are PRIVATE. New agent needs:
+- Personal Access Token with `repo` scope, OR
+- Collaborator access
+
+Repos to access:
+- Matweiss/clawd-brain-data
+- Matweiss/clawd-dashboard
+- Matweiss/clawd-command-center
+
+### Cron Jobs (v2 with Auto-Refresh)
+All jobs self-heal expired tokens automatically:
+- Morning Briefing: 7am PT weekdays
+- Pre-Meeting Prep: Every 15min (7am-6pm)
+- Midday Pulse: 1pm PT weekdays
+- Nightly Research: 10pm PT Mon-Thu
+- Weekly Research: Sun 8pm
+
+### Weekend Policy
+✅ **Active:** Orchestrator, Lifestyle Agent, Builder Agent  
+❌ **Off:** Work Agent, Research Agent  
+*Protects family/creative time from work noise*
+
+### Dashboard
+- URL: https://clawd-dashboard-eight.vercel.app
+- GitHub: https://github.com/Matweiss/clawd-dashboard
+- Issue: Update to use Google Sheets API instead of HubSpot
+
+---
+
 ## March 2026
 
 ### Lucra Employment - Major Career Move
