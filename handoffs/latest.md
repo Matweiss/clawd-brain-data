@@ -1,197 +1,203 @@
 # CLAWD Mission Control - Current State Handoff
 
-**Generated:** March 10, 2026 at 4:50 AM PT  
-**Session:** Main Dashboard Deployment  
+**Generated:** March 11, 2026
+**Session:** Dashboard Recovery + Google Auth + Card Restoration
 **Agent:** CLAWD Prime
 
 ---
 
 ## 🎯 Current Active Work
 
-### 1. Mission Control Dashboard V2 ✅ DEPLOYED
+### 1. Mission Control Dashboard Recovery 🔄 IN PROGRESS
 **Status:** Live at https://clawd-mission-control-v2.vercel.app
 
-**Components Completed:**
-- ✅ 4-column layout with all panels
-- ✅ Weather Panel (91406 zip code)
-- ✅ Time Panel (live clock)
-- ✅ iPhone Status Panel (Home Assistant integration)
-- ✅ Pet Tracker (Diggy/Theo HA BLE beacons)
-- ✅ Today's Priority (add/delete/complete)
-- ✅ Calendar (Google Calendar integration)
-- ✅ Goal Tracker (0 deals closed this month, realistic goals)
-- ✅ Regal Unlimited Tracker ($26.49/month, movie logger)
-- ✅ Token Usage Panel
-- ✅ Brain Data Panel
+The dashboard had drifted away from a richer earlier version. This session restored the richer entrypoint and began rebuilding the desired card set.
 
-**Data Sources Connected:**
-- ✅ Home Assistant (iPhone sensors, pet locations)
-- ⚠️ Google Sheets (pipeline - needs proper auth)
-- ⚠️ OpenWeather (API key needed for live weather)
-- ⚠️ Gmail Calendar (needs OAuth)
+### 2. Google OAuth / Google Data Access ✅ UNBLOCKED
+**Status:** OAuth flow repaired, refresh token generated, Vercel envs added to the Mission Control project.
 
-### 2. CRM Pipeline Integration 🔄 IN PROGRESS
-**Sheet:** https://docs.google.com/spreadsheets/d/1pJJ7dP5hw1un18g0yprfw4sc__ITvdzdsfSFFVqhepQ/edit
-
-**Status:** API route created, needs Google OAuth setup
-
-### 3. Movie Cron Job ✅ RUNNING
-**Schedule:** Daily at 7am LA time  
-**Job ID:** fd0e34f6-3bf6-4d1b-8749-d5119a362f08  
-**Purpose:** Check daily movie showtimes near 91406
+### 3. Card Restoration ✅ FIRST PASS COMPLETE
+New cards added to the live dashboard code:
+- ✅ Home Assistant card
+- ✅ Lucra Commission Tracker
+- ✅ Lifestyle Goal Tracker
+- ✅ Regal Movie Tracker
 
 ---
 
-## 📋 Outstanding Tasks (From User Request)
+## ✅ Completed This Session
 
-### Priority 1: Data Connections
-1. Connect Google Sheet pipeline (needs GOOGLE_REFRESH_TOKEN in Vercel)
-2. Connect Gmail calendar mat@craftable.com (needs OAuth flow)
-3. Add OpenWeather API key for live weather
+### Code / Deploy Work
+- Hardened Google OAuth token flow
+- Fixed Google Sheets API syntax issue
+- Restored richer dashboard entrypoint into `src/pages/index.tsx`
+- Added four new dashboard cards
+- Successfully pushed all changes to GitHub
 
-### Priority 2: Apple Health Integration
-- Full Apple Health data integration (sleep, workouts, HRV, etc.)
-
-### Priority 3: Additional Features
-- Task persistence across sessions (currently localStorage only)
-- Brain Data search/navigation improvements
-- Memory file organization
-
----
-
-## 🔧 Environment Variables Needed
-
-```bash
-# In Vercel (already set ✅)
-HA_TOKEN=xxx
-HA_URL=https://your-ha.ui.nabu.casa
-
-# Need to add:
-OPENWEATHER_API_KEY=xxx
-GOOGLE_REFRESH_TOKEN=xxx
-GOOGLE_SHEETS_ID=1pJJ7dP5hw1un18g0yprfw4sc__ITvdzdsfSFFVqhepQ
-```
+### Important commits
+- `7ddcaec` — Harden Google OAuth token flow
+- `cf340ad` — Fix Sheets API syntax error
+- `eef2d7d` — Restore richer dashboard entrypoint
+- `521c581` — Add HA, Lucra, goals, and movie cards
 
 ---
 
-## 📁 Key Files & Locations
+## 📋 Current User-Approved Product Direction
 
-### Source Code
-- Dashboard: `/root/.openclaw/workspace/clawd-mission-control-v2/`
-- Repo: https://github.com/Matweiss/clawd-mission-control-v2
+Mat wants Mission Control to become a daily operating system that is:
+- polished
+- information-rich
+- agent-operable
+- trustworthy about data freshness and health
 
-### Memory & Handoffs
-- Daily logs: `/root/.openclaw/workspace/memory/`
-- This handoff: `/root/.openclaw/workspace/handoffs/latest.md`
-- Skills: `/usr/lib/node_modules/openclaw/extensions/`
-
-### Active Integrations
-- Home Assistant: Cloud instance (Nabu Casa)
-- Vercel: mats-projects-bc1a3570
-- Google OAuth: clawdasst project
-
----
-
-## 🚨 Critical Context
-
-### What Happened Last Night
-- Session became unresponsive around ~midnight PT
-- Work was recovered from terminal output
-- Dashboard successfully deployed with all new panels
-- Real HA data is now flowing (steps, battery, pet locations)
-
-### User's Biggest Concern
-**"If I need to spin up a new agent with 0 context, I want to get right back to our last state!"**
-
-### Solution Implemented
-1. This handoff file auto-generated
-2. All memory files in `/memory/` directory
-3. GitHub repo with full source code
-4. Environment variables documented
-5. Skills and configs in version control
+### Agreed strategy
+1. Restore the right cards/features first
+2. Improve layout and organization
+3. Fix real data/functionality next
+4. Build system health + agent-operable surfaces
+5. Add deeper views/sidebar afterward
 
 ---
 
-## 🎬 Regal Unlimited Movie Tracker
+## 🧩 Agreed Next Layout
 
-**Current Movies This Month:** 4  
-**Recent:**
-- Dune: Part Two (Mar 3) ⭐⭐⭐⭐⭐
-- Crime 101 (Mar 8) ⭐⭐⭐⭐
-- Poor Things (Feb 28) ⭐⭐⭐⭐⭐
-- The Holdovers (Feb 20) ⭐⭐⭐⭐
+### Column 1 — Operations / system
+- Active Agents
+- Vault & Restoration
+- Integration Status
+- Schedule of Operations
 
-**Subscription:** $26.49/month, renews 15th
+### Column 2 — Life / presence
+- Recent Events (if distinct from calendar)
+- Home Assistant card (absorbs pet tracking)
+- Lifestyle Goal Tracker
+- Regal Movie Tracker
 
----
+### Column 3 — Work / execution
+- Calendar
+- Email
+- Sales Pipeline
+- Lucra Commission Tracker
 
-## 📊 Current Pipeline Status
-
-**Deals:** 0 closed this month (fresh start)  
-**Pipeline Value:** $152,000  
-**Commission YTD:** $3,200
-
-**Active Deals:**
-1. Vertex Solutions - $45K (Proposal)
-2. Dragon Tech - $75K (Evaluation)
-3. Lucra Systems - $32K (Closed Won - Mar 1)
-
----
-
-## 👤 User Context
-
-**Name:** Mat Weiss  
-**Email:** mat@craftable.com  
-**Location:** Sherman Oaks, CA (91406)  
-**Timezone:** PT (Los Angeles)
-
-**Pets:**
-- Diggy (dog) - tracked via BLE beacon
-- Theo (cat) - tracked via BLE beacon
-
-**Subscriptions:**
-- Regal Unlimited: $26.49/month
-- Kimi Allegro: $100/month (49% used, 511K tokens remaining)
+### Expected future merges
+- Active Agents + Integration Status
+- Lifestyle Agent + Goal Tracker
+- Sales Pipeline + Lucra Commission
 
 ---
 
-## 🔄 Recovery Instructions
-
-If starting fresh with new agent:
-
-1. **Clone repos:**
-   ```bash
-   git clone https://github.com/Matweiss/clawd-mission-control-v2
-   git clone https://github.com/Matweiss/clawd-brain-data
-   ```
-
-2. **Set environment variables** (see above)
-
-3. **Copy memory files** from backup
-
-4. **Read this handoff** for full context
-
-5. **Deploy:**
-   ```bash
-   cd clawd-mission-control-v2
-   vercel --prod
-   ```
+## 🏠 Exact Home Assistant Card Requirements
+- iPhone battery
+- charging status
+- location / zone
+- focus mode
+- steps
+- watch battery
+- watch charging
+- watch worn / on-wrist
+- last updated
+- Diggy location
+- Theo location
+- same-room indicator for Diggy + Theo
 
 ---
 
-## 📞 Last Known Good State
+## 💼 Exact Lucra Requirements
+Lucra starts **4/1**. The card should not imply underperformance before then.
 
-**Dashboard:** https://clawd-mission-control-v2.vercel.app  
-**Status:** All panels functional, real HA data flowing  
-**Last Deploy:** March 10, 2026 at 4:47 AM PT
+Track:
+- deals in pipeline
+- year-to-date commission
+- quarter-to-date
+- pipeline commission potential
+- closed won total
+- payout tracker
+- target vs actual
 
-**Health Check:**
-- ✅ Home Assistant API responding
-- ✅ iPhone sensors reporting
-- ✅ Pet beacons active
-- ⚠️ Google Sheets (needs auth)
-- ⚠️ Weather API (needs key)
+Notes:
+- monthly quota is not important
+- quarterly and annual framing matter more
 
 ---
 
-*This handoff generated automatically. Last updated: March 10, 2026*
+## 🧘 Exact Goal Tracker Requirements
+Start with:
+- sleep target
+- yoga per week
+- steps
+
+---
+
+## 🎬 Exact Movie Tracker Requirements
+- Regal Unlimited = **$26.95/month**
+- billed on the **15th**
+- log movies seen
+- undo mistaken entries
+- monthly total
+- yearly total
+- watchlist / want-to-see
+- move watchlist → seen easily
+
+---
+
+## 🔧 Current Integration State
+
+### Google
+Mission Control Vercel project should now have:
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REFRESH_TOKEN`
+
+### Home Assistant
+- HA APIs exist
+- pet locations endpoint exists
+- some new HA card values are currently placeholder/fallback values pending fuller real wiring
+
+### Data correctness still pending
+- Calendar
+- Gmail
+- Sheets/pipeline
+- commission logic
+- movie persistence
+- goal persistence
+
+---
+
+## 📁 Most Relevant Files Right Now
+
+### App entrypoint
+- `/data/.openclaw/workspace/clawd-mission-control-v2/src/pages/index.tsx`
+
+### New cards from this session
+- `/data/.openclaw/workspace/clawd-mission-control-v2/src/components/HomeAssistantCard.tsx`
+- `/data/.openclaw/workspace/clawd-mission-control-v2/src/components/LucraCommissionCard.tsx`
+- `/data/.openclaw/workspace/clawd-mission-control-v2/src/components/LifestyleGoalTrackerCard.tsx`
+- `/data/.openclaw/workspace/clawd-mission-control-v2/src/components/MovieTrackerCard.tsx`
+
+### Related integration/auth files
+- `/data/.openclaw/workspace/clawd-mission-control-v2/src/pages/api/auth/google-token.ts`
+- `/data/.openclaw/workspace/clawd-mission-control-v2/src/pages/api/auth/refresh-google.ts`
+- `/data/.openclaw/workspace/clawd-mission-control-v2/src/lib/sheets-api.ts`
+- `/data/.openclaw/workspace/clawd-mission-control-v2/src/pages/api/gmail/import.ts`
+
+---
+
+## 🚨 Immediate Next Steps
+1. Rebalance dashboard into the agreed 3-column layout
+2. Remove standalone Pet Tracker from dashboard if HA card fully absorbs it
+3. Start fixing real data/functionality after layout feels right
+4. Add System Health panel soon after
+5. Add sidebar / dedicated views after that
+
+---
+
+## 📞 Zero-Context Recovery Note
+If a new agent starts cold, the safest first move is:
+1. Read this handoff
+2. Read `src/pages/index.tsx`
+3. Read the four new card components
+4. Implement the agreed layout reorganization before deeper feature work
+
+---
+
+*Last updated: March 11, 2026*
