@@ -108,7 +108,25 @@ For Mission Control P0/P1, a proactive `STATUS` only counts as Mission Control p
 - Mission Control HA/security behavior (entity mapping, presence logic, garage/lock handling, card logic that reflects those states)
 - Tests or checks that directly validate Mission Control behavior
 
-Work on protocols, skills, task-history, or backup docs should be labeled as proactive-system or infra work, not Mission Control progress, unless it directly changes or validates the app/runtime/HA/security surfaces above.
+Work on protocols, skills, task-history, backup docs, `TASKS.md`, or other bookkeeping should be labeled as proactive-system or infra work, not Mission Control progress, unless it directly changes or validates the app/runtime/HA/security surfaces above.
+
+### Mission Control silent-checkpoint rule
+
+Do not send a Mission Control Telegram `STATUS` when the only changes are ledger/history/bookkeeping updates.
+
+If the interval only touched:
+- `TASKS.md`
+- `task-history.json`
+- protocol/skill docs
+- handoff/backup docs
+- cadence/heartbeat bookkeeping
+
+then update those quietly and continue working.
+
+Only send a Mission Control proactive update when at least one of these is true and visible in execution proof:
+- a `clawd-mission-control-v2` app/runtime/HA/security file changed
+- a Mission Control build/test/check ran and demonstrates a behavior change
+- a concrete HA/security logic change was wired into the app
 
 ## Proactive-worthy vs noise
 
