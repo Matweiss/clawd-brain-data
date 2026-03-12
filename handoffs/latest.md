@@ -23,6 +23,15 @@ New cards added to the live dashboard code:
 - ✅ Lifestyle Goal Tracker
 - ✅ Regal Movie Tracker
 
+### 4. Proactive operations layer ✅ NEW BASELINE
+A reliability pass was added before deeper Mission Control repairs resumed.
+- Added task ledger: `/data/.openclaw/workspace/TASKS.md`
+- Added cadence registry: `/data/.openclaw/workspace/CADENCE.json`
+- Updated workspace `HEARTBEAT.md` to enforce overdue/blocker follow-through
+- Added workspace skill: `skills/proactive-checkins/`
+- Added protocol hardening in `clawd-brain-data/docs/proactive-update-protocol.md`
+- Mission Control updates are now expected on a 7-minute Telegram cadence while active work is in progress
+
 ---
 
 ## ✅ Completed This Session
