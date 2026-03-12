@@ -31,11 +31,31 @@ If Mat messages between scheduled proactive updates for an active cadence-backed
 - acknowledge the miss plainly
 - give current status
 - give new update time
+- after sending an OVERDUE once, either advance the deadline or change the task state so the next run does not emit the same stale alert again
 
 ### DONE
 - what is solved
 - what remains
 - whether the result is trustworthy
+
+## Ledger mutation rule
+
+On every proactive check-in for an active task:
+- update `last_update_at`
+- update `last_update_summary`
+- update `next_update_by`
+
+The next run should see a fresh checkpoint, not the same stale state.
+
+Only send OVERDUE if:
+- `now > next_update_by`, and
+- the ledger has not been touched since the last scheduled checkpoint.
+
+## De-duplication guard
+
+- If the message body would be identical or materially identical to the last proactive update for that task, skip sending it and update the ledger instead.
+- Max 1 OVERDUE message per task per 30 minutes unless there is new information.
+- New information means a state change, a new blocker, a deadline change, or new factual progress.
 
 ## Proactive-worthy vs noise
 
