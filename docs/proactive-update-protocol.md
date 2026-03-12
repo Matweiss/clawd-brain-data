@@ -100,33 +100,21 @@ Meta-work such as tuning protocols, adjusting cadence, or rethinking process:
 - must be time-bounded and recorded as its own task
 - does not count as progress on feature or repair tasks unless it directly unblocks them
 
-## Mission Control progress rule
+## Mission Control hard gate (primary rule)
 
-For Mission Control P0/P1, a proactive `STATUS` only counts as Mission Control progress if the execution proof includes at least one artifact in one of these surfaces:
-- Mission Control app code or config (`clawd-mission-control-v2` files, `next.config.js`, API routes, cards, data loaders)
-- Mission Control runtime/deployment (build/run commands, env/config changes that affect how Mission Control is served)
-- Mission Control HA/security behavior (entity mapping, presence logic, garage/lock handling, card logic that reflects those states)
-- Tests or checks that directly validate Mission Control behavior
+For any task tagged `mission-control`, this rule overrides the global `STATUS` rules.
 
-Work on protocols, skills, task-history, backup docs, `TASKS.md`, or other bookkeeping should be labeled as proactive-system or infra work, not Mission Control progress, unless it directly changes or validates the app/runtime/HA/security surfaces above.
+A Mission Control `STATUS` is allowed only if at least one of these is true in the execution proof:
+- `filesChanged` contains a path under `/data/.openclaw/workspace/clawd-mission-control-v2/`
+- `commandsOrJobsRun` includes a Mission Control build/test/run/check command
+- `evidence` clearly describes a Mission Control runtime/HA/security behavior change validated in the app
 
-### Mission Control silent-checkpoint rule
+If none of those are true, the run must be a silent checkpoint:
+- update `TASKS.md` if needed
+- update `task-history.json` if needed
+- do not send a Telegram `STATUS` for Mission Control
 
-Do not send a Mission Control Telegram `STATUS` when the only changes are ledger/history/bookkeeping updates.
-
-If the interval only touched:
-- `TASKS.md`
-- `task-history.json`
-- protocol/skill docs
-- handoff/backup docs
-- cadence/heartbeat bookkeeping
-
-then update those quietly and continue working.
-
-Only send a Mission Control proactive update when at least one of these is true and visible in execution proof:
-- a `clawd-mission-control-v2` app/runtime/HA/security file changed
-- a Mission Control build/test/check ran and demonstrates a behavior change
-- a concrete HA/security logic change was wired into the app
+Work on protocols, skills, task-history, backup docs, `TASKS.md`, or other bookkeeping should be labeled as proactive-system or infra work, not Mission Control progress, unless it directly changes or validates Mission Control app/runtime/HA/security surfaces.
 
 ## Proactive-worthy vs noise
 
