@@ -9,6 +9,8 @@ Every proactive message must include:
 - **NEXT**: recommended next move
 - **APPROVAL**: `not needed` or `needed for ___`
 
+If Mat messages between scheduled proactive updates for an active cadence-backed task, answer with the current status and include how long until the next scheduled outreach when that information is available.
+
 ## Message lifecycle
 
 ### STARTED
