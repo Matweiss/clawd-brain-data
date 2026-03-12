@@ -100,6 +100,16 @@ Meta-work such as tuning protocols, adjusting cadence, or rethinking process:
 - must be time-bounded and recorded as its own task
 - does not count as progress on feature or repair tasks unless it directly unblocks them
 
+## Mission Control progress rule
+
+For Mission Control P0/P1, a proactive `STATUS` only counts as Mission Control progress if the execution proof includes at least one artifact in one of these surfaces:
+- Mission Control app code or config (`clawd-mission-control-v2` files, `next.config.js`, API routes, cards, data loaders)
+- Mission Control runtime/deployment (build/run commands, env/config changes that affect how Mission Control is served)
+- Mission Control HA/security behavior (entity mapping, presence logic, garage/lock handling, card logic that reflects those states)
+- Tests or checks that directly validate Mission Control behavior
+
+Work on protocols, skills, task-history, or backup docs should be labeled as proactive-system or infra work, not Mission Control progress, unless it directly changes or validates the app/runtime/HA/security surfaces above.
+
 ## Proactive-worthy vs noise
 
 ### STATUS: proactive-worthy
