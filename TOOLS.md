@@ -65,6 +65,13 @@ Add whatever helps you do your job. This is your cheat sheet.
 - Current viable path: Chrome Browser Relay / extension flow from Mat's local Chrome
 - Direct `profile=user` attach from VPS is constrained by lack of direct local browser access
 
+### Home Assistant Key Entity Map (2026-03-15)
+
+- Sarah home/away: `device_tracker.sarah_s_iphone2`
+- Sarah exact location: `sensor.sarah_s_iphone2_geocoded_location`
+- Feed Theo action: `button.theo_s_food_feed`
+- Lock-it-down automation: `automation.lock_it_down`
+
 ### Future Integrations
 
 - Tesla integration planned
