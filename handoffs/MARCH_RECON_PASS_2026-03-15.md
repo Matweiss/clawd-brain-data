@@ -69,6 +69,10 @@ Return — Monday, April 6, 2026
 
 ### Mat NYC Trip (from screenshot + user note)
 
+Lodging
+- Kimpton Hotel Eventi (user phrased as "Kimpton Aventi").
+
+
 Outbound — Tue Mar 31 → Wed Apr 1, 2026
 - Flight: Delta 915
 - Route: LAX → JFK
