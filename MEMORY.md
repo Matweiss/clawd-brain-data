@@ -91,6 +91,20 @@ All jobs self-heal expired tokens automatically:
 
 **Documentation:** `memory/2026-03-07-voice-capabilities-update.md`
 
+### Browser Coworking Setup Success (VPS + Mac)
+**Date:** March 15, 2026
+
+**Result:** ✅ Live browser coworking path operational through connected Mac node.
+
+**Critical architecture notes:**
+- VPS OpenClaw gateway + Mac node host routing works.
+- Extension relay auth on Mac uses Mac-local gateway token.
+- Node host connection to VPS uses VPS gateway token.
+- `openclaw nodes status` connected browser-capable node is the go/no-go signal.
+
+**Runbook:** `handoffs/BROWSER_COWORK_SETUP_2026-03-15.md`
+**Session log:** `memory/2026-03-15-browser-cowork-win.md`
+
 ---
 
 <!-- Add significant events, decisions, and insights here over time. -->
