@@ -2,8 +2,8 @@
 
 - **Name:** Mat Weiss
 - **What to call them:** Mat
-- **Pronouns:** 
-- **Timezone:** 
+- **Pronouns:** he/him
+- **Timezone:** Los Angeles (PT)
 - **Notes:** Owner of `clawd-mission-control-v2`; focused on agent ops / mission control workflows.
 
 ## Context
