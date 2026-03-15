@@ -81,7 +81,7 @@ Outbound — Tue Mar 31 → Wed Apr 1, 2026
 Return
 - Mat confirmed same return flight as Sarah: United 2679 on Monday, April 6, 2026.
 
-## Arizona bachelor trip details confirmed (partial)
+## Arizona bachelor trip details confirmed
 
 Trip purpose
 - Jason Leon ("Leon") bachelor party in Arizona.
@@ -99,8 +99,17 @@ Companion notes
 - Wes is on same outbound + return flights as Mat.
 - David Saunders ("Saunders") is on same outbound flight, different return flight.
 
+Planning + payments context (from forwarded bachelor-party update)
+- Round 2 deposit: $500 (included final house payment + fixed group costs)
+- Expected final payment: about $300 or less (collected after weekend)
+- House fully paid (~$14.6K+), trip locked
+- Thursday arrival day is flexible / no formal schedule
+- Sunday departure is flexible
+- We-Ko-Pa golf costs are outside communal payments
+- Mat status: up to date on payments; planning to golf; needs club rental + golf payment.
+
 Return
-- Mat indicated return is on American, but full flight/time details still pending confirmation.
+- Return airline noted as American in prior context, but exact return flight number/time/date still pending confirmation.
 
 ## Recommended next actions
 
