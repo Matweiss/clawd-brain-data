@@ -108,8 +108,14 @@ Planning + payments context (from forwarded bachelor-party update)
 - We-Ko-Pa golf costs are outside communal payments
 - Mat status: up to date on payments; planning to golf; needs club rental + golf payment.
 
-Return
-- Return airline noted as American in prior context, but exact return flight number/time/date still pending confirmation.
+Return — Sunday, March 29, 2026
+- Airline: American
+- Flight: AA 2742
+- Route: PHX → LAX
+- Departure: 2:09 PM (Phoenix)
+- Arrival: 3:41 PM PT (Los Angeles)
+- Nonstop
+- Wes confirmed on same return flight.
 
 ## Recommended next actions
 
