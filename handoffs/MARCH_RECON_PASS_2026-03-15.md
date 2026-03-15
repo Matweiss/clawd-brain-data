@@ -46,9 +46,38 @@ Key transcribed intents from voice messages:
 1. Confirm exact March trip dates for:
    - Arizona bachelor trip (depart/return)
    - NYC trip (depart/return)
-2. Confirm final flight details to store as source-of-truth (airline/flight number/times).
-3. Confirm whether 3/14 and 3/18 events are completed and if any additional March events should be added.
-4. Confirm current active HA tokens/webhooks post-rotation.
+2. Confirm whether 3/14 and 3/18 events are completed and if any additional March events should be added.
+3. Confirm current active HA tokens/webhooks post-rotation.
+
+## NYC flight details confirmed (source update)
+
+### Sarah NYC Trip
+
+Outbound — Monday, March 30, 2026
+- Flight: United 2127
+- Route: LAX → EWR
+- Departure: 10:20 AM PT
+- Arrival: 6:53 PM ET
+- Nonstop
+
+Return — Monday, April 6, 2026
+- Flight: United 2679
+- Route: EWR → LAX
+- Departure: 10:10 AM ET
+- Arrival: 1:00 PM PT
+- Nonstop
+
+### Mat NYC Trip (from screenshot + user note)
+
+Outbound — Tue Mar 31 → Wed Apr 1, 2026
+- Flight: Delta 915
+- Route: LAX → JFK
+- Departure: 11:59 PM PT (Tue Mar 31)
+- Arrival: 8:30 AM ET (Wed Apr 1)
+- Nonstop
+
+Return
+- Mat confirmed same return flight as Sarah: United 2679 on Monday, April 6, 2026.
 
 ## Recommended next actions
 
