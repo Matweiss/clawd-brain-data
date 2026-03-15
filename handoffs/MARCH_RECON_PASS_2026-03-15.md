@@ -43,9 +43,7 @@ Key transcribed intents from voice messages:
 
 ## Clarifications needed (to finalize clean handoff)
 
-1. Confirm exact March trip dates for:
-   - Arizona bachelor trip (depart/return)
-   - NYC trip (depart/return)
+1. Confirm Arizona return flight details (airline/flight/time/date).
 2. Confirm whether 3/14 and 3/18 events are completed and if any additional March events should be added.
 3. Confirm current active HA tokens/webhooks post-rotation.
 
@@ -82,6 +80,27 @@ Outbound — Tue Mar 31 → Wed Apr 1, 2026
 
 Return
 - Mat confirmed same return flight as Sarah: United 2679 on Monday, April 6, 2026.
+
+## Arizona bachelor trip details confirmed (partial)
+
+Trip purpose
+- Jason Leon ("Leon") bachelor party in Arizona.
+
+Outbound — Thursday, March 26, 2026
+- Airline: Southwest
+- Flight: 2416
+- Route: LAX → PHX
+- Departure: 11:15 AM PT
+- Arrival: 12:40 PM MT (Arizona)
+- Nonstop
+- Confirmation code (from screenshot): AJCFXF
+
+Companion notes
+- Wes is on same outbound + return flights as Mat.
+- David Saunders ("Saunders") is on same outbound flight, different return flight.
+
+Return
+- Mat indicated return is on American, but full flight/time details still pending confirmation.
 
 ## Recommended next actions
 
