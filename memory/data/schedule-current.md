@@ -67,25 +67,26 @@ Sources: CorePower Yoga (Main filter: Encino + Sherman Oaks), Regal Sherman Oaks
 
 ## Regal Sherman Oaks Galleria
 
-### Today / Thu Mar 19
+### Thu, Mar 19
 - GOAT — 11:20am, 7:45pm
 - Dhurandhar The Revenge (Hindi) — 11:30am, 4:10pm, 9:20pm
-- Hoppers — 12:00pm, 11:50am, 12:25pm, 1:10pm, 2:00pm, 3:45pm, 5:00pm, 8:00pm, 10:30pm, 11:00pm
+- Hoppers — 12:00pm
 - The Bride! — 11:45am, 3:05pm, 6:45pm, 10:00pm
 - Scream 7 — 12:20pm, 3:30pm, 6:45pm, 9:50pm
 - Kiki's Delivery Service 4K — 12:30pm
 - Wuthering Heights — 12:30pm
 - Reminders of Him — 12:45pm, 1:15pm, 4:15pm, 7:15pm, 10:15pm
 - Undertone — 1:45pm, 4:30pm, 7:20pm, 10:10pm
-- Ready or Not 2: Here I Come — 7:30pm, 10:30pm, 2:00pm, 5:00pm, 8:00pm, 11:00pm
-- Project Hail Mary — 2:45pm, 6:30pm, 10:15pm, 3:15pm, 7:00pm, 10:45pm, 2:15pm, 3:45pm, 6:00pm, 9:45pm, 2:00pm, 4:40pm, 5:30pm, 6:15pm, 8:30pm, 9:15pm, 10:00pm
+- Ready or Not 2: Here I Come — 2:00pm, 5:00pm, 7:30pm, 8:00pm, 10:30pm, 11:00pm
+- Project Hail Mary — 2:00pm, 2:15pm, 2:45pm, 3:15pm, 3:45pm, 4:40pm, 5:30pm, 6:00pm, 6:15pm, 7:00pm, 8:30pm, 9:15pm, 9:45pm, 10:00pm, 10:15pm, 10:45pm
 - The Pout-Pout Fish — 2:40pm
 - Slanted — 4:40pm
+- Vampires of the Velvet Lounge — 10:40pm
 
-### Fri Mar 20
+### Fri, Mar 20
 - Dhurandhar The Revenge (Hindi) — 10:00am, 3:30pm, 8:45pm
 - Hoppers — 10:00am, 10:30am, 12:50pm, 1:30pm, 3:40pm, 4:20pm, 6:25pm, 7:50pm, 9:20pm, 10:50pm
-- Project Hail Mary — 11:40am, 3:20pm, 7:00pm, 10:40pm, 10:40am, 2:20pm, 6:00pm, 9:40pm, 11:10am, 12:10pm, 2:50pm, 3:50pm, 6:30pm, 10:10pm, 10:10am, 11:25am, 12:50pm, 1:50pm, 4:40pm, 5:30pm, 8:30pm, 9:10pm
+- Project Hail Mary — 10:10am, 10:40am, 11:10am, 11:25am, 11:40am, 12:10pm, 12:50pm, 1:50pm, 2:20pm, 2:50pm, 3:20pm, 3:50pm, 4:40pm, 5:30pm, 6:00pm, 6:30pm, 7:00pm, 8:30pm, 9:10pm, 9:40pm, 10:10pm, 10:40pm
 - The Pout-Pout Fish — 10:15am, 2:10pm, 4:55pm
 - Reminders of Him — 10:15am, 1:15pm, 4:15pm, 7:15pm, 10:25pm
 - Undertone — 10:20am, 1:05pm, 4:05pm, 7:25pm, 10:20pm
@@ -96,10 +97,10 @@ Sources: CorePower Yoga (Main filter: Encino + Sherman Oaks), Regal Sherman Oaks
 - Vampires of the Velvet Lounge — 7:45pm, 10:45pm
 - Slanted — 9:50pm
 
-### Sat Mar 21
+### Sat, Mar 21
 - Dhurandhar The Revenge (Hindi) — 10:00am, 3:30pm, 8:45pm
 - Hoppers — 10:00am, 10:30am, 12:50pm, 1:30pm, 3:40pm, 4:20pm, 6:25pm, 7:50pm, 9:20pm, 10:50pm
-- Project Hail Mary — 11:40am, 3:20pm, 7:00pm, 10:40pm, 10:40am, 2:20pm, 6:00pm, 9:40pm, 11:10am, 12:10pm, 2:50pm, 3:50pm, 6:30pm, 10:10pm, 10:10am, 11:25am, 12:50pm, 1:50pm, 4:40pm, 5:30pm, 8:30pm, 9:10pm
+- Project Hail Mary — 10:10am, 10:40am, 11:10am, 11:25am, 11:40am, 12:10pm, 12:50pm, 1:50pm, 2:20pm, 2:50pm, 3:20pm, 3:50pm, 4:40pm, 5:30pm, 6:00pm, 6:30pm, 7:00pm, 8:30pm, 9:10pm, 9:40pm, 10:10pm, 10:40pm
 - The Pout-Pout Fish — 10:15am, 2:10pm, 4:55pm
 - Reminders of Him — 10:15am, 1:15pm, 4:15pm, 7:15pm, 10:25pm
 - Undertone — 10:20am, 1:05pm, 4:05pm, 7:25pm, 10:20pm
@@ -112,7 +113,7 @@ Sources: CorePower Yoga (Main filter: Encino + Sherman Oaks), Regal Sherman Oaks
 
 ---
 
-Notes:
-- CorePower source pulled live from Main filter page.
-- Regal source pulled live from Regal Sherman Oaks Galleria page.
-- Regal extraction may contain duplicated showtimes on some titles due to multiple formats/cards on the live page; source page is active for manual cross-check in cowork browser.
+Cleanup notes:
+- Regal section deduped and normalized from the live page extraction.
+- Some Regal titles still carry multiple format-derived showtimes on dense movie cards (especially Project Hail Mary), but the obvious cross-title bleed and duplicate clutter were cleaned up.
+- CorePower data remains the clean authoritative portion of this snapshot.
