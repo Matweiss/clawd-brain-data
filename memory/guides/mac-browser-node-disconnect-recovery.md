@@ -54,8 +54,13 @@ Why: unloading the tunnel or node service first can drop the exact path you need
 - Gateway token used by node host: `mat-relay-2026`
 
 ## Script paths on Mac
+**Break-glass/manual copy location:**
 - `~/Documents/obsidian-memory/scripts/ssh-tunnel.sh`
 - `~/Documents/obsidian-memory/scripts/run-openclaw-node.sh`
+
+**LaunchAgent-safe runtime location (recommended):**
+- `~/Library/Application Support/OpenClaw/scripts/ssh-tunnel.sh`
+- `~/Library/Application Support/OpenClaw/scripts/run-openclaw-node.sh`
 
 ## LaunchAgents on Mac
 - `~/Library/LaunchAgents/com.openclaw.ssh-tunnel.plist`
@@ -149,16 +154,16 @@ Use this when you want the Mac to keep the tunnel and node host alive automatica
 
 ## 1) Confirm the files exist on the Mac
 ```bash
-ls -l ~/Documents/obsidian-memory/scripts/ssh-tunnel.sh
-ls -l ~/Documents/obsidian-memory/scripts/run-openclaw-node.sh
+ls -l ~/Library/Application\ Support/OpenClaw/scripts/ssh-tunnel.sh
+ls -l ~/Library/Application\ Support/OpenClaw/scripts/run-openclaw-node.sh
 ls -l ~/Library/LaunchAgents/com.openclaw.ssh-tunnel.plist
 ls -l ~/Library/LaunchAgents/com.openclaw.node-host.plist
 ```
 
 ## 2) Confirm script contents look right
 ```bash
-sed -n '1,200p' ~/Documents/obsidian-memory/scripts/ssh-tunnel.sh
-sed -n '1,200p' ~/Documents/obsidian-memory/scripts/run-openclaw-node.sh
+sed -n '1,200p' ~/Library/Application\ Support/OpenClaw/scripts/ssh-tunnel.sh
+sed -n '1,200p' ~/Library/Application\ Support/OpenClaw/scripts/run-openclaw-node.sh
 ```
 
 Expected key lines:
@@ -168,8 +173,8 @@ Expected key lines:
 
 ## 3) Make scripts executable
 ```bash
-chmod +x ~/Documents/obsidian-memory/scripts/ssh-tunnel.sh
-chmod +x ~/Documents/obsidian-memory/scripts/run-openclaw-node.sh
+chmod +x ~/Library/Application\ Support/OpenClaw/scripts/ssh-tunnel.sh
+chmod +x ~/Library/Application\ Support/OpenClaw/scripts/run-openclaw-node.sh
 ```
 
 ## 4) Validate the plist files before loading
@@ -180,7 +185,32 @@ plutil -lint ~/Library/LaunchAgents/com.openclaw.node-host.plist
 
 Both should report `OK`.
 
-## 5) Bootstrap carefully
+## 5) Critical macOS note: do not run LaunchAgent scripts from Documents
+If LaunchAgents point at scripts under `~/Documents/...`, macOS may return:
+
+```bash
+Operation not permitted
+```
+
+That is a known TCC/privacy-path issue. For LaunchAgents, use:
+
+```bash
+~/Library/Application Support/OpenClaw/scripts/
+```
+
+If you copied fresh scripts into Documents as a staging area, move/copy them into the LaunchAgent-safe runtime path and repoint the plists before bootstrapping:
+
+```bash
+mkdir -p ~/Library/Application\ Support/OpenClaw/scripts
+cp ~/Documents/obsidian-memory/scripts/ssh-tunnel.sh ~/Library/Application\ Support/OpenClaw/scripts/ssh-tunnel.sh
+cp ~/Documents/obsidian-memory/scripts/run-openclaw-node.sh ~/Library/Application\ Support/OpenClaw/scripts/run-openclaw-node.sh
+chmod +x ~/Library/Application\ Support/OpenClaw/scripts/ssh-tunnel.sh
+chmod +x ~/Library/Application\ Support/OpenClaw/scripts/run-openclaw-node.sh
+```
+
+Then ensure the plist `ProgramArguments` point at the `~/Library/Application Support/OpenClaw/scripts/...` paths.
+
+## 6) Bootstrap carefully
 If these agents are not already loaded, use:
 
 ```bash
@@ -195,7 +225,7 @@ launchctl kickstart -k gui/$UID/com.openclaw.ssh-tunnel
 launchctl kickstart -k gui/$UID/com.openclaw.node-host
 ```
 
-## 6) Check logs
+## 7) Check logs
 ```bash
 tail -n 50 /tmp/openclaw-ssh-tunnel.log
 tail -n 50 /tmp/openclaw-ssh-tunnel-error.log
@@ -203,7 +233,9 @@ tail -n 50 /tmp/openclaw-node-host.log
 tail -n 50 /tmp/openclaw-node-host-error.log
 ```
 
-## 7) Re-verify the chain
+If the tunnel log says `Address already in use`, that usually means a manual SSH tunnel is still holding port `14535`. Stop the manual tunnel and let the LaunchAgent reclaim the port.
+
+## 8) Re-verify the chain
 On Mac:
 ```bash
 nc -vz 127.0.0.1 14535

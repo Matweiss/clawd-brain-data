@@ -84,6 +84,7 @@ Run these on the Mac:
 
 ```bash
 mkdir -p ~/Documents/obsidian-memory/scripts
+mkdir -p ~/Library/Application\ Support/OpenClaw/scripts
 mkdir -p ~/Library/LaunchAgents
 ```
 
@@ -92,11 +93,15 @@ scp root@srv882799.hstgr.cloud:/root/.openclaw/workspace/clawd-mission-control-v
 scp root@srv882799.hstgr.cloud:/root/.openclaw/workspace/clawd-mission-control-v2/scripts/run-openclaw-node.sh ~/Documents/obsidian-memory/scripts/run-openclaw-node.sh
 scp root@srv882799.hstgr.cloud:/root/.openclaw/workspace/clawd-mission-control-v2/scripts/com.openclaw.ssh-tunnel.plist ~/Library/LaunchAgents/com.openclaw.ssh-tunnel.plist
 scp root@srv882799.hstgr.cloud:/root/.openclaw/workspace/clawd-mission-control-v2/scripts/com.openclaw.node-host.plist ~/Library/LaunchAgents/com.openclaw.node-host.plist
-chmod +x ~/Documents/obsidian-memory/scripts/ssh-tunnel.sh
-chmod +x ~/Documents/obsidian-memory/scripts/run-openclaw-node.sh
+cp ~/Documents/obsidian-memory/scripts/ssh-tunnel.sh ~/Library/Application\ Support/OpenClaw/scripts/ssh-tunnel.sh
+cp ~/Documents/obsidian-memory/scripts/run-openclaw-node.sh ~/Library/Application\ Support/OpenClaw/scripts/run-openclaw-node.sh
+chmod +x ~/Library/Application\ Support/OpenClaw/scripts/ssh-tunnel.sh
+chmod +x ~/Library/Application\ Support/OpenClaw/scripts/run-openclaw-node.sh
 plutil -lint ~/Library/LaunchAgents/com.openclaw.ssh-tunnel.plist
 plutil -lint ~/Library/LaunchAgents/com.openclaw.node-host.plist
 ```
+
+Important: LaunchAgents should point at scripts under `~/Library/Application Support/OpenClaw/scripts/`, not `~/Documents/...`, or macOS may return `Operation not permitted`.
 
 ---
 
