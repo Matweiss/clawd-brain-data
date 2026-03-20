@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-20T19:09:58.572Z",
+  "updatedAt": "2026-03-20T19:11:31.408Z",
   "activeProjects": [
     "Mission Control dashboard",
     "Web search routing hardening (Perplexity-only)",
@@ -8,6 +8,7 @@
     "Regal authoritative per-date extraction/writer"
   ],
   "whereWeLeftOff": [
+    "Foundry extension validator fixed enough to write extensions again (smoke extension created)",
     "Dashboard tasks now persist via shared localStorage key mission-control-tasks",
     "Removed XAI_API_KEY from active OpenClaw config and restarted gateway",
     "Smoke-tested web_search with provider=perplexity across multiple queries",
@@ -15,6 +16,7 @@
     "Foundry extension writer appears broken with validation error: 'Cannot use import statement outside a module'"
   ],
   "sopTruths": [
+    "Before push/deploy, verify UI behavior manually in browser after reload",
     "Use memory-checkpoint.cjs at work-block boundaries to keep memory-assist fresh",
     "Use strict execution mode: run tool first, then report output",
     "Use grep -Rni fallback when rg is unavailable",
