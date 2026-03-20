@@ -1,29 +1,137 @@
 {
-  "updatedAt": "2026-03-20T19:11:31.408Z",
+  "updatedAt": "2026-03-20T20:17:15.469Z",
   "activeProjects": [
-    "Mission Control dashboard",
-    "Web search routing hardening (Perplexity-only)",
-    "Memory-assist MVP rollout",
-    "Mission Control enhancements",
-    "Regal authoritative per-date extraction/writer"
+    {
+      "text": "Mission Control dashboard",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Web search routing hardening (Perplexity-only)",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Memory-assist MVP rollout",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Mission Control enhancements",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Regal authoritative per-date extraction/writer",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    }
   ],
   "whereWeLeftOff": [
-    "Foundry extension validator fixed enough to write extensions again (smoke extension created)",
-    "Dashboard tasks now persist via shared localStorage key mission-control-tasks",
-    "Removed XAI_API_KEY from active OpenClaw config and restarted gateway",
-    "Smoke-tested web_search with provider=perplexity across multiple queries",
-    "Crystallized browser timeout retry guard and activated via foundry restart",
-    "Foundry extension writer appears broken with validation error: 'Cannot use import statement outside a module'"
+    {
+      "text": "Memory polish pass applied (dedupe, caps, priority tags, weekly prune command)",
+      "priority": "now",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Browser validation passed after deploy (task add persisted in shared storage)",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Foundry extension validator fixed enough to write extensions again (smoke extension created)",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Dashboard tasks now persist via shared localStorage key mission-control-tasks",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Removed XAI_API_KEY from active OpenClaw config and restarted gateway",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Smoke-tested web_search with provider=perplexity across multiple queries",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Crystallized browser timeout retry guard and activated via foundry restart",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Foundry extension writer appears broken with validation error: 'Cannot use import statement outside a module'",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    }
   ],
   "sopTruths": [
-    "Before push/deploy, verify UI behavior manually in browser after reload",
-    "Use memory-checkpoint.cjs at work-block boundaries to keep memory-assist fresh",
-    "Use strict execution mode: run tool first, then report output",
-    "Use grep -Rni fallback when rg is unavailable",
-    "If browser tool times out repeatedly, restart gateway before retry loops",
-    "Keep web_search provider pinned to perplexity in openclaw.json"
+    {
+      "text": "Before push/deploy, verify UI behavior manually in browser after reload",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Use memory-checkpoint.cjs at work-block boundaries to keep memory-assist fresh",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Use strict execution mode: run tool first, then report output",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Use grep -Rni fallback when rg is unavailable",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "If browser tool times out repeatedly, restart gateway before retry loops",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Keep web_search provider pinned to perplexity in openclaw.json",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    }
   ],
   "notes": [
-    "Historical recurring failure entries may persist in Foundry even after fixes; validate with fresh smoke tests"
+    {
+      "text": "Tomorrow kickoff: (1) confirm persisted tasks after fresh browser open, (2) continue mission control feature pass, (3) tidy Foundry unresolved learnings backlog",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    },
+    {
+      "text": "Historical recurring failure entries may persist in Foundry even after fixes; validate with fresh smoke tests",
+      "priority": "this_week",
+      "createdAt": "2026-03-20T20:17:15.398Z",
+      "updatedAt": "2026-03-20T20:17:15.398Z"
+    }
   ]
 }
