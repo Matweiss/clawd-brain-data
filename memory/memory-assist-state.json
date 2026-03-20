@@ -1,0 +1,24 @@
+{
+  "updatedAt": "2026-03-20T17:35:00Z",
+  "activeProjects": [
+    "Web search routing hardening (Perplexity-only)",
+    "Memory-assist MVP rollout",
+    "Mission Control enhancements",
+    "Regal authoritative per-date extraction/writer"
+  ],
+  "whereWeLeftOff": [
+    "Removed XAI_API_KEY from active OpenClaw config and restarted gateway",
+    "Smoke-tested web_search with provider=perplexity across multiple queries",
+    "Crystallized browser timeout retry guard and activated via foundry restart",
+    "Foundry extension writer appears broken with validation error: 'Cannot use import statement outside a module'"
+  ],
+  "sopTruths": [
+    "Use strict execution mode: run tool first, then report output",
+    "Use grep -Rni fallback when rg is unavailable",
+    "If browser tool times out repeatedly, restart gateway before retry loops",
+    "Keep web_search provider pinned to perplexity in openclaw.json"
+  ],
+  "notes": [
+    "Historical recurring failure entries may persist in Foundry even after fixes; validate with fresh smoke tests"
+  ]
+}
