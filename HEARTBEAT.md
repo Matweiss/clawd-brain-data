@@ -1,5 +1,11 @@
 # HEARTBEAT.md
 
-# Keep this file empty (or with only comments) to skip heartbeat API calls.
+# Memory Assist background upkeep (lightweight)
 
-# Add tasks below when you want the agent to check something periodically.
+- Every heartbeat cycle (when not urgent/busy hours), run:
+  - `node /root/.openclaw/workspace/scripts/memory-assist.cjs digest`
+- At meaningful checkpoints (task completed / blocker found / plan changed), run:
+  - `node /root/.openclaw/workspace/scripts/memory-checkpoint.cjs --leftoff "<short checkpoint>"`
+- If a new strategic workstream starts, also run:
+  - `node /root/.openclaw/workspace/scripts/memory-checkpoint.cjs --project "<project name>"`
+- Keep entries concise and durable; never store secrets.
