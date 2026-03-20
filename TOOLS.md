@@ -39,6 +39,15 @@ Skills are shared. Your setup is yours. Keeping them apart means you can update 
 
 Add whatever helps you do your job. This is your cheat sheet.
 
+## Memory Assist Quick Commands
+
+- Digest current memory state:
+  - `node /root/.openclaw/workspace/scripts/memory-assist.cjs digest --max 5`
+- Add a checkpoint (where we left off):
+  - `node /root/.openclaw/workspace/scripts/memory-checkpoint.cjs --leftoff "<short checkpoint>" --priority now`
+- Weekly prune/archive stale notes:
+  - `node /root/.openclaw/workspace/scripts/memory-assist.cjs weekly-prune --days 14`
+
 ## Mat Infrastructure Snapshot (2026-03-15)
 
 ### Domain / DNS
