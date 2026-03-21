@@ -1,0 +1,11 @@
+{
+  "id": "validator-smoke-3",
+  "name": "Validator Smoke 3",
+  "description": "Minimal extension smoke test after validator fix",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  }
+}

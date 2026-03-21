@@ -1,0 +1,161 @@
+{
+  "updatedAt": "2026-03-19T19:23:00Z",
+  "window": {
+    "start": "2026-03-19",
+    "end": "2026-03-21",
+    "label": "Thu Mar 19 – Sat Mar 21, 2026"
+  },
+  "sources": {
+    "corepower": {
+      "name": "CorePower Yoga",
+      "filter": "Main",
+      "studios": ["Encino", "Sherman Oaks"],
+      "confidence": "high",
+      "sourceType": "live-browser"
+    },
+    "regal": {
+      "name": "Regal Sherman Oaks Galleria",
+      "url": "https://www.regmovies.com/theatres/regal-sherman-oaks-galleria-1483",
+      "confidence": "medium",
+      "sourceType": "live-browser-__NEXT_DATA__",
+      "notes": "Strict schema adopted. Thu data is confirmed from live __NEXT_DATA__. Fri/Sat remain carried forward until strict per-day payload collection is completed."
+    }
+  },
+  "yoga": {
+    "lastUpdated": "2026-03-19T17:12:00Z",
+    "freshness": "fresh",
+    "confidence": "high",
+    "days": [
+      {
+        "key": "thu",
+        "label": "Thu",
+        "date": "2026-03-19",
+        "studios": [
+          {"name": "Sherman Oaks", "classes": [
+            {"time": "9:00 am", "className": "YS - Yoga Sculpt", "teacher": "Lydia P", "status": "Session Started"},
+            {"time": "10:00 am", "className": "C2 - CorePower Yoga 2", "teacher": "Olivia L"},
+            {"time": "12:30 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Olivia S"},
+            {"time": "4:30 pm", "className": "YS - Yoga Sculpt", "teacher": "Laura F"},
+            {"time": "6:00 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Megan M"},
+            {"time": "7:00 pm", "className": "YS - Cancelled For Teacher Training", "teacher": "Ling C"},
+            {"time": "9:00 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Erin H"}
+          ]},
+          {"name": "Encino", "classes": [
+            {"time": "9:30 am", "className": "C2 - CorePower Yoga 2", "teacher": "Lupita"},
+            {"time": "10:30 am", "className": "YS - Yoga Sculpt", "teacher": "Eric G"},
+            {"time": "12:00 pm", "className": "YS - Yoga Sculpt", "teacher": "Eric G"},
+            {"time": "12:30 pm", "className": "C2 - CorePower Yoga 2: 75 min", "teacher": "Gabriella D"},
+            {"time": "3:00 pm", "className": "YS - Yoga Sculpt", "teacher": "Gabriella D"},
+            {"time": "5:30 pm", "className": "YS - Yoga Sculpt", "teacher": "Brianna M"},
+            {"time": "7:30 pm", "className": "C2 - CorePower Yoga 2: NEW TIME DUE TO TEACHER TRAINING", "teacher": "Jenna M"},
+            {"time": "9:00 pm", "className": "C2 - CorePower Yoga 2: NEW TIME DUE TO TEACHER TRAINING", "teacher": "Jenna M"}
+          ]}
+        ]
+      },
+      {
+        "key": "fri",
+        "label": "Fri",
+        "date": "2026-03-20",
+        "studios": [
+          {"name": "Sherman Oaks", "classes": [
+            {"time": "7:00 am", "className": "YS - Yoga Sculpt", "teacher": "Kelly D"},
+            {"time": "7:30 am", "className": "C2 - CorePower Yoga 2", "teacher": "Mara C"},
+            {"time": "9:00 am", "className": "YS - Yoga Sculpt", "teacher": "Michelle S"},
+            {"time": "10:00 am", "className": "C2 - CorePower Yoga 2", "teacher": "Jennifer R"},
+            {"time": "12:00 pm", "className": "YS - Yoga Sculpt", "teacher": "Hannah S"},
+            {"time": "3:00 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Aliza P"},
+            {"time": "4:30 pm", "className": "YS - Yoga Sculpt", "teacher": "Bridget A"},
+            {"time": "6:00 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Madison M"}
+          ]},
+          {"name": "Encino", "classes": [
+            {"time": "6:30 am", "className": "YS - Yoga Sculpt", "teacher": "Gabriella D"},
+            {"time": "8:00 am", "className": "YS - Yoga Sculpt", "teacher": "Adrian A"},
+            {"time": "9:30 am", "className": "C2 - CorePower Yoga 2", "teacher": "Olivia S"},
+            {"time": "10:30 am", "className": "YS - Yoga Sculpt", "teacher": "Gabriella D"},
+            {"time": "12:00 pm", "className": "YS - Yoga Sculpt", "teacher": "Gabriella D"},
+            {"time": "12:30 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Tatiana C"},
+            {"time": "3:00 pm", "className": "YS - Yoga Sculpt", "teacher": "Eric G"},
+            {"time": "4:00 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Aileen S"},
+            {"time": "5:30 pm", "className": "YS - Yoga Sculpt", "teacher": "Eric G"},
+            {"time": "7:00 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Nina R"},
+            {"time": "8:30 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Nina R"}
+          ]}
+        ]
+      },
+      {
+        "key": "sat",
+        "label": "Sat",
+        "date": "2026-03-21",
+        "studios": [
+          {"name": "Sherman Oaks", "classes": [
+            {"time": "9:00 am", "className": "YS - Yoga Sculpt", "teacher": "Michelle S"},
+            {"time": "10:00 am", "className": "C2 - CorePower Yoga 2", "teacher": "Dominic C"},
+            {"time": "12:00 pm", "className": "YS - Yoga Sculpt", "teacher": "John S"},
+            {"time": "12:30 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Erin H"},
+            {"time": "3:00 pm", "className": "C2 - CorePower Yoga 2", "teacher": "Erin H"}
+          ]},
+          {"name": "Encino", "classes": [
+            {"time": "8:00 am", "className": "C2 - CorePower Yoga 2", "teacher": "Aileen S"},
+            {"time": "9:30 am", "className": "C2 - CorePower Yoga 2", "teacher": "Aileen S"},
+            {"time": "10:30 am", "className": "YS - Yoga Sculpt", "teacher": "Brandon L"},
+            {"time": "12:00 pm", "className": "YS - Yoga Sculpt", "teacher": "Adrian A"}
+          ]}
+        ]
+      }
+    ]
+  },
+  "movies": {
+    "lastUpdated": "2026-03-19T19:23:00Z",
+    "freshness": "fresh",
+    "confidence": "medium",
+    "theater": "Regal Sherman Oaks Galleria",
+    "schemaVersion": 2,
+    "days": [
+      {
+        "key": "thu",
+        "label": "Thu",
+        "date": "2026-03-19",
+        "strict": true,
+        "movies": [
+          {"title": "GOAT", "masterMovieCode": "HO00018215", "formats": [{"format": "Standard", "showtimes": ["11:20 am", "7:45 pm"]}]},
+          {"title": "Dhurandhar The Revenge (Hindi)", "masterMovieCode": "HO00020964", "formats": [{"format": "Standard", "showtimes": ["11:30 am", "4:10 pm", "9:20 pm"]}]},
+          {"title": "Hoppers", "masterMovieCode": "HO00020716", "formats": [{"format": "RPX", "showtimes": ["11:30 am"]}, {"format": "Standard", "showtimes": ["11:50 am", "12:25 pm", "1:10 pm", "2:00 pm", "3:45 pm", "5:00 pm", "8:00 pm", "10:30 pm", "11:00 pm"]}, {"format": "4DX 3D", "showtimes": ["12:00 pm"]}]},
+          {"title": "The Bride!", "masterMovieCode": "HO00020178", "formats": [{"format": "Standard", "showtimes": ["11:45 am", "3:05 pm", "6:45 pm", "10:00 pm"]}]},
+          {"title": "Scream 7", "masterMovieCode": "HO00020098", "formats": [{"format": "Standard", "showtimes": ["12:20 pm", "3:30 pm", "6:45 pm", "9:50 pm"]}]},
+          {"title": "Kiki's Delivery Service 4K", "masterMovieCode": "HO00020948", "formats": [{"format": "IMAX", "showtimes": ["12:30 pm"]}]},
+          {"title": "Wuthering Heights", "masterMovieCode": "HO00020234", "formats": [{"format": "Standard", "showtimes": ["12:30 pm"]}]},
+          {"title": "Reminders of Him", "masterMovieCode": "HO00020033", "formats": [{"format": "RPX", "showtimes": ["12:45 pm"]}, {"format": "Standard", "showtimes": ["1:15 pm", "4:15 pm", "7:15 pm", "10:15 pm"]}]},
+          {"title": "Undertone", "masterMovieCode": "HO00020951", "formats": [{"format": "Standard", "showtimes": ["1:45 pm", "4:30 pm", "7:20 pm", "10:10 pm"]}]},
+          {"title": "Ready or Not 2: Here I Come", "masterMovieCode": "HO00020338", "formats": [{"format": "Standard", "showtimes": ["2:00 pm", "5:00 pm", "8:00 pm", "11:00 pm"]}, {"format": "RPX", "showtimes": ["7:30 pm", "10:30 pm"]}]},
+          {"title": "Project Hail Mary", "masterMovieCode": "HO00018964", "formats": [{"format": "Standard", "showtimes": ["2:00 pm", "4:40 pm", "5:30 pm", "6:15 pm", "8:30 pm", "9:15 pm", "10:00 pm"]}, {"format": "RPX", "showtimes": ["2:15 pm", "3:45 pm", "6:00 pm", "9:45 pm"]}, {"format": "4DX", "showtimes": ["2:45 pm", "6:30 pm", "10:15 pm"]}, {"format": "IMAX", "showtimes": ["3:15 pm", "7:00 pm", "10:45 pm"]}]},
+          {"title": "The Pout-Pout Fish", "masterMovieCode": "HO00020786", "formats": [{"format": "Standard", "showtimes": ["2:40 pm"]}]},
+          {"title": "Slanted", "masterMovieCode": "HO00020969", "formats": [{"format": "Standard", "showtimes": ["4:40 pm"]}]},
+          {"title": "The Revenant (10th Anniversary)", "masterMovieCode": "HO00021069", "formats": [{"format": "Standard", "showtimes": ["6:40 pm"]}]},
+          {"title": "Vampires of the Velvet Lounge", "masterMovieCode": "HO00020898", "formats": [{"format": "Standard", "showtimes": ["10:40 pm"]}]}
+        ]
+      },
+      {
+        "key": "fri",
+        "label": "Fri",
+        "date": "2026-03-20",
+        "strict": false,
+        "movies": [
+          {"title": "Dhurandhar The Revenge (Hindi)", "masterMovieCode": null, "formats": [{"format": "Unknown/legacy", "showtimes": ["10:00am", "3:30pm", "8:45pm"]}]},
+          {"title": "Hoppers", "masterMovieCode": null, "formats": [{"format": "Unknown/legacy", "showtimes": ["10:00am", "10:30am", "12:50pm", "1:30pm", "3:40pm", "4:20pm", "6:25pm", "7:50pm", "9:20pm", "10:50pm"]}]},
+          {"title": "Project Hail Mary", "masterMovieCode": null, "formats": [{"format": "Unknown/legacy", "showtimes": ["10:10am", "10:40am", "11:10am", "11:25am", "11:40am", "12:10pm", "12:50pm", "1:50pm", "2:20pm", "2:50pm", "3:20pm", "3:50pm", "4:40pm", "5:30pm", "6:00pm", "6:30pm", "7:00pm", "8:30pm", "9:10pm", "9:40pm", "10:10pm", "10:40pm"]}]}
+        ]
+      },
+      {
+        "key": "sat",
+        "label": "Sat",
+        "date": "2026-03-21",
+        "strict": false,
+        "movies": [
+          {"title": "Dhurandhar The Revenge (Hindi)", "masterMovieCode": null, "formats": [{"format": "Unknown/legacy", "showtimes": ["10:00am", "3:30pm", "8:45pm"]}]},
+          {"title": "Hoppers", "masterMovieCode": null, "formats": [{"format": "Unknown/legacy", "showtimes": ["10:00am", "10:30am", "12:50pm", "1:30pm", "3:40pm", "4:20pm", "6:25pm", "7:50pm", "9:20pm", "10:50pm"]}]},
+          {"title": "Project Hail Mary", "masterMovieCode": null, "formats": [{"format": "Unknown/legacy", "showtimes": ["10:10am", "10:40am", "11:10am", "11:25am", "11:40am", "12:10pm", "12:50pm", "1:50pm", "2:20pm", "2:50pm", "3:20pm", "3:50pm", "4:40pm", "5:30pm", "6:00pm", "6:30pm", "7:00pm", "8:30pm", "9:10pm", "9:40pm", "10:10pm", "10:40pm"]}]}
+        ]
+      }
+    ]
+  }
+}

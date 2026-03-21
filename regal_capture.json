@@ -1,0 +1,1338 @@
+[
+  {
+    "requestId": "1C6D02E5AE199E5BF2EB937FC7620555",
+    "url": "https://www.regmovies.com/theatres/regal-sherman-oaks-galleria-1483",
+    "status": 200,
+    "mime": "text/html",
+    "type": "Document",
+    "bodyPreview": "<!DOCTYPE html><html lang=\"en\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width\"/><title>Regal Sherman Oaks Galleria Movie Tickets and Showtimes | Regal</title><meta name=\"description\" content=\"Get showtimes, buy movie tickets and more at Regal Sherman Oaks Galleria movie theatre in Sherman Oaks, CA. Discover it all at a Regal movie theatre near you.\"/><meta property=\"og:title\" content=\"Regal Sherman Oaks Galleria Movie Tickets and Showtimes | Regal\"/><meta property=\"og:description\" content=\"Get showtimes, buy movie tickets and more at Regal Sherman Oaks Galleria movie theatre in Sherman Oaks, CA. Discover it all at a Regal movie theatre near you.\"/><meta property=\"og:type\" content=\"website\"/><meta property=\"og:url\" content=\"https://www.regmovies.com/theatres/regal-sherman-oaks-galleria-1483\"/><meta property=\"twitter:card\" content=\"summary\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"MovieTheater\",\"name\":\"Regal Sherman Oaks Galleria\",\"address\":{\"@type\":\"PostalAddress\",\"streetAddress\":\"15301 Ventura Blvd. Bldg A, 3rd Floor, Suite 300\",\"addressLocality\":\"Sherman Oaks\",\"addressRegion\":\"CA\",\"postalCode\":\"91403\",\"addressCou"
+  },
+  {
+    "requestId": "89855.2831",
+    "url": "https://www.regmovies.com/_next/static/css/26e8413b228f7325.css",
+    "status": 200,
+    "mime": "text/css",
+    "type": "Stylesheet",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2829",
+    "url": "https://www.regmovies.com/_next/image?url=%2FRegalCrown.png&w=1920&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2828",
+    "url": "https://www.regmovies.com/_next/image?url=%2FdefaultTheatreBackground.jpg&w=1200&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2830",
+    "url": "https://www.regmovies.com/ruxitagentjs_ICA15789NPRTUVXfhqrux_10333260303165926.js",
+    "status": 200,
+    "mime": "text/javascript",
+    "type": "Script",
+    "bodyPreview": "/*\n Copyright and licenses see https://www.dynatrace.com/company/trust-center/customers/reports/ */\n(function(){function Xa(){var Aa;(Aa=void 0===Ya.dialogArguments&&navigator.cookieEnabled)||(document.cookie=\"__dTCookie=1;SameSite=Lax\",Aa=document.cookie.includes(\"__dTCookie\"),Aa=(document.cookie=\"__dTCookie=1; expires=Thu, 01-Jan-1970 00:00:01 GMT\",Aa));return Aa}function Ia(){if(Xa()){var Aa=Ya.dT_,bb=null==Aa?void 0:Aa.platformPrefix,Ua;if(Ua=!Aa||bb){var Da;Ua=(null===(Da=document.currentScript)||void 0===Da?void 0:Da.getAttribute(\"data-dtconfig\"))||\"#CONFIGSTRING#|auto=#AUTO#|domain=#DOMAIN#|rid=RID_#REQUEST_ID#|rpid=#RESPONSE_ID#\";\nUa=(Da=null==Aa?void 0:Aa.minAgentVersion)&&\"10333260303165926\"<`${Da}`?(console.log(\"[CookiePrefix/initConfig] Min agent version detected, and javascript agent is older - the javascript agent will not be initialized!\"),!1):bb&&!Ua.includes(`cuc=${bb}`)?(console.log(`[CookiePrefix/initConfig] value of platformPrefix [${bb}] does not match the \"cuc\" value in the current config - initConfig will not initialize!`),!1):!0}Ua&&(Aa={cfg:\"#CONFIGSTRING#|auto=#AUTO#|domain=#DOMAIN#|rid=RID_#REQUEST_ID#|rpid=#RESPONSE_ID#\",\niCE:Xa,platformCookieOffset:null"
+  },
+  {
+    "requestId": "89855.2834",
+    "url": "https://www.regmovies.com/_next/static/chunks/2270.da9220d3cd709357.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[2270],{2270:function(e,o,t){t.r(o);var r=t(47089),n=t(75271),a=t(82761),i=t(40112),l=t(32532),d=t(80052),c=t(84016);let s={display:\"flex\",alignItems:\"center\",justifyContent:\"space-between\"},u={backgroundColor:\"#EBECF0\",borderRadius:\"2em\",color:\"#172B4D\",display:\"inline-block\",fontSize:12,fontWeight:\"normal\",lineHeight:\"1\",minWidth:1,padding:\"0.16666666666667em 0.5em\",textAlign:\"center\"},m=e=>(0,r.BX)(\"div\",{style:s,children:[(0,r.tZ)(\"span\",{children:e.label}),(0,r.tZ)(\"span\",{style:u,children:e.options.length})]}),h=e=>{var o;return(0,r.tZ)(a.c.DropdownIndicator,{...e,children:null==e?void 0:null===(o=e.selectProps)||void 0===o?void 0:o.icon})},p=(0,c.Z)(\"div\",{target:\"e66u5ua0\"})(\"width:100%;min-width:12rem;opacity:\",e=>{let{disabled:o}=e;return o?.35:1},\";\"),b=(0,c.Z)(\"div\",{target:\"e66u5ua1\"})(\"width:100%;display:flex;margin:0;button{flex:1 1 auto;background:transparent;border:\",e=>e.theme.colors.grayLight,\" 2px solid;&:hover{border:\",e=>e.theme.colors.primaryText,\" 2px solid;}\",e=>{let{theme:o,isFocused:t}=e;return t?\"border: 2px solid \".concat(o.colors.primaryText):\"none\"},\";}\"),g=(0,c.Z)(\"div\",{target:\"e66"
+  },
+  {
+    "requestId": "89855.2870",
+    "url": "https://dev.visualwebsiteoptimizer.com/j.php?a=1116122&u=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&vn=2.2&ph=1&st=176.2999997138977&x=true",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "XHR",
+    "bodyPreview": "(function(){function _vwo_err(e){var vwo_e=new Image;vwo_e.src=\"https://dev.visualwebsiteoptimizer.com/e.gif?a=1116122&s=j.php&e=\"+encodeURIComponent(e&&e.message&&e.message.substring(0,1e3)+\"&vn=\")}try{var extE=0;(function(){window._VWO=window._VWO||{};var aC=window._vwo_code;if(typeof aC==='undefined'){window._vwo_mt='dupCode';return;}if(window._VWO.sCL){window._vwo_mt='dupCode';window._VWO.sCDD=true;try{if(aC){clearTimeout(window._vwo_settings_timer);var h=document.querySelectorAll('#_vis_opt_path_hides');var x=h[h.length>1?1:0];x&&x.remove();}}catch(e){}return;}window._VWO.sCL=true;;window._vwo_mt=\"live\";var localPreviewObject={};var previewKey=\"_vis_preview_\"+1116122;var wL=window.location;;try{localPreviewObject[previewKey]=window.localStorage.getItem(previewKey);JSON.parse(localPreviewObject[previewKey])}catch(e){localPreviewObject[previewKey]=\"\"}try{window._vwo_tm=\"\";var getMode=function(e){var n;if(window.name.indexOf(e)>-1){n=window.name}else{n=wL.search.match(\"_vwo_m=([^&]*)\");n=n&&atob(decodeURIComponent(n[1]))}return n&&JSON.parse(n)};var ccMode=getMode(\"_vwo_cc\");if(window.name.indexOf(\"_vis_heatmap\")>-1||window.name.indexOf(\"_vis_editor\")>-1||ccMode||window.name.inde"
+  },
+  {
+    "requestId": "89855.2835",
+    "url": "https://www.regmovies.com/_next/static/chunks/9388.b8a6d69f55a079b7.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[9388],{99388:function(l,e,c){c.r(e);var n=c(47089);e.default=l=>{let{className:e}=l;return(0,n.tZ)(\"svg\",{xmlns:\"http://www.w3.org/2000/svg\",fill:\"none\",viewBox:\"0 0 71 63\",className:e,children:(0,n.tZ)(\"path\",{fillRule:\"evenodd\",d:\"M.24.909h70.555V62.24H.24V.91Zm3.064 58.19h64.42V3.99H3.303V59.1Zm8.653-7.087.06-4.811c6.197.446 6.108-1.366 6.031-2.946-.008-.172-.016-.341-.016-.505V18.169c0-.197.003-.383.006-.558.036-2.123.045-2.649-6.021-2.649l-.06-4.808c1.462 0 4.274-.014 7.48-.03 6.217-.032 13.916-.071 16.143-.028.52.01 1.04.017 1.558.025 9.465.142 18.017.27 18.073 10.206.065 5.98-4.355 9.678-11.412 10.544l11.353 13.372c1.837 2.158 2.7 2.653 7.97 3.145v4.625s-2.021-.123-18.402-.123l-.543-.902c-1.479-2.46-2.772-4.61-4.304-6.377l-8.894-10.352v9.492c0 .175-.005.346-.01.513-.048 1.882-.082 3.17 6.512 3.003l.123 4.746c-4.848-.25-21.231-.25-25.647 0Zm20.012-36.758c-.32.03-.648.059-.99.082v12.943c6.068-.183 10.672-1.79 10.61-7.273h.062c0-4.007-3.068-5.859-7.913-5.859-.598 0-1.171.052-1.769.107Z\",clipRule:\"evenodd\"})})}}}]);"
+  },
+  {
+    "requestId": "89855.2838",
+    "url": "https://www.regmovies.com/_next/static/chunks/1496.b364ef681bcc84b1.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[1496],{61496:function(c,l,e){e.r(l);var t=e(47089);l.default=c=>{let{color:l}=c;return(0,t.tZ)(\"svg\",{xmlns:\"http://www.w3.org/2000/svg\",fill:l||\"#000\",viewBox:\"0 0 94 62\",children:(0,t.tZ)(\"path\",{fillRule:\"evenodd\",d:\"M93.275 61.454H.91V.12h92.364v61.333ZM89.987 3.509H4.258v54.56h85.73V3.51ZM70.668 30.36c.92 1.064 1.824 2.117 2.72 3.16 2.64 3.072 5.202 6.054 7.84 8.966.56.617 1.564.904 2.465 1.162l.237.069c.61.176.483 1.771-.09 1.832-2.985.325-6.008.158-9.009-.008l-.509-.028c-.76-.04-1.648-.848-2.179-1.533-1.515-1.965-3-3.955-4.484-5.945a506.833 506.833 0 0 0-4.17-5.539c-.276-.357-.708-.592-1.248-.886a15.353 15.353 0 0 1-.946-.546c0 1.035-.005 2.02-.009 2.966-.01 2.215-.018 4.23.03 6.245.03 1.313 1.072 1.746 2.176 2.027.167.044.343.08.52.117h.001c.549.113 1.11.228 1.467.558.375.346.508 1.241.353 1.779-.108.375-.876.79-1.356.797-4.788.058-9.58.076-14.37-.025-.477-.011-1.292-.873-1.3-1.35-.006-.508.683-1.381 1.195-1.493 3.244-.693 3.363-.765 3.363-4.113 0-1.69-.005-3.382-.01-5.073-.01-4.44-.022-8.88.046-13.32.029-1.883-.754-2.781-2.472-3.11a7.832 7.832 0 0 0-.345-.054c-.385-.055-.785-.112-1.011-.335-.404-.4-.79-1"
+  },
+  {
+    "requestId": "89855.2836",
+    "url": "https://www.regmovies.com/_next/static/chunks/542.32b505a15dcd6af8.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[542],{10542:function(c,e,v){v.r(e);var h=v(47089);e.default=c=>{let{className:e}=c;return(0,h.tZ)(\"svg\",{xmlns:\"http://www.w3.org/2000/svg\",fill:\"none\",viewBox:\"0 0 91 63\",className:e,children:(0,h.tZ)(\"path\",{fillRule:\"evenodd\",d:\"M87.918 3.211h-84v56h84v-56Zm3-3v62h-90v-62h90Zm-20.22 38.552c-.01.144-.015.31-.02.49-.042 1.736-.12 4.909-6.324 5.074-7.277-.167-7.43-4.704-7.508-6.98a17.112 17.112 0 0 0-.025-.572c.013-1.882.013-5.92 0-10.73.261-4.753.507-8.23 7.93-8.347 6.958.105 7.066 4.585 7.115 6.605.005.213.01.399.021.55.023.034.045.07.067.105.285.45.594.94 1.916 1.087h4.36c1.028-.158 1.463-.903 1.587-1.59v-6.36c-.124-.902-.62-1.895-1.983-2.384-2.478-.505-7.681-.814-12.29-.795-10.63.105-12.737 1.408-14.273 2.782-.176.142-.36.274-.55.41-1.623 1.165-3.593 2.578-3.415 12.308-.198 10.996.297 11.99 1.982 13.91 2.032 2.054 9.962 3.048 14.273 2.783 3.236.14 9.007-.17 15.066-1.987.446-.294.942-.73.793-1.59v-4.769c.149-2.814 1.636-4.491 3.569-4.372.854-.12 1.35-.618 1.189-1.192v-.795c.16-.524-.087-1.176-.793-1.193H66.733c-.978.017-1.226.67-1.19 1.193v.794c-.036.575.458 1.074 1.19 1.193 2.74-.058 3.915 1.558 3.965 4.372Zm"
+  },
+  {
+    "requestId": "89855.2842",
+    "url": "https://www.regmovies.com/_next/static/chunks/3259.6829f40e021a5921.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[3259],{93259:function(a,e,t){t.r(e);var s=t(47089);t(75271),e.default=a=>{let{className:e=\"\"}=a;return(0,s.tZ)(\"svg\",{xmlns:\"http://www.w3.org/2000/svg\",fill:\"none\",viewBox:\"3.5 7.72 21 18.67\",className:e,children:(0,s.tZ)(\"path\",{d:\"M21.58 12.096a4.473 4.473 0 0 1-3.519-3.962v-.411h-3.215v12.76a2.704 2.704 0 0 1-4.854 1.627H9.99h.002a2.702 2.702 0 0 1 2.97-4.21v-3.266a5.908 5.908 0 1 0 5.1 5.85v-6.52a7.637 7.637 0 0 0 4.454 1.424v-3.195a4.51 4.51 0 0 1-.936-.097Z\"})})}}}]);"
+  },
+  {
+    "requestId": "89855.2837",
+    "url": "https://www.regmovies.com/_next/static/chunks/2871.b54046c74eb5c8ac.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[2871],{12871:function(C,V,t){t.r(V);var H=t(47089);V.default=()=>(0,H.BX)(\"svg\",{xmlns:\"http://www.w3.org/2000/svg\",height:\"24\",viewBox:\"0 0 56 24\",fill:\"#FFFFFF\",children:[(0,H.tZ)(\"path\",{d:\"M0.140137 0.675781V23.6106H55.6686V0.675781H0.140137ZM54.4034 22.4345H1.26476V1.85193H54.4034V22.4345Z\"}),(0,H.tZ)(\"path\",{d:\"M52.8561 14.0546C52.9264 12.4435 51.6846 11.4818 50.7475 11.1142C51.2169 10.8546 51.617 10.4767 51.9116 10.0146C52.2062 9.55254 52.3859 9.02091 52.4344 8.46788C52.3758 6.77104 49.9391 6.06045 48.217 6.11559C47.143 6.08009 46.0782 6.33318 45.1243 6.85068C45.0249 6.91236 44.9451 7.00345 44.8951 7.11246C44.845 7.22147 44.827 7.34353 44.8432 7.46325V8.34536C44.7729 8.56589 44.8432 8.77417 45.1243 8.78642H45.7101C45.8557 8.75514 45.9973 8.70578 46.1318 8.6394C46.2677 8.29399 46.4981 7.99817 46.7939 7.78897C47.0898 7.57977 47.4382 7.46647 47.7953 7.46325C48.2012 7.44404 48.5993 7.58421 48.9114 7.85622C49.2235 8.12824 49.4271 8.51246 49.4822 8.93344C49.5094 9.13874 49.4927 9.34779 49.4334 9.54554C49.3741 9.7433 49.2736 9.92485 49.1392 10.0771C49.0048 10.2294 48.8397 10.3487 48.656 10.4263C48.4722 10.504 48."
+  },
+  {
+    "requestId": "89855.2839",
+    "url": "https://www.regmovies.com/_next/static/chunks/9610.3311b3c75ac4ba51.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[9610],{9610:function(e,l,c){c.r(l);var n=c(47089);l.default=e=>{let{className:l}=e;return(0,n.tZ)(\"svg\",{xmlns:\"http://www.w3.org/2000/svg\",fill:\"none\",viewBox:\"0 0 69 63\",className:l,children:(0,n.tZ)(\"path\",{fillRule:\"evenodd\",d:\"M68.798.926H.231v61.333h68.567V.926Zm-2.985 3.08H3.21v55.108h62.603V4.005ZM39.88 53.501c-2.563.31-4.53.433-6.858.433C15.79 53.935 8.16 46.54 8.16 32.67c0-16.027 7.573-22.747 27.306-22.747 5.258 0 9.343.587 14.623 1.346 1.126.161 2.306.331 3.564.504l.296 12.206-7.154-.248c-1.49-7.148-2.264-8.937-11.33-8.937-12.638 0-13.772 9.49-13.772 18.065 0 7.21 2.091 16.146 12.998 16.146 2.148 0 6.14-.615 7.576-2.155.492-.455.481-.91.383-5.003l-.027-1.162c-.005-.241-.004-.467-.004-.678.005-2.495.006-3.016-8.4-2.962V32.67c4.762.137 8.206.11 11.358.084 1.185-.01 2.328-.019 3.485-.019.875 0 1.75.006 2.62.012 3.04.022 6.008.042 8.652-.2v4.622c-5.325 0-5.28 2.126-5.255 3.301l.003.215-.116 10.664c-3.833 0-7.41.706-10.75 1.366-1.491.294-2.936.58-4.336.788Z\",clipRule:\"evenodd\"})})}}}]);"
+  },
+  {
+    "requestId": "89855.2840",
+    "url": "https://www.regmovies.com/_next/static/chunks/4686.0e035789f1548b4c.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[4686],{54686:function(e,t,n){n.r(t);var i=n(47089),a=n(75271),o=n(4471),r=n(18200),l=n(93868),d=n.n(l),c=n(57083),s=n.n(c),m=n(45180),p=n(5179),h=n(84016),u=n(57497);let b=(0,h.Z)(\"footer\",{target:\"e1epa6mo0\"})(\"display:flex;flex-direction:column;width:100%;margin-top:\",e=>e.captive?\"0\":\"1rem\",\";z-index:\",e=>e.captive?\"-1\":\"2\",\";position:relative;@media (min-width:\",e=>\"calc(\".concat(e.theme.breakpoints.phone,\" + 1px)\"),\") and (max-width:\",e=>e.theme.breakpoints.tablet,\"){padding-bottom:\",e=>e.captive?\"0\":\"5rem\",\";}@media (max-width:\",e=>e.theme.breakpoints.phone,\"){padding-bottom:\",e=>e.captive?\"0\":\"4rem\",\";}@media (min-width:\",e=>e.theme.breakpoints.tablet,\"){&:after{content:'';position:absolute;bottom:0rem;left:0;width:100%;height:5rem;background:#000;z-index:-1;}}\"),g=(0,h.Z)(\"div\",{target:\"e1epa6mo1\"})(\"display:flex;flex-direction:row;justify-content:space-between;width:100%;@media (max-width:79rem){flex-direction:column-reverse;}\"),f=(0,h.Z)(\"nav\",{target:\"e1epa6mo2\"})(\"display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));grid-gap:1rem;flex:2;padding:2rem;background:\",e=>e.theme.colors.dar"
+  },
+  {
+    "requestId": "89855.2841",
+    "url": "https://www.regmovies.com/_next/static/chunks/5700.e4e96c4a6cb32def.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[5700],{85700:function(e,l,n){n.r(l);var t=n(47089);n(75271),l.default=e=>{let{className:l=\"\"}=e;return(0,t.tZ)(\"svg\",{fill:\"none\",className:l,xmlns:\"http://www.w3.org/2000/svg\",viewBox:\"6.97 7.91 21.5 16.29\",children:(0,t.tZ)(\"path\",{fillRule:\"evenodd\",clipRule:\"evenodd\",d:\"M26.0946 8.3998C27.0209 8.66838 27.7435 9.45474 27.994 10.459C28.6492 13.3239 28.6065 18.7404 28.0078 21.6501C27.7601 22.6543 27.0347 23.4377 26.1084 23.7092C23.4932 24.4105 11.78 24.324 9.31624 23.7092C8.38992 23.4406 7.66731 22.6543 7.4168 21.6501C6.7988 18.9194 6.84147 13.1448 7.40304 10.4739C7.65079 9.46967 8.37616 8.68629 9.30248 8.41472C12.7985 7.62388 24.8503 7.87904 26.0946 8.3998ZM15.634 12.5625L21.2497 16.0541L15.634 19.5458V12.5625Z\"})})}}}]);"
+  },
+  {
+    "requestId": "89855.2843",
+    "url": "https://www.regmovies.com/_next/static/chunks/6402.032914e032f39a78.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[6402],{26402:function(C,e,t){t.r(e);var l=t(47089);t(75271),e.default=C=>{let{className:e=\"\"}=C;return(0,l.tZ)(\"svg\",{fill:\"none\",className:e,xmlns:\"http://www.w3.org/2000/svg\",viewBox:\"6.08 7.75 20.61 20.61\",children:(0,l.tZ)(\"g\",{children:(0,l.tZ)(\"path\",{d:\"M16.3884 7.75195C13.5933 7.75195 13.2373 7.76362 12.1403 7.81614C11.0433 7.86866 10.2963 8.03788 9.64279 8.29464C8.96589 8.55723 8.3882 8.90734 7.81634 9.48504C7.24448 10.0569 6.89436 10.6346 6.62593 11.3115C6.36918 11.965 6.19412 12.7178 6.14744 13.809C6.10076 14.906 6.08325 15.2562 6.08325 18.0571C6.08325 20.8522 6.09492 21.2023 6.14744 22.3052C6.19996 23.4022 6.36918 24.1492 6.62593 24.8027C6.88852 25.4796 7.23864 26.0573 7.81634 26.6292C8.3882 27.201 8.96589 27.557 9.64279 27.8196C10.2963 28.0763 11.0491 28.2455 12.1403 28.2981C13.2373 28.3506 13.5875 28.3622 16.3884 28.3622C19.1835 28.3622 19.5336 28.3506 20.6365 28.2981C21.7335 28.2455 22.4805 28.0763 23.1398 27.8196C23.8167 27.557 24.3886 27.201 24.9605 26.6292C25.5323 26.0573 25.8824 25.4796 26.1509 24.8027C26.4018 24.1492 26.5768 23.4022 26.6294 22.3052C26.676 21.2082 26.6935 20.858 26.6935 18.0571"
+  },
+  {
+    "requestId": "89855.2845",
+    "url": "https://www.regmovies.com/_next/static/chunks/9047.c04f5f0fb417e35c.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[9047],{89047:function(c,e,l){l.r(e);var a=l(47089);l(75271),e.default=c=>{let{className:e=\"\"}=c;return(0,a.tZ)(\"svg\",{className:e,viewBox:\"0 0 12 10\",children:(0,a.tZ)(\"path\",{d:\"M8.6 7.7c1.2-1.3 1.9-3 1.9-4.7v-.3c.4-.3.8-.7 1.1-1.2l-1.3.4c.5-.3.8-.8 1-1.3-.4.3-1 .5-1.5.6a2.3 2.3 0 0 0-3.9 2c-1.8 0-3.6-1-4.7-2.4C.5 2 .9 3.3 1.9 4c-.4 0-.8 0-1-.3 0 1.2.7 2.1 1.8 2.3h-1c.2 1 1.1 1.7 2 1.7a4.6 4.6 0 0 1-3.3 1c1 .6 2.3 1 3.5 1 1.8 0 3.4-.7 4.7-2z\",fillRule:\"nonzero\"})})}}}]);"
+  },
+  {
+    "requestId": "89855.2847",
+    "url": "https://www.regmovies.com/_next/static/chunks/framework-6603b6fce1ea64cf.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[9774],{86521:function(e,n,t){var r,l,a,u,o,i,s=t(75271),c=t(97537);function f(e){for(var n=\"https://reactjs.org/docs/error-decoder.html?invariant=\"+e,t=1;t<arguments.length;t++)n+=\"&args[]=\"+encodeURIComponent(arguments[t]);return\"Minified React error #\"+e+\"; visit \"+n+\" for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\"}var d=new Set,p={};function m(e,n){h(e,n),h(e+\"Capture\",n)}function h(e,n){for(p[e]=n,e=0;e<n.length;e++)d.add(n[e])}var g=!(\"undefined\"==typeof window||void 0===window.document||void 0===window.document.createElement),v=Object.prototype.hasOwnProperty,y=/^[:A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD][:A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD\\-.0-9\\u00B7\\u0300-\\u036F\\u203F-\\u2040]*$/,b={},k={};function w(e,n,t,r,l,a,u){this.acceptsBooleans=2===n||3===n||4===n,this.attributeName=r,this.attributeNamespace=l,this.mustUseProper"
+  },
+  {
+    "requestId": "89855.2848",
+    "url": "https://www.regmovies.com/_next/static/chunks/main-df579a0f4772dc31.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[179],{48602:function(e,t){\"use strict\";function r(){return\"\"}Object.defineProperty(t,\"__esModule\",{value:!0}),Object.defineProperty(t,\"getDeploymentIdQueryOrEmptyString\",{enumerable:!0,get:function(){return r}})},1106:function(){\"trimStart\"in String.prototype||(String.prototype.trimStart=String.prototype.trimLeft),\"trimEnd\"in String.prototype||(String.prototype.trimEnd=String.prototype.trimRight),\"description\"in Symbol.prototype||Object.defineProperty(Symbol.prototype,\"description\",{configurable:!0,get:function(){var e=/\\((.*)\\)/.exec(this.toString());return e?e[1]:void 0}}),Array.prototype.flat||(Array.prototype.flat=function(e,t){return t=this.concat.apply([],this),e>1&&t.some(Array.isArray)?t.flat(e-1):t},Array.prototype.flatMap=function(e,t){return this.map(e,t).flat()}),Promise.prototype.finally||(Promise.prototype.finally=function(e){if(\"function\"!=typeof e)return this.then(e,e);var t=this.constructor||Promise;return this.then(function(r){return t.resolve(e()).then(function(){return r})},function(r){return t.resolve(e()).then(function(){throw r})})}),Object.fromEntries||(Object.fromEntries=function(e){return Array.from("
+  },
+  {
+    "requestId": "89855.2844",
+    "url": "https://www.regmovies.com/_next/static/chunks/4729.48ed2a71e4877f0f.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[4729],{54729:function(e,t,l){l.r(t);var n=l(47089);l(75271),t.default=e=>{let{className:t=\"\"}=e;return(0,n.tZ)(\"svg\",{className:t,viewBox:\"0 0 25 39\",fill:\"none\",xmlns:\"http://www.w3.org/2000/svg\",children:(0,n.tZ)(\"g\",{children:(0,n.tZ)(\"path\",{d:\"M17.1996 20.3576L17.8133 16.3519H13.9713V13.7528C13.9713 12.6579 14.5071 11.5883 16.2293 11.5883H17.977V8.17877C17.977 8.17877 16.3911 7.90796 14.8753 7.90796C11.7112 7.90796 9.64216 9.82508 9.64216 13.2989V16.3519H6.12354V20.3576H9.64216V30.0387C10.3474 30.1497 11.0703 30.2062 11.8067 30.2062C12.5432 30.2062 13.266 30.1478 13.9713 30.0387V20.3576H17.1996Z\"})})})}}}]);"
+  },
+  {
+    "requestId": "89855.3187",
+    "url": "https://regalcdn.azureedge.net/REG/ReadyorNot2HereICome/HO00020338/Mobile_MovieFeed/20251203-162448406.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3188",
+    "url": "https://regalcdn.azureedge.net/REG/Hoppers/HO00020716/Mobile_MovieFeed/20260122-141934557.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3189",
+    "url": "https://regalcdn.azureedge.net/REG/ProjectHailMary/HO00018964/Mobile_MovieFeed/20250630-083910715.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3190",
+    "url": "https://regalcdn.azureedge.net/REG/DhurandharTheRevengeHindi/HO00020964/Mobile_MovieFeed/20260319-110453711.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3191",
+    "url": "https://regalcdn.azureedge.net/REG/Scream7/HO00020098/Mobile_MovieFeed/20260227-083639391.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3192",
+    "url": "https://regalcdn.azureedge.net/REG/BrideThe/HO00020178/Mobile_MovieFeed/20260302-085452307.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3193",
+    "url": "https://regalcdn.azureedge.net/REG/Undertone/HO00020951/Mobile_MovieFeed/20260216-092215987.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3194",
+    "url": "https://regalcdn.azureedge.net/REG/RemindersofHim/HO00020033/Mobile_MovieFeed/20260218-131627985.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3195",
+    "url": "https://regalcdn.azureedge.net/REG/VampiresoftheVelvetLounge/HO00020898/Mobile_MovieFeed/20260319-110159690.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3196",
+    "url": "https://regalcdn.azureedge.net/REG/MondayMysteryMovieHorrorEdition323/HO00021127/Mobile_MovieFeed/20260319-164045646.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3197",
+    "url": "https://regalcdn.azureedge.net/REG/ForbiddenFruitsEarlyAccess/HO00021132/Mobile_MovieFeed/20260309-105036370.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3198",
+    "url": "https://regalcdn.azureedge.net/REG/Alpha/HO00020743/Mobile_MovieFeed/20260127-092949783.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3199",
+    "url": "https://regalcdn.azureedge.net/REG/AIDocOrHowIBecameanApocaloptimistThe/HO00020988/Mobile_MovieFeed/20260220-130317473.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3200",
+    "url": "https://regalcdn.azureedge.net/REG/TheyWillKillYou/HO00020597/Mobile_MovieFeed/20260106-101015976.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3204",
+    "url": "https://regalcdn.azureedge.net/REG/SuperMarioGalaxyMovieThe/HO00020250/Mobile_MovieFeed/20260213-111052807.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3205",
+    "url": "https://regalcdn.azureedge.net/REG/LOLAprilFoolsDay/HO00021100/Mobile_MovieFeed/20260309-141919542.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3206",
+    "url": "https://regalcdn.azureedge.net/REG/DramaThe/HO00020610/Mobile_MovieFeed/20260319-093944431.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3209",
+    "url": "https://regalcdn.azureedge.net/REG/LOLNationalLampoonsAnimalHouse/HO00021103/Mobile_MovieFeed/20260309-142113249.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3210",
+    "url": "https://regalcdn.azureedge.net/REG/LOLTheJerk/HO00021105/Mobile_MovieFeed/20260309-142940486.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3202",
+    "url": "https://regalcdn.azureedge.net/REG/StandByMe40thAnniversary/HO00020996/Mobile_MovieFeed/20260227-124744715.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3203",
+    "url": "https://regalcdn.azureedge.net/REG/MondayMysteryMovieHorrorEdition330/HO00021176/Mobile_MovieFeed/20260319-164225117.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3207",
+    "url": "https://regalcdn.azureedge.net/REG/LOLBlazingSaddles/HO00021102/Mobile_MovieFeed/20260309-142048582.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3208",
+    "url": "https://regalcdn.azureedge.net/REG/LOLPeterRabbit/HO00021099/Mobile_MovieFeed/20260311-123841163.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3211",
+    "url": "https://regalcdn.azureedge.net/REG/LOLSmokeyandtheBandit/HO00021106/Mobile_MovieFeed/20260309-151408729.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3212",
+    "url": "https://regalcdn.azureedge.net/REG/LOLAirplane/HO00021108/Mobile_MovieFeed/20260310-133916401.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3213",
+    "url": "https://regalcdn.azureedge.net/REG/HuntingMatthewNichols/HO00021027/Mobile_MovieFeed/20260225-120246446.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3214",
+    "url": "https://regalcdn.azureedge.net/REG/YouMeTuscany/HO00020279/Mobile_MovieFeed/20260224-092504920.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3215",
+    "url": "https://regalcdn.azureedge.net/REG/LOLNationalLampoonsVacation/HO00021110/Mobile_MovieFeed/20260310-134709917.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3216",
+    "url": "https://regalcdn.azureedge.net/REG/LOLSpyKids/HO00021107/Mobile_MovieFeed/20260311-124026529.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3217",
+    "url": "https://regalcdn.azureedge.net/REG/LOLFerrisBuellersDayOff/HO00021111/Mobile_MovieFeed/20260310-135002642.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3218",
+    "url": "https://regalcdn.azureedge.net/REG/LOLCaddyshack/HO00021112/Mobile_MovieFeed/20260310-135217065.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3219",
+    "url": "https://regalcdn.azureedge.net/REG/LOLBetterOffDead/HO00021113/Mobile_MovieFeed/20260310-140323926.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3220",
+    "url": "https://regalcdn.azureedge.net/REG/LOLBeverlyHillsCop/HO00021114/Mobile_MovieFeed/20260310-140719286.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3221",
+    "url": "https://regalcdn.azureedge.net/REG/LOLWaynesWorld/HO00021143/Mobile_MovieFeed/20260310-141101809.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2846",
+    "url": "https://www.regmovies.com/_next/static/chunks/webpack-c0d1b1925f47c600.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "!function(){\"use strict\";var e,t,c,a,f,n,r,d,o,u,i,b,s={},l={};function h(e){var t=l[e];if(void 0!==t)return t.exports;var c=l[e]={exports:{}},a=!0;try{s[e].call(c.exports,c,c.exports,h),a=!1}finally{a&&delete l[e]}return c.exports}h.m=s,e=[],h.O=function(t,c,a,f){if(c){f=f||0;for(var n=e.length;n>0&&e[n-1][2]>f;n--)e[n]=e[n-1];e[n]=[c,a,f];return}for(var r=1/0,n=0;n<e.length;n++){for(var c=e[n][0],a=e[n][1],f=e[n][2],d=!0,o=0;o<c.length;o++)r>=f&&Object.keys(h.O).every(function(e){return h.O[e](c[o])})?c.splice(o--,1):(d=!1,f<r&&(r=f));if(d){e.splice(n--,1);var u=a();void 0!==u&&(t=u)}}return t},h.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return h.d(t,{a:t}),t},c=Object.getPrototypeOf?function(e){return Object.getPrototypeOf(e)}:function(e){return e.__proto__},h.t=function(e,a){if(1&a&&(e=this(e)),8&a||\"object\"==typeof e&&e&&(4&a&&e.__esModule||16&a&&\"function\"==typeof e.then))return e;var f=Object.create(null);h.r(f);var n={};t=t||[null,c({}),c([]),c(c)];for(var r=2&a&&e;\"object\"==typeof r&&!~t.indexOf(r);r=c(r))Object.getOwnPropertyNames(r).forEach(function(t){n[t]=function(){return e[t]}});return n.default=function(){return e},h.d(f,n"
+  },
+  {
+    "requestId": "89855.2850",
+    "url": "https://www.regmovies.com/_next/static/chunks/96a31f5f-cfe440c8a5bf6634.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[6091],{46767:function(e){var t;t=function(){var e;return(function e(t,n,r){function i(s,a){if(!n[s]){if(!t[s]){if(o)return o(s,!0);var c=Error(\"Cannot find module '\"+s+\"'\");throw c.code=\"MODULE_NOT_FOUND\",c}var d=n[s]={exports:{}};t[s][0].call(d.exports,function(e){return i(t[s][1][e]||e)},d,d.exports,e,t,n,r)}return n[s].exports}for(var o=void 0,s=0;s<r.length;s++)i(r[s]);return i})({1:[function(e,t,n){\"use strict\";var r={};function i(e){var t,n=JSON.stringify(e);if(!e.forceScriptReload&&(t=r[n]))return t;var i=document.createElement(\"script\"),o=e.dataAttributes||{},s=e.container||document.head;return i.src=e.src,i.id=e.id||\"\",i.async=!0,e.type&&i.setAttribute(\"type\",\"\".concat(e.type)),e.crossorigin&&i.setAttribute(\"crossorigin\",\"\".concat(e.crossorigin)),e.integrity&&i.setAttribute(\"integrity\",\"\".concat(e.integrity)),Object.keys(o).forEach(function(e){i.setAttribute(\"data-\".concat(e),\"\".concat(o[e]))}),t=new Promise(function(t,n){i.addEventListener(\"load\",function(){t(i)}),i.addEventListener(\"error\",function(){n(Error(\"\".concat(e.src,\" failed to load.\")))}),i.addEventListener(\"abort\",function(){n(Error(\"\".concat(e.src,\" has "
+  },
+  {
+    "requestId": "89855.2851",
+    "url": "https://www.regmovies.com/_next/static/chunks/4a00e7e4-ef3d82875c9c04d6.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[7175],{59717:function(e){var t;t=function(){var e;return(function e(t,r,n){function i(a,s){if(!r[a]){if(!t[a]){if(o)return o(a,!0);var c=Error(\"Cannot find module '\"+a+\"'\");throw c.code=\"MODULE_NOT_FOUND\",c}var u=r[a]={exports:{}};t[a][0].call(u.exports,function(e){return i(t[a][1][e]||e)},u,u.exports,e,t,r,n)}return r[a].exports}for(var o=void 0,a=0;a<n.length;a++)i(n[a]);return i})({1:[function(e,t,r){\"use strict\";var n={};function i(e){var t,r=JSON.stringify(e);if(!e.forceScriptReload&&(t=n[r]))return t;var i=document.createElement(\"script\"),o=e.dataAttributes||{},a=e.container||document.head;return i.src=e.src,i.id=e.id||\"\",i.async=!0,e.type&&i.setAttribute(\"type\",\"\".concat(e.type)),e.crossorigin&&i.setAttribute(\"crossorigin\",\"\".concat(e.crossorigin)),e.integrity&&i.setAttribute(\"integrity\",\"\".concat(e.integrity)),Object.keys(o).forEach(function(e){i.setAttribute(\"data-\".concat(e),\"\".concat(o[e]))}),t=new Promise(function(t,r){i.addEventListener(\"load\",function(){t(i)}),i.addEventListener(\"error\",function(){r(Error(\"\".concat(e.src,\" failed to load.\")))}),i.addEventListener(\"abort\",function(){r(Error(\"\".concat(e.src,\" has "
+  },
+  {
+    "requestId": "89855.2854",
+    "url": "https://www.regmovies.com/_next/static/chunks/7107-a798187228506e0b.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[7107],{7107:function(t,e,n){n.d(e,{H:function(){return D}});var a=n(70960),l=n(77581),r=n(26235),i=n(1305),s=n(65922),u=n(24217);let o=(0,n(1844).X)(()=>void 0!==window.ScrollTimeline);class h{constructor(t){this.animations=t.filter(Boolean)}then(t,e){return Promise.all(this.animations).then(t).catch(e)}getAll(t){return this.animations[0][t]}setAll(t,e){for(let n=0;n<this.animations.length;n++)this.animations[n][t]=e}attachTimeline(t){let e=this.animations.map(e=>{if(!o()||!e.attachTimeline)return e.pause(),function(t,e){let n;let a=()=>{let{currentTime:a}=e,l=(null===a?0:a.value)/100;n!==l&&t(l),n=l};return u.Wi.update(a,!0),()=>(0,u.Pn)(a)}(t=>{e.time=e.duration*t},t);e.attachTimeline(t)});return()=>{e.forEach((t,e)=>{t&&t(),this.animations[e].stop()})}}get time(){return this.getAll(\"time\")}set time(t){this.setAll(\"time\",t)}get speed(){return this.getAll(\"speed\")}set speed(t){this.setAll(\"speed\",t)}get duration(){let t=0;for(let e=0;e<this.animations.length;e++)t=Math.max(t,this.animations[e].duration);return t}runAll(t){this.animations.forEach(e=>e[t]())}play(){this.runAll(\"play\")}pause(){this.runAll(\"pause\")}"
+  },
+  {
+    "requestId": "89855.2849",
+    "url": "https://www.regmovies.com/_next/static/chunks/pages/_app-f5b71c03b7881032.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[2888],{83340:function(e,t,n){\"use strict\";n.d(t,{Z:function(){return z}});var r=function(){function e(e){var t=this;this._insertTag=function(e){var n;n=0===t.tags.length?t.insertionPoint?t.insertionPoint.nextSibling:t.prepend?t.container.firstChild:t.before:t.tags[t.tags.length-1].nextSibling,t.container.insertBefore(e,n),t.tags.push(e)},this.isSpeedy=void 0===e.speedy||e.speedy,this.tags=[],this.ctr=0,this.nonce=e.nonce,this.key=e.key,this.container=e.container,this.prepend=e.prepend,this.insertionPoint=e.insertionPoint,this.before=null}var t=e.prototype;return t.hydrate=function(e){e.forEach(this._insertTag)},t.insert=function(e){if(this.ctr%(this.isSpeedy?65e3:1)==0){var t;this._insertTag(((t=document.createElement(\"style\")).setAttribute(\"data-emotion\",this.key),void 0!==this.nonce&&t.setAttribute(\"nonce\",this.nonce),t.appendChild(document.createTextNode(\"\")),t.setAttribute(\"data-s\",\"\"),t))}var n=this.tags[this.tags.length-1];if(this.isSpeedy){var r=function(e){if(e.sheet)return e.sheet;for(var t=0;t<document.styleSheets.length;t++)if(document.styleSheets[t].ownerNode===e)return document.styleSheets[t]}(n);try{r.insertRule"
+  },
+  {
+    "requestId": "89855.2853",
+    "url": "https://www.regmovies.com/_next/static/chunks/3770-1699e76dc4f1e08c.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[3770],{74049:function(e,t,n){\"use strict\";var o=n(36257);function r(){}function i(){}i.resetWarningCache=r,e.exports=function(){function e(e,t,n,r,i,a){if(a!==o){var s=Error(\"Calling PropTypes validators directly is not supported by the `prop-types` package. Use PropTypes.checkPropTypes() to call them. Read more at http://fb.me/use-check-prop-types\");throw s.name=\"Invariant Violation\",s}}function t(){return e}e.isRequired=e;var n={array:e,bigint:e,bool:e,func:e,number:e,object:e,string:e,symbol:e,any:e,arrayOf:t,element:e,elementType:e,instanceOf:t,node:e,objectOf:t,oneOf:t,oneOfType:t,shape:t,exact:t,checkPropTypes:i,resetWarningCache:r};return n.PropTypes=n,n}},40507:function(e,t,n){e.exports=n(74049)()},36257:function(e){\"use strict\";e.exports=\"SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED\"},53579:function(e,t,n){\"use strict\";var o=Object.assign||function(e){for(var t=1;t<arguments.length;t++){var n=arguments[t];for(var o in n)Object.prototype.hasOwnProperty.call(n,o)&&(e[o]=n[o])}return e},r=function(){function e(e,t){for(var n=0;n<t.length;n++){var o=t[n];o.enumerable=o.enumerable||!1,o.configurable=!0,\"value\"in o&&(o.wri"
+  },
+  {
+    "requestId": "89855.2852",
+    "url": "https://www.regmovies.com/_next/static/chunks/7867-130ae33ae2c30e95.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[7867],{76527:function(t){var e;e=function(){var t;return(function t(e,n,r){function i(a,s){if(!n[a]){if(!e[a]){if(o)return o(a,!0);var c=Error(\"Cannot find module '\"+a+\"'\");throw c.code=\"MODULE_NOT_FOUND\",c}var u=n[a]={exports:{}};e[a][0].call(u.exports,function(t){return i(e[a][1][t]||t)},u,u.exports,t,e,n,r)}return n[a].exports}for(var o=void 0,a=0;a<r.length;a++)i(r[a]);return i})({1:[function(t,e,n){\"use strict\";var r={};function i(t){var e,n=JSON.stringify(t);if(!t.forceScriptReload&&(e=r[n]))return e;var i=document.createElement(\"script\"),o=t.dataAttributes||{},a=t.container||document.head;return i.src=t.src,i.id=t.id||\"\",i.async=!0,t.type&&i.setAttribute(\"type\",\"\".concat(t.type)),t.crossorigin&&i.setAttribute(\"crossorigin\",\"\".concat(t.crossorigin)),t.integrity&&i.setAttribute(\"integrity\",\"\".concat(t.integrity)),Object.keys(o).forEach(function(t){i.setAttribute(\"data-\".concat(t),\"\".concat(o[t]))}),e=new Promise(function(e,n){i.addEventListener(\"load\",function(){e(i)}),i.addEventListener(\"error\",function(){n(Error(\"\".concat(t.src,\" failed to load.\")))}),i.addEventListener(\"abort\",function(){n(Error(\"\".concat(t.src,\" has "
+  },
+  {
+    "requestId": "89855.2856",
+    "url": "https://www.regmovies.com/_next/static/chunks/7240-fbadc6deb23f59f4.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[7240],{11249:function(t,e,n){var r=n(70783);e.Z=r.Z},65123:function(t,e,n){n.d(e,{j:function(){return a}});var r={};function a(){return r}},39074:function(t,e){var n=function(t,e){switch(t){case\"P\":return e.date({width:\"short\"});case\"PP\":return e.date({width:\"medium\"});case\"PPP\":return e.date({width:\"long\"});default:return e.date({width:\"full\"})}},r=function(t,e){switch(t){case\"p\":return e.time({width:\"short\"});case\"pp\":return e.time({width:\"medium\"});case\"ppp\":return e.time({width:\"long\"});default:return e.time({width:\"full\"})}};e.Z={p:r,P:function(t,e){var a,i=t.match(/(P+)(p+)?/)||[],o=i[1],u=i[2];if(!u)return n(t,e);switch(o){case\"P\":a=e.dateTime({width:\"short\"});break;case\"PP\":a=e.dateTime({width:\"medium\"});break;case\"PPP\":a=e.dateTime({width:\"long\"});break;default:a=e.dateTime({width:\"full\"})}return a.replace(\"{{date}}\",n(o,e)).replace(\"{{time}}\",r(u,e))}}},94941:function(t,e,n){n.d(e,{Z:function(){return r}});function r(t){var e=new Date(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate(),t.getHours(),t.getMinutes(),t.getSeconds(),t.getMilliseconds()));return e.setUTCFullYear(t.getFullYear()),t.getTime()-e.g"
+  },
+  {
+    "requestId": "89855.2857",
+    "url": "https://www.regmovies.com/_next/static/chunks/6002-cbb68e06ec6a88ef.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[6002],{98668:function(e,t,r){\"use strict\";Object.defineProperty(t,\"__esModule\",{value:!0}),Object.defineProperty(t,\"actionAsyncStorage\",{enumerable:!0,get:function(){return n}});let n=(0,r(79498).createAsyncLocalStorage)();(\"function\"==typeof t.default||\"object\"==typeof t.default&&null!==t.default)&&void 0===t.default.__esModule&&(Object.defineProperty(t.default,\"__esModule\",{value:!0}),Object.assign(t.default,t),e.exports=t.default)},76314:function(e,t,r){\"use strict\";Object.defineProperty(t,\"__esModule\",{value:!0}),Object.defineProperty(t,\"actionAsyncStorage\",{enumerable:!0,get:function(){return n.actionAsyncStorage}});let n=r(98668);(\"function\"==typeof t.default||\"object\"==typeof t.default&&null!==t.default)&&void 0===t.default.__esModule&&(Object.defineProperty(t.default,\"__esModule\",{value:!0}),Object.assign(t.default,t),e.exports=t.default)},79498:function(e,t){\"use strict\";Object.defineProperty(t,\"__esModule\",{value:!0}),Object.defineProperty(t,\"createAsyncLocalStorage\",{enumerable:!0,get:function(){return o}});let r=Error(\"Invariant: AsyncLocalStorage accessed in runtime where it is not available\");class n{disable(){t"
+  },
+  {
+    "requestId": "89855.2855",
+    "url": "https://www.regmovies.com/_next/static/chunks/5425-27044425d516d2d8.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[5425],{53899:function(e,t){\"use strict\";Object.defineProperty(t,\"__esModule\",{value:!0}),t.attributeNames=t.elementNames=void 0,t.elementNames=new Map([\"altGlyph\",\"altGlyphDef\",\"altGlyphItem\",\"animateColor\",\"animateMotion\",\"animateTransform\",\"clipPath\",\"feBlend\",\"feColorMatrix\",\"feComponentTransfer\",\"feComposite\",\"feConvolveMatrix\",\"feDiffuseLighting\",\"feDisplacementMap\",\"feDistantLight\",\"feDropShadow\",\"feFlood\",\"feFuncA\",\"feFuncB\",\"feFuncG\",\"feFuncR\",\"feGaussianBlur\",\"feImage\",\"feMerge\",\"feMergeNode\",\"feMorphology\",\"feOffset\",\"fePointLight\",\"feSpecularLighting\",\"feSpotLight\",\"feTile\",\"feTurbulence\",\"foreignObject\",\"glyphRef\",\"linearGradient\",\"radialGradient\",\"textPath\"].map(function(e){return[e.toLowerCase(),e]})),t.attributeNames=new Map([\"definitionURL\",\"attributeName\",\"attributeType\",\"baseFrequency\",\"baseProfile\",\"calcMode\",\"clipPathUnits\",\"diffuseConstant\",\"edgeMode\",\"filterUnits\",\"glyphRef\",\"gradientTransform\",\"gradientUnits\",\"kernelMatrix\",\"kernelUnitLength\",\"keyPoints\",\"keySplines\",\"keyTimes\",\"lengthAdjust\",\"limitingConeAngle\",\"markerHeight\",\"markerUnits\",\"markerWidth\",\"maskContentUnits\",\"maskUnits\",\"numOctaves\",\"path"
+  },
+  {
+    "requestId": "89855.2858",
+    "url": "https://www.regmovies.com/_next/static/chunks/7059-3d44eb165b910c4f.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[7059],{19732:function(t,e){Object.defineProperty(e,\"__esModule\",{value:!0}),e.default=function(t){var e=new Date(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate(),t.getHours(),t.getMinutes(),t.getSeconds(),t.getMilliseconds()));return e.setUTCFullYear(t.getFullYear()),t.getTime()-e.getTime()},t.exports=e.default},89045:function(t,e){Object.defineProperty(e,\"__esModule\",{value:!0}),e.default=function(t){if(null===t||!0===t||!1===t)return NaN;var e=Number(t);return isNaN(e)?e:e<0?Math.ceil(e):Math.floor(e)},t.exports=e.default},25001:function(t,e,n){n.d(e,{Z:function(){return tM}});var r=n(41392),a=n(23317);function i(t,e){var n=\"undefined\"!=typeof Symbol&&t[Symbol.iterator]||t[\"@@iterator\"];if(!n){if(Array.isArray(t)||(n=(0,a.Z)(t))||e&&t&&\"number\"==typeof t.length){n&&(t=n);var r=0,i=function(){};return{s:i,n:function(){return r>=t.length?{done:!0}:{done:!1,value:t[r++]}},e:function(t){throw t},f:i}}throw TypeError(\"Invalid attempt to iterate non-iterable instance.\\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.\")}var o,u=!0,c=!1;return{s:function(){n=n.call(t)},n:function(){va"
+  },
+  {
+    "requestId": "89855.2859",
+    "url": "https://www.regmovies.com/_next/static/chunks/856-6b32f502d696a986.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[856,5948],{43640:function(e,t,n){\"use strict\";n.d(t,{Z:function(){return C}});var o=n(10929),i=n(48772),l=n(5724);let r=e=>e.sort((e,t)=>new Date(t.MyTransaction.Showtime)-new Date(e.MyTransaction.Showtime)),a=e=>{let t=e.slice().reverse(),n=new Date().getTime();return t.find(e=>new Date(e.MyTransaction.Showtime).getTime()>n)};var d=(e,t)=>fetch((0,l.Z)(\"/api/OrderMedia?theatreCode=\".concat(e,\"&sessionId=\").concat(t))).then(e=>e.json()).then(e=>e).catch(e=>{throw e}),u=e=>{let{theatreCode:t,bookingNumber:n}=e;return fetch((0,l.Z)(\"/api/markcollected\"),{method:\"POST\",body:JSON.stringify({CinemaId:t,BookingNumber:n,PrepareConcessionsOnly:!0})}).then(e=>e.json()).then(e=>{if((null==e?void 0:e.Result)!==0)throw e;return e}).catch(e=>{throw e})},s=e=>fetch((0,l.Z)(\"\".concat(i.Z.api,\"/orders?sessionToken=\").concat(e))).then(e=>e.json()).then(e=>{if(e.statusCode)throw e;let t=r(e),n=a(t)||!1,o=n||t[0];return{orders:t,nextOrder:o,isUpcoming:!!n}}),c=e=>{let{theatreCode:t,orderId:n,sessionToken:o}=e;return fetch((0,l.Z)(\"\".concat(i.Z.api,\"/OrderById?theatreCode=\").concat(t,\"&orderId=\").concat(n,\"&sessionToken=\").concat(o))).then(e=>e."
+  },
+  {
+    "requestId": "89855.2860",
+    "url": "https://www.regmovies.com/_next/static/chunks/9910-883d4e604974929e.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[9910],{85219:function(e,t,o){o.d(t,{Z:function(){return s}});var r=o(80671),i=e=>{let t=new AbortController;return setTimeout(()=>t.abort(),6e3),fetch(\"/api/moviefeeds\").then(e=>e.json()).then(e=>{if(e.errorCode||e.StackTrace)throw e;return e}).catch(e=>{throw{errorCode:\"000001\",userMessage:\"Error retrieving feed\"}})};let n=e=>e({type:r.vl}),a=(e,t)=>o=>{e({type:r.XD,shows:o,feed:t})},l=e=>t=>{e({type:r.VF,err:t})};var s={fetchShows:function(){let e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:\"now-playing\";return t=>(n(t),i(e).then(a(t,e)).catch(l(t)))},showtimesLoading:e=>t=>t({type:r.el,loading:e})}},17532:function(e,t,o){o.d(t,{Z:function(){return v}});var r=o(47089),i=o(75271),n=o(4471),a=o(82761),l=o(56010),s=o(70094),c=o(32532),d=o(80052),u=o(84016),h=e=>(0,r.BX)(\"svg\",{xmlns:\"http://www.w3.org/2000/svg\",width:24,height:24,fill:\"none\",...e,children:[(0,r.tZ)(\"mask\",{id:\"image_svg__a\",width:24,height:24,x:0,y:0,maskUnits:\"userSpaceOnUse\",style:{maskType:\"alpha\"},children:(0,r.tZ)(\"path\",{fill:\"#D9D9D9\",d:\"M0 0h24v24H0z\"})}),(0,r.tZ)(\"g\",{mask:\"url(#image_svg__a)\",children:(0,r.tZ)(\"path\",{fill:\"#F"
+  },
+  {
+    "requestId": "89855.2861",
+    "url": "https://www.regmovies.com/_next/static/chunks/7963-b2e7d1af13ebf3f2.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[7963,3761,4847],{72635:function(e,t,i){var n=i(47089),r=i(75271),o=i(84016),a=i(85476),l=i(7107),d=i(57665),s=i(48702);let c=(0,o.Z)(\"div\",{target:\"e1x0w1040\"})(\"padding:0;\"),h=(0,o.Z)(\"div\",{target:\"e1x0w1041\"})(\"display:flex;flex-direction:column;width:100%;border:1px solid #A5745A;color:#FFFFFF;background:#4D352CB2;padding:\",e=>e.collapsible&&!e.expanded?\"1.25rem 1.25rem 0 1.25rem\":\"1.25rem\",\";border-radius:0.625rem;gap:0.625rem;max-width:none;margin:auto;position:relative;overflow:hidden;&:after{content:'';position:absolute;bottom:0;left:0;width:100%;height:\",e=>e.collapsible&&!e.expanded&&e.hasOverflow?\"2em\":\"0\",\";opacity:\",e=>e.collapsible&&!e.expanded&&e.hasOverflow?1:0,\";background:linear-gradient(transparent,#4D352CB2);transition:all 0.3s;pointer-events:none;}\"),u=(0,o.Z)(\"div\",{target:\"e1x0w1042\"})(\"display:flex;align-items:center;justify-content:space-between;padding:0;width:100%;text-align:left;color:inherit;position:relative;\"),m=(0,o.Z)(\"div\",{target:\"e1x0w1043\"})(\"display:flex;align-items:center;gap:0.375rem;\"),p=(0,o.Z)(\"div\",{target:\"e1x0w1044\"})(\"flex-shrink:0;display:flex;align-items:center;jus"
+  },
+  {
+    "requestId": "89855.2862",
+    "url": "https://www.regmovies.com/_next/static/chunks/pages/theatres/%5Btheatre-route%5D-261dd90f42e0d685.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[6545,1593],{34769:function(e,t,n){(window.__NEXT_P=window.__NEXT_P||[]).push([\"/theatres/[theatre-route]\",function(){return n(13469)}])},83099:function(e,t,n){\"use strict\";var i=n(47089),a=n(75271),o=n(85476),r=n(20649),l=n(84016);let d=(0,l.Z)(\"div\",{target:\"esve45v0\"})(\"position:relative;\"),s=(0,l.Z)(\"div\",{target:\"esve45v1\"})(\"display:flex;position:relative;top:0em;text-transform:uppercase;max-width:275px;padding:0 0 0 1em;@media (min-width:\",e=>{let{theme:t}=e;return t.breakpoints.phone},\"){max-width:814px;margin:auto;}@media (min-width:1024px){padding:0;}@media (min-width:\",e=>{let{theme:t}=e;return t.breakpoints.tablet},\"){max-width:900px;}\"),c=(0,l.Z)(\"button\",{target:\"esve45v2\"})(\"display:flex;flex-direction:column;background:transparent;border-radius:0;padding:0;text-transform:uppercase;font-size:\",e=>{let{theme:t}=e;return t.fonts.medium},\";letter-spacing:\",e=>{let{theme:t}=e;return t.fonts.letterSpacingLess},\";color:\",e=>{let{active:t,theme:n}=e;return!t&&n.colors.grayLighter},\";font-weight:700;white-space:nowrap;&:not(:first-of-type){margin-left:1.5rem;}&:after{content:'';background:\",e=>{let{theme:t}=e;return t.c"
+  },
+  {
+    "requestId": "89855.2863",
+    "url": "https://www.regmovies.com/_next/static/20260310T1913-1_0_6394/_buildManifest.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "self.__BUILD_MANIFEST=function(s,e,a,c,t,n,i,r,d,u,o,h,p,f,b,j,k,l,g,m,w,v,_,I,x,y,L,q,B,F,A,D,E,M,N,S,T){return{__rewrites:{afterFiles:[{has:I,source:\"/:nextInternalLocale(en)\",destination:\"/:nextInternalLocale/unlimited-login\"},{has:I,source:\"/:nextInternalLocale(en)/sitemap.xml\",destination:\"/:nextInternalLocale/api/sitemap.xml\"},{has:I,source:\"/:nextInternalLocale(en)/robots.txt\",destination:\"/:nextInternalLocale/api/robots.txt\"},{has:I,source:\"/:nextInternalLocale(en)/.well-known/apple-developer-merchantid-domain-association\",destination:\"/:nextInternalLocale/api/apple-developer-merchantid-domain-association\"}],beforeFiles:[],fallback:[]},\"/\":[s,e,a,i,n,r,d,p,u,f,b,c,j,k,g,x,y,\"static/chunks/pages/index-826cedae47d7807d.js\"],\"/404\":[\"static/chunks/pages/404-519fbd211effcdfd.js\"],\"/_error\":[\"static/chunks/pages/_error-cb7e69ff0185c951.js\"],\"/account\":[s,e,a,n,l,c,L,q,t,\"static/chunks/pages/account-93120e6f86d3a68c.js\"],\"/add-credits\":[s,e,a,c,t,\"static/chunks/pages/add-credits-53ee120832b35813.js\"],\"/cancel-order\":[s,e,a,c,t,\"static/chunks/pages/cancel-order-c5b855e965667e90.js\"],\"/checkout\":[s,e,m,w,a,v,c,_,B,A,D,t,\"static/chunks/pages/checkout-3a3e7e889b4dae4d.js\"],\"/concessi"
+  },
+  {
+    "requestId": "89855.2908",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FReadyorNot2HereICome%2FHO00020338%2FTV_SmallPosterImage%2F20260219-125424873.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2910",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FHoppers%2FHO00020716%2FTV_SmallPosterImage%2F20260122-141940466.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2912",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FProjectHailMary%2FHO00018964%2FTV_SmallPosterImage%2F20260209-101530589.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2914",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FDhurandarTheRevengeHindi%2FHO00020964%2FTV_SmallPosterImage%2F20260226-114702553.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2916",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FScream7%2FHO00020098%2FTV_SmallPosterImage%2F20260204-162409193.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2918",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FBrideThe%2FHO00020178%2FTV_SmallPosterImage%2F20260212-130902309.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2920",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FUndertone%2FHO00020951%2FTV_SmallPosterImage%2F20260216-092222971.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2924",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FVampiresoftheVelvetLounge%2FHO00020898%2FTV_SmallPosterImage%2F20260304-151507802.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2922",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FRemindersofHim%2FHO00020033%2FTV_SmallPosterImage%2F20260127-104040526.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2928",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FForbiddenFruitsEarlyAccess%2FHO00021132%2FTV_SmallPosterImage%2F20260309-105028549.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2926",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FMondayMysteryMovieHorrorEdition323%2FHO00021127%2FTV_SmallPosterImage%2F20260319-164053894.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2864",
+    "url": "https://www.regmovies.com/_next/static/20260310T1913-1_0_6394/_ssgManifest.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "self.__SSG_MANIFEST=new Set([\"\\u002F\",\"\\u002F404\",\"\\u002F[...cms-route]\",\"\\u002Faccount\",\"\\u002Fadd-credits\",\"\\u002Fcancel-order\",\"\\u002Fcheckout\",\"\\u002Fconcessions\",\"\\u002Fconfirm-email\",\"\\u002Fcontact\",\"\\u002Fedit-account\",\"\\u002Ferror\",\"\\u002Fgroups-and-events\\u002Fbirthday-party-request\",\"\\u002Fgroups-and-events\\u002Fprivate-watch-party-request\",\"\\u002Fjoin-rewards\",\"\\u002Fjoin-rewards-plus\",\"\\u002Fjoin-unlimited\",\"\\u002Flogin\",\"\\u002Flogout\",\"\\u002Fmanage-rewards-plus\",\"\\u002Fmanage-unlimited\",\"\\u002Fmembership\",\"\\u002Fmovies\\u002F[movie-route]\",\"\\u002Forder-success\",\"\\u002Fpast-due-unlimited\",\"\\u002Fpayment-methods\",\"\\u002Fpurchases\",\"\\u002Frefresh-stats\",\"\\u002Freset-password\",\"\\u002Freset-password-request\",\"\\u002Frewards\",\"\\u002Frewards-plus\",\"\\u002Fsearch\",\"\\u002Ftheatres\",\"\\u002Ftheatres\\u002F[theatre-route]\",\"\\u002Ftheme\",\"\\u002Funlimited\"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()"
+  },
+  {
+    "requestId": "89855.2930",
+    "url": "https://www.regmovies.com/_next/image?url=https%3A%2F%2Fregalcdn.azureedge.net%2FREG%2FAlpha%2FHO00020743%2FTV_SmallPosterImage%2F20260127-092955221.jpg&w=256&q=75",
+    "status": 200,
+    "mime": "image/webp",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3286",
+    "url": "https://regalcdn.azureedge.net/REG/LOLRugratsinParis/HO00021115/Mobile_MovieFeed/20260311-124217864.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3287",
+    "url": "https://regalcdn.azureedge.net/REG/LOLTheBigLebowski/HO00021145/Mobile_MovieFeed/20260310-141628535.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3288",
+    "url": "https://regalcdn.azureedge.net/REG/LOLDeathBecomesHer/HO00021146/Mobile_MovieFeed/20260310-141919413.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3289",
+    "url": "https://regalcdn.azureedge.net/REG/LOLTheMask/HO00021147/Mobile_MovieFeed/20260310-162249410.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3290",
+    "url": "https://regalcdn.azureedge.net/REG/LOLDazedandConfused/HO00021148/Mobile_MovieFeed/20260310-162530178.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3291",
+    "url": "https://regalcdn.azureedge.net/REG/LOLTheFirstWivesClub/HO00021149/Mobile_MovieFeed/20260310-162917246.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3292",
+    "url": "https://regalcdn.azureedge.net/REG/LOLThisistheEnd/HO00021152/Mobile_MovieFeed/20260310-163342190.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3293",
+    "url": "https://regalcdn.azureedge.net/REG/MichaelEarlyAccess/HO00020976/Mobile_MovieFeed/20260220-101049587.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3294",
+    "url": "https://regalcdn.azureedge.net/REG/LOLHotFuzz/HO00021153/Mobile_MovieFeed/20260310-163725694.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3295",
+    "url": "https://regalcdn.azureedge.net/REG/LOLSesameStreetPresentsFollowThatBird/HO00021151/Mobile_MovieFeed/20260311-124813479.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3296",
+    "url": "https://regalcdn.azureedge.net/REG/LOLTheHangover/HO00021154/Mobile_MovieFeed/20260310-170359449.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3298",
+    "url": "https://regalcdn.azureedge.net/REG/LOLBestinShow/HO00021157/Mobile_MovieFeed/20260311-100843455.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3297",
+    "url": "https://regalcdn.azureedge.net/REG/LOLSuperbad/HO00021156/Mobile_MovieFeed/20260311-100532181.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3299",
+    "url": "https://regalcdn.azureedge.net/REG/LOLStepBrothers/HO00021158/Mobile_MovieFeed/20260311-101112149.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3300",
+    "url": "https://regalcdn.azureedge.net/REG/LOLGirlsTrip/HO00021159/Mobile_MovieFeed/20260311-101429385.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3301",
+    "url": "https://regalcdn.azureedge.net/REG/PowerToThePeopleJohnYokoLiveinNYC/HO00021025/Mobile_MovieFeed/20260319-113456432.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3302",
+    "url": "https://regalcdn.azureedge.net/REG/AnimalFarm/HO00020836/Mobile_MovieFeed/20260217-163540573.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3303",
+    "url": "https://regalcdn.azureedge.net/REG/LOLTheNiceGuys/HO00021160/Mobile_MovieFeed/20260311-101658672.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3304",
+    "url": "https://regalcdn.azureedge.net/REG/DevilWearsPrada2The/HO00020256/Mobile_MovieFeed/20251113-092805874.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3305",
+    "url": "https://regalcdn.azureedge.net/REG/DevilWearsPrada2FanEventThe/HO00021165/Mobile_MovieFeed/20260311-161010312.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3306",
+    "url": "https://regalcdn.azureedge.net/REG/IronMaidenBurningAmbition/HO00021026/Mobile_MovieFeed/20260311-123110762.jpg",
+    "status": 200,
+    "mime": "image/jpeg",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.2833",
+    "url": "https://challenges.cloudflare.com/turnstile/v0/g/ea2d291c0fdc/api.js",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "\"use strict\";(function(){function Gt(e,t,r,o,c,l,v){try{var y=e[l](v),d=y.value}catch(f){r(f);return}y.done?t(d):Promise.resolve(d).then(o,c)}function Xt(e){return function(){var t=this,r=arguments;return new Promise(function(o,c){var l=e.apply(t,r);function v(d){Gt(l,o,c,v,y,\"next\",d)}function y(d){Gt(l,o,c,v,y,\"throw\",d)}v(void 0)})}}function D(e,t){return t!=null&&typeof Symbol!=\"undefined\"&&t[Symbol.hasInstance]?!!t[Symbol.hasInstance](e):D(e,t)}function Ue(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}function ze(e){for(var t=1;t<arguments.length;t++){var r=arguments[t]!=null?arguments[t]:{},o=Object.keys(r);typeof Object.getOwnPropertySymbols==\"function\"&&(o=o.concat(Object.getOwnPropertySymbols(r).filter(function(c){return Object.getOwnPropertyDescriptor(r,c).enumerable}))),o.forEach(function(c){Ue(e,c,r[c])})}return e}function Lr(e,t){var r=Object.keys(e);if(Object.getOwnPropertySymbols){var o=Object.getOwnPropertySymbols(e);t&&(o=o.filter(function(c){return Object.getOwnPropertyDescriptor(e,c).enumerable})),r.push.apply(r,o)}return r}function lt(e,t){return t=t!=null?t:{},Object.getOwnPropertyDescriptors?Object"
+  },
+  {
+    "requestId": "89855.3428",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-19-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3429",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-19-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3430",
+    "url": "https://www.regmovies.com/favicon.ico",
+    "status": 200,
+    "mime": "image/x-icon",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3451",
+    "url": "https://connect.facebook.net/signals/config/294077417420551?v=2.9.280&r=stable&domain=www.regmovies.com&hme=b758cff5989f970d61536a685dcccfaabd7a9508da12548b3811a55c83b2e4ae&ex_m=101%2C194%2C143%2C22%2C69%2C70%2C136%2C65%2C64%2C11%2C151%2C87%2C16%2C130%2C123%2C72%2C75%2C129%2C148%2C153%2C8%2C4%2C5%2C7%2C6%2C3%2C88%2C98%2C154%2C159%2C208%2C59%2C175%2C176%2C52%2C264%2C30%2C71%2C220%2C219%2C218%2C23%2C32%2C100%2C58%2C10%2C60%2C94%2C95%2C96%2C102%2C126%2C31%2C29%2C128%2C125%2C124%2C144%2C73%2C147%2C145%2C146%2C47%2C57%2C119%2C15%2C150%2C42%2C251%2C252%2C250%2C26%2C27%2C28%2C45%2C137%2C74%2C109%2C18%2C20%2C41%2C37%2C39%2C38%2C80%2C89%2C93%2C107%2C135%2C138%2C43%2C108%2C24%2C21%2C115%2C66%2C35%2C140%2C139%2C141%2C132%2C131%2C25%2C34%2C56%2C106%2C149%2C67%2C17%2C142%2C111%2C78%2C63%2C19%2C82%2C83%2C112%2C81%2C33%2C280%2C201%2C190%2C191%2C189%2C283%2C275%2C49%2C202%2C104%2C127%2C77%2C117%2C51%2C44%2C46%2C110%2C116%2C122%2C55%2C61%2C50%2C53%2C97%2C152%2C1%2C120%2C14%2C118%2C12%2C2%2C54%2C90%2C62%2C114%2C86%2C85%2C155%2C156%2C91%2C92%2C9%2C121%2C99%2C48%2C133%2C84%2C76%2C68%2C113%2C103%2C40%2C134%2C0%2C79%2C36%2C105%2C13%2C157",
+    "status": 200,
+    "mime": "application/x-javascript",
+    "type": "Script",
+    "bodyPreview": "/**\n* Copyright (c) 2017-present, Facebook, Inc. All rights reserved.\n*\n* You are hereby granted a non-exclusive, worldwide, royalty-free license to use,\n* copy, modify, and distribute this software in source code or binary form for use\n* in connection with the web services and APIs provided by Facebook.\n*\n* As with any software that integrates with the Facebook platform, your use of\n* this software is subject to the Facebook Platform Policy\n* [http://developers.facebook.com/policy/]. This copyright notice shall be\n* included in all copies or substantial portions of the software.\n*\n* THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS\n* FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR\n* COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER\n* IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN\n* CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n*/\n(function(e,t,n,r){var o={exports:{}},a=o.exports;(function(){var a=e.fbq;if(a.execStart=e.performance&&e.performance.now&&e.performanc"
+  },
+  {
+    "requestId": "89855.3427",
+    "url": "https://www.regmovies.com/rb_bf41505zgt?sc=0&si=v_4_srv_2_sn_4AMFTDM70O5CA18MKTGCP7HLN4DIJ5OC_perc_100000_ol_0_mul_1_app-3A1f36f465a6bd3eec_0&ty=js&pv=4&ai=1f36f465a6bd3eec&en=4w5b027f&cr=1773971288428&av=1.333.13&cy=event&bc=2993135376&co=snappy&st=1773979973414&ss=0&qc=2508890705&end=1",
+    "status": 202,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": "{\"status\":\"ERROR\",\"handler\":\"OA\",\"errorCode\":6000,\"errorReason\":\"Blocked by cost control\",\"dynamicConfig\":{\"state\":\"priority=high\"}}"
+  },
+  {
+    "requestId": "89855.3450",
+    "url": "https://edge.eu1.fullstory.com/s/settings/o-72ZF-eu1/v1/web",
+    "status": 200,
+    "mime": "application/json",
+    "type": "XHR",
+    "bodyPreview": "{\"AjaxWatches\":[{\"URLRegex\":\"regmovies\\\\.com\\\\/api\\\\/\",\"RecordReq\":0,\"RecordRsp\":2,\"ReqWhitelist\":\"\",\"RspWhitelist\":\"status\\nmessage\\nerror\",\"ReqAllowlist\":\"\",\"RspAllowlist\":\"status\\nmessage\\nerror\",\"ReqBody\":false,\"RspBody\":false}],\"BehaviorSignalSettings\":{\"ElementBlocks\":[{\"Selector\":\"button#remove-ticket-0\",\"Signals\":[2]},{\"Selector\":\"button#print-receipt\",\"Signals\":[2]},{\"Selector\":\"button#add-ticket-0 span\",\"Signals\":[2]},{\"Selector\":\"#back-button\",\"Signals\":[2]}]},\"Domains\":{\"OnlyKnownDomains\":false},\"ElementBlocks\":[{\"Selector\":\"input[type=password]\",\"Consent\":false,\"Type\":1,\"GroupId\":0},{\"Selector\":\"input[type=hidden]\",\"Consent\":false,\"Type\":1,\"GroupId\":0},{\"Selector\":\"[autocomplete^=cc-]\",\"Consent\":false,\"Type\":1,\"GroupId\":0},{\"Selector\":\"input\",\"Consent\":false,\"Type\":2,\"GroupId\":1},{\"Selector\":\"textarea\",\"Consent\":false,\"Type\":2,\"GroupId\":1},{\"Selector\":\"select\",\"Consent\":false,\"Type\":2,\"GroupId\":1},{\"Selector\":\"[contenteditable]\",\"Consent\":false,\"Type\":2,\"GroupId\":1},{\"Selector\":\"input[type=radio]\",\"Consent\":false,\"Type\":1,\"GroupId\":1},{\"Selector\":\"input[type=checkbox]\",\"Consent\":false,\"Type\":1,\"GroupId\":1},{\"Selector\":\".fs-exclude\",\"Consent\":false,\"Type\":1,\"GroupId\":0}"
+  },
+  {
+    "requestId": "89855.3452",
+    "url": "https://pixel-config.reddit.com/pixels/t2_99whntb/config",
+    "status": 200,
+    "mime": "application/json",
+    "type": "XHR",
+    "bodyPreview": "{\"aam\":{}}\n"
+  },
+  {
+    "requestId": "89855.3456",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-20-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3454",
+    "url": "https://trc.taboola.com/1893760/trc/3/json?tim=1773979973592&data=%7B%22id%22%3A675%2C%22ii%22%3A%22%2Ftheatres%2Fregal-sherman-oaks-galleria-1483%22%2C%22it%22%3A%22video%22%2C%22sd%22%3A%22v2_52888cb507fdd4eb1cb92785644018a4_6518e3ab-28c6-4566-9738-e415ae45ec3b-tuct10afcbd3_1773979930_1773979930_CNawjgYQgMtzGIWfxsvQMyABKAMw4QE4kaQOQIuwDkiLo9kDUKMGWABgAGicvdiKs5uxjpEBcAGAAQCIAQA%22%2C%22ui%22%3A%226518e3ab-28c6-4566-9738-e415ae45ec3b-tuct10afcbd3%22%2C%22vi%22%3A1773979973587%2C%22cv%22%3A%2220260319-5-RELEASE%22%2C%22uiv%22%3A%22default%22%2C%22u%22%3A%22https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483%22%2C%22e%22%3Anull%2C%22cb%22%3A%22TFASC.trkCallback%22%2C%22qs%22%3A%22%22%2C%22r%22%3A%5B%7B%22li%22%3A%22rbox-tracking%22%2C%22s%22%3A0%2C%22uim%22%3A%22rbox-tracking%3Apub%3D301digitalmedia-regalcinema-sc%3Aabp%3D0%22%2C%22uip%22%3A%22rbox-tracking%22%2C%22orig_uip%22%3A%22rbox-tracking%22%7D%5D%2C%22mpvd%22%3A%7B%22en%22%3A%22page_view%22%2C%22it%22%3A%22GTM%22%2C%22tim%22%3A1773979973591%2C%22ref%22%3Anull%2C%22item-url%22%3A%22https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483%22%2C%22tos%22%3A16001257%2C%22ssd%22%3A1%2C%22scd%22%3A0%2C%22supv%22%3Atrue%7D%2C%22pa%22%3A%7B%22su%22%3Atrue%7D%2C%22psb%22%3Atrue%7D&pubit=i",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "TFASC.trkCallback({\"trc\":{\"si\":\"52888cb507fdd4eb1cb92785644018a4\",\"sd\":\"v2_52888cb507fdd4eb1cb92785644018a4_6518e3ab-28c6-4566-9738-e415ae45ec3b-tuct10afcbd3_1773979930_1773979973_CNawjgYQgMtzGNPvyMvQMyACKAMw4QE4kaQOQIuwDkiLo9kDUKMGWABgAGicvdiKs5uxjpEBcAGAAQCIAQA\",\"ui\":\"6518e3ab-28c6-4566-9738-e415ae45ec3b-tuct10afcbd3\",\"plc\":\"DESK\",\"wi\":\"2238655243964002274\",\"cc\":\"US\",\"route\":\"LA:LA:V\",\"el2r\":[\"bulk-metrics\",\"debug\",\"social\",\"abtests\",\"metrics\",\"perf\",\"supply-feature\"],\"uvpw\":\"1\",\"pi\":\"1893760\",\"cpb\":\"EhIyMDI2MDMxOS01LVJFTEVBU0UYASCc__________8BKhlsYS50YWJvb2xhc3luZGljYXRpb24uY29tMg90cmMtdHJhY2tpbmcyMDU4gKzDvwFAkaQOSIuwDlCLo9kDWKMGYwjXFhDVHxgjZGMIyJwBEL7qARhDZGMIu___________ARC7__________8BGEVkYwjSAxDgBhgIZGMIlhQQmxwYGGRjCKiFARDtqAEYOmRjCLb__________wEQtv__________ARhKZGMIoaUBEKTRARgLZGMIt5IBEI24ARg-ZGMI9BQQnh0YH2RjCKQnEIM1GC9kYwiFQhCpVxgPZHgBgAGsTYgB9LnlxQGQAReYAe3vyMvQM9sBEAHcAQ\",\"evh\":\"1594451289\",\"evi\":{\"62\":\"18743|23565\",\"47\":\"5028|6787\"},\"vl\":[{\"ri\":\"e2dbb4c6de13b9a748f6972c15b003a7\",\"uip\":\"rbox-tracking\",\"ppb\":\"CNQD\",\"v\":[],\"ppz\":\"UNDEFINED\"}],\"tslt\":{\"p-video-overlay\":{\"cancel\":\"Cancel\",\"goto\":\"Go To\"},\"read-more\":{\"DEFAULT_CAPTION\":\"Read%20More\"},\"next-up\":{\"BTN_TEXT\":\"Re"
+  },
+  {
+    "requestId": "89855.3470",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-21-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3431",
+    "url": "https://www.regmovies.com/api/Member",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "\"Missing sessionToken\""
+  },
+  {
+    "requestId": "89855.3468",
+    "url": "https://flask.nextdoor.com/pixel?pid=dfb71613-294c-4033-b209-7657883e9820&vrs=10.19&ev=PAGE_VIEW&pl=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&v=1&ndclid=&ndclid_src=0&rf=&sem=&tm=GTM&iid=40b46997-bf93-42c2-a2f4-34595902875f&pageid=a2a4f4b6-823f-4fc4-9689-0640317eb805&sessionid=266eaa11-452f-4823-be89-f0c4dd95b086&cd=%7B%7D&tz=America%2FLos_Angeles&sw=2560&sh=1440&gpuV=Google%20Inc.%20(Apple)&gpuR=ANGLE%20(Apple%2C%20ANGLE%20Metal%20Renderer%3A%20Apple%20M1%20Pro%2C%20Unspecified%20Version)",
+    "status": 204,
+    "mime": "text/plain",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3457",
+    "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-T76Y1M3B5S&gtm=45je63i0v888337384z8811280540za20gzb811280540zd811280540&_p=1773979973482&gcs=G111&gcd=13v3v3_3v5l1&npa=0&dma=0&cid=1717596423.1773553231&ecid=1969574782&ul=en-us&sr=2560x1440&ir=1&uaa=arm&uab=64&uafvl=Chromium%3B146.0.7680.153%7CNot-A.Brand%3B24.0.0.0%7CGoogle%2520Chrome%3B146.0.7680.153&uamb=0&uam=&uap=macOS&uapv=26.2.0&uaw=0&are=1&frm=0&pscdl=noapi&ec_mode=a&_eu=EAAAAAQ&_s=1&tag_exp=103116026~103200004~115938466~115938468~116024733~117484252&sid=1773979930&sct=6&seg=1&dl=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&dt=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&_tu=CA&en=page_view&tfd=649",
+    "status": 204,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3459",
+    "url": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/1041385581/?random=1773979973559&cv=11&fst=1773979973559&bg=ffffff&guid=ON&async=1&gtm=45be63i0v889588731z8811280540za20gzb811280540zd811280540xea&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938468~116024733~117484252~118128923&u_w=2560&u_h=1440&url=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&frm=0&tiba=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=279201815.1773553234&uaa=arm&uab=64&uafvl=Chromium%3B146.0.7680.153%7CNot-A.Brand%3B24.0.0.0%7CGoogle%2520Chrome%3B146.0.7680.153&uamb=0&uam=&uap=macOS&uapv=26.2.0&uaw=0&rfmt=3&fmt=4",
+    "status": 200,
+    "mime": "text/javascript",
+    "type": "Script",
+    "bodyPreview": "(function(){var s = {};(function(){var k=typeof Object.defineProperties==\"function\"?Object.defineProperty:function(a,d,b){if(a==Array.prototype||a==Object.prototype)return a;a[d]=b.value;return a};function l(a){a=[\"object\"==typeof globalThis&&globalThis,a,\"object\"==typeof window&&window,\"object\"==typeof self&&self,\"object\"==typeof global&&global];for(var d=0;d<a.length;++d){var b=a[d];if(b&&b.Math==Math)return b}throw Error(\"Cannot find global object\");} var p=l(this),q=typeof Symbol===\"function\"&&typeof Symbol(\"x\")===\"symbol\",r={},t={};function u(a,d,b){if(!b||a!=null){b=t[d];if(b==null)return a[d];b=a[b];return b!==void 0?b:a[d]}} function v(a,d,b){if(d)a:{var c=a.split(\".\");a=c.length===1;var e=c[0],g;!a&&e in r?g=r:g=p;for(e=0;e<c.length-1;e++){var f=c[e];if(!(f in g))break a;g=g[f]}c=c[c.length-1];b=q&&b===\"es6\"?g[c]:null;d=d(b);d!=null&&(a?k(r,c,{configurable:!0,writable:!0,value:d}):d!==b&&(t[c]===void 0&&(a=Math.random()*1E9>>>0,t[c]=q?p.Symbol(c):\"$jscp$\"+a+\"$\"+c),k(g,t[c],{configurable:!0,writable:!0,value:d})))}} var w=q&&typeof u(Object,\"assign\")==\"function\"?u(Object,\"assign\"):function(a,d){if(a==null)throw new TypeError(\"No nullish arg\");a=Object(a);for(var b=1;b<argum"
+  },
+  {
+    "requestId": "89855.3460",
+    "url": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/17379723676/?random=1773979973567&cv=11&fst=1773979973567&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45be63i0v9225529221z8811280540za20gzb811280540zd811280540xec&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938469~116024733~117484252~118104773&u_w=2560&u_h=1440&url=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&frm=0&tiba=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=279201815.1773553234&uaa=arm&uab=64&uafvl=Chromium%3B146.0.7680.153%7CNot-A.Brand%3B24.0.0.0%7CGoogle%2520Chrome%3B146.0.7680.153&uamb=0&uam=&uap=macOS&uapv=26.2.0&uaw=0&_tu=CA&data=event%3Dgtag.config&rfmt=3&fmt=4",
+    "status": 200,
+    "mime": "text/javascript",
+    "type": "Script",
+    "bodyPreview": "(function(){var s = {};(function(){var k=typeof Object.defineProperties==\"function\"?Object.defineProperty:function(a,d,b){if(a==Array.prototype||a==Object.prototype)return a;a[d]=b.value;return a};function l(a){a=[\"object\"==typeof globalThis&&globalThis,a,\"object\"==typeof window&&window,\"object\"==typeof self&&self,\"object\"==typeof global&&global];for(var d=0;d<a.length;++d){var b=a[d];if(b&&b.Math==Math)return b}throw Error(\"Cannot find global object\");} var p=l(this),q=typeof Symbol===\"function\"&&typeof Symbol(\"x\")===\"symbol\",r={},t={};function u(a,d,b){if(!b||a!=null){b=t[d];if(b==null)return a[d];b=a[b];return b!==void 0?b:a[d]}} function v(a,d,b){if(d)a:{var c=a.split(\".\");a=c.length===1;var e=c[0],g;!a&&e in r?g=r:g=p;for(e=0;e<c.length-1;e++){var f=c[e];if(!(f in g))break a;g=g[f]}c=c[c.length-1];b=q&&b===\"es6\"?g[c]:null;d=d(b);d!=null&&(a?k(r,c,{configurable:!0,writable:!0,value:d}):d!==b&&(t[c]===void 0&&(a=Math.random()*1E9>>>0,t[c]=q?p.Symbol(c):\"$jscp$\"+a+\"$\"+c),k(g,t[c],{configurable:!0,writable:!0,value:d})))}} var w=q&&typeof u(Object,\"assign\")==\"function\"?u(Object,\"assign\"):function(a,d){if(a==null)throw new TypeError(\"No nullish arg\");a=Object(a);for(var b=1;b<argum"
+  },
+  {
+    "requestId": "89855.3458",
+    "url": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/1041385581/?random=1773979973558&cv=11&fst=1773979973558&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45be63i0v889588731z8811280540za20gzb811280540zd811280540xec&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938468~116024733~117484252~118128923&u_w=2560&u_h=1440&url=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&frm=0&tiba=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=279201815.1773553234&uaa=arm&uab=64&uafvl=Chromium%3B146.0.7680.153%7CNot-A.Brand%3B24.0.0.0%7CGoogle%2520Chrome%3B146.0.7680.153&uamb=0&uam=&uap=macOS&uapv=26.2.0&uaw=0&_tu=CA&data=event%3Dgtag.config&rfmt=3&fmt=4",
+    "status": 200,
+    "mime": "text/javascript",
+    "type": "Script",
+    "bodyPreview": "(function(){var s = {};(function(){var k=typeof Object.defineProperties==\"function\"?Object.defineProperty:function(a,d,b){if(a==Array.prototype||a==Object.prototype)return a;a[d]=b.value;return a};function l(a){a=[\"object\"==typeof globalThis&&globalThis,a,\"object\"==typeof window&&window,\"object\"==typeof self&&self,\"object\"==typeof global&&global];for(var d=0;d<a.length;++d){var b=a[d];if(b&&b.Math==Math)return b}throw Error(\"Cannot find global object\");} var p=l(this),q=typeof Symbol===\"function\"&&typeof Symbol(\"x\")===\"symbol\",r={},t={};function u(a,d,b){if(!b||a!=null){b=t[d];if(b==null)return a[d];b=a[b];return b!==void 0?b:a[d]}} function v(a,d,b){if(d)a:{var c=a.split(\".\");a=c.length===1;var e=c[0],g;!a&&e in r?g=r:g=p;for(e=0;e<c.length-1;e++){var f=c[e];if(!(f in g))break a;g=g[f]}c=c[c.length-1];b=q&&b===\"es6\"?g[c]:null;d=d(b);d!=null&&(a?k(r,c,{configurable:!0,writable:!0,value:d}):d!==b&&(t[c]===void 0&&(a=Math.random()*1E9>>>0,t[c]=q?p.Symbol(c):\"$jscp$\"+a+\"$\"+c),k(g,t[c],{configurable:!0,writable:!0,value:d})))}} var w=q&&typeof u(Object,\"assign\")==\"function\"?u(Object,\"assign\"):function(a,d){if(a==null)throw new TypeError(\"No nullish arg\");a=Object(a);for(var b=1;b<argum"
+  },
+  {
+    "requestId": "89855.3462",
+    "url": "https://www.google.com/ccm/collect?frm=0&ae=g&en=page_view&dl=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&scrsrc=www.googletagmanager.com&rnd=477405196.1773979974&dt=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&auid=279201815.1773553234&navt=r&npa=0&ep.ads_data_redaction=0&gtm=45He63i0v811280540za200zd811280540xea&gcs=G111&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938468~116024733~117484252&apve=1&apvf=f&apvc=1&tft=1773979973628&tfd=667",
+    "status": 200,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3463",
+    "url": "https://www.google.com/ccm/collect?frm=0&en=page_view&dl=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&scrsrc=www.googletagmanager.com&rnd=477405196.1773979974&dt=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&auid=279201815.1773553234&navt=r&npa=0&_tu=CA&gtm=45be63i0v889588731z8811280540za20gzb811280540zd811280540xec&gcs=G111&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938468~116024733~117484252~118128923&apve=1&apvf=f&apvc=0&tids=AW-1041385581&tid=AW-1041385581&tft=1773979973628&tfd=668",
+    "status": 200,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3465",
+    "url": "https://www.google.com/ccm/collect?frm=0&en=page_view&dl=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&scrsrc=www.googletagmanager.com&rnd=477405196.1773979974&dt=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&auid=279201815.1773553234&navt=r&npa=0&_tu=CA&gtm=45be63i0v9225529221z8811280540za20gzb811280540zd811280540xec&gcs=G111&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938469~116024733~117484252~118104773&apve=1&apvf=f&apvc=0&tids=AW-17379723676&tid=AW-17379723676&tft=1773979973628&tfd=668",
+    "status": 200,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3464",
+    "url": "https://www.google.com/ccm/collect?frm=0&ae=g&dl=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&scrsrc=www.googletagmanager.com&rnd=477405196.1773979974&dt=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&auid=279201815.1773553234&navt=r&npa=0&gtm=45be63i0v889588731z8811280540za20gzb811280540zd811280540xea&gcs=G111&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938468~116024733~117484252~118128923&apve=1&apvf=f&apvc=0&tids=AW-1041385581&tid=AW-1041385581&tft=1773979973628&tfd=668",
+    "status": 200,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3455",
+    "url": "https://pixels.spotify.com/v1/config/e3f720c9ea634c87bf4e0d999d919170",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{\"pixelId\":\"e3f720c9ea634c87bf4e0d999d919170\",\"aamFields\":[]}"
+  },
+  {
+    "requestId": "89855.3478",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-20-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3490",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-22-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3472",
+    "url": "https://analytics.twitter.com/1/i/adsct?bci=4&dv=America%2FLos_Angeles%26en-US%2Cen%26Google%20Inc.%26MacIntel%26127%262560%261440%2610%2624%262560%261410%260%26na&eci=3&event=%7B%7D&event_id=fccc3410-aaa9-4e97-9242-d2aba63a74de&integration=gtm&p_id=Twitter&p_user_id=0&pl_id=afa36485-8a1c-4a7d-bed9-0b0f856a8e9e&pt=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&tw_document_href=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&tw_iframe_status=0&tw_pid_src=2&twpid=tw.1773553235089.550052749503394577&txn_id=o4i80&type=javascript&version=2.3.50",
+    "status": 200,
+    "mime": "image/gif",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3484",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-21-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3477",
+    "url": "https://tr.snapchat.com/p?pid=b978d351-dc96-4e5d-8c47-7373b895b13b&ev=PAGE_VIEW&intg=gtm&pids=b978d351-dc96-4e5d-8c47-7373b895b13b&u_c1=4d99478f-bab6-4900-ae56-c5d679ef73f4&cdid=%40-48b8c5b1-4457-427e-b963-7307fe58f5a2&u_sclid=d8daac7d-fef4-4352-a98e-11ce050f9d69&u_scsid=3d66381f-eaba-4dfc-86df-52faa22ca157&gat=AW-17379723676%2CAW-1041385581%2CG-T76Y1M3B5S&gac=9a24ee5a&bg=false&bt=1d53c387&d_a=arm&d_bvs=%5B%2C%7B%22brand%22%3A%22Chromium%22%2C%22version%22%3A%22146.0.7680.153%22%7D%7B%22brand%22%3A%22Not-A.Brand%22%2C%22version%22%3A%2224.0.0.0%22%7D%7B%22brand%22%3A%22Google%20Chrome%22%2C%22version%22%3A%22146.0.7680.153%22%7D%5D&d_os=26.2.0&d_ot=macOS&huah=true&m_dcl=391&m_fcps=244&m_pi=231&m_pl=454&m_pv=2&m_rd=711&m_sh=1440&m_sl=698&m_sw=2560&pl=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&trackId=f5efb084-ad71-47cb-b4d2-8042f5626552&ts=1773979973671&v=3.54.3-2603171656",
+    "status": 200,
+    "mime": "image/png",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3471",
+    "url": "https://t.co/1/i/adsct?bci=4&dv=America%2FLos_Angeles%26en-US%2Cen%26Google%20Inc.%26MacIntel%26127%262560%261440%2610%2624%262560%261410%260%26na&eci=3&event=%7B%7D&event_id=fccc3410-aaa9-4e97-9242-d2aba63a74de&integration=gtm&p_id=Twitter&p_user_id=0&pl_id=afa36485-8a1c-4a7d-bed9-0b0f856a8e9e&pt=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&tw_document_href=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&tw_iframe_status=0&tw_pid_src=2&twpid=tw.1773553235089.550052749503394577&txn_id=o4i80&type=javascript&version=2.3.50",
+    "status": 200,
+    "mime": "image/gif",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3486",
+    "url": "https://www.google.com/pagead/1p-user-list/17379723676/?random=1773979973567&cv=11&fst=1773979200000&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45be63i0v9225529221z8811280540za20gzb811280540zd811280540xec&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938469~116024733~117484252~118104773&u_w=2560&u_h=1440&url=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&frm=0&tiba=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=279201815.1773553234&uaa=arm&uab=64&uafvl=Chromium%3B146.0.7680.153%7CNot-A.Brand%3B24.0.0.0%7CGoogle%2520Chrome%3B146.0.7680.153&uamb=0&uam=&uap=macOS&uapv=26.2.0&uaw=0&_tu=CA&data=event%3Dgtag.config&rfmt=3&fmt=3&is_vtc=1&cid=CAQSvgEABaugfbhlUkHSpzBRyYpxH9fXdbGKObOKw_IVZQ6eyHQG27DTg7siGS3ZL006mP-0hdMhcvb67AkQyGQH3JWYd9hbCXMx5GDuPcnfm2tos7M4O9nE2NabNRL3EqNnypup2f2UDB5RSTDntAUCMmzDD1twlrlIBCjHN28NVdHPNyQjJ3cZUKxNOBbm-bXUlO6b9MnsyPdfJ29vN8RZMLa2at0E1iTmmkKTWBFNoO3_cHmzG7mzMdz4QvEujamV&random=2244690898&rmt_tld=0&ipr=y",
+    "status": 200,
+    "mime": "image/gif",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3485",
+    "url": "https://www.google.com/pagead/1p-user-list/1041385581/?random=1773979973559&cv=11&fst=1773979200000&bg=ffffff&guid=ON&async=1&gtm=45be63i0v889588731z8811280540za20gzb811280540zd811280540xea&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938468~116024733~117484252~118128923&u_w=2560&u_h=1440&url=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&frm=0&tiba=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=279201815.1773553234&uaa=arm&uab=64&uafvl=Chromium%3B146.0.7680.153%7CNot-A.Brand%3B24.0.0.0%7CGoogle%2520Chrome%3B146.0.7680.153&uamb=0&uam=&uap=macOS&uapv=26.2.0&uaw=0&rfmt=3&fmt=3&is_vtc=1&cid=CAQSvgEABaugfZwK7DchRYQbIuFSCXrZ2SM4uuJZB6B6_0gsC7t5aa9BGcC-mSk-79iDyL1FaVfRfkZ3Dg1WaFZ1YzrZgZvdBEzt7u3jp_qyPPfLnFhEegOesfSxlUfinH3Svrl9XSyaP870Go96b8ODwdSmZsucUkg3Kv9qhqzEubpafwNx-3zFoeJQM5XUIAGLzpF-zZmyPDcJwo97WbuDjV9btaWX0CV3uWRT5kX9-GMailf1dO2olm7xEyD_CuqE&random=3420711211&rmt_tld=0&ipr=y",
+    "status": 200,
+    "mime": "image/gif",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3487",
+    "url": "https://www.google.com/pagead/1p-user-list/1041385581/?random=1773979973558&cv=11&fst=1773979200000&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45be63i0v889588731z8811280540za20gzb811280540zd811280540xec&gcd=13v3v3_3v5l1&dma=0&tag_exp=103116026~103200004~115938466~115938468~116024733~117484252~118128923&u_w=2560&u_h=1440&url=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&frm=0&tiba=Regal%20Sherman%20Oaks%20Galleria%20Movie%20Tickets%20and%20Showtimes%20%7C%20Regal&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=279201815.1773553234&uaa=arm&uab=64&uafvl=Chromium%3B146.0.7680.153%7CNot-A.Brand%3B24.0.0.0%7CGoogle%2520Chrome%3B146.0.7680.153&uamb=0&uam=&uap=macOS&uapv=26.2.0&uaw=0&_tu=CA&data=event%3Dgtag.config&rfmt=3&fmt=3&is_vtc=1&cid=CAQSvgEABaugfWspQv8RfdBP3J4q6U66DLuJEHEuB7Pky0QYzmvqUGlrIpbWQtlCVBAVwRoZeEBa-JNMssXKAJR6HnQGQp9eE7-sBUXDkoe4dciEcSbdEEIzbl0k5ooHRAs2xG4kRIUIhLCOGRD4tyh1bTZI6pWD6vysINiG0gqLgvX_MpvZxFXpKntjQho4pu0fezkgp49duXDR6qlHgYStipp6jmdn8XiV1_KAFFwBIXwXIGF_ovKKfCWuYmSFVYaJ&random=3058003072&rmt_tld=0&ipr=y",
+    "status": 200,
+    "mime": "image/gif",
+    "type": "Image",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3488",
+    "url": "https://d.adroll.com/consent/check/JRDEDPRYSBHZRBEXHSP6ZY?adroll_fpc=255202ae7affab9d73edef8e738201d9-1773553235854&pv=38625896012.31001&arrfrr=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&_s=8ed234fbd4e169819d456de352b184ed&_b=2",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Script",
+    "bodyPreview": "window.adroll_exp_list = [\"nofledge\",\"block33a\"]; __adroll.set_consent(true, false, false, \"US\", \"US\", {\"arconsent\":null,\"euconsent\":null,\"purposes\":null,\"eucookie\":null,\"banner\":\"banner_declined\",\"ipgeo\":{\"country_code\":\"US\",\"region_name\":\"California\"},\"etld\":\"regmovies.com\",\"max_vendor_id\":4202,\"networks\":[\"a\",\"g\",\"f\",\"aol\",\"r\",\"b\",\"x\",\"l\",\"d\",\"k\",\"kx\",\"freespee\",\"bcd\",\"o\",\"c\",\"u\",\"n\",\"index\",\"pubmatic\",\"taboola\",\"outbrain\",\"narrative\",\"i\",\"m\",\"w\",\"st\",\"cy\",\"sib\",\"triplelift\",\"linkedin\",\"pixalate\",\"oath\",\"onevideo\",\"experian\",\"bombora\",\"innovid\",\"eyeota\"],\"tpc\":\"5AIPRK1zTSA5LSF9VAp0P3ptfUNAejM7MxwPXU12aSV3eFoIcTo\",\"isipv6\":false});"
+  },
+  {
+    "requestId": "6984582FFFBDF7F5DD078C96F77EF0AE",
+    "url": "https://insight.adsrvr.org/track/cei?advertiser_id=prioimw&cookie_sync=1&upv=3.0.0&upid=vvptmi5&ref=https://www.regmovies.com/theatres/regal-sherman-oaks-galleria-1483",
+    "status": 200,
+    "mime": "text/html",
+    "type": "Document",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3491",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-22-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3466",
+    "url": "https://pixels.spotify.com/v1/ingest",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{\"response\":\"e3f720c9ea634c87bf4e0d999d919170\"}"
+  },
+  {
+    "requestId": "89855.3480",
+    "url": "https://analytics.tiktok.com/api/v2/pixel",
+    "status": 200,
+    "mime": "text/plain",
+    "type": "Ping",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3492",
+    "url": "https://d.adroll.com/segment/JRDEDPRYSBHZRBEXHSP6ZY/PYQUDK7XJNH6JLGT3QTJSC?adroll_fpc=255202ae7affab9d73edef8e738201d9-1773553235854&pv=38625896012.31001&arrfrr=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483&cookie=JRDEDPRYSBHZRBEXHSP6ZY%3A20%7CPYQUDK7XJNH6JLGT3QTJSC%3A20&adroll_s_ref=&keyw=&p0=570&adroll_external_data=&adroll_version=2.0",
+    "status": 200,
+    "mime": "image/gif",
+    "type": "XHR",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3496",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-23-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3497",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-23-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3482",
+    "url": "https://rs.eu1.fullstory.com/rec/page",
+    "status": 200,
+    "mime": "application/json",
+    "type": "XHR",
+    "bodyPreview": "{\"Consented\":false,\"CookieDomain\":\"regmovies.com\",\"PrivacyHash\":\"\",\"UserUUID\":\"64ace63e-5a88-447d-a147-ec4991330080\",\"SessionUUID\":\"f15381c2-2943-4faf-addd-8a9774a5ba89\",\"PageUUID\":\"b184df3b-bb1c-4b01-bd0e-d68ebc7d55e4\",\"UserIntId\":\"0\",\"SessionIntId\":\"0\",\"PageIntId\":\"0\",\"EmbedToken\":\"\",\"PageStart\":1773979973788,\"IsNewSession\":false,\"Flags\":{\"AjaxFetch\":true,\"AjaxWatcher\":true,\"CaptureAnimations\":true,\"ConsoleWatcher\":true,\"FetchChildIntegrations\":true,\"FetchIntegrations\":true,\"GetCurrentSession\":true,\"UseBufferedPO\":true,\"UseClientSideId\":true,\"UseCompression\":true,\"UseDwellTime\":true,\"UseLZEncoding\":true,\"UseStatelessConsent\":true,\"UseStaticSettings\":true,\"UseTreeWalker\":true},\"GCLBSubdomain\":\"rs\",\"Blocks\":[],\"Watches\":[],\"AjaxFetchEnabled\":true,\"AjaxWatcherEnabled\":true,\"ConsoleWatcherEnabled\":true,\"GetCurrentSessionEnabled\":true,\"ResourceUploadingEnabled\":false,\"WhitelistElementsEnabled\":false,\"ElementBlocks\":[],\"ElementDeferreds\":[],\"ElementKeeps\":[],\"ElementWatches\":[],\"UrlKeeps\":[],\"DwellTime\":0,\"AjaxWatches\":[],\"OrgSettings\":{\"AttributeBlocklist\":[],\"HttpRequestHeadersAllowlist\":[],\"HttpResponseHeadersAllowlist\":[],\"MaxAjaxPayloadLength\":0,\"MaxConsoleLogPerPage\":0,\"MaxPerfMa"
+  },
+  {
+    "requestId": "89855.3500",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-24-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3501",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-24-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3503",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-25-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3502",
+    "url": "https://analytics.tiktok.com/api/v2/pixel/act",
+    "status": 200,
+    "mime": "text/plain",
+    "type": "Ping",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3505",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-26-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3507",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-27-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3508",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-25-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3834",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-28-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Fetch",
+    "bodyPreview": "{}"
+  },
+  {
+    "requestId": "89855.3901",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-27-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3900",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-26-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3973",
+    "url": "https://www.regmovies.com/api/theatreCurfews?theatreCode=1483&date=03-28-2026",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Other",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3903",
+    "url": "https://www.google-analytics.com/privacy-sandbox/register-conversion?_c=1&cid=1717596423.1773553231&dma=0&en=view_item&gcs=G111&gtm=45je63i0v888337384z8811280540za20gzb811280540zd811280540&npa=0&tid=G-T76Y1M3B5S&dl=https%3A%2F%2Fwww.regmovies.com%3F",
+    "status": 204,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3905",
+    "url": "https://www.google-analytics.com/privacy-sandbox/register-conversion?_c=1&cid=1717596423.1773553231&dma=0&en=view_item&gcs=G111&gtm=45je63i0v888337384z8811280540za20gzb811280540zd811280540&npa=0&tid=G-T76Y1M3B5S&dl=https%3A%2F%2Fwww.regmovies.com%3F",
+    "status": 204,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3904",
+    "url": "https://dev.visualwebsiteoptimizer.com/events/t?en=gtm.view_item&a=1116122&_cu=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Ping",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3902",
+    "url": "https://dev.visualwebsiteoptimizer.com/events/t?en=gtm.view_item&a=1116122&_cu=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Ping",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3906",
+    "url": "https://dev.visualwebsiteoptimizer.com/events/t?en=gtm.view_item&a=1116122&_cu=https%3A%2F%2Fwww.regmovies.com%2Ftheatres%2Fregal-sherman-oaks-galleria-1483",
+    "status": 200,
+    "mime": "application/javascript",
+    "type": "Ping",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.3907",
+    "url": "https://www.google-analytics.com/privacy-sandbox/register-conversion?_c=1&cid=1717596423.1773553231&dma=0&en=view_item&gcs=G111&gtm=45je63i0v888337384z8811280540za20gzb811280540zd811280540&npa=0&tid=G-T76Y1M3B5S&dl=https%3A%2F%2Fwww.regmovies.com%3F",
+    "status": 204,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "089E033DB44B4B4CBFD37E319FE68791",
+    "url": "https://insight.adsrvr.org/track/realtimeconversion",
+    "status": 200,
+    "mime": "application/json",
+    "type": "Preflight",
+    "bodyPreview": ""
+  },
+  {
+    "requestId": "89855.4040",
+    "url": "https://insight.adsrvr.org/track/realtimeconversion",
+    "status": 200,
+    "mime": "application/json",
+    "type": "XHR",
+    "bodyPreview": "{\"Message\":null,\"EventResponses\":[]}"
+  },
+  {
+    "requestId": "89855.4039",
+    "url": "https://rs.eu1.fullstory.com/rec/bundle/v2?OrgId=o-72ZF-eu1&UserId=64ace63e-5a88-447d-a147-ec4991330080&SessionId=f15381c2-2943-4faf-addd-8a9774a5ba89&PageId=58d2a949-152d-44d6-830a-3303e75ba971&Seq=4&ClientTime=1773979974606&CompiledVersion=ba8d0ae9b2475df54a314b35ab93d9d8a76336f3&PageStart=1773979930965&PrevBundleTime=1773979941094&IsNewSession=true&DeltaT=1587&ContentEncoding=gzip",
+    "status": 200,
+    "mime": "application/json",
+    "type": "XHR",
+    "bodyPreview": "{\"BundleTime\":1773979974726}\n"
+  },
+  {
+    "requestId": "89855.4041",
+    "url": "https://www.regmovies.com/rb_bf41505zgt?sc=5&si=v_4_srv_2_sn_4AMFTDM70O5CA18MKTGCP7HLN4DIJ5OC_perc_100000_ol_0_mul_1_app-3A1f36f465a6bd3eec_0&ty=js&pv=4&ai=1f36f465a6bd3eec&en=4w5b027f&cr=1773971288428&av=1.333.13&cy=event&bc=1991552449&co=snappy&st=1773979975429&ss=0&qc=419157491&end=1",
+    "status": 202,
+    "mime": "text/plain",
+    "type": "Fetch",
+    "bodyPreview": "{\"status\":\"ERROR\",\"handler\":\"OA\",\"errorCode\":6000,\"errorReason\":\"Blocked by cost control\",\"dynamicConfig\":{\"state\":\"priority=high\"}}"
+  },
+  {
+    "requestId": "89855.4042",
+    "url": "https://rs.eu1.fullstory.com/rec/bundle/v2?OrgId=o-72ZF-eu1&UserId=64ace63e-5a88-447d-a147-ec4991330080&SessionId=f15381c2-2943-4faf-addd-8a9774a5ba89&PageId=b184df3b-bb1c-4b01-bd0e-d68ebc7d55e4&Seq=1&ClientTime=1773979976394&CompiledVersion=ba8d0ae9b2475df54a314b35ab93d9d8a76336f3&PageStart=1773979973867&PrevBundleTime=0&LastActivity=1968&ContentEncoding=gzip",
+    "status": 200,
+    "mime": "application/json",
+    "type": "XHR",
+    "bodyPreview": "{\"BundleTime\":1773979976491}\n"
+  },
+  {
+    "requestId": "89855.4043",
+    "url": "https://rs.eu1.fullstory.com/rec/bundle/v2?OrgId=o-72ZF-eu1&UserId=64ace63e-5a88-447d-a147-ec4991330080&SessionId=f15381c2-2943-4faf-addd-8a9774a5ba89&PageId=b184df3b-bb1c-4b01-bd0e-d68ebc7d55e4&Seq=2&ClientTime=1773979978890&CompiledVersion=ba8d0ae9b2475df54a314b35ab93d9d8a76336f3&PageStart=1773979973867&PrevBundleTime=1773979976491&LastActivity=4465&ContentEncoding=gzip",
+    "status": 200,
+    "mime": "application/json",
+    "type": "XHR",
+    "bodyPreview": "{\"BundleTime\":1773979978983}\n"
+  }
+]
