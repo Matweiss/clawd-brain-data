@@ -1,149 +1,191 @@
 {
-  "updatedAt": "2026-03-21T18:44:10.167Z",
+  "updatedAt": "2026-03-22T19:23:04.021Z",
   "activeProjects": [
     {
-      "text": "Sarah Art Assistant",
+      "text": "LCM + Telegram Topics setup (lossless-claw plugin)",
       "priority": "this_week",
-      "createdAt": "2026-03-21T18:44:10.167Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T17:38:36.593Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "Mission Control dashboard",
+      "text": "Camera AI: Theo/Diggy + person detection with improved notifications",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T17:11:50.384Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "Web search routing hardening (Perplexity-only)",
+      "text": "Daily Morning Dashboard — COMPLETE (auto-sends 8am PST)",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:23:35.695Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "Memory-assist MVP rollout",
+      "text": "Landing page auto-update system (pending)",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:23:35.695Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "Mission Control enhancements",
+      "text": "Product upload workflow automation (pending)",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:23:35.695Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "Regal authoritative per-date extraction/writer",
+      "text": "Birthday program launch (pending)",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:23:35.695Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     }
   ],
   "whereWeLeftOff": [
     {
+      "text": "Bachelor party this week at Manor on Valle Vista, Phoenix",
+      "priority": "this_week",
+      "createdAt": "2026-03-22T19:23:04.021Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
+    },
+    {
+      "text": "Floor plan captured: analyzing camera/ESP placement for Theo tracking and security",
+      "priority": "this_week",
+      "createdAt": "2026-03-22T19:13:59.062Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
+    },
+    {
+      "text": "Shopify API token updated with secure scopes - connection tested and working",
+      "priority": "this_week",
+      "createdAt": "2026-03-22T18:57:43.109Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
+    },
+    {
+      "text": "PEMDAS for today: (1) Shopify API token with full scopes, (2) ESP layout + camera placement (room by room), (3) Camera installs to HA + Frigate",
+      "priority": "this_week",
+      "createdAt": "2026-03-22T17:25:31.030Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
+    },
+    {
+      "text": "Mat confirmed channel open — I can ping proactively anytime",
+      "priority": "this_week",
+      "createdAt": "2026-03-22T16:23:35.695Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
+    },
+    {
+      "text": "Weekend projects: (1) Get new Shopify token with full read+write scopes for Sarah, (2) ESP32 adjustments and updates for Theo tracking",
+      "priority": "this_week",
+      "createdAt": "2026-03-22T05:36:41.377Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
+    },
+    {
       "text": "Agent identity established, system prompt created with proactive/cheerleader personality, shared memory system implemented for team continuity",
       "priority": "this_week",
       "createdAt": "2026-03-21T18:44:10.167Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
       "text": "Memory polish pass applied (dedupe, caps, priority tags, weekly prune command)",
       "priority": "now",
       "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
       "text": "Browser validation passed after deploy (task add persisted in shared storage)",
       "priority": "this_week",
       "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
       "text": "Foundry extension validator fixed enough to write extensions again (smoke extension created)",
       "priority": "this_week",
       "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
       "text": "Dashboard tasks now persist via shared localStorage key mission-control-tasks",
       "priority": "this_week",
       "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
       "text": "Removed XAI_API_KEY from active OpenClaw config and restarted gateway",
       "priority": "this_week",
       "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
       "text": "Smoke-tested web_search with provider=perplexity across multiple queries",
       "priority": "this_week",
       "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
       "text": "Crystallized browser timeout retry guard and activated via foundry restart",
       "priority": "this_week",
       "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
       "text": "Foundry extension writer appears broken with validation error: 'Cannot use import statement outside a module'",
       "priority": "this_week",
       "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     }
   ],
   "sopTruths": [
     {
-      "text": "Before push/deploy, verify UI behavior manually in browser after reload",
+      "text": "Option A: Preview BEFORE + wait for approval → execute with BEFORE/AFTER screenshots",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:02:26.070Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "Use memory-checkpoint.cjs at work-block boundaries to keep memory-assist fresh",
+      "text": "All customer-facing changes require preview and explicit approval",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:02:26.070Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "Use strict execution mode: run tool first, then report output",
+      "text": "Landing page automation = curating available pieces, not just marking sold",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:02:26.070Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "Use grep -Rni fallback when rg is unavailable",
+      "text": "Screenshot workflow: BEFORE (current state) → PROPOSED CHANGES → AFTER (executed)",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:02:26.070Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "If browser tool times out repeatedly, restart gateway before retry loops",
+      "text": "Human-in-the-loop required for all actions that affect customer experience",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
-    },
-    {
-      "text": "Keep web_search provider pinned to perplexity in openclaw.json",
-      "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:02:26.070Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     }
   ],
   "notes": [
     {
-      "text": "Tomorrow kickoff: (1) confirm persisted tasks after fresh browser open, (2) continue mission control feature pass, (3) tidy Foundry unresolved learnings backlog",
+      "text": "Mat's Telegram channel (8001393940) is now open — can message proactively",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:23:35.695Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     },
     {
-      "text": "Historical recurring failure entries may persist in Foundry even after fixes; validate with fresh smoke tests",
+      "text": "Daily Morning Dashboard v1.0 complete — auto-sends 8am PST to Sarah",
       "priority": "this_week",
-      "createdAt": "2026-03-20T20:17:15.398Z",
-      "updatedAt": "2026-03-21T18:44:10.167Z"
+      "createdAt": "2026-03-22T16:23:35.695Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
+    },
+    {
+      "text": "Pending: Mat to add read_analytics scope for traffic data",
+      "priority": "this_week",
+      "createdAt": "2026-03-22T16:23:35.695Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
+    },
+    {
+      "text": "API request documented in /projects/API_REQUEST_FOR_MAT.md",
+      "priority": "this_week",
+      "createdAt": "2026-03-22T16:23:35.695Z",
+      "updatedAt": "2026-03-22T19:23:04.021Z"
     }
   ]
 }
