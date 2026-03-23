@@ -1,0 +1,5 @@
+{
+  "snapshot": "2026-03-23",
+  "githubSafe": true,
+  "note": "Original full manifest existed in the local restore-grade snapshot. Secret-bearing and local-only snapshot contents were intentionally excluded from the GitHub-safe version."
+}
