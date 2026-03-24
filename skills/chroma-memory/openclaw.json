@@ -1,0 +1,9 @@
+{
+"name": "chroma-memory",
+"version": "1.0.1",
+"description": "Memory tools backed by local JSONL storage (temporary replacement for broken ChromaDB path)",
+"tools": ["memory_search", "memory_add"],
+"config": {
+"storageFile": "~/.openclaw/workspace/memory/store/memories.jsonl"
+}
+}
