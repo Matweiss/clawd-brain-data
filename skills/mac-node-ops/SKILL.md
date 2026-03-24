@@ -27,8 +27,8 @@ bash scripts/mac-node-ops.sh run -- 'uname -a'
 
 ## Default node targeting
 
-- The wrapper auto-detects the first connected node whose name contains `MacBook`, `Mac`, or `macOS`.
-- Override target explicitly with `--node <id>` when multiple Macs exist.
+- The wrapper is pinned to Mat's current Mac node ID by default.
+- Override target explicitly with `--node <id>` or `MAC_NODE_ID=<id>` when multiple Macs exist.
 - Discover details with:
 
 ```bash

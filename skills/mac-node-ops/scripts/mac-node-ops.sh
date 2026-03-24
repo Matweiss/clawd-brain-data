@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-NODE_ID=""
+DEFAULT_NODE_ID="faea6e83a7e54cf758b8de36dfaf0db8284f7959718c2dbe86c8b2bf2d39ad6b"
+NODE_ID="${MAC_NODE_ID:-$DEFAULT_NODE_ID}"
 ACTION="${1:-status}"
 if [[ $# -gt 0 ]]; then shift; fi
 

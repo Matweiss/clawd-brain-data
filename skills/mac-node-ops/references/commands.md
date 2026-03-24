@@ -40,6 +40,6 @@ bash scripts/mac-node-ops.sh run -- 'defaults read com.apple.loginwindow 2>/dev/
 
 ## Notes
 
-- Use `--node <id>` whenever auto-detection is ambiguous.
+- The wrapper currently defaults to Mat's Mac node ID and can be overridden with `--node <id>` or `MAC_NODE_ID=<id>`.
 - Keep raw commands concise and quote them as a single shell string.
 - Prefer `openclaw nodes run` over separate SSH if the node is already paired and connected.
