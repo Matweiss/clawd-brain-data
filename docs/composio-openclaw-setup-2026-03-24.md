@@ -103,6 +103,38 @@ So:
 - **Composio status:** working
 - **embedded local smoke test:** blocked by separate agent auth/header issue
 
+## Verified connection inventory (live query)
+Explicitly confirmed via live `COMPOSIO_MANAGE_CONNECTIONS` / discovery checks:
+
+### Active and usable
+- **GitHub** — active
+  - login: `Matweiss`
+  - profile: `https://github.com/Matweiss`
+  - public repos: 15
+  - private repos: 5
+- **ElevenLabs** — active
+  - returned live account/model catalog data
+- **Shopify** — active
+- **Supabase** — active
+  - surfaced projects:
+    - `Clawdv2` — `ACTIVE_HEALTHY`
+    - `craftable-onboarding` — `INACTIVE`
+- **Vercel** — active
+  - username: `matweiss`
+  - email: `mat.weiss@att.net`
+
+### Active connection, but needs attention
+- **GroqCloud** — connection marked active, but current user info returned:
+  - `Invalid API Key`
+
+### Active connection, but likely limited
+- **OpenRouter** — active
+  - total credits: 0
+  - total usage: 0
+
+### Not confirmed in Composio
+- **PerplexityAI** — not cleanly surfaced as a confirmed Composio toolkit/connection during these checks
+
 ## Recommendation
 For future setup docs, treat the current working path as:
 1. install plugin
@@ -110,4 +142,5 @@ For future setup docs, treat the current working path as:
 3. allow `composio` in `tools.alsoAllow`
 4. ensure `plugins.entries.composio.config.consumerKey` exists in the actual JSON config
 5. restart gateway
-6. verify with `openclaw plugins inspect composio --json`
+6. verify plugin registration / MCP connectivity
+7. verify important toolkit connections individually with connection-management checks
