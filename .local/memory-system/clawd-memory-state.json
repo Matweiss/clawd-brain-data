@@ -1,0 +1,39 @@
+{
+  "projects": [
+    {
+      "name": "Build Memory System",
+      "slug": "build-memory-system",
+      "status": "completed",
+      "priority": "high",
+      "created": "2026-03-23",
+      "updated": "2026-03-23",
+      "file": "/root/.openclaw/workspace/memory/archive/projects/2026-03-23-build-memory-system.md"
+    },
+    {
+      "name": "ESP32 Optimization",
+      "slug": "esp32-optimization",
+      "status": "blocked",
+      "priority": "high",
+      "created": "2026-03-23",
+      "updated": "2026-03-23",
+      "file": "/root/.openclaw/workspace/memory/archive/projects/2026-03-23-esp32-optimization.md"
+    },
+    {
+      "name": "Camera Planning",
+      "slug": "camera-planning",
+      "status": "planned",
+      "priority": "medium",
+      "created": "2026-03-23",
+      "updated": "2026-03-23",
+      "file": "/root/.openclaw/workspace/memory/archive/projects/2026-03-23-camera-planning.md"
+    }
+  ],
+  "lastDigest": "2026-03-23",
+  "created": "2026-03-23",
+  "version": "1.0.0",
+  "notes": [
+    "Build memory system - TOP PRIORITY (2026-03-23)",
+    "ESP32 optimization - move den sensor to art room (2026-03-23)",
+    "Camera planning - gameplan optimal positions (2026-03-23)"
+  ]
+}

@@ -330,6 +330,34 @@ Friday 9 AM: Identify new pieces → Draft newsletter → Send to Sarah → Satu
 
 ---
 
+## Appendix B: Tool Stack (Integration Targets)
+
+**Documented:** 2026-03-23  
+**Source:** Mat confirmed these are Sarah's active business tools
+
+### Shipping & Fulfillment
+- **Pirate Ship** — Primary shipping platform
+
+### Marketing Automation  
+- **Manychat** — Instagram DM automation, Messenger bots, SMS flows
+
+### Social Media Platforms
+- **Instagram** — Primary visual platform (Shop, Stories, Posts, Reels)
+- **TikTok** — Short-form video content
+- **Facebook** — Page management, groups
+- **Pinterest** — Visual discovery, auto-pinning
+- **Threads** — Text-first content
+- **Reddit** — Community engagement (requires careful approach)
+
+### Integration Roadmap
+1. **Phase 1:** Pirate Ship, Instagram, Manychat
+2. **Phase 2:** Pinterest, TikTok, Facebook  
+3. **Phase 3:** Threads, Reddit (with human approval)
+
+**Full details:** See `sarah-tool-stack.md`
+
+---
+
 *Design spec based on interview conducted 2026-03-21*  
 *Agent to be built using Shopify Admin API + OpenClaw*  
 *Human-in-the-loop for all customer-facing actions*
