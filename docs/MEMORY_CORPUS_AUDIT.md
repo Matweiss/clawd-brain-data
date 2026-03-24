@@ -44,14 +44,15 @@ These are good semantic-memory sources.
 ### KEEP BUT DEPRIORITIZE / MOVE OUT OF HOT MEMORY CORPUS
 These may be useful references, but they pollute general recall.
 
-- `memory/BUILD_SUMMARY.md`
-- `memory/MISSION_CONTROL_INTEGRATION.md`
+- `docs/memory-system/BUILD_SUMMARY.md` _(moved)_
+- `docs/memory-system/MISSION_CONTROL_INTEGRATION.md` _(moved)_
 - `memory/guides/obsidian-setup.md`
 - `memory/obsidian-sync-setup.md`
 - `memory/corepower-schedule-process.md`
 - `memory/regal-sherman-oaks-process.md`
 - `memory/media-archive-index.md`
 - `memory/digest/digest-2026-03-23.md`
+- `data/memory-system/schedule-current.*` _(moved)_
 
 ### ARCHIVE / EXCLUDE FROM SEMANTIC HOT PATH
 These are implementation artifacts, generated state, or storage backends — not memory content.
