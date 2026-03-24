@@ -119,9 +119,9 @@ All jobs self-heal expired tokens automatically:
 ## Retrieval Anchor Notes
 For fast recall, prefer these entity anchors:
 - **Mat core facts:** `memory/facts-mat-core.md`
-- **Lucra:** this file + `memory/facts-mat-core.md`
-- **GitHub repos:** this file + `memory/facts-mat-core.md`
-- **CRM / dashboard / voice / browser coworking:** this file + `memory/facts-mat-core.md`
+- **Career / Lucra:** `memory/facts-career-core.md`
+- **GitHub / CRM / dashboard / voice / browser coworking:** `memory/facts-infra-core.md`
+- **Pets / home:** `memory/facts-pets-home.md`
 - **Pets:** Theo and Diggy are the high-priority pet anchors
 
 ## Separation Rule

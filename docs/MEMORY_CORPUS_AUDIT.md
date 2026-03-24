@@ -48,8 +48,8 @@ These may be useful references, but they pollute general recall.
 - `docs/memory-system/MISSION_CONTROL_INTEGRATION.md` _(moved)_
 - `memory/guides/obsidian-setup.md`
 - `memory/obsidian-sync-setup.md`
-- `memory/corepower-schedule-process.md`
-- `memory/regal-sherman-oaks-process.md`
+- `docs/reference/processes/corepower-schedule-process.md` _(moved)_
+- `docs/reference/processes/regal-sherman-oaks-process.md` _(moved)_
 - `memory/media-archive-index.md`
 - `memory/digest/digest-2026-03-23.md`
 - `data/memory-system/schedule-current.*` _(moved)_
