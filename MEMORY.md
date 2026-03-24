@@ -108,3 +108,23 @@ All jobs self-heal expired tokens automatically:
 ---
 
 <!-- Add significant events, decisions, and insights here over time. -->
+
+## Personal Facts (March 2026)
+- **Wife:** Sarah
+- **Dog:** Diggy (black dog, orange collar)
+- **Cat:** Theo (automated feeding via Home Assistant `button.theo_s_food_feed`)
+
+---
+
+## Retrieval Anchor Notes
+For fast recall, prefer these entity anchors:
+- **Mat core facts:** `memory/facts-mat-core.md`
+- **Lucra:** this file + `memory/facts-mat-core.md`
+- **GitHub repos:** this file + `memory/facts-mat-core.md`
+- **CRM / dashboard / voice / browser coworking:** this file + `memory/facts-mat-core.md`
+- **Pets:** Theo and Diggy are the high-priority pet anchors
+
+## Separation Rule
+- Keep **Sarah project/art-assistant work** in `memory/projects/` and shared Sarah-agent memory.
+- Keep **Mat personal/core memory** in `MEMORY.md`, daily notes, and `memory/facts-mat-core.md`.
+- Do **not** merge Sarah project memory into Mat core recall unless explicitly asked.
