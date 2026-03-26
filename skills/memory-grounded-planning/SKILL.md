@@ -9,6 +9,11 @@ Give context-first answers.
 
 Read `references/relationship-first-policy.md` when the user is expressing expectations about personalization, continuity, or why they use the assistant instead of generic search.
 
+Read these references as needed:
+- `references/event-capture-format.md` for logging future plans into canonical event memory
+- `references/prep-mode-enrichment.md` for packing, prep, and "what am I forgetting" questions
+- `references/general-context-routing.md` for broader advice/prioritization questions where continuity changes the answer
+
 ## Use this skill when
 Trigger on questions like:
 - What do I have going on today / this week?
@@ -49,11 +54,12 @@ Do not answer with generic suggestions until you have checked memory for the lik
 
 2. **Read the best supporting snippets/files**
    - Use `memory_get` when memory search surfaces relevant files.
-   - Prefer exact notes, daily logs, event notes, and decision records over generic summaries.
+   - Prefer exact notes, daily logs, event notes, decision records, and canonical rolling files over generic summaries.
    - Minimum recall set for schedule-style questions when relevant:
      - `MEMORY.md`
      - today's daily memory file
      - yesterday's daily memory file
+     - `memory/upcoming-events.md`
      - the relevant `memory/*-events.md` file if surfaced
 
 3. **Infer the likely referent**
@@ -75,7 +81,11 @@ Do not answer with generic suggestions until you have checked memory for the lik
    - Use weather lookup when destination weather matters.
    - For project/strategy questions, consider current goals, blockers, likely tradeoffs, and previous decisions.
 
-6. **Answer specifically**
+6. **Capture future events when learned**
+   - If the conversation reveals a future dated plan likely to matter later, log it into `memory/upcoming-events.md` using the event-capture format reference.
+   - If helpful, also note it in the day's memory file.
+
+7. **Answer specifically**
    - Give advice for the actual remembered context.
    - Mention the inferred referent explicitly.
    - Include specific reminders tied to what the user already shared.

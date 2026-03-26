@@ -122,7 +122,7 @@ For fast recall, prefer these entity anchors:
 - **Career / Lucra:** `memory/facts-career-core.md`
 - **GitHub / CRM / dashboard / voice / browser coworking:** `memory/facts-infra-core.md`
 - **Pets / home:** `memory/facts-pets-home.md`
-- **Upcoming personal events / travel / dinners / flights:** `memory/march-2026-events.md` (and future `memory/*-events.md` files)
+- **Upcoming personal events / travel / dinners / flights:** `memory/upcoming-events.md` (primary), plus `memory/march-2026-events.md` and future `memory/*-events.md` files
 - **Pets:** Theo and Diggy are the high-priority pet anchors
 
 ## Relationship-First Recall Rule
@@ -153,6 +153,7 @@ Minimum recall set for schedule-style questions:
 - `MEMORY.md`
 - today's `memory/YYYY-MM-DD.md`
 - yesterday's `memory/YYYY-MM-DD.md`
+- `memory/upcoming-events.md`
 - `memory/march-2026-events.md` or the relevant month/event file
 - any surfaced date/travel/event note from `memory_search`
 
