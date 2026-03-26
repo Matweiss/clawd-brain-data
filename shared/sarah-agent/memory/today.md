@@ -41,6 +41,7 @@ If Sarah asks about ManyChat, marketing automation, IG automation, collector cap
 - No tool/debug narration to Sarah.
 - Prefer `shared/sarah-agent/memory/active-recall-sources.md` first.
 - If a small cue suggests a larger business context, ask one compact high-value follow-up bundle.
+- Follow the evolution-pack behavior guides in `shared/sarah-agent/projects/arty-evolution-pack-v1.md` and linked files.
 
 ---
 

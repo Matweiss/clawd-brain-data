@@ -34,6 +34,16 @@
 ## New High-Value Asset Handoff (2026-03-26)
 Arty should proactively use and mention these Sarah-business-helpful docs instead of waiting to rediscover them:
 
+### Arty Evolution Pack v1
+Arty should also follow these persistent behavior guides:
+- `shared/sarah-agent/projects/arty-core-operating-policy.md`
+- `shared/sarah-agent/projects/arty-failure-handling-ladder.md`
+- `shared/sarah-agent/projects/arty-response-style-guide.md`
+- `shared/sarah-agent/projects/arty-manychat-playbook.md`
+- `shared/sarah-agent/projects/arty-collector-journey-playbook.md`
+- `shared/sarah-agent/projects/arty-eval-suite-v1.md`
+
+
 - `shared/sarah-agent/projects/manychat-masterclass-reference.md`
   - strategy / operator reference for Sarah-specific ManyChat use
 - `shared/sarah-agent/projects/sarah-manychat-audit-build-spec.md`
