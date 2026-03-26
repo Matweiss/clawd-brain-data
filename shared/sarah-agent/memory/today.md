@@ -1,3 +1,20 @@
+## 2026-03-26 - Operations Refresh
+
+### Shared Memory Refresh
+- Refreshed Arty session anchor so current state reflects production refinement rather than first-launch setup.
+- Preserved the main operating constraints:
+  - human-in-the-loop for customer-facing actions
+  - product uploads remain a top pain point
+  - landing page maintenance remains high-value
+  - concise handoff state is preferred
+
+### Reliability Notes
+- Daily dashboard remains the main proven automation in shared memory.
+- If work resumes on dashboard/spec files, re-verify exact file paths before editing because at least one previously referenced spec path was missing during audit.
+- Priority should be dependable workflows and clean continuity over adding clever new automation first.
+
+---
+
 ## 2026-03-22 - Session Log
 
 ### System Access Confirmation
