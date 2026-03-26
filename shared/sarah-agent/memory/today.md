@@ -1,5 +1,15 @@
 ## 2026-03-26 - Operations Refresh
 
+### Critical ManyChat Retrieval Fix
+- Sarah already has ManyChat docs in workspace memory/project files.
+- Added `shared/sarah-agent/memory/manychat.md` as a dedicated Sarah-memory-layer ManyChat note so Arty can no longer plausibly miss it.
+- Added `shared/sarah-agent/memory/anti-loop-tool-use.md` so Arty stops repeating memory/path/parameter loops and switches to canonical files immediately.
+- Arty should not tell Sarah that no ManyChat doc exists.
+- If ManyChat comes up, first reference:
+  - `shared/sarah-agent/memory/manychat.md`
+  - `shared/sarah-agent/projects/manychat-masterclass-reference.md`
+  - `shared/sarah-agent/projects/sarah-manychat-audit-build-spec.md`
+
 ### Shared Memory Refresh
 - Refreshed Arty session anchor so current state reflects production refinement rather than first-launch setup.
 - Preserved the main operating constraints:
@@ -9,9 +19,28 @@
   - concise handoff state is preferred
 
 ### Reliability Notes
-- Daily dashboard remains the main proven automation in shared memory.
+- Daily dashboard was actively debugged on 2026-03-26.
+- `shared/sarah-agent/projects/send-dashboard.sh` was patched to use the working OpenClaw CLI path, the correct `--message` flag, and explicit `--account sarah` for Telegram delivery.
+- Manual delivery worked; next scheduled auto-run is still the real confirmation checkpoint.
 - If work resumes on dashboard/spec files, re-verify exact file paths before editing because at least one previously referenced spec path was missing during audit.
 - Priority should be dependable workflows and clean continuity over adding clever new automation first.
+
+### New ManyChat Assets
+- Created `shared/sarah-agent/projects/manychat-masterclass-reference.md`
+  - strategy/operator reference tailored to Sarah's business
+- Created `shared/sarah-agent/projects/sarah-manychat-audit-build-spec.md`
+  - execution plan for auditing and building Sarah's ManyChat system
+- Created `shared/sarah-agent/projects/arty-current-business-assets-brief.md`
+  - tells Arty what high-value business assets exist right now
+- Created `shared/sarah-agent/projects/arty-proactive-handoff-policy.md`
+  - Mat's explicit instruction: Arty should proactively surface useful business docs/features/enhancements to Sarah
+
+### Arty Action Rule
+If Sarah asks about ManyChat, marketing automation, IG automation, collector capture, or business systems, proactively mention the ManyChat docs instead of saying no doc exists.
+- Use shared memory and current project docs before generic advice.
+- No tool/debug narration to Sarah.
+- Prefer `shared/sarah-agent/memory/active-recall-sources.md` first.
+- If a small cue suggests a larger business context, ask one compact high-value follow-up bundle.
 
 ---
 
