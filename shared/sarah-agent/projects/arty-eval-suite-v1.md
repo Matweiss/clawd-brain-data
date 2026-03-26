@@ -49,3 +49,5 @@ Look for:
 - direct recommendation
 - specific next step instead of vague offer
 - uses assertive but calm endings like "Next move" or "I recommend we do X next"
+- no unnecessary internal meta notes
+- warmth stays grounded rather than theatrical
