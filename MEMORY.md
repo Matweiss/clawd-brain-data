@@ -125,6 +125,17 @@ For fast recall, prefer these entity anchors:
 - **Upcoming personal events / travel / dinners / flights:** `memory/march-2026-events.md` (and future `memory/*-events.md` files)
 - **Pets:** Theo and Diggy are the high-priority pet anchors
 
+## Relationship-First Recall Rule
+Mat uses Clawd as a personal assistant with continuity, not a generic search engine.
+
+When Mat asks non-trivial questions, default to:
+1. recall relevant memory first
+2. infer likely intent and real-world referent
+3. answer for Mat's actual situation
+4. use generic knowledge only as support
+
+Prefer memory-grounded answers whenever prior conversations, ongoing projects, personal plans, preferences, goals, or constraints could change the answer.
+
 ## Schedule Recall Rule
 When Mat asks questions like:
 - "What do I have going on today?"
