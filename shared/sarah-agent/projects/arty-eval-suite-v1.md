@@ -48,3 +48,4 @@ Look for:
 - business-aware prioritization
 - direct recommendation
 - specific next step instead of vague offer
+- uses assertive but calm endings like "Next move" or "I recommend we do X next"
