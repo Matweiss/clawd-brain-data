@@ -122,7 +122,30 @@ For fast recall, prefer these entity anchors:
 - **Career / Lucra:** `memory/facts-career-core.md`
 - **GitHub / CRM / dashboard / voice / browser coworking:** `memory/facts-infra-core.md`
 - **Pets / home:** `memory/facts-pets-home.md`
+- **Upcoming personal events / travel / dinners / flights:** `memory/march-2026-events.md` (and future `memory/*-events.md` files)
 - **Pets:** Theo and Diggy are the high-priority pet anchors
+
+## Schedule Recall Rule
+When Mat asks questions like:
+- "What do I have going on today?"
+- "What do I have this week?"
+- "What plans do I have?"
+- "Am I traveling / flying / meeting anyone?"
+
+Do **not** answer from project/work memory only.
+
+Always search across both:
+1. **work/task context** (daily notes, active project notes)
+2. **personal event context** (travel, flights, dinners, meetings, reservations, date-specific plans)
+
+Minimum recall set for schedule-style questions:
+- `MEMORY.md`
+- today's `memory/YYYY-MM-DD.md`
+- yesterday's `memory/YYYY-MM-DD.md`
+- `memory/march-2026-events.md` or the relevant month/event file
+- any surfaced date/travel/event note from `memory_search`
+
+Treat personal dated plans as schedule-critical memory, even when no external calendar is connected.
 
 ## Separation Rule
 - Keep **Sarah project/art-assistant work** in `memory/projects/` and shared Sarah-agent memory.
