@@ -13,6 +13,9 @@ Read these references as needed:
 - `references/event-capture-format.md` for logging future plans into canonical event memory
 - `references/prep-mode-enrichment.md` for packing, prep, and "what am I forgetting" questions
 - `references/general-context-routing.md` for broader advice/prioritization questions where continuity changes the answer
+- `references/proactive-cue-expansion.md` for turning small cues into richer assisted discovery
+- `references/travel-discovery-playbook.md` for partial travel/trip cues
+- `references/proactive-briefing-standard.md` for high-impact briefing behavior
 
 ## Use this skill when
 Trigger on questions like:
@@ -26,6 +29,9 @@ Trigger on questions like:
 - What should I focus on?
 - What should I do next?
 - How should I think about this?
+- I booked a flight / trip / hotel
+- I think I'm traveling in [month]
+- Any small cue that implies a larger planning/logistics context
 - Any advice request where prior conversations, plans, preferences, commitments, or relationship context should shape the answer.
 
 ## Core rule
@@ -76,16 +82,23 @@ Do not answer with generic suggestions until you have checked memory for the lik
    - Example: "Do you mean the Arizona bachelor party or the NYC trip?"
    - If one option is overwhelmingly likely, soft-confirm in the answer.
 
-5. **Enrich when useful**
+5. **Expand from small cues when useful**
+   - If the user gives a partial cue that implies a larger context, do not stop at the literal sentence.
+   - Infer what missing details would unlock a much stronger briefing.
+   - Search memory for likely related events, dates, people, and prior mentions before asking follow-ups.
+   - Ask a compact, high-value follow-up bundle for only the missing details.
+   - If connected systems exist or are expected (email, travel confirmations, vendor accounts), prefer those retrieval paths over making Mat reconstruct everything manually.
+
+6. **Enrich when useful**
    - For packing/travel/prep questions, gather external context if it materially improves the answer.
    - Use weather lookup when destination weather matters.
    - For project/strategy questions, consider current goals, blockers, likely tradeoffs, and previous decisions.
 
-6. **Capture future events when learned**
+7. **Capture future events when learned**
    - If the conversation reveals a future dated plan likely to matter later, log it into `memory/upcoming-events.md` using the event-capture format reference.
    - If helpful, also note it in the day's memory file.
 
-7. **Answer specifically**
+8. **Answer specifically**
    - Give advice for the actual remembered context.
    - Mention the inferred referent explicitly.
    - Include specific reminders tied to what the user already shared.
@@ -98,6 +111,10 @@ Do not answer with generic suggestions until you have checked memory for the lik
 - If recall is thin, say you checked memory and what you found.
 - If the user confirms the inferred event or context, go deeper on specifics.
 - Use generic knowledge as support, not as the whole answer, when memory/context should matter.
+- Be proactive in asking follow-up questions when they would materially improve the usefulness of the briefing.
+- Prefer a small number of high-value, bundled follow-ups over many piecemeal questions.
+- Use smaller cues as triggers for richer discovery, especially around travel, events, logistics, and planning.
+- If connected systems can likely answer the question later, say so and design the follow-up flow around that.
 
 ## Good answer pattern
 1. Briefly name the likely event you found
