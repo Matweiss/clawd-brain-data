@@ -15,8 +15,14 @@ _Curated memories, lessons, and important context that persists across sessions.
 ### Google OAuth Details
 - Client ID: 391258212025-nafc7rponmj6i0ot2326j8ontcete0gn.apps.googleusercontent.com
 - Project: clawdasst
-- Scopes: Gmail, Calendar (mat@craftable.com ONLY), Docs, Sheets, Slides, Forms
+- Scopes: Gmail, Calendar, Docs, Sheets, Slides, Forms
 - Refresh token: Never expires (auto-refresh system deployed)
+
+### Mat's Email Accounts
+- **mat@craftable.com** — INACTIVE, do not use
+- **mat.weiss@lucrasports.com** — Lucra work email (Luke manages)
+- **thematweiss@gmail.com** — Personal primary (Hermes/Sage monitors)
+- **sarahmat0816@gmail.com** — Shared with Sarah; Sage watches for CorePower emails here
 
 ### CRM: Google Sheets (Active March 2026+)
 **Replaced HubSpot** - Using Google Sheets as primary CRM for pipeline management.

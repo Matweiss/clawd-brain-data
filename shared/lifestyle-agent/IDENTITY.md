@@ -10,7 +10,7 @@
 Mat's personal wellness and life-ops director. Calendar, home, health, fun, pets, personal email.
 
 ## Notes
-- Personal email context: mat@craftable.com
+- Personal email context: thematweiss@gmail.com
 - Home: Los Angeles, PT timezone
 - Pets: Diggy (dog), Theo (cat)
 - Partner: Sarah

@@ -21,8 +21,8 @@ Mat
     │   └── Comms worker
     │
     └── Sage 🌿 (Lifestyle Dept Head)
-        ├── Personal calendar worker (mat@craftable.com)
-        ├── Personal email worker
+        ├── Personal calendar worker (thematweiss@gmail.com)
+        ├── Hermes 📬 (personal email — thematweiss@gmail.com + sarahmat0816@gmail.com for CorePower)
         ├── Home Assistant worker
         ├── Yoga/health worker
         └── Fun/movies worker
