@@ -1,6 +1,6 @@
 # Agent Org Structure
 
-**Decided:** 2026-03-30
+**Decided:** 2026-03-30 | **Updated:** 2026-03-31
 
 ## The Org
 
@@ -14,36 +14,43 @@ Mat
     │   └── Dashboard/Metrics worker
     │
     ├── Luke 💼 (Lucra Dept Head)
-    │   ├── Lucra calendar worker (mat.weiss@lucrasports.com)
-    │   ├── Lucra email worker
+    │   ├── Scout 🔍 (research worker)
+    │   ├── Hermes 📬 (email — mat.weiss@lucrasports.com, reports to Luke)
     │   ├── Pipeline worker
-    │   ├── Research worker
     │   └── Comms worker
     │
     └── Sage 🌿 (Lifestyle Dept Head)
-        ├── Personal calendar worker (thematweiss@gmail.com)
-        ├── Hermes 📬 (personal email — thematweiss@gmail.com + sarahmat0816@gmail.com for CorePower)
+        ├── Pixel 📅 (schedule worker — CorePower, Regal)
+        ├── Hermes 📬 (email — thematweiss@gmail.com + sarahmat0816@gmail.com CorePower, reports to Sage)
         ├── Home Assistant worker
         ├── Yoga/health worker
         └── Fun/movies worker
 ```
 
+## Email Accounts
+- **mat.weiss@lucrasports.com** — Lucra work (Hermes → Luke)
+- **thematweiss@gmail.com** — Personal primary (Hermes → Sage)
+- **sarahmat0816@gmail.com** — Shared with Sarah; Hermes watches for CorePower emails only (→ Sage)
+- **mat@craftable.com** — INACTIVE, ignore
+
 ## Routing Logic
-- "Put on my work calendar" → Clawd → Luke → Lucra calendar worker
-- "Put on my personal calendar" → Clawd → Sage → personal calendar worker
+- "Put on my work calendar" → Clawd → Luke → calendar
+- "Put on my personal calendar" → Clawd → Sage → calendar
+- "Check my email" → Clawd → Hermes (via Luke for work, via Sage for personal)
 - "Tell Arty to..." → Clawd → Arty
-- Each dept head owns its own email, calendar, and context
+- Each dept head owns its context; Hermes serves both Luke and Sage for their respective inboxes
+
+## Hermes Note
+Hermes is a dual-reporting worker:
+- Under **Luke**: monitors mat.weiss@lucrasports.com
+- Under **Sage**: monitors thematweiss@gmail.com and sarahmat0816@gmail.com (CorePower only)
+All three Google accounts are OAuth authorized ✅
 
 ## Build Order
-1. Luke (Lucra) — highest priority, Mat starts at Lucra April 1, 2026
-2. Sage (Lifestyle) — second priority
-3. Worker agents — built under each dept head as needed
-
-## OpenClaw Agent IDs (planned)
-- main → Clawd (exists ✅)
-- sarah → Arty (exists ✅)
-- lucra → Luke (to build)
-- lifestyle → Sage (to build)
-
-## Paperclip
-Build agents in OpenClaw first, then wire into Paperclip departments.
+1. ✅ Luke (Lucra) — active
+2. ✅ Sage (Lifestyle) — active
+3. ✅ Scout (research, under Luke) — active
+4. ✅ Pixel (schedule, under Sage) — active
+5. ✅ Hermes (email, dual-reporting) — active
+6. Pipeline worker — TBD after onboarding
+7. Remaining Arty workers — TBD
