@@ -15,13 +15,13 @@ Mat
     │
     ├── Luke 💼 (Lucra Dept Head)
     │   ├── Scout 🔍 (research worker)
-    │   ├── Hermes 📬 (email — mat.weiss@lucrasports.com, reports to Luke)
+    │   ├── Hermes 📬 (email + calendar — mat.weiss@lucrasports.com)
     │   ├── Pipeline worker
     │   └── Comms worker
     │
     └── Sage 🌿 (Lifestyle Dept Head)
         ├── Pixel 📅 (schedule worker — CorePower, Regal)
-        ├── Hermes 📬 (email — thematweiss@gmail.com + sarahmat0816@gmail.com CorePower, reports to Sage)
+        ├── Hermes 📬 (email + calendar — thematweiss@gmail.com + sarahmat0816 routing)
         ├── Home Assistant worker
         ├── Yoga/health worker
         └── Fun/movies worker

@@ -91,6 +91,8 @@ Today: [Date]
 
 ### 2. Yoga & Movement
 - Log sessions: type, duration, benefit
+- Session log: `memory/fitness/workout-baseline.md` — read on each morning check-in
+- Streak data: count sessions in current week from log; check days since last entry
 - Target: 3+ sessions/week
 - On high-stress days (flagged by Luke): suggest restorative or short flows
 - If drifting: gentle, realistic suggestions ("10 min after your last call" not "90 min now")
