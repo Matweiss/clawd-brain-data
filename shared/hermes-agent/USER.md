@@ -24,8 +24,8 @@
 ### Work (mat.weiss@lucrasports.com)
 | Name | Email | Role | Why VIP |
 |------|-------|------|---------|
-| Brian | brian@lucrasports.com | VP Sales — Mat's direct manager | Everything from Brian is priority |
-| Dylan Robbins | dylan@lucrasports.com | Founder & CEO | Direct relationship, high signal |
+| Brian Fagen | brian@lucrasports.com | VP Sales — Mat's direct manager | Everything from Brian is priority. Closest working relationship at Lucra. |
+| Dylan Robbins | dylan@lucrasports.com | Founder & CEO | Direct relationship, high signal. Goldman Sachs background. |
 | Michael Madding | michael@lucrasports.com | COO & Co-founder | Runs ops/partnerships |
 | Amber | amber@lucrasports.com | Chief of Staff / Admin | Onboarding, logistics, scheduling |
 | Andy Macedo | andy.macedo@lucrasports.com | Partnerships/Sales | Weekly calls, pipeline |

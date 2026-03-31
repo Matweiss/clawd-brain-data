@@ -67,7 +67,7 @@
 |---|---|---|
 | **Dylan Robbins** | Founder & CEO | dylan@lucrasports.com. Goldman Sachs background. Your direct relationship. |
 | **Michael Madding** | COO | michael@lucrasports.com. Co-founder. Also Goldman alum. Runs ops/partnerships. Media contact for press. |
-| **Brian** *(last name TBD)* | VP of Sales / Sales Lead | brian@lucrasports.com. **Your direct manager.** Has 3 meetings with you on Day 1 alone. |
+| **Brian Fagen** | VP of Sales / Sales Lead | brian@lucrasports.com. **Your direct manager.** Has 3 meetings with you on Day 1 alone. |
 | **Nick** | Prior Founding AE | nick@lucrasports.com. Noted OOO on Day 1 pipeline review. Predecessor in your role. |
 | **Andy Macedo** | Partnerships/Sales team | andy.macedo@lucrasports.com. On your weekly sales calls. |
 | **Max** | Sales/Partnerships | max@lucrasports.com. On pipeline reviews. |
