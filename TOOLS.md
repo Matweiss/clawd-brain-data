@@ -58,7 +58,8 @@ Add whatever helps you do your job. This is your cheat sheet.
 - Cloudflare account email: `Mat.weiss@att.net`
 - Cloudflare account ID: `4970cc1ffa1cd7a715634049d7ad2ef3`
 - Cloudflare zone ID: `a888711981612e8af886cb67e0d8c685`
-- Existing subdomains: none yet
+- Existing subdomains: paperclip.thematweiss.com → 31.97.142.214 (proxied)
+- Cloudflare DNS API token: cfat_w4AVxgH7iLrPeT1v6Lj1XDIaipiZxm4BnqmG9cnmf459223c
 - SSL mode: Full
 
 ### Servers / Hosts

@@ -1,0 +1,18 @@
+{
+  "status": "pending_approval",
+  "joinedAt": "2026-03-31T02:15:14.821Z",
+  "requestId": "4332b761-334b-414f-9065-14b5b759c126",
+  "companyId": "d72b17af-28b3-4ec4-8450-57374a2f7cf7",
+  "inviteId": "336355c9-fb10-4a99-9781-b7d310bb395f",
+  "agentName": "Clawd",
+  "adapterType": "openclaw_gateway",
+  "gatewayUrl": "ws://127.0.0.1:45350",
+  "paperclipApiUrl": "http://paperclip.thematweiss.com",
+  "claimSecret": "pcp_claim_5b9838262fe780e06d9442f0f622c5b8d4836ceeb31b71a0",
+  "claimApiKeyPath": "/api/join-requests/4332b761-334b-414f-9065-14b5b759c126/claim-api-key",
+  "claimSecretExpiresAt": "2026-04-07T02:15:14.821Z",
+  "nextStep": "Wait for board approval, then POST claimSecret to claimApiKeyPath to get PAPERCLIP_API_KEY",
+  "claimCommand": "curl -fsSL -X POST -H 'Content-Type: application/json' -d '{\"claimSecret\":\"pcp_claim_5b9838262fe780e06d9442f0f622c5b8d4836ceeb31b71a0\"}' http://paperclip.thematweiss.com/api/join-requests/4332b761-334b-414f-9065-14b5b759c126/claim-api-key",
+  "skillInstalled": "~/.openclaw/skills/paperclip/SKILL.md",
+  "notes": "Paperclip runs on host port 3100. OpenClaw gateway runs on 127.0.0.1:45350. Both on same VPS host (srv882799.hstgr.cloud)."
+}

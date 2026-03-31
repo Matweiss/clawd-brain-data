@@ -5,6 +5,7 @@
 - Role: Founding Account Executive
 - Decision date: March 5, 2026
 - Start date: April 1, 2026
+- Lucra email: `mat.weiss@lucrasports.com`
 - Compensation: $300K OTE
   - Base: $150K
   - Commission: $150K

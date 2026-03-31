@@ -1,0 +1,8 @@
+{
+  "requestId": "4332b761-334b-414f-9065-14b5b759c126",
+  "claimSecret": "pcp_claim_5b9838262fe780e06d9442f0f622c5b8d4836ceeb31b71a0",
+  "claimApiKeyPath": "/api/join-requests/4332b761-334b-414f-9065-14b5b759c126/claim-api-key",
+  "status": "pending_approval",
+  "claimSecretExpiresAt": "2026-04-07T02:15:14.821Z",
+  "paperclipApiUrl": "http://paperclip.thematweiss.com"
+}

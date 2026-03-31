@@ -68,6 +68,7 @@ All jobs self-heal expired tokens automatically:
 - 61,141 shares equity (0.175%)
 - Uncapped commission, path to Director in 6-9 months
 - Fully remote, premium benefits
+- New Lucra email: `mat.weiss@lucrasports.com`
 
 **Documents:**
 - Full repository: `docs/lucra-employment-document-repository.md`

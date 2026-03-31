@@ -22,6 +22,9 @@
 - Daily dashboard was actively debugged on 2026-03-26.
 - `shared/sarah-agent/projects/send-dashboard.sh` was patched to use the working OpenClaw CLI path, the correct `--message` flag, and explicit `--account sarah` for Telegram delivery.
 - Manual delivery worked; next scheduled auto-run is still the real confirmation checkpoint.
+- Verified live Sarah Shopify access on 2026-03-26: `SARAH_SHOPIFY_STORE` and `SARAH_SHOPIFY_ACCESS_TOKEN` are present, and `shared/sarah-agent/projects/daily-dashboard.mjs` ran successfully using those Sarah-specific env vars.
+- For Sarah-specific Shopify code, standardize on `process.env.SARAH_SHOPIFY_STORE` and `process.env.SARAH_SHOPIFY_ACCESS_TOKEN` as the source of truth.
+- If access/auth issues recur, reach out to Mat rather than guessing alternate token names.
 - If work resumes on dashboard/spec files, re-verify exact file paths before editing because at least one previously referenced spec path was missing during audit.
 - Priority should be dependable workflows and clean continuity over adding clever new automation first.
 
