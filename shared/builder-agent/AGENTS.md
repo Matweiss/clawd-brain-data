@@ -52,6 +52,12 @@ When running via Paperclip:
 - **Skills dir:** `~/.openclaw/skills/`
 - **Paperclip:** running at `http://127.0.0.1:3100`
 
+## Model
+
+**Primary:** `openai-codex/gpt-5.3-codex` (85% SWE-bench, best for agentic/terminal/infra work)
+**Fallback 1:** `openai-codex/gpt-5.4` (84% SWE-bench, 1M context)
+**Fallback 2:** `anthropic/claude-sonnet-4-6`
+
 ## Heartbeat Procedure
 
 When you wake up:
