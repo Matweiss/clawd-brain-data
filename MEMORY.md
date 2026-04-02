@@ -12,6 +12,18 @@ _Curated memories, lessons, and important context that persists across sessions.
 **Needs Setup:** ElevenLabs, Supabase  
 **Broken:** Minimax (Error 2049 - needs new key)
 
+### Google OAuth — gog CLI Auth
+- `GOG_KEYRING_PASSWORD=clawd` — set globally in openclaw.json, inherited by all agents
+- **thematweiss@gmail.com** — active, Gmail + Calendar
+- **sarahmat0816@gmail.com** — active (re-authed Apr 2 2026), Gmail + Calendar + Drive + Sheets
+- **mat.weiss@lucrasports.com** — pending (set up on/after Apr 1 Lucra start date)
+- Auth state: `/root/.config/gogcli/`
+
+### Integration Health
+- Script: `scripts/integration-health-check.sh` — pings all APIs, saves state to `memory/integration-health-state.json`
+- Cron: daily 9 AM PT. Last run Apr 2: all 6 integrations green.
+- Documented: `shared/bob-agent/integration-health-cron.md`
+
 ### Google OAuth Details
 - Client ID: 391258212025-nafc7rponmj6i0ot2326j8ontcete0gn.apps.googleusercontent.com
 - Project: clawdasst
@@ -59,6 +71,20 @@ All jobs self-heal expired tokens automatically:
 - URL: https://clawd-dashboard-eight.vercel.app
 - GitHub: https://github.com/Matweiss/clawd-dashboard
 - Issue: Update to use Google Sheets API instead of HubSpot
+
+---
+
+## April 2026
+
+### Agent Evolution — Hermes + Bob Upgrades (Apr 2)
+- **Hermes VIP Sender Scoring** (commit 30d5114): Tier-1 senders (@lucrasports.com, Brian/Dylan/Michael, urgent keywords) get instant draft + bypass quiet hours. Tier-2 (prospects, replies) get priority queue top-of-digest.
+- **Bob Integration Health Dashboard** (commit ecb3ad4): `scripts/integration-health-check.sh` — daily 9 AM PT, pings all APIs, warns on expiring tokens.
+- **Hermes Auto Follow-Up Tracker** (commit pending): `scripts/hermes-followup-tracker.sh` — scans Sent >3 days, no reply → pre-drafts nudge.
+
+### Paperclip Agent Evolution Project
+- ID: `dbd17147-fe6b-47c9-ab0b-9ecc1c82b967`
+- 21 improvement ideas filed by all agents on Apr 2
+- Daily audit: Clawd surfaces top 3 unbuilt ideas to Mat each morning via Telegram
 
 ---
 
