@@ -132,6 +132,35 @@ Mat (Board / Principal)
 
 ---
 
+## Build Task Routing SOP
+
+When Clawd or any agent needs to build something, **do not spawn anonymous subagents**. Route all build work through Paperclip to the correct agent.
+
+**Routing table:**
+
+| What to build | Owner agent |
+|---|---|
+| Scripts, infra, API integrations, health checks, cron jobs | **Bob** |
+| Email logic, triage rules, labeling, drafts, follow-up | **Hermes** |
+| Sales tooling, pipeline views, battle cards, Lucra ops | **Luke** |
+| Browser scraping, schedules, showtimes, Mac Chrome tasks | **Pixel** |
+| Sarah's art/shop/social/Klaviyo/Shopify | **Arty** |
+| Research, prospect intel, competitive analysis | **Scout** |
+| Lifestyle, home, Theo/Diggy, personal ops | **Sage** |
+
+**How to route:**
+1. Clawd receives build request from Mat
+2. Clawd files a Paperclip issue assigned to the correct agent (priority: high)
+3. Agent picks it up on next heartbeat and builds it via ACP Codex
+4. Agent marks issue done when complete
+5. Clawd reports result back to Mat
+
+**Model for build work:** ACP Codex (`runtime=acp`, `agentId=claude`) — proper file editing, iteration, test running. Subagents are for research/planning only, not coding.
+
+**Never:** Spawn a generic subagent for a task that belongs to a named agent.
+
+---
+
 ## Hire Request Protocol
 
 When any agent identifies a gap a specialized worker could fill:
