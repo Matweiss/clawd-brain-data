@@ -94,18 +94,43 @@ Parse for:
 **"Main" filter = Encino + Sherman Oaks studios only**
 
 ### Step 3: Scrape Regal Sherman Oaks Galleria
+
+⚠️ **VPS IP is Cloudflare-blocked on regmovies.com** — do NOT use `web_fetch` or `web_search` for Regal. Must go through Mac Chrome.
+
+**Primary method — mcporter chrome-devtools:**
 ```bash
-mcporter call chrome-devtools.navigate_page url="https://www.regmovies.com/theatres/regal-sherman-oaks-galleria-1483"
+mcporter call chrome-devtools.navigate_page url="https://www.regmovies.com/theatres/regal-sherman-oaks-galleria-1483?date=MM-DD-YYYY"
 sleep 2
 mcporter call chrome-devtools.take_snapshot
+```
+
+**Fallback method (if mcporter times out) — raw CDP via Python script:**
+```bash
+# This uses the SSH-tunneled Mac Chrome port (28800) directly
+python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/regal-cdp-scrape.py <date> <tab_id>
+# date format: 04-02-2026
+# tab_id: get from: curl -s http://127.0.0.1:28800/json | python3 -c "import sys,json; [print(p['id'],p['url'][:60]) for p in json.load(sys.stdin) if 'regmovies' in p.get('url','')]"
+```
+
+**Finding the Regal tab ID:**
+```bash
+curl -s http://127.0.0.1:28800/json | python3 -c "
+import sys, json
+pages = json.load(sys.stdin)
+for p in pages:
+    if 'regmovies.com' in p.get('url',''):
+        print(p['id'], p['url'][:80])
+"
+# If no Regal tab exists, open any tab first via mcporter, then use that tab_id
 ```
 
 Parse for:
 - Movie titles
 - Runtimes
-- All showtimes
-- Formats: Standard, RPX, IMAX
+- All showtimes per day (navigate to each date with ?date=MM-DD-YYYY)
+- Formats: Standard, RPX, IMAX, LASER, 70mm
 - "NO PASSES" flags
+- SOLD OUT indicators
 
 ### Step 4: Write output files
 
@@ -153,7 +178,7 @@ Last run: <time PT>
 | Error | Action |
 |-------|--------|
 | Mac node not connected | Log + notify Mat: "⚠️ Pixel: Mac node offline, schedule not updated" |
-| chrome-devtools not healthy | Log + notify Mat: "⚠️ Pixel: Chrome MCP down, schedule not updated" |
+| chrome-devtools not healthy | Try raw CDP fallback script first. If that also fails, log + notify Mat: "⚠️ Pixel: Chrome MCP down, schedule not updated" |
 | Page structure changed | Log snapshot + notify Mat: "⚠️ Pixel: Page layout changed at [URL], manual fix needed" |
 | Partial scrape (one source failed) | Write what you got, clearly flag missing source in JSON + notify |
 | Git push failed | Log error, data files still updated locally |
