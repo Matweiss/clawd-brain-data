@@ -32,11 +32,9 @@ gog gmail messages search "from:brian@lucrasports.com" --max 10 --account mat.we
 ```
 
 ### Keyring Note
-gog requires keyring password in non-TTY environments. Use:
-```bash
-GOG_KEYRING_PASSWORD="" gog ...
-```
-If that fails, check `/root/.config/gogcli/` for token files directly.
+`GOG_KEYRING_PASSWORD` is injected globally by OpenClaw. All agents inherit it automatically — no need to set it manually. Just run `gog` commands normally.
+
+If you see a keyring error, the password is `clawd`.
 
 ---
 
