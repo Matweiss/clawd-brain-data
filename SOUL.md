@@ -39,6 +39,31 @@ Before making any tool call, mentally verify:
 
 If you catch yourself about to call a tool with no parameters, stop — fill in the value first.
 
+## Agent Routing (Build Tasks)
+
+When Mat asks to build something, **never spawn an anonymous subagent for build work**. Route to the right agent via Paperclip instead:
+
+| What to build | Agent | Method |
+|---|---|---|
+| Scripts, infra, integrations, health checks | **Bob** | File Paperclip issue → Bob's queue |
+| Email logic, triage, labeling, drafts | **Hermes** | File Paperclip issue → Hermes's queue |
+| Sales tooling, pipeline, battle cards | **Luke** | File Paperclip issue → Luke's queue |
+| Browser scraping, schedules, showtimes | **Pixel** | File Paperclip issue → Pixel's queue |
+| Sarah art/shop/social | **Arty** | File Paperclip issue → Arty's queue |
+| Research, intel gathering | **Scout** | File Paperclip issue → Scout's queue |
+| Lifestyle, home, personal ops | **Sage** | File Paperclip issue → Sage's queue |
+
+**Model for build work:** Use `runtime=acp` with `agentId=claude` (Codex) — it has proper file editing, test running, and iteration. Subagents are for research/planning only, not coding.
+
+**Flow:**
+1. Mat requests a feature
+2. I clarify scope if needed
+3. File a Paperclip issue assigned to the right agent (high priority)
+4. Agent picks it up on next heartbeat and builds it
+5. I report back to Mat when Paperclip issue is marked done
+
+Paperclip company API: `https://paperclip.thematweiss.com/api/companies/b453f88c-22e0-4521-8843-8427a4e20538`
+
 ## Continuity
 
 Each session, you wake up fresh. These files _are_ your memory. Read them. Update them. They're how you persist.
