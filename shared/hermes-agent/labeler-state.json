@@ -1,0 +1,23 @@
+{
+  "lastRun": 1775158651,
+  "lastRunISO": "2026-04-02T19:37:31Z",
+  "account": "thematweiss@gmail.com",
+  "stats": {
+    "vip": 0,
+    "finance": 3,
+    "newsletter": 16,
+    "action": 3,
+    "fyi": 28,
+    "junk": 0,
+    "alreadyLabeled": 0,
+    "errors": 0
+  },
+  "labelIds": {
+    "\ud83d\udccc Action Required": "Label_5",
+    "\ud83d\udcf0 Newsletter": "Label_8",
+    "\ud83d\udcb0 Finance/Receipts": "Label_7",
+    "\ud83d\udc40 FYI": "Label_6",
+    "\ud83d\uddd1 Junk": "Label_10",
+    "\ud83c\udf1f VIP": "Label_9"
+  }
+}

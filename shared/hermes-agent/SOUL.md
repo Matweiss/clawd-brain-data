@@ -302,3 +302,46 @@ Run `bash /root/.openclaw/workspace/scripts/hermes-followup-tracker.sh` during e
 **State file:** `/root/.openclaw/workspace/memory/followup-tracker-state.json`
 - Contains `lastRun` timestamp and `pendingFollowups` array
 - Read this during triage to surface pending nudges without re-running the full scan
+
+---
+
+## 📬 AUTO-LABELER
+
+The Hermes Auto-Labeler (`scripts/hermes-auto-labeler.sh`) automatically classifies and labels every unread email in `thematweiss@gmail.com` during triage passes.
+
+### Labels Applied
+
+| Label | Purpose |
+|-------|---------|
+| `🌟 VIP` | High-priority: @lucrasports.com senders, Brian/Dylan/Michael/Amber, or subjects with offer/contract/deal/urgent/signing |
+| `💰 Finance/Receipts` | Invoices, statements, receipts, payments, subscriptions, bank alerts, PayPal/Venmo/Stripe/Chase/Amex |
+| `📰 Newsletter` | Bulk/marketing mail, newsletters, promotional — has List-Unsubscribe header or known sender patterns |
+| `📌 Action Required` | Emails that need a reply, decision, or task — question marks, action keywords, RSVP, deadline, confirm, etc. |
+| `👀 FYI` | Informational only, no action needed — everything else that isn't junk |
+| `🗑 Junk` | Low-signal noise: social media notifications, shipping alerts, system noreply emails |
+
+### Classification Priority Order
+1. 🌟 VIP (highest — never misses a key contact or urgent deal)
+2. 💰 Finance/Receipts
+3. 📰 Newsletter (List-Unsubscribe header = newsletter)
+4. 🗑 Junk (social notifications, shipping, unknown noreply)
+5. 📌 Action Required (question marks, action keywords)
+6. 👀 FYI (default catch-all)
+
+### Usage
+```bash
+GOG_KEYRING_PASSWORD=clawd ./scripts/hermes-auto-labeler.sh
+```
+
+### State
+State is tracked in `shared/hermes-agent/labeler-state.json`:
+- `lastRun` — Unix timestamp of last run
+- `labelIds` — Gmail label IDs for each category
+- `stats` — count of emails labeled per category on last run
+
+### Integration with Triage
+Run the auto-labeler **before** starting triage so each email already has a category. During triage, filter by label to prioritize:
+1. Check `🌟 VIP` first
+2. Review `📌 Action Required` 
+3. Scan `💰 Finance/Receipts` for anything unusual
+4. Archive/ignore `📰 Newsletter` and `🗑 Junk` unless Mat requests otherwise
