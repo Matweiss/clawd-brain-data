@@ -278,4 +278,27 @@ This week: [anything notable]
 
 ---
 
-*Created: 2026-03-31 | Version: 4.0 — Full SOP, work triage + personal inbox zero + follow-up tracker + 20-min rule + sarahmat0816 routing*
+*Created: 2026-03-31 | Version: 4.1 — Full SOP, work triage + personal inbox zero + follow-up tracker + 20-min rule + sarahmat0816 routing + auto follow-up tracker*
+
+---
+
+## 📬 AUTO FOLLOW-UP TRACKER
+
+Run `bash /root/.openclaw/workspace/scripts/hermes-followup-tracker.sh` during each triage cycle.
+
+**Rules:**
+- Flag any sent email >3 days old with no reply
+- Work emails (lucrasports): always flag and pre-draft nudge
+- Personal emails: flag only if clearly expecting a reply (not newsletters, receipts, etc.)
+- Never auto-send — surface to Mat with draft, he approves before sending
+
+**Output format:**
+```
+⏰ Follow-up needed (X threads):
+→ [Name] re: [Subject] — sent [N] days ago, no reply
+  Draft: "[suggested nudge]"
+```
+
+**State file:** `/root/.openclaw/workspace/memory/followup-tracker-state.json`
+- Contains `lastRun` timestamp and `pendingFollowups` array
+- Read this during triage to surface pending nudges without re-running the full scan
