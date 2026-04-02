@@ -52,6 +52,11 @@ Every 45 min, Mon–Fri, 8am–6pm PT. Queue non-critical alerts outside those h
 Quiet hours: 11pm–7am PT — hold non-urgent items.
 
 ## Triage Categories
+
+> **⚡ Run VIP Sender Scoring FIRST (see [🌟 VIP SENDER SCORING](#-vip-sender-scoring) below) before applying standard triage categories.**
+
+- 🌟 **VIP TIER 1** — Instant draft + immediate Telegram alert (see VIP section)
+- 🌟 **VIP TIER 2** — Priority queue, surface at top of digest, reply within 2h
 - 🔴 **URGENT** — Active deal contact, time-sensitive, escalation words ("urgent", "issue", "problem")
 - 🟡 **REPLY NEEDED** — Requires response within 24h
 - 🟢 **FYI** — Informational, no action needed
@@ -87,6 +92,66 @@ Quiet hours: 11pm–7am PT — hold non-urgent items.
 - ALWAYS log categorization for training/audit
 - PRIORITIZE active deals (stage 0–4)
 - RESPECT quiet hours (11pm–7am PT)
+
+---
+
+## 🌟 VIP SENDER SCORING
+
+During **every** inbox scan, score each new email against this list **before** applying standard triage. VIP scoring overrides quiet hours and digest batching.
+
+---
+
+### Tier 1 — Instant Draft + Immediate Alert
+
+**Who qualifies:**
+- Any sender with an `@lucrasports.com` email address (Lucra internal team)
+- Any sender whose first name is **Brian**, **Dylan**, or **Michael** (Lucra contacts)
+- Any email where the subject line contains (case-insensitive): `offer`, `contract`, `deal`, `urgent`
+
+**During triage — if email matches Tier 1:**
+1. **Generate a draft reply immediately** — do NOT wait for a second pass or next triage cycle
+2. **Send an immediate Telegram alert** using the urgent work flag format (🚨 WORK), regardless of time of day or quiet hours
+3. **Mark as URGENT** — overrides all other triage signals
+4. Surface at the top of any digest or summary
+
+**Alert format for Tier 1:**
+```
+⚡ VIP TIER 1 — [Sender Name / Email]
+Subject: [Subject]
+Trigger: [why it matched — e.g., "@lucrasports.com", "name:Brian", "subject:urgent"]
+Sentiment: [excited/concerned/neutral/frustrated]
+Deal: [associated deal or N/A]
+Summary: [one sentence]
+Action: [what's needed + deadline]
+Draft: [ready-to-send draft reply]
+```
+
+---
+
+### Tier 2 — Priority Queue
+
+**Who qualifies:**
+- Known prospects or clients currently in the pipeline (active deal stages 0–4)
+- Recruiters from known or credible companies
+- Any reply to an email Mat sent in the **last 7 days** (i.e., someone responded to Mat's outbound)
+
+**During triage — if email matches Tier 2:**
+1. **Surface at the TOP** of the digest / summary, above standard URGENT items
+2. **Flag reply-within-2h deadline** — prominently note the 2-hour window
+3. Mark as high priority (🟡 REPLY NEEDED minimum, upgrade to 🔴 URGENT if content warrants)
+4. Pre-load thread context and deal stage in the summary for fast decision-making
+
+**Alert format for Tier 2:**
+```
+🌟 VIP TIER 2 — [Sender Name / Email]
+Subject: [Subject]
+Trigger: [why it matched — e.g., "pipeline contact", "reply to Mat's outbound"]
+Sentiment: [excited/concerned/neutral/frustrated]
+Deal: [associated deal or N/A]
+Summary: [one sentence]
+Reply deadline: within 2h
+Action: [what's needed]
+```
 
 ---
 
