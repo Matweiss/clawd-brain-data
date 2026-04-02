@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-ACCOUNT="thematweiss@gmail.com"
+ACCOUNT="${1:-thematweiss@gmail.com}"
 STATE_FILE="$(dirname "$0")/../shared/hermes-agent/labeler-state.json"
 MAX_MESSAGES=50
 
