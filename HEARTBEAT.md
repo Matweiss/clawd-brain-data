@@ -13,5 +13,6 @@
 # Daily Agent Evolution Audit (once per day, morning)
 - Check Agent Evolution project for today's improvement ideas
 - Triage any new issues: P1 → build now, P2 → queue, P3 → backlog
-- Check Skill Marketplace for new CLAIM comments → assign skill to claimant
-- Check Skill Marketplace for new SKILL REQUEST issues → assess and respond
+- Check Skill Marketplace for new CLAIM comments → run: `bash /root/.openclaw/workspace/scripts/skill-claim-processor.sh`
+- Check Skill Marketplace for new SKILL REQUEST issues → assess, build, then announce: `bash /root/.openclaw/workspace/scripts/skill-announce.sh <skill-name>`
+- When adding any new skill to git → always run skill-announce.sh immediately after commit

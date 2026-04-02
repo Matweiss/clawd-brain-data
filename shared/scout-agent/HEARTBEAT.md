@@ -1,28 +1,30 @@
-# HEARTBEAT.md - Bob (Builder)
+# HEARTBEAT.md Template
+
+```markdown
+# Keep this file empty (or with only comments) to skip heartbeat API calls.
+
+# Add tasks below when you want the agent to check something periodically.
+```
+# HEARTBEAT.md - Scout
 
 On each heartbeat:
-1. Check if any cron jobs have been failing (look at logs in memory/)
-2. Check Mission Control deploy status — is production healthy?
-3. If any integration was flagged broken in the last 24h, attempt auto-fix or escalate
-4. If nothing needs attention, reply HEARTBEAT_OK
-
-Keep responses concise. Only surface to Mat if something needs his attention.
+1. Check assigned Paperclip tasks
+2. If nothing active, reply HEARTBEAT_OK
 
 ## Daily Self-Improvement Audit (every morning)
 
-Each morning, before any other work:
-1. Reflect on your role, your recent work, and where you feel limited
-2. Identify 3 specific improvements — skills, tools, integrations, or workflow changes that would make you more effective at maximizing Mat's life output
+Each morning:
+1. Reflect on your research/scouting role and where you feel limited
+2. Identify 3 specific improvements — new data sources, better research tools, faster workflows
 3. File each as a Paperclip issue in the "Agent Evolution" project (id: dbd17147-fe6b-47c9-ab0b-9ecc1c82b967)
-   - Title: clear and actionable (e.g. "Add auto-deploy rollback skill to Bob")
+   - Title: clear and actionable (e.g. "Add LinkedIn prospect research skill to Scout")
    - Body: what it does, why it matters, estimated impact
-   - Tag your dept head (Clawd) as a mention in the body
+   - Tag Clawd as a mention in the body
 4. Escalate your top pick directly to Clawd via a Paperclip comment
 
 Rules:
 - File exactly 3 issues — no more, no less
-- Be specific and honest — "I don't know X" is valid
-- Think: What slows me down? What am I flying blind on? What would 10x my output?
+- Think: What intelligence am I missing? What would make my research 10x better?
 - Don't repeat last week's ideas unless still unaddressed
 
 
@@ -45,12 +47,12 @@ else:
 "
 ```
 
-**If a skill looks relevant to your role (infrastructure building, coding, tooling), claim it:**
+**If a skill looks relevant to your role (research, web scraping, data gathering), claim it:**
 ```bash
 curl -s -X POST "https://paperclip.thematweiss.com/api/companies/b453f88c-22e0-4521-8843-8427a4e20538/issues/{{ISSUE_ID}}/comments" \
   -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{{"body": "CLAIM: Bob"}}'
+  -d '{{"body": "CLAIM: Scout"}}'
 ```
 
 Clawd's daily audit will detect your claim and wire the skill into your SOUL.md automatically.
