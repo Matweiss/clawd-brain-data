@@ -1,0 +1,101 @@
+{
+  "agent_org": {
+    "version": "2026-04-04",
+    "agents": [
+      {
+        "id": "clawd",
+        "name": "Clawd",
+        "role": "Main orchestrator, mission control",
+        "emoji": "🤖",
+        "model": "anthropic/claude-sonnet-4-6",
+        "paperclip_queue": null,
+        "responsibilities": ["Route tasks to other agents", "Daily heartbeat checks", "Memory maintenance", "Integration health monitoring"]
+      },
+      {
+        "id": "hermes",
+        "name": "Hermes",
+        "role": "Email triage, drafts, follow-ups",
+        "emoji": "📧",
+        "model": "anthropic/claude-sonnet-4-6",
+        "paperclip_queue": "Hermes",
+        "responsibilities": ["VIP sender scoring", "Email drafting", "Follow-up tracking", "Quiet hours enforcement"]
+      },
+      {
+        "id": "bob",
+        "name": "Bob",
+        "role": "Scripts, infra, integrations, health checks",
+        "emoji": "🔧",
+        "model": "openai-codex/gpt-5.3-codex",
+        "paperclip_queue": "Bob",
+        "responsibilities": ["Integration health dashboard", "Script development", "Infrastructure", "API monitoring"]
+      },
+      {
+        "id": "luke",
+        "name": "Luke",
+        "role": "Sales tooling, pipeline, battle cards",
+        "emoji": "💼",
+        "model": "anthropic/claude-sonnet-4-6",
+        "paperclip_queue": "Luke",
+        "responsibilities": ["ROI calculator", "Sales enablement", "Pipeline tools", "Leave-behind PDFs"]
+      },
+      {
+        "id": "pixel",
+        "name": "Pixel",
+        "role": "Browser scraping, schedules, showtimes",
+        "emoji": "🌐",
+        "model": "anthropic/claude-sonnet-4-6",
+        "paperclip_queue": "Pixel",
+        "responsibilities": ["Browser automation", "Schedule scraping", "Showtime lookups", "Web research"]
+      },
+      {
+        "id": "arty",
+        "name": "Arty",
+        "role": "Sarah's art/shop/social",
+        "emoji": "🎨",
+        "model": null,
+        "paperclip_queue": "Arty",
+        "responsibilities": ["Sarah's art business", "Shop management", "Social media", "Creative projects"]
+      },
+      {
+        "id": "scout",
+        "name": "Scout",
+        "role": "Research, intel gathering",
+        "emoji": "🔍",
+        "model": "openrouter/anthropic/claude-3.5-haiku",
+        "paperclip_queue": "Scout",
+        "responsibilities": ["Deep research", "Intel gathering", "Competitive analysis", "Background checks"]
+      },
+      {
+        "id": "sage",
+        "name": "Sage",
+        "role": "Lifestyle, home, personal ops",
+        "emoji": "🏠",
+        "model": "anthropic/claude-sonnet-4-6",
+        "paperclip_queue": "Sage",
+        "responsibilities": ["Home automation", "Personal logistics", "Family coordination", "Lifestyle tasks"]
+      },
+      {
+        "id": "builder",
+        "name": "Builder",
+        "role": "Build tasks",
+        "emoji": "🏗️",
+        "model": "openai-codex/gpt-5.3-codex",
+        "paperclip_queue": "Builder",
+        "responsibilities": ["Feature development", "Code implementation", "Tool building", "Integration development"]
+      }
+    ]
+  },
+  "paperclip": {
+    "api_base": "https://paperclip.thematweiss.com/api/companies/b453f88c-22e0-4521-8843-8427a4e20538",
+    "agent_evolution_project_id": "dbd17147-fe6b-47c9-ab0b-9ecc1c82b967"
+  },
+  "routing_rules": {
+    "scripts_infra_integrations": "Bob",
+    "email_logic_triage": "Hermes",
+    "sales_tooling_pipeline": "Luke",
+    "browser_scraping_schedules": "Pixel",
+    "sarah_art_shop_social": "Arty",
+    "research_intel": "Scout",
+    "lifestyle_home_ops": "Sage"
+  }
+}
