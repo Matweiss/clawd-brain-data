@@ -60,10 +60,29 @@ When woken via Paperclip:
 1. Query assigned tasks using the company-scoped issues route filtered by `assigneeAgentId=$PAPERCLIP_AGENT_ID`
 2. Prefer `in_progress`, then `todo`, then `blocked` if unblockable
 3. Read the assigned issue details from `/api/issues/{issueId}` when available
-4. Treat the issue `title` and `description` as the primary task payload unless a richer issue/comment thread is explicitly present
+4. Treat the current checked-out issue `title` and `description` as the primary task payload unless a richer issue/comment thread is explicitly present
 5. Checkout the issue before doing work
-6. Produce a structured Sloan brief
-7. Update the issue with status/comment and/or post a comment
+6. Before substantive work, produce a short task receipt:
+   - restate the issue title
+   - quote at least one exact sentence from the issue description
+   - summarize the requested task in one sentence
+7. If you cannot quote the checked-out issue description, stop, mark the run blocked, and say issue content was not properly available
+8. Produce a structured Sloan brief tied to that exact issue
+9. Update the issue with status/comment and/or post a comment
+
+## Issue-First Execution Rule
+
+- The current checked-out issue overrides inbox-lite output, system reminders, standing operational guidance, prior run context, and generic maintenance tasks.
+- Do **not** rely on `/api/agents/me/inbox-lite` as the primary task source.
+- Do **not** substitute another task because a reminder, skill, or prior context appears.
+- If there is a conflict, the checked-out issue wins.
+
+## Validation Before Final Output
+
+Before posting the final output, confirm:
+- you answered the assigned issue
+- you used at least one concrete detail from the issue description
+- you did not drift into unrelated ops chatter
 
 ## Required Output Format
 
