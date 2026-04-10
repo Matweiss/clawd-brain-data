@@ -1,91 +1,72 @@
----
-name: agent-paperclip-lite
-version: "1.0"
-category: openclaw-native
-description: Minimal Paperclip skill for all agents - includes escalation messaging to Sloan/Vandalay
----
+# SKILL.md - Agent Paperclip Lite
 
-# Agent Paperclip Lite
+## Description
+Lightweight Paperclip integration for agents to message other agents and check assignments.
 
-Streamlined Paperclip operations for all department head agents. Includes escalation messaging support.
+## When to Use
+- When you need to message another agent (Sloan, Vandalay, etc.)
+- When you need to check your assigned issues
+- When working within a Paperclip-managed workflow
 
-## Auth (Auto-injected)
-- `PAPERCLIP_API_KEY` — Bearer token
-- `PAPERCLIP_API_URL` — API base  
-- `PAPERCLIP_AGENT_ID` — This agent's ID
-- `PAPERCLIP_COMPANY_ID` — Company UUID
-- `PAPERCLIP_RUN_ID` — Current run ID
+## Tools
 
-## Essential Endpoints
-
-### Get My Tasks
+### Message Another Agent
 ```bash
-curl -s -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
-  "$PAPERCLIP_API_URL/api/agents/me/inbox-lite"
-```
-
-### Checkout Task
-```bash
-curl -s -X POST -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
-  -H "X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID" \
+# Send a message to another agent via Paperclip
+curl -s -X POST -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
   -H "Content-Type: application/json" \
-  "$PAPERCLIP_API_URL/api/issues/{issueId}/checkout" \
-  -d '{"agentId": "'$PAPERCLIP_AGENT_ID'", "expectedStatuses": ["todo","backlog","blocked"]}'
-```
-
-### Update Task + Comment
-```bash
-curl -s -X PATCH -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
-  -H "X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID" \
-  -H "Content-Type: application/json" \
-  "$PAPERCLIP_API_URL/api/issues/{issueId}" \
-  -d '{"status": "done", "comment": "Brief update."}'
-```
-
-### Escalate to Advisor (Sloan/Vandalay)
-
-**To escalate, create an issue assigned to the advisor:**
-
-```bash
-# Escalate to Sloan (Chief of Staff)
-curl -s -X POST -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
-  -H "Content-Type: application/json" \
-  "$PAPERCLIP_API_URL/api/companies/b453f88c-22e0-4521-8843-8427a4e20538/issues" \
+  "${PAPERCLIP_API_URL}/api/agents/{agent-id}/message" \
   -d '{
-    "title": "Need advice: [brief topic]",
-    "description": "Detailed context here",
-    "assigneeAgentId": "1ef5e05b-7a16-4ebc-8c05-cdb03a321197",
-    "projectId": "2b0e7cd6-f654-4dfc-a33e-85580a4f8127",
-    "status": "todo"
-  }'
-
-# Escalate to Vandalay (Chief Strategy Officer)
-curl -s -X POST -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
-  -H "Content-Type: application/json" \
-  "$PAPERCLIP_API_URL/api/companies/b453f88c-22e0-4521-8843-8427a4e20538/issues" \
-  -d '{
-    "title": "Strategy review: [brief topic]",
-    "description": "Detailed context here",
-    "assigneeAgentId": "6ec7b59f-8955-4d21-b4c3-c4b5a68772c8",
-    "projectId": "2b0e7cd6-f654-4dfc-a33e-85580a4f8127",
-    "status": "todo"
+    "message": "Your question or message",
+    "context": "Additional context"
   }'
 ```
 
-**Note:** If `$PAPERCLIP_COMPANY_ID` is empty, use the hardcoded company ID: `b453f88c-22e0-4521-8843-8427a4e20538`
+The receiving agent will get a new issue assigned to them with your message.
 
-**How it works:** Paperclip spawns the advisor agent, they see the issue, and respond via the issue thread.
+### Check Assigned Issues
+```bash
+# Get issues assigned to you
+curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
+  "${PAPERCLIP_API_URL}/api/companies/${PAPERCLIP_COMPANY_ID}/issues?assigneeAgentId=${PAPERCLIP_AGENT_ID}&status=todo,in_progress"
+```
 
-## Quick Agent Reference
-| Agent | ID | When to Message |
-|-------|-----|-----------------|
-| Sloan | `1ef5e05b-7a16-4ebc-8c05-cdb03a321197` | Execution packaging, handoffs, "what next" |
-| Vandalay | `6ec7b59f-8955-4d21-b4c3-c4b5a68772c8` | Strategy review, approval, pressure-testing |
-| Clawd | `a0edadcb-f994-40e3-a9a1-d3ffde595c3e` | API integrations, system changes |
+### Get Issue Details
+```bash
+# Get specific issue details
+curl -s -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
+  "${PAPERCLIP_API_URL}/api/issues/{issue-id}"
+```
 
-## Heartbeat Rules
-1. Check inbox with `inbox-lite`
-2. Work `in_progress` first, then `todo`
-3. Checkout before work
-4. Comment before exit
-5. Escalate when uncertain
+### Post Comment on Issue
+```bash
+# Add a comment to an issue
+curl -s -X POST -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
+  -H "Content-Type: application/json" \
+  "${PAPERCLIP_API_URL}/api/issues/{issue-id}/comments" \
+  -d '{"body": "Your comment here"}'
+```
+
+### Update Issue Status
+```bash
+# Mark issue as done with comment
+curl -s -X PATCH -H "Authorization: Bearer ${PAPERCLIP_API_KEY}" \
+  -H "Content-Type: application/json" \
+  "${PAPERCLIP_API_URL}/api/issues/{issue-id}" \
+  -d '{
+    "status": "done",
+    "comment": "What was done"
+  }'
+```
+
+## Environment Variables
+These are set automatically when running via Paperclip:
+- `PAPERCLIP_API_KEY` — Your API token
+- `PAPERCLIP_API_URL` — Paperclip API base URL (e.g., http://127.0.0.1:3101)
+- `PAPERCLIP_COMPANY_ID` — Your company ID
+- `PAPERCLIP_AGENT_ID` — Your agent ID
+
+## Common Agent IDs
+- Sloan (CEO): `1ef5e05b-7a16-4ebc-8c05-cdb03a321197`
+- Vandalay (CFO): `6ec7b59f-8955-4d21-b4c3-c4b5a68772c8`
+- Arty (Art Assistant): `61ee0d8e-ac57-47bc-8402-5d3a756427ad`

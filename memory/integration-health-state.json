@@ -1,40 +1,40 @@
 {
-  "lastCheck": "2026-04-09T16:00:55Z",
+  "lastCheck": "2026-04-10T16:00:58Z",
   "integrations": {
     "google_mat.weiss": {
       "ok": true,
       "detail": "OK",
-      "checkedAt": "2026-04-09T16:00:55Z"
+      "checkedAt": "2026-04-10T16:00:58Z"
     },
     "google_sarahmat0816": {
       "ok": true,
       "detail": "OK",
-      "checkedAt": "2026-04-09T16:00:55Z"
+      "checkedAt": "2026-04-10T16:00:58Z"
     },
     "google_thematweiss": {
       "ok": true,
       "detail": "OK",
-      "checkedAt": "2026-04-09T16:00:55Z"
+      "checkedAt": "2026-04-10T16:00:58Z"
     },
     "github": {
       "ok": true,
       "detail": "OK",
-      "checkedAt": "2026-04-09T16:00:55Z"
+      "checkedAt": "2026-04-10T16:00:58Z"
     },
     "paperclip": {
       "ok": true,
       "detail": "OK",
-      "checkedAt": "2026-04-09T16:00:55Z"
+      "checkedAt": "2026-04-10T16:00:58Z"
     },
     "home_assistant": {
       "ok": true,
-      "detail": "OK (token valid 3632d)",
-      "checkedAt": "2026-04-09T16:00:55Z"
+      "detail": "OK (token valid 3631d)",
+      "checkedAt": "2026-04-10T16:00:58Z"
     },
     "telegram_gateway": {
       "ok": true,
       "detail": "Running",
-      "checkedAt": "2026-04-09T16:00:55Z"
+      "checkedAt": "2026-04-10T16:00:58Z"
     }
   },
   "summary": {

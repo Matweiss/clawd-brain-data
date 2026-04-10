@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-04-03",
+  "lastUpdated": "2026-04-10",
   "newsletterSubscribers": 498,
   "starterKitWaitlist": 27,
   "salesHistory": [
@@ -18,6 +18,14 @@
     {
       "date": "2026-04-03",
       "sales": 0
+    },
+    {
+      "date": "2026-04-10",
+      "sales": 0
+    },
+    {
+      "date": "2026-04-10",
+      "sales": 0
     }
   ],
   "subscriberHistory": [
@@ -35,6 +43,14 @@
     },
     {
       "date": "2026-04-03",
+      "count": 498
+    },
+    {
+      "date": "2026-04-10",
+      "count": 498
+    },
+    {
+      "date": "2026-04-10",
       "count": 498
     }
   ]
