@@ -31,7 +31,6 @@ _Curated memories, lessons, and important context that persists across sessions.
 - Refresh token: Never expires (auto-refresh system deployed)
 
 ### Mat's Email Accounts
-- **mat@craftable.com** — INACTIVE, do not use
 - **mat.weiss@lucrasports.com** — Lucra work email (Luke manages)
 - **thematweiss@gmail.com** — Personal primary (Hermes/Sage monitors)
 - **sarahmat0816@gmail.com** — Shared with Sarah; Sage watches for CorePower emails here
@@ -202,3 +201,13 @@ Treat personal dated plans as schedule-critical memory, even when no external ca
 - Keep **Sarah project/art-assistant work** in `memory/projects/` and shared Sarah-agent memory.
 - Keep **Mat personal/core memory** in `MEMORY.md`, daily notes, and `memory/facts-mat-core.md`.
 - Do **not** merge Sarah project memory into Mat core recall unless explicitly asked.
+
+## Future Project: Siri Replacement / Voice Control (Apr 2026)
+**Status:** Parked — revisit after ROI calculator is done
+
+- iMessage bridge: OpenClaw has it built in, just needs Mac node wired up
+- Voice → Clawd: iOS Shortcut that dictates → sends to Telegram → I execute → respond
+- "Hey Siri, ask Clawd" flow via Shortcuts API endpoint
+- Contacts: readable via macOS contacts CLI on Mac node
+- Limitation: no real-time mic bridge; async dictation is the viable path
+- First step when we return: build the iOS Shortcut (20 min job)

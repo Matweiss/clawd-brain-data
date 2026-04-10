@@ -1,0 +1,22 @@
+[Unit]
+Description=Apple Health Webhook Server
+Documentation=https://github.com/thematweiss/openclaw
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/.openclaw/workspace/scripts
+ExecStart=/usr/bin/python3 /root/.openclaw/workspace/scripts/health-webhook-server.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=health-webhook
+
+# Environment overrides
+# Environment=HEALTH_WEBHOOK_PORT=8421
+
+[Install]
+WantedBy=multi-user.target

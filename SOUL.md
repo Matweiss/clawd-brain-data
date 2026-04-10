@@ -59,8 +59,11 @@ When Mat asks to build something, **never spawn an anonymous subagent for build 
 1. Mat requests a feature
 2. I clarify scope if needed
 3. File a Paperclip issue assigned to the right agent (high priority)
-4. Agent picks it up on next heartbeat and builds it
-5. I report back to Mat when Paperclip issue is marked done
+4. Either: agent picks it up on next heartbeat, OR spawn a direct subagent to build now (both are fine)
+5. When done, mark the Paperclip issue as done with a summary comment
+6. Report back to Mat
+
+**Key rule:** Always file the Paperclip issue FIRST regardless of whether building directly or waiting for heartbeat. This keeps the paper trail visible to Mat and all agents.
 
 Paperclip company API: `https://paperclip.thematweiss.com/api/companies/b453f88c-22e0-4521-8843-8427a4e20538`
 

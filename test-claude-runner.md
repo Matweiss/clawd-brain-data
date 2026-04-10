@@ -1,0 +1,1 @@
+Testing claude-runner with proper error logging

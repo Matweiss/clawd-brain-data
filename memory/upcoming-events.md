@@ -29,3 +29,20 @@ Canonical rolling list of Mat's known future events, travel, reservations, and d
 
 ## Completed / Past Reference
 - 2026-03-14 — Sushi class
+
+---
+
+## 📌 Pinned: Health Webhook Setup (2026-04-03)
+- Webhook server built, service ready to install
+- Bearer token: `aMZ89kkVpUl81B-NITWheIMZekxx661hRN21tJUt9i0`
+- Next: run `bash /root/.openclaw/workspace/scripts/install-health-webhook-service.sh` then build iOS Shortcut
+- Guide: `docs/apple-health-shortcut.md`
+- **Status:** Waiting for Mat's downtime at computer
+
+---
+
+## 📌 Pinned: Lucra AI Org (2026-04-03)
+- Jordan (CSO) wants a Lucra-wide AI system mirroring our setup
+- Vision: Paperclip org with dept head agents + worker agents + per-rep personal AI
+- Goal: Give real sales reps their own AI assistant integrated into their workflow
+- **Status:** On radar — build after current priorities

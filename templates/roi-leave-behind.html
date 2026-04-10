@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucra ROI Analysis — {{ company_name }}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #ffffff;
+    color: #1a1a2e;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 0;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* ── TOP ACCENT BAR ── */
+  .accent-bar {
+    height: 5px;
+    background: linear-gradient(90deg, {{ brand_color }} 0%, {{ brand_color_light }} 50%, #00C851 100%);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 24px 36px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e8eaf0;
+    background: #fafbff;
+  }
+
+  .logo-zone {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .prospect-logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .prospect-logo-wrap img {
+    max-height: 44px;
+    max-width: 140px;
+    object-fit: contain;
+  }
+
+  .prospect-name-badge {
+    font-size: 22pt;
+    font-weight: 800;
+    color: {{ brand_color }};
+    letter-spacing: -0.5px;
+  }
+
+  .logo-divider {
+    font-size: 18pt;
+    color: #c0c4d8;
+    font-weight: 300;
+    padding: 0 4px;
+  }
+
+  .lucra-logo {
+    font-size: 20pt;
+    font-weight: 900;
+    color: #00C851;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .lucra-tagline {
+    font-size: 8pt;
+    color: #6b7280;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+    text-align: right;
+  }
+
+  .lucra-block {
+    text-align: right;
+  }
+
+  /* ── HERO SECTION ── */
+  .hero {
+    background: linear-gradient(135deg, {{ brand_color }}08 0%, {{ brand_color }}15 100%);
+    padding: 28px 36px;
+    border-bottom: 2px solid {{ brand_color }}25;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 180px;
+    height: 180px;
+    background: {{ brand_color }}10;
+    border-radius: 50%;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    right: 60px;
+    width: 100px;
+    height: 100px;
+    background: #00C85110;
+    border-radius: 50%;
+  }
+
+  .hero-label {
+    font-size: 8pt;
+    font-weight: 700;
+    color: {{ brand_color }};
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .hero-title {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #1a1a2e;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero-title span {
+    color: {{ brand_color }};
+  }
+
+  .hero-body {
+    font-size: 10.5pt;
+    color: #4a4a6a;
+    max-width: 460px;
+    line-height: 1.6;
+  }
+
+  /* ── ROI NUMBERS STRIP ── */
+  .roi-strip {
+    background: #1a1a2e;
+    padding: 20px 36px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .roi-metric {
+    text-align: center;
+    flex: 1;
+    position: relative;
+  }
+
+  .roi-metric:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 10%;
+    height: 80%;
+    width: 1px;
+    background: rgba(255,255,255,0.15);
+  }
+
+  .roi-metric-label {
+    font-size: 7.5pt;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+
+  .roi-metric-value {
+    font-size: 18pt;
+    font-weight: 800;
+    color: #00C851;
+    letter-spacing: -0.5px;
+  }
+
+  .roi-metric-value.highlight {
+    color: {{ brand_color_bright }};
+  }
+
+  .roi-metric-sub {
+    font-size: 7.5pt;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .content {
+    padding: 24px 36px;
+  }
+
+  .two-col {
+    display: flex;
+    gap: 20px;
+  }
+
+  .col-left {
+    flex: 1.1;
+  }
+
+  .col-right {
+    flex: 0.9;
+  }
+
+  /* ── SECTION CARDS ── */
+  .section-card {
+    background: #f8f9ff;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    border: 1px solid #e8eaf0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .section-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: {{ brand_color }};
+    border-radius: 10px 0 0 10px;
+  }
+
+  .section-card.green::before {
+    background: #00C851;
+  }
+
+  .section-card.dark {
+    background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%);
+    border: none;
+    color: white;
+  }
+
+  .section-card.dark::before {
+    background: #00C851;
+  }
+
+  .section-title {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: {{ brand_color }};
+    margin-bottom: 10px;
+  }
+
+  .section-card.green .section-title {
+    color: #00C851;
+  }
+
+  .section-card.dark .section-title {
+    color: #00C851;
+  }
+
+  /* ── BULLET LIST ── */
+  .bullet-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .bullet-list li {
+    padding: 5px 0 5px 20px;
+    position: relative;
+    font-size: 10pt;
+    color: #374151;
+    line-height: 1.5;
+  }
+
+  .bullet-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: {{ brand_color }};
+    font-size: 10pt;
+  }
+
+  .section-card.green .bullet-list li::before {
+    color: #00C851;
+  }
+
+  .section-card.dark .bullet-list li {
+    color: #d1d5db;
+  }
+
+  .section-card.dark .bullet-list li::before {
+    color: #00C851;
+  }
+
+  .bullet-list li strong {
+    color: #1a1a2e;
+    font-weight: 600;
+  }
+
+  .section-card.dark .bullet-list li strong {
+    color: #ffffff;
+  }
+
+  /* ── NEXT STEP ── */
+  .next-step-card {
+    background: linear-gradient(135deg, {{ brand_color }} 0%, {{ brand_color_dark }} 100%);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    color: white;
+  }
+
+  .next-step-title {
+    font-size: 13pt;
+    font-weight: 800;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .next-step-body {
+    font-size: 9.5pt;
+    opacity: 0.9;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .contact-chip {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 9pt;
+    font-weight: 600;
+    color: white;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-chip {
+    flex: 1;
+    background: white;
+    border: 1px solid #e8eaf0;
+    border-radius: 8px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .stat-chip-value {
+    font-size: 14pt;
+    font-weight: 800;
+    color: {{ brand_color }};
+    letter-spacing: -0.5px;
+  }
+
+  .stat-chip-label {
+    font-size: 7.5pt;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* ── NOTES BOX ── */
+  .notes-box {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 9pt;
+    color: #78350f;
+  }
+
+  .notes-label {
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #d97706;
+    margin-bottom: 3px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: #1a1a2e;
+    padding: 12px 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+  }
+
+  .footer-text {
+    font-size: 8pt;
+    color: #6b7280;
+    letter-spacing: 0.3px;
+  }
+
+  .footer-brand {
+    font-size: 8pt;
+    font-weight: 700;
+    color: #00C851;
+    letter-spacing: 2px;
+  }
+
+  .footer-url {
+    font-size: 8pt;
+    color: #9ca3af;
+  }
+
+  /* ── PREPARED BADGE ── */
+  .prepared-badge {
+    font-size: 7.5pt;
+    color: #9ca3af;
+    text-align: center;
+    padding: 8px 0;
+    background: #f3f4f6;
+    border-top: 1px solid #e5e7eb;
+  }
+</style>
+</head>
+<body>
+
+<!-- Top accent bar -->
+<div class="accent-bar"></div>
+
+<!-- Header: Co-branded logos -->
+<div class="header">
+  <div class="logo-zone">
+    <div class="prospect-logo-wrap">
+      {% if prospect_logo_b64 %}
+        <img src="data:image/png;base64,{{ prospect_logo_b64 }}" alt="{{ company_name }} logo" />
+      {% else %}
+        <span class="prospect-name-badge">{{ company_name }}</span>
+      {% endif %}
+    </div>
+    <span class="logo-divider">×</span>
+    <div class="lucra-block">
+      <div class="lucra-logo">LUCRA</div>
+      <div class="lucra-tagline">Revenue Intelligence</div>
+    </div>
+  </div>
+  <div style="text-align: right;">
+    <div style="font-size: 8pt; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">Confidential ROI Analysis</div>
+    <div style="font-size: 8pt; color: #6b7280; margin-top: 2px;">Prepared for {{ company_name }}</div>
+  </div>
+</div>
+
+<!-- Hero section -->
+<div class="hero">
+  <div class="hero-label">📊 Personalized ROI Analysis</div>
+  <div class="hero-title">How Lucra Works for <span>{{ company_name }}</span></div>
+  <div class="hero-body">
+    Lucra's engagement platform drives measurable revenue lift for {{ industry_hint }}, turning passive users into high-value participants through real-money competitions and social challenges.
+    With <strong>{{ users_formatted }} active users</strong> and a targeted <strong>{{ lift_pct }}% engagement lift</strong>, {{ company_name }} is positioned to unlock significant incremental revenue starting in the first quarter.
+  </div>
+</div>
+
+<!-- ROI Numbers Strip -->
+<div class="roi-strip">
+  <div class="roi-metric">
+    <div class="roi-metric-label">Monthly Impact</div>
+    <div class="roi-metric-value">{{ monthly_roi }}</div>
+    <div class="roi-metric-sub">additional revenue / mo</div>
+  </div>
+  <div class="roi-metric">
+    <div class="roi-metric-label">Annual Impact</div>
+    <div class="roi-metric-value highlight">{{ annual_roi }}</div>
+    <div class="roi-metric-sub">projected year 1 uplift</div>
+  </div>
+  <div class="roi-metric">
+    <div class="roi-metric-label">3-Year Value</div>
+    <div class="roi-metric-value">{{ three_yr_value }}</div>
+    <div class="roi-metric-sub">cumulative ROI potential</div>
+  </div>
+  <div class="roi-metric">
+    <div class="roi-metric-label">Payback Period</div>
+    <div class="roi-metric-value" style="color: #f59e0b;">{{ payback_months }} mo</div>
+    <div class="roi-metric-sub">typical time to break-even</div>
+  </div>
+</div>
+
+<!-- Main content: two columns -->
+<div class="content">
+  <div class="two-col">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-left">
+
+      <!-- What You Get -->
+      <div class="section-card">
+        <div class="section-title">✅ What You Get</div>
+        <ul class="bullet-list">
+          <li><strong>{{ lift_pct }}% Engagement Lift</strong> — Lucra's proven competition engine drives deeper session frequency and time-on-platform</li>
+          <li><strong>{{ annual_roi }} Annual Revenue Impact</strong> — Direct uplift from increased monetization of your existing {{ users_formatted }}-user base</li>
+          <li><strong>{{ payback_months }}-Month Payback</strong> — Rapid ROI with a streamlined integration that goes live in weeks, not quarters</li>
+        </ul>
+      </div>
+
+      <!-- Why Now -->
+      <div class="section-card green">
+        <div class="section-title">⚡ Why Now</div>
+        <ul class="bullet-list">
+          <li><strong>Market window is open:</strong> {{ why_now_1 }}</li>
+          <li><strong>{{ why_now_2 }}</strong></li>
+        </ul>
+      </div>
+
+      {% if notes %}
+      <!-- Call notes -->
+      <div class="notes-box">
+        <div class="notes-label">📝 Call Notes</div>
+        {{ notes }}
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-right">
+
+      <!-- Key metrics -->
+      <div class="stats-row">
+        <div class="stat-chip">
+          <div class="stat-chip-value">{{ users_formatted }}</div>
+          <div class="stat-chip-label">Users / Players</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-value">{{ lift_pct }}%</div>
+          <div class="stat-chip-label">Lift Target</div>
+        </div>
+      </div>
+
+      <!-- ROI Breakdown -->
+      <div class="section-card dark">
+        <div class="section-title">💰 ROI Breakdown</div>
+        <ul class="bullet-list">
+          <li>Current Annual Revenue<br><strong>${{ current_revenue_fmt }}</strong></li>
+          <li>Projected Lift Revenue<br><strong>{{ annual_roi }} / year</strong></li>
+          <li>3-Year Cumulative<br><strong>{{ three_yr_value }}</strong></li>
+          <li>Revenue Per User Uplift<br><strong>{{ revenue_per_user }}</strong></li>
+        </ul>
+      </div>
+
+      <!-- Next Step CTA -->
+      <div class="next-step-card">
+        <div class="next-step-title">Ready to see {{ company_name }}'s full potential?</div>
+        <div class="next-step-body">Let's schedule a technical deep-dive and build your custom implementation plan — live demo included.</div>
+        <div class="contact-chip">📧 mat.weiss@lucrasports.com</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-text">Prepared exclusively for <strong style="color: #d1d5db;">{{ company_name }}</strong> by Lucra</div>
+  <div class="footer-brand">LUCRA</div>
+  <div class="footer-url">lucrasports.com</div>
+</div>
+
+<div class="prepared-badge">
+  This document contains proprietary analysis prepared specifically for {{ company_name }}. Not for distribution. | lucrasports.com
+</div>
+
+</body>
+</html>

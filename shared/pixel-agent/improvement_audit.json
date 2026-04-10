@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Implement cache-layer for CorePower schedule responses",
+    "description": "Currently scraping live on every run. Implementing a JSON cache layer in the workspace could reduce CorePower load and speed up schedule retrieval when the site is slow or returns 429s."
+  },
+  {
+    "title": "Add backup scrape target for Regal movie times",
+    "description": "Adding a secondary source for Regal (e.g. Google Search or Fandango page) would ensure resilience if the main Regal theatre page layout changes again."
+  },
+  {
+    "title": "Improve error handling for browser node disconnection",
+    "description": "Currently logging to file. Enhancing this to auto-retry reconnection attempts for browser MCP specifically (with exponential backoff) would reduce manual intervention needs."
+  }
+]

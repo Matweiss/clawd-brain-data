@@ -1,24 +1,95 @@
 {
-  "updatedAt": "2026-03-25T02:32:00Z",
+  "updatedAt": "2026-04-02T18:34:52.968Z",
   "activeProjects": [
-    "Debug OpenClaw Anthropic auth/model selection in Telegram DM",
-    "Bachelor party travel logistics"
+    {
+      "text": "Debug OpenClaw Anthropic auth/model selection in Telegram DM",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "Bachelor party travel logistics",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    }
   ],
   "whereWeLeftOff": [
-    "Confirmed Anthropic failure is not from openclaw.json, auth.json, shell env, systemd service env, deleted auth-profiles.json, or /root/.claude/.credentials.json.",
-    "Confirmed openclaw-gateway runs as systemd user service openclaw-gateway.service with no ANTHROPIC/CLAUDE env vars in the daemon process.",
-    "Found root cause in /root/.openclaw/agents/main/sessions/sessions.json: active Telegram DM session agent:main:telegram:direct:8001393940 contains authProfileOverride = anthropic:oauth-sub.",
-    "This stale session-scoped auth override is likely rehydrating the malformed Anthropic OAuth token and causing Headers.append invalid header value errors.",
-    "Next step: inspect surrounding lines in sessions.json, then either remove authProfileOverride from the affected session entry or reset/delete that session so OpenClaw recreates it cleanly."
+    {
+      "text": "sarahmat0816 gog re-auth complete with password 'clawd'; GOG_KEYRING_PASSWORD=clawd set globally in openclaw.json; both thematweiss and sarahmat0816 Gmail/Calendar working; Hermes TOOLS.md updated",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.967Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "Confirmed Anthropic failure is not from openclaw.json, auth.json, shell env, systemd service env, deleted auth-profiles.json, or /root/.claude/.credentials.json.",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "Confirmed openclaw-gateway runs as systemd user service openclaw-gateway.service with no ANTHROPIC/CLAUDE env vars in the daemon process.",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "Found root cause in /root/.openclaw/agents/main/sessions/sessions.json: active Telegram DM session agent:main:telegram:direct:8001393940 contains authProfileOverride = anthropic:oauth-sub.",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "This stale session-scoped auth override is likely rehydrating the malformed Anthropic OAuth token and causing Headers.append invalid header value errors.",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "Next step: inspect surrounding lines in sessions.json, then either remove authProfileOverride from the affected session entry or reset/delete that session so OpenClaw recreates it cleanly.",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    }
   ],
   "sopTruths": [
-    "When auth cleanup fails, inspect session-scoped state under /root/.openclaw/agents/main/sessions/sessions.json for authProfileOverride or model/provider pinning.",
-    "For OpenClaw user services, inspect systemd with systemctl --user cat <unit> --no-pager and live daemon env via /proc/<pid>/environ rather than relying on shell env.",
-    "Do not paste live secrets/tokens into chat; rotate any exposed gateway, bot, or API tokens after debugging.",
-    "Bachelor party return flight note: J Lee is also on the shared return flight (United 2679, EWR → LAX, Mon Apr 6, 10:10 AM ET)."
+    {
+      "text": "When auth cleanup fails, inspect session-scoped state under /root/.openclaw/agents/main/sessions/sessions.json for authProfileOverride or model/provider pinning.",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "For OpenClaw user services, inspect systemd with systemctl --user cat <unit> --no-pager and live daemon env via /proc/<pid>/environ rather than relying on shell env.",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "Do not paste live secrets/tokens into chat; rotate any exposed gateway, bot, or API tokens after debugging.",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "Bachelor party return flight note: J Lee is also on the shared return flight (United 2679, EWR → LAX, Mon Apr 6, 10:10 AM ET).",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    }
   ],
   "notes": [
-    "Useful follow-up command: sed -n '1,40p;4128,4145p;4425,4440p;5798,5810p;6098,6108p' /root/.openclaw/agents/main/sessions/sessions.json",
-    "User asked to log this to memory, especially if there is a solution."
+    {
+      "text": "Useful follow-up command: sed -n '1,40p;4128,4145p;4425,4440p;5798,5810p;6098,6108p' /root/.openclaw/agents/main/sessions/sessions.json",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    },
+    {
+      "text": "User asked to log this to memory, especially if there is a solution.",
+      "priority": "this_week",
+      "createdAt": "2026-04-02T18:34:52.968Z",
+      "updatedAt": "2026-04-02T18:34:52.968Z"
+    }
   ]
 }
