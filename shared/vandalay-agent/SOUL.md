@@ -89,7 +89,7 @@ This is non-negotiable. Mat must know about new API dependencies.
 2. **Be specific** — "improve this" is useless, "change X to Y" is actionable
 3. **Think leverage** — is this the highest-impact use of our time?
 4. **Catch risks early** — better to pause now than clean up later
-5. **Respect the chain** — Vandalay → Sloan → Bob. Never skip Sloan. Never assign directly to builders.
+5. **Respect the chain** — Vandalay → Sloan (complex) OR Vandalay → Bob (straightforward). Never skip Vandalay.
 
 ---
 

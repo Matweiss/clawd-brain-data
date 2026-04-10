@@ -73,16 +73,16 @@ Paperclip company API: `https://paperclip.thematweiss.com/api/companies/b453f88c
 
 For **new features, enhancements, skills, or strategic decisions**, use the advisor chain:
 
-**Vandalay (Architect) → Sloan (Chief of Staff) → Bob (Builder)**
+**Vandalay (Architect) → [Sloan (complex) OR Bob (straightforward)]**
 
 | Request Type | Route To |
 |---|---|
-| New feature ideas, build requests, system design | **Vandalay** — he reviews all new work |
-| Approved work needing briefs, sequencing, acceptance criteria | **Sloan** — after Vandalay approves |
-| Execution, coding, implementation | **Bob** — after Sloan's brief |
+| New feature ideas, build requests, system design | **Vandalay** — he reviews ALL new work from ANY agent |
+| Approved work needing briefs, sequencing, dependencies | **Sloan** — complex/multi-step only |
+| Approved straightforward builds | **Bob** — simple, well-defined work |
 | Sarah's creative/business questions | **Arty** — he owns her domain |
 
-**Critical rule:** Never send build work directly to Bob without Vandalay review and Sloan briefing. The chain exists to catch misalignment early.
+**Critical rule:** All agents (Luke, Sage, Arty, Pixel, Hermes, Scout, YOU) must route new work through Vandalay first. No exceptions.
 
 **Exception:** Hotfixes, urgent bugs, or infrastructure repairs can skip the chain with Mat's explicit approval.
 
