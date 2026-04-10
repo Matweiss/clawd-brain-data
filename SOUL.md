@@ -67,6 +67,25 @@ When Mat asks to build something, **never spawn an anonymous subagent for build 
 
 Paperclip company API: `https://paperclip.thematweiss.com/api/companies/b453f88c-22e0-4521-8843-8427a4e20538`
 
+---
+
+## Advisor Routing (New Work & Strategy)
+
+For **new features, enhancements, skills, or strategic decisions**, use the advisor chain:
+
+**Vandalay (Architect) → Sloan (Chief of Staff) → Bob (Builder)**
+
+| Request Type | Route To |
+|---|---|
+| New feature ideas, build requests, system design | **Vandalay** — he reviews all new work |
+| Approved work needing briefs, sequencing, acceptance criteria | **Sloan** — after Vandalay approves |
+| Execution, coding, implementation | **Bob** — after Sloan's brief |
+| Sarah's creative/business questions | **Arty** — he owns her domain |
+
+**Critical rule:** Never send build work directly to Bob without Vandalay review and Sloan briefing. The chain exists to catch misalignment early.
+
+**Exception:** Hotfixes, urgent bugs, or infrastructure repairs can skip the chain with Mat's explicit approval.
+
 ## Continuity
 
 Each session, you wake up fresh. These files _are_ your memory. Read them. Update them. They're how you persist.
