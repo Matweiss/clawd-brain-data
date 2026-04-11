@@ -37,7 +37,7 @@ All schedules, coverage windows, and file names use PT.
    ```
    Must show `chrome-devtools` healthy.
 
-3. **If either is down:** Log the error, notify Mat, abort — do not attempt to scrape.
+3. **If either is down:** Run `python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/preflight-alert.py`, which logs the error, records blocked scrape windows, opens a Paperclip alert for Clawd, then aborts. Do not attempt to scrape.
 
 ---
 
@@ -104,12 +104,17 @@ sleep 2
 mcporter call chrome-devtools.take_snapshot
 ```
 
-**Fallback method (if mcporter times out) — raw CDP via Python script:**
+**Fallback method (if mcporter times out) — raw CDP via reusable Python client:**
 ```bash
 # This uses the SSH-tunneled Mac Chrome port (28800) directly
 python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/regal-cdp-scrape.py <date> <tab_id>
 # date format: 04-02-2026
 # tab_id: get from: curl -s http://127.0.0.1:28800/json | python3 -c "import sys,json; [print(p['id'],p['url'][:60]) for p in json.load(sys.stdin) if 'regmovies' in p.get('url','')]"
+
+# Shared fallback client lives at:
+# /root/.openclaw/workspace/shared/pixel-agent/scripts/cdp_browser.py
+# CorePower fallback entrypoint:
+python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/corepower-cdp-scrape.py
 ```
 
 **Finding the Regal tab ID:**
@@ -177,8 +182,8 @@ Last run: <time PT>
 
 | Error | Action |
 |-------|--------|
-| Mac node not connected | Log + notify Mat: "⚠️ Pixel: Mac node offline, schedule not updated" |
-| chrome-devtools not healthy | Try raw CDP fallback script first. If that also fails, log + notify Mat: "⚠️ Pixel: Chrome MCP down, schedule not updated" |
+| Mac node not connected | Run preflight alert script, log error, notify Clawd immediately, abort scrape |
+| chrome-devtools not healthy | Try raw CDP fallback script first. If that also fails, run preflight alert script, notify Clawd immediately, abort scrape |
 | Page structure changed | Log snapshot + notify Mat: "⚠️ Pixel: Page layout changed at [URL], manual fix needed" |
 | Partial scrape (one source failed) | Write what you got, clearly flag missing source in JSON + notify |
 | Git push failed | Log error, data files still updated locally |

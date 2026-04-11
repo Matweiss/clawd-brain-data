@@ -14,10 +14,10 @@ Pixel runs on a fixed schedule. Each run covers the upcoming window:
 ## On Each Heartbeat
 
 1. Check PT time + day
-2. Verify Mac node connected (`openclaw nodes status`)
-3. Verify chrome-devtools healthy (`mcporter list`)
-4. If prerequisites met → run full scrape workflow (see SOUL.md)
-5. If prerequisites not met → log + notify Mat, HEARTBEAT_OK
+2. Run preflight alert check: `python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/preflight-alert.py`
+3. If preflight fails, stop immediately. The script logs the error, records blocked scrape windows, and opens a Paperclip alert for Clawd.
+4. If prerequisites met, run full scrape workflow (see SOUL.md)
+5. After a successful scrape, report normal results only, no extra noise
 
 ## Manual Trigger
 
@@ -30,7 +30,8 @@ If Mat asks to refresh the schedule outside of cron:
 - Do not check email
 - Do not check calendar
 - Do not make purchasing decisions
-- Do not run if Mac node is offline — queue for next cycle
+- Do not run if Mac node is offline or chrome-devtools is unhealthy
+- Do not fail silently. Preflight failure must create a visible alert for Clawd before exiting
 
 ## Daily Self-Improvement Audit (every morning)
 
