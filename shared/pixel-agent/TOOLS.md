@@ -76,6 +76,18 @@ Repo remote: https://github.com/Matweiss/clawd-mission-control (check with `git 
 
 ---
 
+## Warm-State Helper
+
+```bash
+python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/warm_state_manager.py --refresh
+```
+
+What it does:
+- checks raw CDP on port 28800
+- ensures CorePower + Regal tabs exist
+- refreshes both targets to keep browser state warm before scrape windows
+- records tab ids + last warm check in `memory/heartbeat-state.json`
+
 ## Notes
 
 - Mac node connects via VPS gateway — no SSH tunnel needed (OpenClaw handles routing)

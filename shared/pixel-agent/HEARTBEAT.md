@@ -16,8 +16,9 @@ Pixel runs on a fixed schedule. Each run covers the upcoming window:
 1. Check PT time + day
 2. Run preflight alert check: `python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/preflight-alert.py`
 3. If preflight fails, stop immediately. The script logs the error, records blocked scrape windows, and opens a Paperclip alert for Clawd.
-4. If prerequisites met, run full scrape workflow (see SOUL.md)
-5. After a successful scrape, report normal results only, no extra noise
+4. If prerequisites met, optionally warm browser state with `python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/warm_state_manager.py --refresh` when CDP is reachable and scrape windows are approaching
+5. Run full scrape workflow (see SOUL.md)
+6. After a successful scrape, report normal results only, no extra noise
 
 ## Manual Trigger
 

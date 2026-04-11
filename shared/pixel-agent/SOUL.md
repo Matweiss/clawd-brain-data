@@ -59,6 +59,9 @@ All schedules, coverage windows, and file names use PT.
 TZ='America/Los_Angeles' date
 openclaw nodes status
 mcporter list
+
+# Optional warm-state prep when CDP is reachable
+python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/warm_state_manager.py --refresh
 ```
 
 ### Step 2: Scrape CorePower Yoga ("Main" filter)
@@ -126,7 +129,8 @@ for p in pages:
     if 'regmovies.com' in p.get('url',''):
         print(p['id'], p['url'][:80])
 "
-# If no Regal tab exists, open any tab first via mcporter, then use that tab_id
+# If no Regal tab exists, create or refresh one with:
+python3 /root/.openclaw/workspace/shared/pixel-agent/scripts/warm_state_manager.py --refresh
 ```
 
 Parse for:
