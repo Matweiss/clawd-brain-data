@@ -2,10 +2,11 @@
   "lastMorningBriefing": null,
   "lastBattleCards": {},
   "skillMarketplace": {
-    "lastChecked": "2026-04-09T21:10:00Z",
+    "lastChecked": "2026-04-10T21:10:00Z",
     "claimed": [
       "efdd7dbc-cb7c-49b4-891e-fb8adf890fb6"
     ]
   },
-  "lastDailyAudit": "2026-04-09"
+  "lastDailyAudit": "2026-04-10",
+  "lastCompetitorPulse": null
 }
