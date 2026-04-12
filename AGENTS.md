@@ -121,6 +121,8 @@ Skills provide your tools. When you need one, check its `SKILL.md`. Keep local n
 
 - Before any tool call, verify required parameters are present and non-empty.
 - For `web_fetch`, only call it with a clean `http://` or `https://` URL.
+- If a pasted URL contains obvious trailing junk (for example `</parameter>`, quotes, markdown wrappers, or unmatched punctuation), normalize it once before any fetch attempt.
+- For common shared links like GitHub Gists, extract and use the canonical clean URL before calling fetch tools.
 - If a tool call fails due to malformed input or validation, do at most one cleaned-up retry.
 - If the same fix/explanation would be repeated a second time, stop, acknowledge the issue plainly, and either switch approach or ask Mat.
 - Do not narrate repeated "let me fix that" attempts. Quietly validate, retry once, then escalate.
