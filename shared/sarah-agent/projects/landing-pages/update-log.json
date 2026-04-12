@@ -1,0 +1,191 @@
+[
+  {
+    "generatedAt": "2026-04-12T00:29:06.657Z",
+    "replacements": 2,
+    "pagesNeedingUpdates": 1,
+    "pages": [
+      {
+        "file": "landing-pages/ashley-wall.json",
+        "pageTitle": "Ashley Wall Collector Edit",
+        "updates": [
+          {
+            "status": "replace",
+            "reason": "Featured product missing from Shopify response",
+            "current": {
+              "id": null,
+              "title": "Sold Piece Placeholder One",
+              "handle": "sold-piece-placeholder-one",
+              "productType": "Contemporary Frame",
+              "tags": [
+                "Babes",
+                "Iridescent",
+                "Pink"
+              ],
+              "tier": "Babes",
+              "price": 1600
+            },
+            "replacement": {
+              "id": 8650857414708,
+              "title": "Shine Through No. 2",
+              "handle": "shine-through-no-2",
+              "productType": "Contemporary Frame",
+              "tags": [
+                "Babes"
+              ],
+              "status": "active",
+              "publishedAt": "2025-09-12T10:08:10-07:00",
+              "price": 1200,
+              "tier": "Babes",
+              "totalInventory": 1,
+              "image": "https://cdn.shopify.com/s/files/1/0724/8560/1332/files/SJS-021425-4.webp?v=1759010492",
+              "url": "https://sarahjschwartz.com/products/shine-through-no-2",
+              "raw": {
+                "id": 8650857414708,
+                "title": "Shine Through No. 2",
+                "product_type": "Contemporary Frame",
+                "handle": "shine-through-no-2",
+                "published_at": "2025-09-12T10:08:10-07:00",
+                "tags": "Babes",
+                "status": "active",
+                "variants": [
+                  {
+                    "id": 47102285217844,
+                    "product_id": 8650857414708,
+                    "title": "19.5 x 16.5 in",
+                    "price": "1200.00",
+                    "position": 1,
+                    "inventory_policy": "deny",
+                    "compare_at_price": null,
+                    "option1": "19.5 x 16.5 in",
+                    "option2": null,
+                    "option3": null,
+                    "created_at": "2025-09-16T15:00:49-07:00",
+                    "updated_at": "2025-11-21T09:55:44-08:00",
+                    "taxable": false,
+                    "barcode": null,
+                    "fulfillment_service": "manual",
+                    "grams": 0,
+                    "inventory_management": "shopify",
+                    "requires_shipping": true,
+                    "sku": "SQ8793080",
+                    "weight": 0,
+                    "weight_unit": "lb",
+                    "inventory_item_id": 49203322880052,
+                    "inventory_quantity": 1,
+                    "old_inventory_quantity": 1,
+                    "admin_graphql_api_id": "gid://shopify/ProductVariant/47102285217844",
+                    "image_id": null
+                  }
+                ],
+                "image": {
+                  "id": 35626256957492,
+                  "alt": null,
+                  "position": 1,
+                  "product_id": 8650857414708,
+                  "created_at": "2025-09-12T10:07:18-07:00",
+                  "updated_at": "2025-09-27T15:01:32-07:00",
+                  "admin_graphql_api_id": "gid://shopify/MediaImage/27232291487796",
+                  "width": 1495,
+                  "height": 1495,
+                  "src": "https://cdn.shopify.com/s/files/1/0724/8560/1332/files/SJS-021425-4.webp?v=1759010492",
+                  "variant_ids": [
+                    47102285217844
+                  ]
+                }
+              }
+            },
+            "score": 69
+          },
+          {
+            "status": "replace",
+            "reason": "Featured product missing from Shopify response",
+            "current": {
+              "id": null,
+              "title": "Sold Piece Placeholder Two",
+              "handle": "sold-piece-placeholder-two",
+              "productType": "Contemporary Frame",
+              "tags": [
+                "Darlings",
+                "Glow",
+                "Gradient"
+              ],
+              "tier": "Darlings",
+              "price": 900
+            },
+            "replacement": {
+              "id": 8785317560372,
+              "title": "Confetti on a Friday",
+              "handle": "confetti-on-a-friday",
+              "productType": "Contemporary Frame",
+              "tags": [
+                "Darlings"
+              ],
+              "status": "active",
+              "publishedAt": "2026-04-04T06:57:54-07:00",
+              "price": 330,
+              "tier": "Darlings",
+              "totalInventory": 1,
+              "image": "https://cdn.shopify.com/s/files/1/0724/8560/1332/files/IMG-5890.png?v=1774658049",
+              "url": "https://sarahjschwartz.com/products/confetti-on-a-friday",
+              "raw": {
+                "id": 8785317560372,
+                "title": "Confetti on a Friday",
+                "product_type": "Contemporary Frame",
+                "handle": "confetti-on-a-friday",
+                "published_at": "2026-04-04T06:57:54-07:00",
+                "tags": "Darlings",
+                "status": "active",
+                "variants": [
+                  {
+                    "id": 47641874268212,
+                    "product_id": 8785317560372,
+                    "title": "6.75 x 6.75 in",
+                    "price": "330.00",
+                    "position": 1,
+                    "inventory_policy": "deny",
+                    "compare_at_price": null,
+                    "option1": "6.75 x 6.75 in",
+                    "option2": null,
+                    "option3": null,
+                    "created_at": "2026-03-29T17:37:12-07:00",
+                    "updated_at": "2026-03-29T17:50:09-07:00",
+                    "taxable": false,
+                    "barcode": "",
+                    "fulfillment_service": "manual",
+                    "grams": 0,
+                    "inventory_management": "shopify",
+                    "requires_shipping": true,
+                    "sku": null,
+                    "weight": 0,
+                    "weight_unit": "lb",
+                    "inventory_item_id": 49758424170548,
+                    "inventory_quantity": 1,
+                    "old_inventory_quantity": 1,
+                    "admin_graphql_api_id": "gid://shopify/ProductVariant/47641874268212",
+                    "image_id": null
+                  }
+                ],
+                "image": {
+                  "id": 36579147939892,
+                  "alt": null,
+                  "position": 1,
+                  "product_id": 8785317560372,
+                  "created_at": "2026-03-27T17:34:05-07:00",
+                  "updated_at": "2026-03-27T17:34:23-07:00",
+                  "admin_graphql_api_id": "gid://shopify/MediaImage/28130065350708",
+                  "width": 2268,
+                  "height": 4032,
+                  "src": "https://cdn.shopify.com/s/files/1/0724/8560/1332/files/IMG-5890.png?v=1774658049",
+                  "variant_ids": [
+                    47641874268212
+                  ]
+                }
+              }
+            },
+            "score": 61
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "collectorName": "Ashley Wall",
+  "pageTitle": "Ashley Wall Collector Edit",
+  "pageHandle": "collectors-ashley-wall",
+  "collectorProfile": {
+    "preferredTiers": [
+      "Babes",
+      "Darlings"
+    ],
+    "preferredTags": [
+      "Iridescent",
+      "Glow",
+      "Pink"
+    ]
+  },
+  "featuredProducts": [
+    {
+      "productId": 8650857414708,
+      "handle": "shine-through-no-2",
+      "title": "Shine Through No. 2",
+      "price": 1200,
+      "tier": "Babes",
+      "productType": "Contemporary Frame",
+      "tags": [
+        "Babes"
+      ],
+      "url": "https://sarahjschwartz.com/products/shine-through-no-2",
+      "swappedInAt": "2026-04-12T00:29:06.658Z",
+      "replacedHandle": "sold-piece-placeholder-one"
+    },
+    {
+      "productId": 8785317560372,
+      "handle": "confetti-on-a-friday",
+      "title": "Confetti on a Friday",
+      "price": 330,
+      "tier": "Darlings",
+      "productType": "Contemporary Frame",
+      "tags": [
+        "Darlings"
+      ],
+      "url": "https://sarahjschwartz.com/products/confetti-on-a-friday",
+      "swappedInAt": "2026-04-12T00:29:06.658Z",
+      "replacedHandle": "sold-piece-placeholder-two"
+    }
+  ],
+  "lastEvaluatedAt": "2026-04-12T00:29:06.658Z"
+}
