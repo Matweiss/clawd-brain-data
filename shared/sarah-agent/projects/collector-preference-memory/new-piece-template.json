@@ -1,0 +1,13 @@
+{
+  "id": "aurora-garden",
+  "title": "Aurora Garden",
+  "medium": "acrylic",
+  "widthInches": 30,
+  "heightInches": 40,
+  "orientation": "portrait",
+  "price": 3200,
+  "palette": ["pink", "gold", "blue", "bold-color"],
+  "themes": ["abstract", "floral", "statement"],
+  "moods": ["energetic", "optimistic", "lush"],
+  "notes": "Color-forward original that should be reviewed against VIP first-look collectors before launch."
+}
