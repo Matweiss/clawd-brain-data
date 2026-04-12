@@ -1,0 +1,14 @@
+{
+  "id": "new-dawn-study-01",
+  "title": "New Dawn Study",
+  "medium": "acrylic",
+  "widthInches": 24,
+  "heightInches": 30,
+  "orientation": "portrait",
+  "palette": ["blue", "gold", "white"],
+  "subject": ["seascape", "horizon"],
+  "mood": ["calm", "hopeful"],
+  "url": "https://example.com/products/new-dawn-study",
+  "imageUrl": "https://example.com/images/new-dawn-study.jpg",
+  "notes": "Use this as a template for new piece previews before public release."
+}
