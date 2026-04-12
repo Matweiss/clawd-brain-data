@@ -117,6 +117,14 @@ Reactions are lightweight social signals. Humans use them constantly — they sa
 
 Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `TOOLS.md`.
 
+### Tool Guardrails
+
+- Before any tool call, verify required parameters are present and non-empty.
+- For `web_fetch`, only call it with a clean `http://` or `https://` URL.
+- If a tool call fails due to malformed input or validation, do at most one cleaned-up retry.
+- If the same fix/explanation would be repeated a second time, stop, acknowledge the issue plainly, and either switch approach or ask Mat.
+- Do not narrate repeated "let me fix that" attempts. Quietly validate, retry once, then escalate.
+
 **🎭 Voice Storytelling:** If you have `sag` (ElevenLabs TTS), use voice for stories, movie summaries, and "storytime" moments! Way more engaging than walls of text. Surprise people with funny voices.
 
 **📝 Platform Formatting:**
