@@ -1,0 +1,32 @@
+{
+  "releaseName": "Spring Minis Drop",
+  "releaseDate": "2026-04-18",
+  "defaultTimeOfDay": "16:00",
+  "theme": "Fresh spring color story with collector-friendly minis",
+  "audience": "Newsletter subscribers first, then Instagram collectors and warm followers",
+  "links": {
+    "privateCollectionPage": "https://sarahjaclynschwartz.com/pages/spring-minis-private",
+    "publicCollectionPage": "https://sarahjaclynschwartz.com/collections/spring-minis"
+  },
+  "overrides": {
+    "productPrep": {
+      "checklist": [
+        "Make sure each piece is tagged by size bucket: minis / darlings / babes / gems"
+      ]
+    },
+    "landingPages": {
+      "notes": "Collector-specific landing pages should only include available work relevant to prior purchases."
+    },
+    "newsletter": {
+      "notes": "Sarah usually sends Saturday releases, so this anchors the whole drop.",
+      "checklist": [
+        "Include a clear 24-hour subscriber-only access reminder"
+      ]
+    },
+    "instagramLaunch": {
+      "checklist": [
+        "Mention what sold during newsletter early access so scarcity feels real, not manufactured"
+      ]
+    }
+  }
+}
