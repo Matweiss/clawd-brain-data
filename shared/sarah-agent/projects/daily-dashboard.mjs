@@ -14,6 +14,7 @@
 
 import https from 'https';
 import fs from 'fs';
+import { buildBirthdayDrafts, fetchBirthdayCustomers } from './birthday-program.mjs';
 
 // Configuration
 const SHOPIFY_STORE = process.env.SARAH_SHOPIFY_STORE || 'yr5azj-q0.myshopify.com';
@@ -335,9 +336,19 @@ async function getTodaysDeliveries() {
 
 // Fetch customers with birthdays today
 async function getTodaysBirthdays() {
-  // Note: This requires customer metafields for birthdays
-  // For now, returning empty array - will need to implement birthday tracking
-  return [];
+  try {
+    const customers = await fetchBirthdayCustomers();
+    const entries = buildBirthdayDrafts(customers, { today: new Date(), lookaheadDays: 0 });
+    return entries.map((entry) => ({
+      name: entry.name,
+      email: entry.email,
+      source: entry.source,
+      recommendedDraft: entry.drafts[entry.drafts.recommended]
+    }));
+  } catch (error) {
+    console.error('Birthday lookup failed:', error.message);
+    return [];
+  }
 }
 
 // Fetch detailed subscriber metrics
@@ -489,6 +500,9 @@ export async function generateDashboard() {
   } else {
     birthdays.forEach((person) => {
       output += `   • ${person.name} 🎉\n`;
+      if (person.recommendedDraft) {
+        output += `     Draft: ${person.recommendedDraft}\n`;
+      }
     });
   }
 
