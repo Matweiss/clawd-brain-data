@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2026-04-12T00:30:37.697Z",
+  "source": "/root/.openclaw/workspace/shared/sarah-agent/projects/product-upload-packager/sample-raw-pieces.json",
+  "summary": {
+    "pieceCount": 1,
+    "imageCount": 1
+  },
+  "listings": [
+    {
+      "title": "Blue Bloom",
+      "handle": "blue-bloom",
+      "status": "draft",
+      "product_type": "Original Artwork",
+      "vendor": "Sarah Schwartz",
+      "tags": "Babes, Original Artwork, Acrylic on canvas, portrait, blue, gold, white, floral, abstract, calm, uplifting, newsletter-drop, spring",
+      "template_suffix": "orphan-draft",
+      "body_html": "<p>Painted after a beach walk at dusk. Soft blue and warm gold tones with a floral pull.</p>\n<ul><li><strong>Medium:</strong> Acrylic on canvas</li><li><strong>Dimensions:</strong> 24\" x 30\"</li><li><strong>Orientation:</strong> portrait</li></ul>\n<p>This listing is staged as a draft for Sarah review before publish.</p>",
+      "seo": {
+        "seoTitle": "Blue Bloom | Acrylic on canvas by Sarah Schwartz",
+        "seoDescription": "Blue Bloom is a acrylic on canvas sized 24 x 30 inches. Keywords: blue, gold, white, floral, abstract, blue floral painting."
+      },
+      "metafields": {
+        "category": "Babes",
+        "widthInches": 24,
+        "heightInches": 30,
+        "depthInches": null,
+        "palette": [
+          "blue",
+          "gold",
+          "white"
+        ],
+        "subject": [
+          "floral",
+          "abstract"
+        ],
+        "mood": [
+          "calm",
+          "uplifting"
+        ],
+        "titleIdeas": [
+          "Blue Bloom",
+          "Bloom Study"
+        ]
+      },
+      "options": [
+        {
+          "name": "Edition",
+          "values": [
+            "8x10 print",
+            "16x20 print"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "option1": "8x10 print",
+          "price": "65.00",
+          "sku": "blue-bloom-print-1",
+          "inventory_policy": "continue",
+          "fulfillment_service": "manual"
+        },
+        {
+          "option1": "16x20 print",
+          "price": "145.00",
+          "sku": "blue-bloom-print-2",
+          "inventory_policy": "continue",
+          "fulfillment_service": "manual"
+        }
+      ],
+      "images": [
+        {
+          "src": "images/blue-bloom/blue-bloom-01.jpg",
+          "alt": "Blue Bloom by Sarah Schwartz, view 1",
+          "position": 1,
+          "width": 1400,
+          "height": 900
+        }
+      ]
+    }
+  ]
+}

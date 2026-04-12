@@ -1,0 +1,25 @@
+{
+  "pieces": [
+    {
+      "titleIdeas": ["Blue Bloom", "Bloom Study"],
+      "medium": "Acrylic on canvas",
+      "widthInches": 24,
+      "heightInches": 30,
+      "price": 1200,
+      "storyNotes": [
+        "Painted after a beach walk at dusk.",
+        "Soft blue and warm gold tones with a floral pull."
+      ],
+      "palette": ["blue", "gold", "white"],
+      "subject": ["floral", "abstract"],
+      "mood": ["calm", "uplifting"],
+      "tags": ["newsletter-drop", "spring"],
+      "seoKeywords": ["blue floral painting", "original acrylic art"],
+      "photos": ["./sample-assets/blue-bloom-source.jpg"],
+      "printSizes": [
+        { "label": "8x10 print", "widthInches": 8, "heightInches": 10, "price": 65 },
+        { "label": "16x20 print", "widthInches": 16, "heightInches": 20, "price": 145 }
+      ]
+    }
+  ]
+}
