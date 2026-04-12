@@ -9,7 +9,8 @@ On each heartbeat:
 1. Check current PT time — quiet hours: 10pm–7am PT
 2. Check for any urgent Sarah messages or tasks in shared memory
 3. Check ManyChat or Shopify for anything time-sensitive
-4. If nothing needs attention, reply HEARTBEAT_OK
+4. Run `shared/sarah-agent/projects/run-instagram-drop-reminder.sh` and surface any staged Instagram draft that just became due
+5. If nothing needs attention, reply HEARTBEAT_OK
 
 ## Daily Self-Improvement Audit (every morning)
 
