@@ -223,8 +223,8 @@ function getDayBoundaryRange(dateStr) {
   const parts = formatter.formatToParts(testDate);
   const offsetPart = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT-7';
   // Parse offset like "GMT-7" or "GMT-8"
-  const match = offsetPart.match(/GMT([+-]\d+)/);
-  const offset = match ? `${match[1].padStart(3, '0')}:00` : '-07:00';
+  const match = offsetPart.match(/GMT([+-])(\d+)/);
+  const offset = match ? `${match[1]}${match[2].padStart(2, '0')}:00` : '-07:00';
   return {
     start: `${dateStr}T00:00:00${offset}`,
     end: `${dateStr}T23:59:59${offset}`
@@ -245,6 +245,27 @@ function formatDate(dateStr) {
     day: 'numeric',
     year: 'numeric'
   });
+}
+
+function formatMonthDay(dateStr) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'America/Los_Angeles'
+  });
+}
+
+function getAnniversaryDateForYear(baseDate, year) {
+  const month = String(baseDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(baseDate.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getCustomerDisplayName(customer) {
+  if (!customer) return 'Guest';
+  const fullName = `${customer.first_name || ''} ${customer.last_name || ''}`.trim();
+  return fullName || customer.email || 'Guest';
 }
 
 // Read previous day's snapshot
@@ -375,6 +396,48 @@ async function getSubscriberMetrics() {
   }
 }
 
+async function getCollectorAnniversaryMoments() {
+  const today = new Date();
+  const currentYear = today.getUTCFullYear();
+  const seenCustomerIds = new Set();
+  const opportunities = [];
+
+  for (let year = currentYear - 1; year >= 2020; year -= 1) {
+    const anniversaryDate = getAnniversaryDateForYear(today, year);
+    const { start, end } = getDayBoundaryRange(anniversaryDate);
+    const dayOrders = await shopifyRequest(
+      `/orders.json?created_at_min=${encodeURIComponent(start)}&created_at_max=${encodeURIComponent(end)}&status=any&limit=250`
+    );
+
+    for (const order of dayOrders.orders || []) {
+      const customerId = order.customer?.id;
+      if (!customerId || seenCustomerIds.has(customerId)) continue;
+
+      try {
+        const customerOrders = await shopifyRequest(`/customers/${customerId}/orders.json?status=any&limit=250`);
+        const allOrders = (customerOrders.orders || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        if (allOrders.length === 0) continue;
+
+        const firstOrder = allOrders[0];
+        if (String(firstOrder.id) !== String(order.id)) continue;
+
+        seenCustomerIds.add(customerId);
+        opportunities.push({
+          name: getCustomerDisplayName(order.customer),
+          years: currentYear - year,
+          firstPurchaseDate: firstOrder.created_at,
+          lifetimeOrders: allOrders.length,
+          totalSpent: order.customer?.total_spent || null
+        });
+      } catch (e) {
+        // Non-fatal, skip customer if history lookup fails
+      }
+    }
+  }
+
+  return opportunities.sort((a, b) => b.years - a.years || b.lifetimeOrders - a.lifetimeOrders || a.name.localeCompare(b.name));
+}
+
 // Main dashboard generation
 export async function generateDashboard() {
   const yesterday = getYesterday();
@@ -426,6 +489,17 @@ export async function generateDashboard() {
   } else {
     birthdays.forEach((person) => {
       output += `   • ${person.name} 🎉\n`;
+    });
+  }
+
+  const anniversaryMoments = await getCollectorAnniversaryMoments();
+  output += `\n💌 Collector Anniversary Moments:\n`;
+  if (anniversaryMoments.length === 0) {
+    output += `   • None today — no first-purchase anniversaries to nudge.\n`;
+  } else {
+    anniversaryMoments.slice(0, 5).forEach((moment) => {
+      const collectorDepth = moment.lifetimeOrders > 1 ? `, ${moment.lifetimeOrders} lifetime orders` : '';
+      output += `   • ${moment.name} — ${moment.years} year${moment.years === 1 ? '' : 's'} since first purchase (${formatMonthDay(moment.firstPurchaseDate)}${collectorDepth})\n`;
     });
   }
 
