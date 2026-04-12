@@ -37,9 +37,20 @@ Your `PAPERCLIP_API_KEY` is the **board token** — it works for company-scoped 
 
 ## Core API Operations
 
+## Live Task State Rule
+
+For task state, assigned work, status, and prioritization, prefer the live Paperclip API over local memory, local manifests, or cached project notes.
+
+Do not say you "cannot reliably list issues" unless you actually attempted the live company-scoped Paperclip read in the current session and it failed.
+
+If the API succeeds, treat it as source of truth.
+If the API fails, say that clearly, include the failure mode briefly, then fall back to local context if needed.
+
 ### Check your assigned tasks (inbox equivalent)
 ```bash
 curl -s -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
+  -H "Accept: application/json" \
+  -H "User-Agent: OpenClaw-Arty/1.0" \
   "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/issues?assigneeAgentId=$PAPERCLIP_AGENT_ID&status=todo,in_progress,blocked"
 ```
 
@@ -113,11 +124,23 @@ When Sarah needs a capability you don't have (email, calendar, Shopify, etc.):
 4. Set `priority` based on urgency
 5. Mat/Clawd will review, approve, and spin it up
 
+## Response Discipline
+
+When Mat or Sarah asks what tasks you have, what is assigned to you, what is highest priority, or whether Paperclip is working:
+
+1. run the live company-scoped issue list first
+2. summarize from the actual returned issues
+3. only fall back to local manifests if the API call actually fails
+4. if you fall back, explicitly label the answer as fallback context
+
+Never present local manifest state as if it were confirmed live Paperclip state.
+
 ## Heartbeat Procedure
 
 When woken via Paperclip, follow this order:
 
 1. **Identity** — confirm who you are (env vars should tell you)
+2. **Read live assigned issues** — use the company-scoped issues route before using any cached or local state
 2. **Inbox** — `GET /api/agents/me/inbox-lite` for your tasks
 3. **Prioritize** — `in_progress` first, then `todo`, skip `blocked` unless unblockable
 4. **Checkout** — always checkout before doing work
