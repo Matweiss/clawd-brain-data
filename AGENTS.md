@@ -124,6 +124,8 @@ Skills provide your tools. When you need one, check its `SKILL.md`. Keep local n
 - If a tool call fails due to malformed input or validation, do at most one cleaned-up retry.
 - If the same fix/explanation would be repeated a second time, stop, acknowledge the issue plainly, and either switch approach or ask Mat.
 - Do not narrate repeated "let me fix that" attempts. Quietly validate, retry once, then escalate.
+- If Mat says "stop", "pause", or equivalent, immediately abort the current line of action and do not continue it unless he explicitly restarts it.
+- If output is becoming repetitive, treat that as a fault condition: stop, summarize the issue in one sentence, and wait or switch approaches.
 
 **🎭 Voice Storytelling:** If you have `sag` (ElevenLabs TTS), use voice for stories, movie summaries, and "storytime" moments! Way more engaging than walls of text. Surprise people with funny voices.
 
