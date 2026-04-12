@@ -1,0 +1,559 @@
+{
+  "generatedAt": "2026-04-12T00:26:10.500Z",
+  "totalProductsFetched": 337,
+  "totalPieces": 333,
+  "edits": [
+    {
+      "key": "soft-light-open-air",
+      "title": "Soft Light + Open Air",
+      "shopperHook": "For collectors who want a room to feel brighter, calmer, and a little more expansive.",
+      "merchandisingNote": "Lead with airy landscapes and sky/ocean energy, then support with dreamy color pieces.",
+      "pieceCount": 6,
+      "priceRange": "$240-$1500",
+      "tierMix": "Babes x2, Darlings x2, Minis x1, Gems x1",
+      "hero": {
+        "id": 8653190955060,
+        "title": "Morning Day",
+        "handle": "morning-day",
+        "productType": "Contemporary Frame",
+        "tier": "Babes",
+        "tags": [
+          "Babes"
+        ],
+        "price": 750,
+        "score": 4,
+        "url": "https://sarahjschwartz.com/products/morning-day"
+      },
+      "pieces": [
+        {
+          "id": 8653190955060,
+          "title": "Morning Day",
+          "handle": "morning-day",
+          "productType": "Contemporary Frame",
+          "tier": "Babes",
+          "tags": [
+            "Babes"
+          ],
+          "price": 750,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/morning-day"
+        },
+        {
+          "id": 8643939860532,
+          "title": "Oceanic",
+          "handle": "oceanic",
+          "productType": "Contemporary Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 360,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/oceanic"
+        },
+        {
+          "id": 8722973589556,
+          "title": "Morning Fog",
+          "handle": "morning-fog",
+          "productType": "Contemporary Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 340,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/morning-fog"
+        },
+        {
+          "id": 8755408994356,
+          "title": "Held By the Ocean",
+          "handle": "held-by-the-ocean",
+          "productType": "Gold Frame",
+          "tier": "Minis",
+          "tags": [
+            "Minis"
+          ],
+          "price": 240,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/held-by-the-ocean"
+        },
+        {
+          "id": 8676175020084,
+          "title": "Sunset Boulevard",
+          "handle": "sunset-boulevard",
+          "productType": "Skateboard",
+          "tier": "Gems",
+          "tags": [
+            "Gems"
+          ],
+          "price": 1500,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/sunset-boulevard"
+        },
+        {
+          "id": 8653191086132,
+          "title": "Good Morning Kiss",
+          "handle": "good-morning-kiss",
+          "productType": "Contemporary Frame",
+          "tier": "Babes",
+          "tags": [
+            "Babes"
+          ],
+          "price": 700,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/good-morning-kiss"
+        }
+      ]
+    },
+    {
+      "key": "garden-party",
+      "title": "Garden Party",
+      "shopperHook": "For collectors drawn to romance, bloom, and playful botanical color.",
+      "merchandisingNote": "Keep the page feeling lush and giftable, with florals and optimistic color stories together.",
+      "pieceCount": 6,
+      "priceRange": "$90-$400",
+      "tierMix": "Babes x1, Darlings x4, Minis x1",
+      "hero": {
+        "id": 8643942711348,
+        "title": "Buy Her Flowers",
+        "handle": "buy-her-flowers",
+        "productType": "Contemporary Frame",
+        "tier": "Babes",
+        "tags": [
+          "Babes"
+        ],
+        "price": 400,
+        "score": 4,
+        "url": "https://sarahjschwartz.com/products/buy-her-flowers"
+      },
+      "pieces": [
+        {
+          "id": 8643942711348,
+          "title": "Buy Her Flowers",
+          "handle": "buy-her-flowers",
+          "productType": "Contemporary Frame",
+          "tier": "Babes",
+          "tags": [
+            "Babes"
+          ],
+          "price": 400,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/buy-her-flowers"
+        },
+        {
+          "id": 8755409256500,
+          "title": "Orchids in Bloom",
+          "handle": "orchids-in-bloom",
+          "productType": "Vintage Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 380,
+          "score": 8,
+          "url": "https://sarahjschwartz.com/products/orchids-in-bloom"
+        },
+        {
+          "id": 8683318575156,
+          "title": "Budding + Bloom",
+          "handle": "budding-bloom",
+          "productType": "Contemporary Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 400,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/budding-bloom"
+        },
+        {
+          "id": 8643938222132,
+          "title": "The Rosebud",
+          "handle": "the-rosebud",
+          "productType": "Vintage Frame",
+          "tier": "Minis",
+          "tags": [
+            "Minis"
+          ],
+          "price": 90,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/the-rosebud"
+        },
+        {
+          "id": 8764080095284,
+          "title": "Rose Petals No. 2",
+          "handle": "rose-petals-no-2",
+          "productType": "Vintage Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 390,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/rose-petals-no-2"
+        },
+        {
+          "id": 8749910163508,
+          "title": "Rose Petals",
+          "handle": "rose-petals",
+          "productType": "Vintage Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 380,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/rose-petals"
+        }
+      ]
+    },
+    {
+      "key": "iridescent-pop",
+      "title": "Iridescent Pop",
+      "shopperHook": "For collectors who want the bold, glossy, dopamine-hit side of Sarah’s work.",
+      "merchandisingNote": "Cluster the gradients, glow, and candy-color pieces so the visual impact compounds instead of scattering.",
+      "pieceCount": 6,
+      "priceRange": "$210-$1200",
+      "tierMix": "Babes x1, Darlings x4, Minis x1",
+      "hero": {
+        "id": 8650857414708,
+        "title": "Shine Through No. 2",
+        "handle": "shine-through-no-2",
+        "productType": "Contemporary Frame",
+        "tier": "Babes",
+        "tags": [
+          "Babes"
+        ],
+        "price": 1200,
+        "score": 2,
+        "url": "https://sarahjschwartz.com/products/shine-through-no-2"
+      },
+      "pieces": [
+        {
+          "id": 8650857414708,
+          "title": "Shine Through No. 2",
+          "handle": "shine-through-no-2",
+          "productType": "Contemporary Frame",
+          "tier": "Babes",
+          "tags": [
+            "Babes"
+          ],
+          "price": 1200,
+          "score": 2,
+          "url": "https://sarahjschwartz.com/products/shine-through-no-2"
+        },
+        {
+          "id": 8643937009716,
+          "title": "Iridescent Gradient No. 17",
+          "handle": "iridescent-gradient-no-17",
+          "productType": "Gold Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 330,
+          "score": 7,
+          "url": "https://sarahjschwartz.com/products/iridescent-gradient-no-17"
+        },
+        {
+          "id": 8643937042484,
+          "title": "Iridescent Gradient No. 1",
+          "handle": "iridescent-gradient-no-1",
+          "productType": "Vintage Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 300,
+          "score": 7,
+          "url": "https://sarahjschwartz.com/products/iridescent-gradient-no-1"
+        },
+        {
+          "id": 8769418919988,
+          "title": "The Pink Path",
+          "handle": "the-pink-path",
+          "productType": "Vintage Frame",
+          "tier": "Minis",
+          "tags": [
+            "Minis"
+          ],
+          "price": 210,
+          "score": 2,
+          "url": "https://sarahjschwartz.com/products/the-pink-path"
+        },
+        {
+          "id": 8653190529076,
+          "title": "Iridescent Gradient No. 10",
+          "handle": "iridescent-gradient-no-10",
+          "productType": "Contemporary Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 300,
+          "score": 7,
+          "url": "https://sarahjschwartz.com/products/iridescent-gradient-no-10"
+        },
+        {
+          "id": 8643937075252,
+          "title": "Iridescent Gradient No. 11",
+          "handle": "iridescent-gradient-no-11",
+          "productType": "Gold Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 300,
+          "score": 7,
+          "url": "https://sarahjschwartz.com/products/iridescent-gradient-no-11"
+        }
+      ]
+    },
+    {
+      "key": "cozy-inner-life",
+      "title": "Cozy Inner Life",
+      "shopperHook": "For collectors who love intimate, bookish, homebody energy with emotional warmth.",
+      "merchandisingNote": "Merchandise these as mood pieces for reading nooks, bedrooms, and thoughtful gifting.",
+      "pieceCount": 6,
+      "priceRange": "$90-$1000",
+      "tierMix": "Babes x1, Darlings x3, Minis x1, Gems x1",
+      "hero": {
+        "id": 8653192200244,
+        "title": "High School Notebook",
+        "handle": "high-school-notebook",
+        "productType": "Canvas",
+        "tier": "Babes",
+        "tags": [
+          "Babes"
+        ],
+        "price": 900,
+        "score": 6,
+        "url": "https://sarahjschwartz.com/products/high-school-notebook"
+      },
+      "pieces": [
+        {
+          "id": 8653192200244,
+          "title": "High School Notebook",
+          "handle": "high-school-notebook",
+          "productType": "Canvas",
+          "tier": "Babes",
+          "tags": [
+            "Babes"
+          ],
+          "price": 900,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/high-school-notebook"
+        },
+        {
+          "id": 8715254399028,
+          "title": "Glinda's Books",
+          "handle": "glindas-books",
+          "productType": "Contemporary Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 390,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/glindas-books"
+        },
+        {
+          "id": 8768482246708,
+          "title": "Bookworm",
+          "handle": "bookworm",
+          "productType": "Contemporary Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 360,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/bookworm"
+        },
+        {
+          "id": 8653191249972,
+          "title": "Mini Bookshelf",
+          "handle": "mini-bookshelf",
+          "productType": "Contemporary Frame",
+          "tier": "Minis",
+          "tags": [
+            "Minis"
+          ],
+          "price": 90,
+          "score": 8,
+          "url": "https://sarahjschwartz.com/products/mini-bookshelf"
+        },
+        {
+          "id": 8653190889524,
+          "title": "Intersection of Thought",
+          "handle": "intersection-of-thought",
+          "productType": "Gold Frame",
+          "tier": "Gems",
+          "tags": [
+            "Gems"
+          ],
+          "price": 1000,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/intersection-of-thought"
+        },
+        {
+          "id": 8643943235636,
+          "title": "Books at the Beach",
+          "handle": "books-at-the-beach",
+          "productType": "Contemporary Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 350,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/books-at-the-beach"
+        }
+      ]
+    },
+    {
+      "key": "play-motion",
+      "title": "Play + Motion",
+      "shopperHook": "For collectors who want movement, travel, and a little mischief.",
+      "merchandisingNote": "Use these for a higher-energy edit that feels social, youthful, and momentum-forward.",
+      "pieceCount": 6,
+      "priceRange": "$260-$3500",
+      "tierMix": "Babes x1, Darlings x3, Minis x1, Gems x1",
+      "hero": {
+        "id": 8653191577652,
+        "title": "Playground",
+        "handle": "playground",
+        "productType": "Canvas",
+        "tier": "Babes",
+        "tags": [
+          "Babes"
+        ],
+        "price": 1350,
+        "score": 4,
+        "url": "https://sarahjschwartz.com/products/playground"
+      },
+      "pieces": [
+        {
+          "id": 8653191577652,
+          "title": "Playground",
+          "handle": "playground",
+          "productType": "Canvas",
+          "tier": "Babes",
+          "tags": [
+            "Babes"
+          ],
+          "price": 1350,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/playground"
+        },
+        {
+          "id": 8643941400628,
+          "title": "Rollercoaster Ride",
+          "handle": "rollercoaster-ride",
+          "productType": "Gold Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 330,
+          "score": 8,
+          "url": "https://sarahjschwartz.com/products/rollercoaster-ride"
+        },
+        {
+          "id": 8700035104820,
+          "title": "Balloon Ride",
+          "handle": "balloon-ride",
+          "productType": "Contemporary Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 370,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/balloon-ride"
+        },
+        {
+          "id": 8643940319284,
+          "title": "Run with It",
+          "handle": "run-with-it",
+          "productType": "Vintage Frame",
+          "tier": "Minis",
+          "tags": [
+            "Minis"
+          ],
+          "price": 260,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/run-with-it"
+        },
+        {
+          "id": 8643940941876,
+          "title": "Nomadic",
+          "handle": "nomadic",
+          "productType": "Canvas",
+          "tier": "Gems",
+          "tags": [
+            "Gems"
+          ],
+          "price": 3500,
+          "score": 4,
+          "url": "https://sarahjschwartz.com/products/nomadic"
+        },
+        {
+          "id": 8716806717492,
+          "title": "Viridescent",
+          "handle": "viridescent",
+          "productType": "Gold Frame",
+          "tier": "Darlings",
+          "tags": [
+            "Darlings"
+          ],
+          "price": 360,
+          "score": 6,
+          "url": "https://sarahjschwartz.com/products/viridescent"
+        }
+      ]
+    }
+  ],
+  "crossSell": {
+    "minisUpsellTargets": [
+      "Autumn Echo",
+      "Azure Clouds",
+      "Birthday Wishes",
+      "Book Bind",
+      "Calm, Cool, Collected",
+      "Cannonball",
+      "Care Free",
+      "Celestial Dance"
+    ],
+    "darlingAnchors": [
+      "143",
+      "A Soft Landing",
+      "Above the Treetops",
+      "Absolutely Abundant",
+      "Antelope Canyon",
+      "Arms of My Sweater",
+      "Balloon Ride",
+      "Bloom"
+    ],
+    "babeStatementPieces": [
+      "Adrift",
+      "Again & Again",
+      "At the Apex",
+      "Aurora",
+      "Balancing Act",
+      "Beyond the Horizon",
+      "Box of Chocolates",
+      "Browns & Blues"
+    ],
+    "gemsHeroMoments": [
+      "All Decked Out",
+      "I Never Want It to End",
+      "In Deep",
+      "Intersection of Thought",
+      "Let the Good Times Roll",
+      "License to Live",
+      "Nomadic",
+      "Ready, Set, Go"
+    ]
+  }
+}
