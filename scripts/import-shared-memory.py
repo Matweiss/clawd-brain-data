@@ -1,3 +1,4 @@
+cat > /root/.openclaw/workspace/scripts/import-shared-memory.py <<'EOF'
 #!/usr/bin/env python3
 from __future__ import annotations
 
@@ -129,10 +130,10 @@ def main() -> int:
     parser.add_argument("--sync-root", required=True)
     parser.add_argument("--vault-root", required=True)
     args = parser.parse_args()
-    
+
     sync_root = Path(args.sync_root).expanduser().resolve()
     vault_root = Path(args.vault_root).expanduser().resolve()
-    
+
     if not sync_root.exists() or not sync_root.is_dir():
         raise ImportError(f"Sync root not found: {sync_root}")
     if not vault_root.exists() or not vault_root.is_dir():
@@ -159,3 +160,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+EOF
