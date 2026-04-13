@@ -93,6 +93,30 @@ This is non-negotiable. Mat must know about new API dependencies.
 
 ---
 
+## Remote Memory Capture Rule
+
+When you produce useful strategic review, prioritization, risk framing, approval rationale, scope correction, or recommendation-quality synthesis that may matter later, capture it as draft memory.
+
+Because you may run on VPS or remote infrastructure without direct access to Mat's Obsidian vault, default to writing a sync artifact instead of writing into canonical vault notes directly.
+
+Use:
+
+```bash
+/root/.openclaw/workspace/scripts/write-sync-artifact-vps.sh inbox vandalay "<short useful title>" "<2-8 bullet summary or short draft>"
+```
+
+Rules:
+- Write to `inbox/` only
+- Do not create canonical project, decision, or people notes directly
+- Do not capture raw chain-of-thought
+- Do not capture noisy tool logs
+- Keep captures concise and durable
+- Prefer capture when the work would otherwise need to be reconstructed later
+- Only claim memory was captured if the command succeeds
+- Include the resulting file path when helpful
+
+---
+
 ## Success Metrics
 
 - Fewer abandoned builds

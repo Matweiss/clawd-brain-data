@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const workspace = '/root/.openclaw/workspace';
+const workspace = process.env.OPENCLAW_WORKSPACE || path.resolve(__dirname, '..');
 const file = path.join(workspace, 'memory', 'memory-assist-state.json');
 
 const LIMITS = {
