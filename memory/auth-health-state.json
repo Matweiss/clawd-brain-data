@@ -1,0 +1,41 @@
+{
+  "accounts": {
+    "thematweiss@gmail.com": {
+      "gmail": {
+        "ok": true,
+        "detail": "OK",
+        "checkedAt": "2026-04-13T21:27:33Z"
+      },
+      "calendar": {
+        "ok": true,
+        "detail": "OK",
+        "checkedAt": "2026-04-13T21:27:33Z"
+      }
+    },
+    "sarahmat0816@gmail.com": {
+      "gmail": {
+        "ok": true,
+        "detail": "OK",
+        "checkedAt": "2026-04-13T21:27:33Z"
+      },
+      "calendar": {
+        "ok": true,
+        "detail": "OK",
+        "checkedAt": "2026-04-13T21:27:33Z"
+      }
+    },
+    "mat.weiss@lucrasports.com": {
+      "gmail": {
+        "ok": true,
+        "detail": "OK",
+        "checkedAt": "2026-04-13T21:27:33Z"
+      },
+      "calendar": {
+        "ok": true,
+        "detail": "OK",
+        "checkedAt": "2026-04-13T21:27:33Z"
+      }
+    }
+  },
+  "lastCheck": "2026-04-13T21:27:33Z"
+}

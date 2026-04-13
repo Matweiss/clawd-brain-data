@@ -23,6 +23,7 @@ _Curated memories, lessons, and important context that persists across sessions.
 - Script: `scripts/integration-health-check.sh` — pings all APIs, saves state to `memory/integration-health-state.json`
 - Cron: daily 9 AM PT. Last run Apr 2: all 6 integrations green.
 - Documented: `shared/bob-agent/integration-health-cron.md`
+- Fast Google auth smoke test: `scripts/auth-health-smoke-test.sh` checks Gmail + Calendar on `thematweiss@gmail.com`, `sarahmat0816@gmail.com`, and `mat.weiss@lucrasports.com`, saves state to `memory/auth-health-state.json`, and is scheduled every 30 minutes from 7 AM to 10 PM PT.
 
 ### Google OAuth Details
 - Client ID: 391258212025-nafc7rponmj6i0ot2326j8ontcete0gn.apps.googleusercontent.com
