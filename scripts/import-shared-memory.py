@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
+CONFLICT_SUFFIX = ".conflict"
+
 ALLOWED_FOLDERS = {
     "inbox",
     "projects",
@@ -34,6 +36,7 @@ class ImportResult:
     skipped_existing: list[str]
     skipped_manifest: list[str]
     skipped_invalid: list[str]
+    conflicted: list[str]
 
 
 def sha256_file(path: Path) -> str:
@@ -79,12 +82,16 @@ def validate_relative(rel_path: Path) -> bool:
     return rel_path.parts[0] in ALLOWED_FOLDERS
 
 
+def conflict_target_path(target: Path, source_hash: str) -> Path:
+    return target.with_name(f"{target.stem}{CONFLICT_SUFFIX}-{source_hash[:8]}{target.suffix}")
+
+
 def import_files(sync_root: Path, vault_root: Path) -> ImportResult:
     state_dir = sync_root / STATE_DIRNAME
     manifest = load_manifest(state_dir)
     imports = manifest.setdefault("imports", {})
 
-    result = ImportResult(imported=[], skipped_existing=[], skipped_manifest=[], skipped_invalid=[])
+    result = ImportResult(imported=[], skipped_existing=[], skipped_manifest=[], skipped_invalid=[], conflicted=[])
 
     for source in iter_candidate_files(sync_root):
         rel_path = source.relative_to(sync_root)
@@ -112,6 +119,16 @@ def import_files(sync_root: Path, vault_root: Path) -> ImportResult:
                 }
                 result.skipped_existing.append(f"{source} -> {target}")
                 continue
+
+            conflict_target = conflict_target_path(target, source_hash)
+            shutil.copy2(source, conflict_target)
+            imports[rel_key] = {
+                "sourceSha256": source_hash,
+                "target": str(conflict_target),
+                "conflictedAgainst": str(target),
+            }
+            result.conflicted.append(f"{source} -> {conflict_target} (existing target: {target})")
+            continue
 
         shutil.copy2(source, target)
         imports[rel_key] = {
@@ -144,12 +161,14 @@ def main() -> int:
     print(f"Skipped existing: {len(result.skipped_existing)}")
     print(f"Skipped manifest: {len(result.skipped_manifest)}")
     print(f"Skipped invalid: {len(result.skipped_invalid)}")
+    print(f"Conflicted: {len(result.conflicted)}")
 
     for label, rows in (
         ("imported", result.imported),
         ("skipped_existing", result.skipped_existing),
         ("skipped_manifest", result.skipped_manifest),
         ("skipped_invalid", result.skipped_invalid),
+        ("conflicted", result.conflicted),
     ):
         for row in rows:
             print(f"{label}: {row}")
