@@ -14,9 +14,9 @@ _Curated memories, lessons, and important context that persists across sessions.
 
 ### Google OAuth — gog CLI Auth
 - `GOG_KEYRING_PASSWORD=clawd` — set globally in openclaw.json, inherited by all agents
-- **thematweiss@gmail.com** — active, Gmail + Calendar
-- **sarahmat0816@gmail.com** — active (re-authed Apr 2 2026), Gmail + Calendar + Drive + Sheets
-- **mat.weiss@lucrasports.com** — pending (set up on/after Apr 1 Lucra start date)
+- **thematweiss@gmail.com** — active, Gmail + Calendar + Drive + Docs + Contacts + Sheets (re-authed Apr 13 2026 after revoked token)
+- **sarahmat0816@gmail.com** — active, Gmail + Calendar + Drive + Docs + Contacts + Sheets (re-authed Apr 13 2026 after revoked token)
+- **mat.weiss@lucrasports.com** — active, Gmail + Calendar + Drive + Docs + Contacts + Sheets (re-authed Apr 13 2026 after revoked token)
 - Auth state: `/root/.config/gogcli/`
 
 ### Integration Health
