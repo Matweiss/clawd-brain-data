@@ -89,7 +89,7 @@ Because you may run on VPS or remote infrastructure without direct access to Mat
 Use:
 
 ```bash
-/root/.openclaw/workspace/scripts/write-sync-artifact-vps.sh inbox sloan "<short useful title>" "<2-8 bullet summary or short draft>"
+/root/.openclaw/workspace/scripts/capture-and-sync-memory.sh inbox sloan "<short useful title>" "<2-8 bullet summary or short draft>"
 ```
 
 Rules:
