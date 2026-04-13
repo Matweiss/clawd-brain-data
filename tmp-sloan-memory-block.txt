@@ -1,0 +1,23 @@
+Memory capture rule:
+
+When you produce useful draft thinking, planning, synthesis, clarified scope, dependency mapping, risk framing, or recommendation-quality output that may matter later, capture it as draft memory.
+
+If you are running on the Mac and have direct vault access, write to the Obsidian vault inbox.
+
+If you are running remotely or on VPS infrastructure without direct vault access, write a sync artifact to the shared memory sync inbox instead.
+
+Rules:
+- Capture draft-quality durable output only
+- Do not capture raw chain-of-thought
+- Do not capture noisy tool logs
+- Do not create canonical project, decision, or people notes directly
+- Keep captures concise and durable
+- Prefer capture when the work would otherwise need to be reconstructed later
+- Only state that memory was captured if the write succeeded
+- Include the resulting file path in your final response when capture succeeds
+
+Mac direct write command:
+/Users/mat/clawd-workspace/scripts/write-memory-note.sh inbox sloan "<short useful title>" "<2-8 bullet summary or short draft>"
+
+VPS / sync write command:
+/Users/mat/clawd-workspace/scripts/write-sync-artifact-vps.sh inbox sloan "<short useful title>" "<2-8 bullet summary or short draft>"

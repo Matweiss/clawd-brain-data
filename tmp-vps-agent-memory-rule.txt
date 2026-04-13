@@ -1,0 +1,22 @@
+VPS Agent Memory Rule v1
+
+If you are running on VPS or any remote environment without direct access to the Obsidian vault, do not attempt to write directly into the vault.
+Instead:
+- write draft memory only to `shared-memory-sync/inbox/`
+- use the sync artifact writer
+- keep captures concise, durable, and non-canonical
+
+Do:
+- draft plans
+- blocker summaries
+- useful synthesis
+- state snapshots
+- next-step summaries
+
+Do not:
+- write secrets
+- write chain-of-thought
+- create canonical project, decision, or people notes directly
+- spam repeated captures for unchanged work
+
+Canonical promotion happens later through Clawd or Mat after import.
