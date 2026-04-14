@@ -1,98 +1,67 @@
 ---
 name: luke-granola-integration
-description: Integration with Granola AI for meeting notes and transcription
+description: Luke's Granola meeting access for sales follow-ups, engagement prep, and deal context. Routes through the shared granola-bridge skill which reads from a Mac-synced cache. Use for recent meetings, searching by company name, getting notes/action items, and transcripts.
 ---
 
 # Granola Integration for Luke
 
-## Overview
+Access Granola meeting data via the shared `granola-bridge` skill.
 
-Granola is an AI notepad that transcribes meetings and generates enhanced notes. This skill enables Luke to access meeting transcripts and sync them to the sales workflow.
+> **Architecture:** Local Mac cache sync (no hosted OAuth). Granola data lives on Mat's Mac;
+> a push script syncs it to VPS periodically. See `skills/granola-bridge/SKILL.md` for setup.
 
-## Prerequisites
+## Quick Usage
 
-1. **Granola Account:** Mat needs Granola installed (macOS/Windows/iPhone)
-2. **API Access:** Enterprise API key or MCP (Model Context Protocol) setup
-3. **Environment Variable:** `GRANOLA_API_KEY`
-
-## Setup
-
-### Option 1: Enterprise API (Full Workspace Access)
-
-Contact Granola for Enterprise API access: https://granola.ai/enterprise
-
-### Option 2: MCP (Model Context Protocol)
-
-Connect Granola to Claude via MCP for querying notes:
-https://docs.granola.ai/help-center/sharing/integrations/granola-mcp
-
-## API Usage
-
-### List Recent Meetings
 ```bash
-curl -s "https://api.granola.ai/v1/meetings?limit=20" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
+# Check if Granola data is available
+python3 skills/granola-bridge/scripts/granola-query.py health
+
+# Recent meetings
+python3 skills/granola-bridge/scripts/granola-query.py recent --limit 10
+
+# Search for a company/person
+python3 skills/granola-bridge/scripts/granola-query.py search "DraftKings"
+
+# Get notes + action items for a meeting
+python3 skills/granola-bridge/scripts/granola-query.py notes <meeting-id>
+
+# Get transcript
+python3 skills/granola-bridge/scripts/granola-query.py transcript <meeting-id>
 ```
 
-### Get Meeting Details
-```bash
-curl -s "https://api.granola.ai/v1/meetings/<MEETING_ID>" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
+## Sales Workflow Integration
+
+### Pre-Meeting Prep
+1. `search "<company name>"` — pull all prior meetings with this prospect
+2. `notes <meeting-id>` — review last conversation notes and action items
+3. Use context for brief + talking points
+
+### Post-Meeting Follow-up
+1. `recent --limit 3` — find today's meeting ID
+2. `notes <id>` — extract action items
+3. Create Paperclip tasks for each action item
+4. Sync relevant context to Notion deal note
+
+### Daily Morning Sync
+1. `health` — confirm cache is fresh
+2. `recent --limit 5` — review yesterday's meetings
+3. Surface any open action items for pipeline update
+
+## Health Status
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| `healthy` | Cache fresh, meetings available | Good to go |
+| `stale` | Cache >24h old | Ping Mat to run sync on Mac |
+| `missing` | Cache not synced yet | See setup in granola-bridge/SKILL.md |
+| `degraded` | Cache corrupt/empty | Re-sync from Mac |
+
+## Setup (if cache is missing)
+
+The `granola-bridge` skill handles all Granola access. If health shows `missing` or `stale`,
+the Mac-side sync script needs to be run (or re-run). See:
+
 ```
-
-### Get Transcript
-```bash
-curl -s "https://api.granola.ai/v1/meetings/<MEETING_ID>/transcript" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
+skills/granola-bridge/SKILL.md  — full architecture + setup instructions
+skills/granola-bridge/scripts/granola-sync-push.sh  — run on Mac to push cache
 ```
-
-### Search Meetings
-```bash
-curl -s "https://api.granola.ai/v1/meetings/search?q=DraftKings" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-```
-
-## Workflow Integration
-
-### Daily Sync
-1. Query meetings from last 24 hours
-2. Identify sales-related calls
-3. Extract action items
-4. Sync to Notion deal notes
-5. Update pipeline in Sheets
-
-### Pre-Meeting
-1. Search Granola for previous meetings with this company
-2. Pull relevant context
-3. Include in prep brief
-
-### Post-Meeting
-1. Get transcript (usually available within minutes)
-2. Extract key decisions and next steps
-3. Create follow-up tasks
-4. Update CRM
-
-## Data Structure
-
-```json
-{
-  "id": "mtg_abc123",
-  "title": "Call with DraftKings",
-  "started_at": "2026-04-10T14:00:00Z",
-  "ended_at": "2026-04-10T14:30:00Z",
-  "participants": ["Mat Weiss", "John Doe"],
-  "transcript": {
-    "segments": [
-      {"speaker": "Mat", "text": "...", "timestamp": "..."},
-      {"speaker": "Them", "text": "...", "timestamp": "..."}
-    ]
-  },
-  "enhanced_notes": "...",
-  "action_items": ["Send proposal", "Schedule demo"]
-}
-```
-
-## Zapier Alternative
-
-If API is not available, use Zapier to sync Granola → Notion:
-https://docs.granola.ai/help-center/sharing/integrations/zapier
