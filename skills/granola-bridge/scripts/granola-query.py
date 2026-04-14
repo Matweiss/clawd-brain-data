@@ -35,24 +35,34 @@ def load_cache():
     if not CACHE_PATH.exists():
         err(f"Cache not found at {CACHE_PATH}. Run granola-sync-push.sh on the Mac first.")
     try:
-        data = json.loads(CACHE_PATH.read_text())
+        raw = json.loads(CACHE_PATH.read_text())
     except json.JSONDecodeError as e:
         err(f"Cache JSON is corrupt: {e}")
-    return data
+    return raw
 
 
-def extract_meetings(data):
-    """Normalize cache-v6 format to a flat list of meeting dicts."""
-    # cache-v6 may be a dict with a 'meetings' key, or a list directly,
-    # or a dict with nested structure. Handle common variants.
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict):
-        for key in ("meetings", "panels", "documents", "items", "data"):
-            if key in data and isinstance(data[key], list):
-                return data[key]
-        # May be a dict keyed by meeting id
-        vals = list(data.values())
+def extract_meetings(raw):
+    """Extract meetings from cache-v6 format: data['cache']['state']['documents']."""
+    # Real cache-v6 structure: {"cache": {"state": {"documents": {id: doc, ...}, "transcripts": {id: [...], ...}}}}
+    if isinstance(raw, dict) and "cache" in raw:
+        state = raw["cache"].get("state", {})
+        docs = state.get("documents", {})
+        transcripts = state.get("transcripts", {})
+        if isinstance(docs, dict):
+            meetings = []
+            for doc_id, doc in docs.items():
+                if isinstance(doc, dict):
+                    doc["_transcripts"] = transcripts.get(doc_id) or transcripts.get(doc.get("id", ""))
+                    meetings.append(doc)
+            return meetings
+    # Fallback: list of meetings directly, or dict with 'meetings' key
+    if isinstance(raw, list):
+        return raw
+    if isinstance(raw, dict):
+        for key in ("meetings", "panels", "items", "data"):
+            if key in raw and isinstance(raw[key], list):
+                return raw[key]
+        vals = list(raw.values())
         if vals and isinstance(vals[0], dict):
             return vals
     return []
@@ -60,43 +70,66 @@ def extract_meetings(data):
 
 def meeting_summary(m):
     """Return a compact summary dict for a meeting."""
+    started, ended = _timestamps(m)
     return {
-        "id": m.get("id") or m.get("panelId") or m.get("documentId") or "",
-        "title": m.get("title") or m.get("name") or "(untitled)",
-        "started_at": m.get("started_at") or m.get("startedAt") or m.get("created_at") or "",
-        "ended_at": m.get("ended_at") or m.get("endedAt") or "",
+        "id": m.get("id") or "",
+        "title": m.get("title") or "(untitled)",
+        "started_at": started,
+        "ended_at": ended,
         "participants": _participants(m),
         "has_notes": bool(_notes_text(m)),
-        "has_transcript": bool(_transcript(m)),
+        "has_transcript": bool(m.get("_transcripts")),
     }
 
 
+def _timestamps(m):
+    """Extract start/end from google_calendar_event or created_at."""
+    gcal = m.get("google_calendar_event") or {}
+    if isinstance(gcal, dict):
+        start = gcal.get("start") or {}
+        end = gcal.get("end") or {}
+        started = start.get("dateTime") or start.get("date") or m.get("created_at") or ""
+        ended = end.get("dateTime") or end.get("date") or m.get("updated_at") or ""
+        return started, ended
+    return m.get("created_at") or "", m.get("updated_at") or ""
+
+
 def _participants(m):
-    p = m.get("participants") or m.get("attendees") or []
-    if isinstance(p, list):
+    """Extract participant names from people.attendees or google_calendar_event.attendees."""
+    people = m.get("people") or {}
+    if isinstance(people, dict):
+        attendees = people.get("attendees") or []
         out = []
-        for item in p:
-            if isinstance(item, str):
-                out.append(item)
-            elif isinstance(item, dict):
-                out.append(item.get("name") or item.get("email") or item.get("displayName") or "")
-        return [x for x in out if x]
+        for a in attendees:
+            if isinstance(a, dict):
+                # Try nested details.person.name.fullName first
+                details = a.get("details") or {}
+                person = details.get("person") or {}
+                name_obj = person.get("name") or {}
+                name = name_obj.get("fullName") or a.get("displayName") or a.get("email") or ""
+                if name:
+                    out.append(name)
+        if out:
+            return out
+    # Fallback: google_calendar_event attendees
+    gcal = m.get("google_calendar_event") or {}
+    if isinstance(gcal, dict):
+        gcal_attendees = gcal.get("attendees") or []
+        return [a.get("displayName") or a.get("email") or "" for a in gcal_attendees if isinstance(a, dict)]
     return []
 
 
 def _notes_text(m):
-    for key in ("enhanced_notes", "enhancedNotes", "notes", "summary", "aiNotes"):
+    """Extract notes from notes_markdown, notes_plain, summary, or overview."""
+    for key in ("notes_markdown", "notes_plain", "summary", "overview"):
         v = m.get(key)
-        if v and isinstance(v, str):
+        if v and isinstance(v, str) and v.strip():
             return v
-        if v and isinstance(v, dict):
-            # may be a ProseMirror doc or similar
-            return json.dumps(v)
     return ""
 
 
 def _action_items(m):
-    for key in ("action_items", "actionItems", "todos", "tasks"):
+    for key in ("action_items", "actionItems", "todos", "tasks", "chapters"):
         v = m.get(key)
         if v and isinstance(v, list):
             return v
@@ -104,10 +137,17 @@ def _action_items(m):
 
 
 def _transcript(m):
-    for key in ("transcript", "segments", "transcriptSegments"):
-        v = m.get(key)
-        if v:
-            return v
+    segs = m.get("_transcripts")
+    if segs and isinstance(segs, list):
+        return [
+            {
+                "speaker": s.get("source") or s.get("transcriber_user_id") or "unknown",
+                "text": s.get("text") or "",
+                "timestamp": s.get("start_timestamp") or "",
+            }
+            for s in segs
+            if isinstance(s, dict) and s.get("text")
+        ]
     return None
 
 
