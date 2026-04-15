@@ -24,6 +24,7 @@ META_DEST="$WORKSPACE/skills/granola-bridge/data/.cache-meta.json"
 GRANOLA_CACHE_SRC="/Users/mat/Library/Application Support/Granola/cache-v6.json"
 CAL_TITLE="${CAL_TITLE:-}"
 EVENT_ID="${EVENT_ID:-}"
+END_TIME="${END_TIME:-}"
 LOOKBACK_H="${LOOKBACK_H:-3}"
 
 mkdir -p "$FOLLOWUP_DIR"
@@ -58,4 +59,5 @@ python3 "$BRIEF_PY" \
   --query-script "$QUERY" \
   --cal-title "$CAL_TITLE" \
   --event-id "$EVENT_ID" \
+  --end-time "$END_TIME" \
   --lookback-hours "$LOOKBACK_H"

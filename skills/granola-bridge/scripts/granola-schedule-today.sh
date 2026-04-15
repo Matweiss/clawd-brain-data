@@ -10,8 +10,10 @@ set -euo pipefail
 WORKSPACE="/root/.openclaw/workspace"
 ACCOUNT="mat.weiss@lucrasports.com"
 SYNC_SCRIPT="$WORKSPACE/skills/granola-bridge/scripts/granola-post-meeting-sync.sh"
+PRE_SCRIPT="$WORKSPACE/skills/granola-bridge/scripts/granola-pre-meeting-brief.sh"
 SCHEDULE_LOG="$WORKSPACE/memory/granola-followups/.schedule-log.json"
 DELAY_MINUTES=10
+PRE_LEAD_MINUTES=15
 
 log() { echo "[granola-scheduler] $*" >&2; }
 
@@ -31,6 +33,8 @@ python3 "$WORKSPACE/skills/granola-bridge/scripts/_schedule-jobs.py" \
   --events-file "$EVENTS_FILE" \
   --schedule-log "$SCHEDULE_LOG" \
   --sync-script "$SYNC_SCRIPT" \
-  --delay-minutes "$DELAY_MINUTES"
+  --pre-script "$PRE_SCRIPT" \
+  --delay-minutes "$DELAY_MINUTES" \
+  --pre-lead-minutes "$PRE_LEAD_MINUTES"
 
 rm -f "$EVENTS_FILE"

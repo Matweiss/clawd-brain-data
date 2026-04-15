@@ -36,8 +36,17 @@ for job in jobs:
         cal_title = job.get('cal_title', '')
         event_id = job.get('event_id', '')
         sync_script = job.get('sync_script', '')
-        print(f"[dispatcher] FIRE: {cal_title}")
-        env = {**os.environ, 'CAL_TITLE': cal_title, 'EVENT_ID': event_id}
+        brief_type = job.get('brief_type', 'post')
+        attendees = job.get('attendees', '[]')
+        start_time = job.get('start_time', '')
+        end_time = job.get('end_time', '')
+        print(f"[dispatcher] FIRE ({brief_type}): {cal_title}")
+        env = {**os.environ,
+               'CAL_TITLE': cal_title,
+               'EVENT_ID': event_id,
+               'ATTENDEES': attendees,
+               'START_TIME': start_time,
+               'END_TIME': end_time}
         subprocess.Popen(['bash', sync_script], env=env,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         job['status'] = 'fired'

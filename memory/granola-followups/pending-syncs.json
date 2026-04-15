@@ -1,1 +1,25 @@
-[]
+[
+  {
+    "event_id": "l8fdpfoumgmpnqluhnd9bh5rjf_20260415T163000Z",
+    "cal_title": "Sales - Leads Weekly Connect",
+    "end_time": "2026-04-15T10:00:00-07:00",
+    "fire_at": "2026-04-15T17:10:00+00:00",
+    "fire_epoch": 1776273000,
+    "scheduled_date": "2026-04-15",
+    "sync_script": "/root/.openclaw/workspace/skills/granola-bridge/scripts/granola-post-meeting-sync.sh",
+    "status": "pending"
+  },
+  {
+    "event_id": "l8fdpfoumgmpnqluhnd9bh5rjf_20260415T163000Z_post",
+    "cal_title": "Sales - Leads Weekly Connect",
+    "brief_type": "post",
+    "start_time": "2026-04-15T09:30:00-07:00",
+    "end_time": "2026-04-15T10:00:00-07:00",
+    "attendees": "[\"Michael Madding\", \"Dylan Robbins\", \"Nick Johnson\", \"Brian\", \"Andy Macedo\"]",
+    "fire_at": "2026-04-15T17:10:00+00:00",
+    "fire_epoch": 1776273000,
+    "scheduled_date": "2026-04-15",
+    "sync_script": "/root/.openclaw/workspace/skills/granola-bridge/scripts/granola-post-meeting-sync.sh",
+    "status": "pending"
+  }
+]
