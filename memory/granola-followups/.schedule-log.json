@@ -1,0 +1,52 @@
+[
+  {
+    "event_id": "l8fdpfoumgmpnqluhnd9bh5rjf_20260415T163000Z",
+    "cal_title": "Sales - Leads Weekly Connect ",
+    "end_time": "2026-04-15T10:00:00-07:00",
+    "fire_at": "2026-04-15T10:10:00+00:00",
+    "fire_epoch": 1776273000,
+    "scheduled_date": "2026-04-15",
+    "sync_script": "/root/.openclaw/workspace/skills/granola-bridge/scripts/granola-post-meeting-sync.sh",
+    "status": "scheduled"
+  },
+  {
+    "event_id": "3sito3v0n5mm91oqpuf6o4kk89",
+    "cal_title": "Lucra Pricing Presentation",
+    "end_time": "2026-04-15T11:00:00-07:00",
+    "fire_at": "2026-04-15T11:10:00+00:00",
+    "fire_epoch": 1776276600,
+    "scheduled_date": "2026-04-15",
+    "sync_script": "/root/.openclaw/workspace/skills/granola-bridge/scripts/granola-post-meeting-sync.sh",
+    "status": "scheduled"
+  },
+  {
+    "event_id": "3rpdni1hqt6kck34k1vs5kpmmf",
+    "cal_title": "New Hire Session: Platform & Architecture",
+    "end_time": "2026-04-15T11:45:00-07:00",
+    "fire_at": "2026-04-15T11:55:00+00:00",
+    "fire_epoch": 1776279300,
+    "scheduled_date": "2026-04-15",
+    "sync_script": "/root/.openclaw/workspace/skills/granola-bridge/scripts/granola-post-meeting-sync.sh",
+    "status": "scheduled"
+  },
+  {
+    "event_id": "4gpbt421be1a8397p95kmg3r8c",
+    "cal_title": "Brian / Mat",
+    "end_time": "2026-04-15T12:00:00-07:00",
+    "fire_at": "2026-04-15T12:10:00+00:00",
+    "fire_epoch": 1776280200,
+    "scheduled_date": "2026-04-15",
+    "sync_script": "/root/.openclaw/workspace/skills/granola-bridge/scripts/granola-post-meeting-sync.sh",
+    "status": "scheduled"
+  },
+  {
+    "event_id": "4c6bnvmn4ksj15bs7d5mcl93jf",
+    "cal_title": "New Hire Session: W/ Max Brown, Director of Partnerships",
+    "end_time": "2026-04-15T12:30:00-07:00",
+    "fire_at": "2026-04-15T12:40:00+00:00",
+    "fire_epoch": 1776282000,
+    "scheduled_date": "2026-04-15",
+    "sync_script": "/root/.openclaw/workspace/skills/granola-bridge/scripts/granola-post-meeting-sync.sh",
+    "status": "scheduled"
+  }
+]
