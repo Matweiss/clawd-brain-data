@@ -121,6 +121,29 @@ def paperclip_post_issue(title: str, description: str):
         return {'error': str(e)}
 
 
+def detect_node_ok(nodes_output: str) -> bool:
+    text = nodes_output.lower()
+    return (
+        'known: 1' in text
+        and 'paired: 1' in text
+        and 'connected: 1' in text
+        and 'mat' in text
+        and 'mac' in text
+        and 'pro' in text
+    )
+
+
+
+def detect_mcp_ok(mcp_output: str) -> bool:
+    text = mcp_output.lower()
+    if 'chrome-devtools' not in text:
+        return False
+    if 'offline' in text or '0 healthy' in text or 'unable to reach server' in text:
+        return False
+    return 'healthy' in text
+
+
+
 def main():
     date_s, weekday, stamp = pt_now_parts()
     openclaw_bin = resolve_bin('openclaw', '/usr/bin/openclaw')
@@ -129,8 +152,8 @@ def main():
     nodes = run(f"{openclaw_bin} nodes status")
     mcp = run(f"{mcporter_bin} list")
 
-    node_ok = nodes['code'] == 0 and 'connected' in nodes['stdout'].lower() and "mat's macbook pro" in nodes['stdout'].lower()
-    mcp_ok = mcp['code'] == 0 and 'chrome-devtools' in mcp['stdout'].lower() and 'healthy' in mcp['stdout'].lower()
+    node_ok = nodes['code'] == 0 and detect_node_ok(nodes['stdout'])
+    mcp_ok = mcp['code'] == 0 and detect_mcp_ok(mcp['stdout'])
 
     state = load_state()
     state.setdefault('lastChecks', {})
