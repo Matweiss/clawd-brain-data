@@ -1,5 +1,4 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@shared/db";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY =
@@ -17,8 +16,13 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
   );
 }
 
-export function createSupabaseServerClient(): SupabaseClient<Database> {
-  return createClient<Database>(SUPABASE_URL!, SERVICE_KEY!, {
+// Untyped client to match lib/supabase.ts convention. The hand-written
+// shared/db.ts is missing the per-table Relationships field that
+// supabase-js's generic constraint expects, which collapses .from()
+// inference to `never`. Routes cast row shapes explicitly where needed
+// using types from @shared/db.
+export function createSupabaseServerClient(): SupabaseClient {
+  return createClient(SUPABASE_URL!, SERVICE_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { "x-client-info": "clawd-dashboard-server" } },
   });
