@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { cn, timeAgo } from "@/lib/utils";
 import { MeetingStatusPill } from "@/app/components/meetings/MeetingStatusPill";
 import type {
@@ -23,10 +24,24 @@ type MeetingListItem = {
 
 const POLL_INTERVAL_MS = 30_000;
 
-// Mock rows so all five status states are represented for visual review.
-// Real Granola data covers `complete` and `null` naturally; the other
-// three need synthetic rows. Removed when sample data and Phase 3 fully
-// covers each state during real-meeting smoke tests.
+// Single source of truth for headers — both real and demo tables read it
+// so header copy and column widths stay aligned across them.
+const COLUMNS: Array<{
+  label: string;
+  align: "left" | "right";
+  width?: string;
+  // Extra left padding on the Status column so it does not visually
+  // collide with the right-aligned Unspoken column to its left.
+  padLeft?: boolean;
+}> = [
+  { label: "Title", align: "left" },
+  { label: "Attendees", align: "right", width: "w-24" },
+  { label: "Frames", align: "right", width: "w-20" },
+  { label: "Unspoken", align: "right", width: "w-24" },
+  { label: "Status", align: "left", width: "w-56", padLeft: true },
+  { label: "When", align: "right", width: "w-24" },
+];
+
 const DEMO_ROWS: MeetingListItem[] = [
   {
     granola_meeting_id: "demo-pending-transcript",
@@ -64,6 +79,9 @@ const DEMO_ROWS: MeetingListItem[] = [
 ];
 
 export function MeetingsListClient() {
+  const searchParams = useSearchParams();
+  const showDemo = searchParams.get("demo") === "1";
+
   const [meetings, setMeetings] = useState<MeetingListItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,8 +122,7 @@ export function MeetingsListClient() {
       <div className="py-10 font-mono text-xs text-bone-300">Loading…</div>
     );
   }
-
-  if (meetings.length === 0) {
+  if (meetings.length === 0 && !showDemo) {
     return (
       <div className="border hairline p-8 text-center">
         <div className="font-mono text-[10px] uppercase tracking-capwide text-bone-300">
@@ -126,12 +143,14 @@ export function MeetingsListClient() {
         title="Recent meetings"
         subtitle="From Granola, enriched with capture review status"
       />
-      <MeetingTable
-        rows={DEMO_ROWS}
-        title="Demo states"
-        subtitle="Mock rows for visual QA — covers the three states real Granola data does not currently exercise"
-        accent
-      />
+      {showDemo && (
+        <MeetingTable
+          rows={DEMO_ROWS}
+          title="Demo states"
+          subtitle="Mock rows for visual QA — pending_transcript / analyzing / failed states. Add ?demo=1 to surface."
+          accent
+        />
+      )}
     </div>
   );
 }
@@ -164,20 +183,19 @@ function MeetingTable({
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b hairline">
-              <Th>Title</Th>
-              <Th align="right" width="w-20">
-                Atndees
-              </Th>
-              <Th align="right" width="w-20">
-                Frames
-              </Th>
-              <Th align="right" width="w-24">
-                Unspoken
-              </Th>
-              <Th width="w-56">Status</Th>
-              <Th align="right" width="w-24">
-                When
-              </Th>
+              {COLUMNS.map((col) => (
+                <th
+                  key={col.label}
+                  className={cn(
+                    "py-3 font-mono text-[10px] font-medium uppercase tracking-capwide text-bone-300",
+                    col.align === "right" ? "text-right" : "text-left",
+                    col.padLeft && "pl-6",
+                    col.width
+                  )}
+                >
+                  {col.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-700/60">
@@ -243,7 +261,7 @@ function MeetingRow({
           <span className="text-bone-500">—</span>
         )}
       </td>
-      <td className="py-3 px-2">
+      <td className="py-3 pl-6 pr-2">
         <MeetingStatusPill status={m.status} failure_code={m.failure_code} />
       </td>
       <td className="py-3 pl-2 text-right font-mono text-[11px] text-bone-300">
@@ -258,27 +276,5 @@ function IdLine({ id }: { id: string }) {
     <div className="mt-1 font-mono text-[10px] text-bone-500">
       {id.length > 12 ? `${id.slice(0, 8)}…` : id}
     </div>
-  );
-}
-
-function Th({
-  children,
-  align,
-  width,
-}: {
-  children: React.ReactNode;
-  align?: "left" | "right";
-  width?: string;
-}) {
-  return (
-    <th
-      className={cn(
-        "py-3 font-mono text-[10px] font-medium uppercase tracking-capwide text-bone-300",
-        align === "right" ? "text-right" : "text-left",
-        width
-      )}
-    >
-      {children}
-    </th>
   );
 }
