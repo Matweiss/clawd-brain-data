@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { MeetingStatusPill } from "@/app/components/meetings/MeetingStatusPill";
+import { useMeetingReviewRealtime } from "@/lib/meetings/realtime";
 import { ActionBar } from "./ActionBar";
 import { UnspokenCallout } from "./UnspokenCallout";
 import { TranscriptPane } from "./TranscriptPane";
@@ -10,7 +11,6 @@ import { Lightbox } from "./Lightbox";
 import type { MeetingDetail } from "@/lib/meetings/fetch-detail";
 
 const SIGNED_URL_REFRESH_BUFFER_MS = 5 * 60 * 1000;
-const POLL_AFTER_REANALYZE_MS = 3_000;
 
 export function MeetingClient({
   granolaMeetingId,
@@ -21,12 +21,26 @@ export function MeetingClient({
 }) {
   const [detail, setDetail] = useState<MeetingDetail>(initialDetail);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [polling, setPolling] = useState(false);
 
   const visualsById = useMemo(
     () => new Map(detail.visuals.map((v) => [v.id, v])),
     [detail.visuals]
   );
+
+  const refetchDetail = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/meetings/${granolaMeetingId}`);
+      if (!res.ok) return;
+      const next = (await res.json()) as MeetingDetail;
+      setDetail(next);
+    } catch {
+      // swallow — next Realtime tick or visibility refresh will retry
+    }
+  }, [granolaMeetingId]);
+
+  // Filtered Realtime subscription on meeting_reviews — fires when status
+  // flips analyzing → complete/failed without a manual refresh.
+  useMeetingReviewRealtime(granolaMeetingId, refetchDetail);
 
   // Refresh signed URLs on tab focus when any expire within 5 minutes.
   useEffect(() => {
@@ -74,7 +88,7 @@ export function MeetingClient({
           }),
         }));
       } catch {
-        // swallow — old URLs will surface as not_found in the lightbox
+        // swallow — old URLs surface as not_found in the lightbox
       }
     }
 
@@ -85,41 +99,9 @@ export function MeetingClient({
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [detail.visuals, granolaMeetingId]);
 
-  // After click-Reanalyze, poll the detail endpoint until status flips
-  // out of analyzing. Step 6 swaps this for a Realtime subscription.
-  useEffect(() => {
-    if (!polling) return;
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout>;
-
-    async function tick() {
-      if (cancelled) return;
-      try {
-        const res = await fetch(`/api/meetings/${granolaMeetingId}`);
-        if (res.ok) {
-          const next = (await res.json()) as MeetingDetail;
-          if (cancelled) return;
-          setDetail(next);
-          if (next.review?.status && next.review.status !== "analyzing") {
-            setPolling(false);
-            return;
-          }
-        }
-      } catch {
-        // ignore one tick
-      }
-      timer = setTimeout(tick, POLL_AFTER_REANALYZE_MS);
-    }
-
-    tick();
-    return () => {
-      cancelled = true;
-      if (timer!) clearTimeout(timer);
-    };
-  }, [polling, granolaMeetingId]);
-
   const status = detail.review?.status ?? null;
   const failureCode = detail.review?.failure_code ?? null;
+  const isAnalyzing = status === "analyzing";
 
   function openLightbox(visualId: string) {
     const idx = detail.visuals.findIndex((v) => v.id === visualId);
@@ -149,15 +131,13 @@ export function MeetingClient({
   }
 
   function onAnalyzingStart() {
-    // Optimistic local flip — keeps the spinner from flickering before
-    // the next poll.
+    // Optimistic local flip — Realtime will overwrite with the same
+    // value within ~100ms so this just removes the visible flicker
+    // between click and the first Realtime delivery.
     setDetail((d) => ({
       ...d,
-      review: d.review
-        ? { ...d.review, status: "analyzing" }
-        : null,
+      review: d.review ? { ...d.review, status: "analyzing" } : null,
     }));
-    setPolling(true);
   }
 
   return (
@@ -165,9 +145,9 @@ export function MeetingClient({
       <header className="flex flex-wrap items-center justify-between gap-4 border-b hairline pb-4">
         <div className="flex flex-wrap items-center gap-3">
           <MeetingStatusPill status={status} failure_code={failureCode} />
-          {polling && (
+          {isAnalyzing && (
             <span className="font-mono text-[10px] uppercase tracking-capwide text-ember-500">
-              watching for analyzer…
+              live · analyzer running
             </span>
           )}
           {detail.review?.failure_reason && (
