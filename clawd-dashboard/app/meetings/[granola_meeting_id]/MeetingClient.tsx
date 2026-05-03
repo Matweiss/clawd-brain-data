@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MeetingStatusPill } from "@/app/components/meetings/MeetingStatusPill";
 import { useMeetingReviewRealtime } from "@/lib/meetings/realtime";
+import { cn } from "@/lib/utils";
 import { ActionBar } from "./ActionBar";
 import { UnspokenCallout } from "./UnspokenCallout";
 import { TranscriptPane } from "./TranscriptPane";
@@ -11,6 +12,8 @@ import { Lightbox } from "./Lightbox";
 import type { MeetingDetail } from "@/lib/meetings/fetch-detail";
 
 const SIGNED_URL_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+
+type Tab = "unspoken" | "transcript" | "visuals";
 
 export function MeetingClient({
   granolaMeetingId,
@@ -27,6 +30,12 @@ export function MeetingClient({
     [detail.visuals]
   );
 
+  const unspoken = detail.review?.unspoken_visuals ?? [];
+  const hasUnspoken = unspoken.length > 0;
+
+  // Default tab on mobile: unspoken if it exists, else transcript.
+  const [tab, setTab] = useState<Tab>(hasUnspoken ? "unspoken" : "transcript");
+
   const refetchDetail = useCallback(async () => {
     try {
       const res = await fetch(`/api/meetings/${granolaMeetingId}`);
@@ -34,15 +43,12 @@ export function MeetingClient({
       const next = (await res.json()) as MeetingDetail;
       setDetail(next);
     } catch {
-      // swallow — next Realtime tick or visibility refresh will retry
+      // swallow — next Realtime tick or visibility refresh retries
     }
   }, [granolaMeetingId]);
 
-  // Filtered Realtime subscription on meeting_reviews — fires when status
-  // flips analyzing → complete/failed without a manual refresh.
   useMeetingReviewRealtime(granolaMeetingId, refetchDetail);
 
-  // Refresh signed URLs on tab focus when any expire within 5 minutes.
   useEffect(() => {
     async function refreshExpired() {
       const now = Date.now();
@@ -88,7 +94,7 @@ export function MeetingClient({
           }),
         }));
       } catch {
-        // swallow — old URLs surface as not_found in the lightbox
+        // swallow
       }
     }
 
@@ -107,21 +113,17 @@ export function MeetingClient({
     const idx = detail.visuals.findIndex((v) => v.id === visualId);
     if (idx >= 0) setLightboxIndex(idx);
   }
-
   function openLightboxAtIndex(i: number) {
     setLightboxIndex(i);
   }
-
   function closeLightbox() {
     setLightboxIndex(null);
   }
-
   function nextLightbox() {
     setLightboxIndex((i) =>
       i === null ? null : (i + 1) % detail.visuals.length
     );
   }
-
   function prevLightbox() {
     setLightboxIndex((i) =>
       i === null
@@ -129,11 +131,7 @@ export function MeetingClient({
         : (i - 1 + detail.visuals.length) % detail.visuals.length
     );
   }
-
   function onAnalyzingStart() {
-    // Optimistic local flip — Realtime will overwrite with the same
-    // value within ~100ms so this just removes the visible flicker
-    // between click and the first Realtime delivery.
     setDetail((d) => ({
       ...d,
       review: d.review ? { ...d.review, status: "analyzing" } : null,
@@ -165,20 +163,59 @@ export function MeetingClient({
 
       {detail.review === null && <NotYetAnalyzedHero />}
 
-      {detail.review && detail.review.unspoken_visuals.length > 0 && (
-        <UnspokenCallout
-          unspoken={detail.review.unspoken_visuals}
-          visualsById={visualsById}
-          onOpen={openLightbox}
+      {/* Mobile (<900px): single-column tab view. Three tabs: Unspoken /
+          Transcript / Visuals. Hides on desktop. */}
+      <div className="min-[900px]:hidden">
+        <TabNav
+          active={tab}
+          onChange={setTab}
+          unspokenCount={unspoken.length}
+          frameCount={detail.visuals.length}
+          chunkCount={detail.transcript_chunks.length}
         />
-      )}
+        <div className="mt-4">
+          {tab === "unspoken" && (
+            <>
+              {hasUnspoken ? (
+                <UnspokenCallout
+                  unspoken={unspoken}
+                  visualsById={visualsById}
+                  onOpen={openLightbox}
+                />
+              ) : (
+                <EmptyTab message="No unspoken visuals on this meeting." />
+              )}
+            </>
+          )}
+          {tab === "transcript" && (
+            <TranscriptPane chunks={detail.transcript_chunks} />
+          )}
+          {tab === "visuals" && (
+            <VisualTimeline
+              visuals={detail.visuals}
+              onOpen={openLightboxAtIndex}
+            />
+          )}
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1fr]">
-        <TranscriptPane chunks={detail.transcript_chunks} />
-        <VisualTimeline
-          visuals={detail.visuals}
-          onOpen={openLightboxAtIndex}
-        />
+      {/* Desktop (>=900px): hero on top + side-by-side split. Hides on
+          mobile. */}
+      <div className="hidden space-y-8 min-[900px]:block">
+        {hasUnspoken && (
+          <UnspokenCallout
+            unspoken={unspoken}
+            visualsById={visualsById}
+            onOpen={openLightbox}
+          />
+        )}
+        <div className="grid grid-cols-1 gap-6 min-[900px]:grid-cols-2">
+          <TranscriptPane chunks={detail.transcript_chunks} />
+          <VisualTimeline
+            visuals={detail.visuals}
+            onOpen={openLightboxAtIndex}
+          />
+        </div>
       </div>
 
       {lightboxIndex !== null && (
@@ -190,6 +227,64 @@ export function MeetingClient({
           onPrev={prevLightbox}
         />
       )}
+    </div>
+  );
+}
+
+function TabNav({
+  active,
+  onChange,
+  unspokenCount,
+  frameCount,
+  chunkCount,
+}: {
+  active: Tab;
+  onChange: (t: Tab) => void;
+  unspokenCount: number;
+  frameCount: number;
+  chunkCount: number;
+}) {
+  const TABS: Array<{ key: Tab; label: string; count: number }> = [
+    { key: "unspoken", label: "Unspoken", count: unspokenCount },
+    { key: "transcript", label: "Transcript", count: chunkCount },
+    { key: "visuals", label: "Visuals", count: frameCount },
+  ];
+  return (
+    <div className="flex border-b hairline">
+      {TABS.map((t) => {
+        const isActive = active === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => onChange(t.key)}
+            className={cn(
+              "flex-1 border-b-2 px-3 py-2 font-mono text-[11px] uppercase tracking-capwide transition-colors",
+              isActive
+                ? "border-ember-500 text-bone-50"
+                : "border-transparent text-bone-400 hover:text-bone-200"
+            )}
+          >
+            {t.label}{" "}
+            <span
+              className={cn(
+                "ml-1",
+                isActive ? "text-ember-500" : "text-bone-500"
+              )}
+            >
+              {t.count}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function EmptyTab({ message }: { message: string }) {
+  return (
+    <div className="border hairline p-6 text-center font-mono text-[12px] italic text-bone-500">
+      {message}
     </div>
   );
 }
