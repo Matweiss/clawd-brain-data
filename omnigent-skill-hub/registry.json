@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "name": "omnigent-skill-hub",
+  "description": "Filesystem-first shared skill hub for Clawd, Omnigent, Claude, and Codex with no extra API calls by default.",
+  "cost_policy": "local_filesystem_only_by_default; no MCP/API/model calls unless explicitly approved",
+  "skills_path": "skills",
+  "skills": [
+    "omnigent-session-start",
+    "gstack-coding-workflow",
+    "dangerous-action-guard",
+    "context-budget-guard"
+  ]
+}

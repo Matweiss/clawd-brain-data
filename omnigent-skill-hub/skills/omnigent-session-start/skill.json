@@ -1,0 +1,13 @@
+{
+  "name": "omnigent-session-start",
+  "version": "0.1.0",
+  "description": "Start and coordinate Omnigent/Polly/Claude/Codex sessions from Telegram with setup preflight and receipts.",
+  "triggers": ["start a Polly session", "start an Omnigent session", "spin up Polly", "use Claude and Codex to plan/build", "kick this to Omnigent", "create a repo/folder and start the build agent"],
+  "runtimes": ["openclaw", "omnigent", "claude", "codex"],
+  "requires": {"bins": [], "env": [], "tools": []},
+  "safety": {
+    "external_writes": false,
+    "destructive": false,
+    "approval_required": ["github repo creation", "push", "deploy", "publish", "destructive file changes", "credential changes"]
+  }
+}

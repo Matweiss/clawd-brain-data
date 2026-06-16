@@ -1,0 +1,13 @@
+{
+  "name": "context-budget-guard",
+  "version": "0.1.0",
+  "description": "Watch context usage during long sessions and checkpoint/summarize before context overflow.",
+  "triggers": ["long session", "multi-hour task", "complex build", "many files", "extended investigation", "context getting large"],
+  "runtimes": ["openclaw", "omnigent", "claude", "codex"],
+  "requires": {"bins": [], "env": [], "tools": []},
+  "safety": {
+    "external_writes": false,
+    "destructive": false,
+    "approval_required": ["none"]
+  }
+}
