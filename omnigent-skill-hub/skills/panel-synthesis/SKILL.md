@@ -13,20 +13,30 @@ Use when Mat asks to panel, compare, debate, fuse, synthesize, or get best answe
 3. Preferred default panel:
    - Claude Code / Opus-class model for deep reasoning, architecture, prose, and risk review.
    - Codex / GPT-5.5-class model for code, execution detail, edge cases, and adversarial review.
-4. Give both panelists the same brief plus explicit output schema:
+4. Default debate topology is **blind parallel → cross-review parallel → Clawd synthesis**. Avoid sequential Claude → Codex → Claude → Codex by default because speaker order creates anchoring.
+5. Round 1: give both panelists the same brief plus explicit output schema:
    - answer
    - assumptions
    - strongest evidence/reasoning
    - risks/caveats
    - recommended next action
-5. Prevent cross-contamination: do not show panelist A's answer to panelist B unless Mat explicitly asks for debate rounds.
-6. Synthesize locally in Clawd:
+6. Round 2: provide each panelist the other's Round 1 answer and ask for a revised answer:
+   - what did the other answer catch that you missed?
+   - what do you still disagree with?
+   - what would you change in your final answer?
+   - submit a revised final answer, not just critique
+7. Synthesize locally in Clawd:
    - agreements
    - disagreements
    - which model is more persuasive on each point
+   - what changed after cross-review
    - final answer
    - practical next step
-7. Include a compact receipt with session IDs/harnesses when available.
+8. Include a compact receipt with session IDs/harnesses when available.
+
+## Tool choice
+
+Use Debby-style debate when the output is judgment, strategy, writing, or answer quality. Use Polly when the output is coordinated work: plan/build/review/ship, coding execution, or multi-agent task management. Use this panel-synthesis skill as the wrapper when Mat wants both independent model opinions and a final Clawd synthesis.
 
 ## Cost policy
 
