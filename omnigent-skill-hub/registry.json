@@ -8,6 +8,7 @@
     "omnigent-session-start",
     "gstack-coding-workflow",
     "dangerous-action-guard",
-    "context-budget-guard"
+    "context-budget-guard",
+    "panel-synthesis"
   ]
 }
