@@ -6,10 +6,10 @@ const COOKIE = 'lucra_roi_auth';
 const DAY = 60 * 60 * 24;
 
 function secret() {
-  return process.env.ROI_AUTH_SECRET || process.env.ROI_PASSWORD || 'dev-secret-change-me';
+  return process.env.ROI_AUTH_SECRET || process.env.ROI_PASSWORD || process.env.SITE_PASSWORD || 'dev-secret-change-me';
 }
 function password() {
-  return process.env.ROI_PASSWORD || '';
+  return process.env.ROI_PASSWORD || process.env.SITE_PASSWORD || '';
 }
 function sign(value) {
   return crypto.createHmac('sha256', secret()).update(value).digest('hex');
