@@ -672,6 +672,14 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
       <div><div class="input-head" style="margin-bottom:6px"><span class="input-label">C price / mo</span></div><input id="gm-price-C" type="number" min="0" step="500" placeholder="15000" oninput="GMcustomPrice('C')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none"></div>
     </div>
   </div>
+  <div class="card-section" style="margin-bottom:14px">
+    <div class="ct">Waive selected core products</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="preset" id="gm-waive-A" onclick="GMwaive('A',this)">Waive A</button>
+      <button class="preset" id="gm-waive-B" onclick="GMwaive('B',this)">Waive B</button>
+      <button class="preset" id="gm-waive-C" onclick="GMwaive('C',this)">Waive C</button>
+    </div>
+  </div>
 
   <div class="section-label"><span class="dot" style="background:var(--blue)"></span>Add-ons (monthly)</div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
@@ -685,6 +693,14 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
       <div><div class="input-head" style="margin-bottom:6px"><span class="input-label">D price / mo</span></div><input id="gm-price-D" type="number" min="0" step="500" placeholder="5000" oninput="GMcustomPrice('D')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none"></div>
       <div><div class="input-head" style="margin-bottom:6px"><span class="input-label">E price / mo</span></div><input id="gm-price-E" type="number" min="0" step="500" placeholder="5000" oninput="GMcustomPrice('E')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none"></div>
       <div><div class="input-head" style="margin-bottom:6px"><span class="input-label">F price / mo</span></div><input id="gm-price-F" type="number" min="0" step="500" placeholder="5000" oninput="GMcustomPrice('F')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none"></div>
+    </div>
+  </div>
+  <div class="card-section" style="margin-bottom:14px">
+    <div class="ct">Waive selected add-ons</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="preset" id="gm-waive-D" onclick="GMwaive('D',this)">Waive D</button>
+      <button class="preset" id="gm-waive-E" onclick="GMwaive('E',this)">Waive E</button>
+      <button class="preset" id="gm-waive-F" onclick="GMwaive('F',this)">Waive F</button>
     </div>
   </div>
 
@@ -730,6 +746,10 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
       <div><div class="input-head" style="margin-bottom:6px"><span class="input-label">Go-Live date</span></div><input id="gm-golive" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none"></div>
       <div><div class="input-head" style="margin-bottom:6px"><span class="input-label">Rev share — Client %</span></div><input id="gm-rs-client" type="number" min="0" max="100" value="80" oninput="gmRS('client')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none"></div>
       <div><div class="input-head" style="margin-bottom:6px"><span class="input-label">Rev share — Lucra %</span></div><input id="gm-rs-lucra" type="number" min="0" max="100" value="20" oninput="gmRS('lucra')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none"></div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="input-head" style="margin-bottom:6px"><span class="input-label">Agreement notes</span><span style="color:var(--text3);font-size:11px">Auto-filled from waived/custom/discounted items; editable before submitting.</span></div>
+      <textarea id="gm-notes" oninput="GMnotesEdited()" style="width:100%;min-height:92px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--font);font-size:13px;line-height:1.45;outline:none;resize:vertical"></textarea>
     </div>
     <div style="margin-top:14px"><button id="gm-go" onclick="GMgenerate()" style="padding:11px 18px;border-radius:8px;border:none;background:var(--green);color:#0a0a0b;font-weight:600;font-family:var(--font);cursor:pointer;min-height:44px">Generate agreement</button></div>
     <div id="gm-result" style="margin-top:14px"></div>
@@ -1038,99 +1058,33 @@ function TMagreement(){
   .catch(function(e){btn.disabled=false;btn.textContent='Generate agreement';res.innerHTML='<div class="warn">Request failed: '+e+'</div>';});
 }
 /* ════════ GAMIFICATION (Core / Mini Games) ════════ */
-var GM={tpl:'core',pkgs:{A:false,B:false,C:false,D:false,E:false,F:false},prices:{},impl:'',disc:0,discMode:'pct',implDisc:0,implDiscMode:'pct',term:2};
+var GM={tpl:'core',pkgs:{A:false,B:false,C:false,D:false,E:false,F:false},waived:{A:false,B:false,C:false,D:false,E:false,F:false},prices:{},impl:'',disc:0,discMode:'pct',implDisc:0,implDiscMode:'pct',term:2,notesTouched:false,lastAutoNotes:''};
 var GM_PRICE={A:10000,B:10000,C:15000,D:5000,E:5000,F:5000};
 var GM_IMPL={G:30000,H:15000,I:10000};
+var GM_NAMES={A:'Recreational games + client-hosted tournaments',B:'User-generated competitions',C:'Gaming compliant wallet infrastructure',D:'Play-for-Rewards + loyalty',E:'Convert winnings to gift cards',F:'Marketing analytics / data insights'};
 function GMmoney(n){return '$'+Math.round(n||0).toLocaleString()}
 function GMprice(k){var v=GM.prices&&GM.prices[k];return (v!==undefined&&v!==null&&!isNaN(v))?Number(v):GM_PRICE[k]}
-function GMpriceLabel(k){var el=$('gm-price-label-'+k);if(el){var custom=GM.prices&&GM.prices[k]!==undefined;el.textContent=GMmoney(GMprice(k))+'/mo'+(custom?' custom':'')}}
+function GMstrike(txt){return String(txt).split('').map(function(c){return c===' '?c:c+'\u0336'}).join('')}
+function GMpriceToken(k){var val=GMmoney(GMprice(k)).replace('$','');return GM.waived[k]?GMstrike(val):val}
+function GMselToken(k){return GM.pkgs[k]?(GM.waived[k]?'Waived':'Yes'):''}
+function GMpriceLabel(k){var el=$('gm-price-label-'+k);if(el){var custom=GM.prices&&GM.prices[k]!==undefined,waived=GM.waived&&GM.waived[k];el.innerHTML=(waived?'<span style="text-decoration:line-through;color:var(--amber)">'+GMmoney(GMprice(k))+'/mo</span> <span style="color:var(--amber)">waived</span>':GMmoney(GMprice(k))+'/mo'+(custom?' custom':''));}}
 function GMcustomPrice(k){var el=$('gm-price-'+k),raw=el?el.value:'';if(raw===''){delete GM.prices[k]}else{var v=parseFloat(raw);if(!isNaN(v)&&v>=0)GM.prices[k]=v;}GMpriceLabel(k);renderGM()}
 function GMtpl(t,b){GM.tpl=t;['gm-tpl-core','gm-tpl-minigames'].forEach(function(id){if($(id))$(id).classList.remove('on')});b.classList.add('on');renderGM()}
-function GMpkg(k,b){GM.pkgs[k]=!GM.pkgs[k];b.classList.toggle('on',GM.pkgs[k]);renderGM()}
+function GMpkg(k,b){GM.pkgs[k]=!GM.pkgs[k];if(!GM.pkgs[k])GM.waived[k]=false;b.classList.toggle('on',GM.pkgs[k]);var wb=$('gm-waive-'+k);if(wb)wb.classList.toggle('on',GM.waived[k]);renderGM()}
+function GMwaive(k,b){GM.waived[k]=!GM.waived[k];if(GM.waived[k]&&!GM.pkgs[k]){GM.pkgs[k]=true;var pb=$('gm-'+k);if(pb)pb.classList.add('on')}if(b)b.classList.toggle('on',GM.waived[k]);renderGM()}
 function GMimpl(k,b){GM.impl=k;['gm-impl-G','gm-impl-H','gm-impl-I','gm-impl-waived','gm-impl-none'].forEach(function(id){if($(id))$(id).classList.remove('on')});b.classList.add('on');renderGM()}
 function GMset(){GM.disc=Math.max(0,parseFloat($('gm-disc').value)||0);renderGM()}
 function GMmode(m,b){GM.discMode=m;['gm-dm-pct','gm-dm-flat'].forEach(function(id){if($(id))$(id).classList.remove('on')});b.classList.add('on');renderGM()}
 function GMimplDisc(){GM.implDisc=Math.max(0,parseFloat($('gm-impl-disc').value)||0);renderGM()}
 function GMimplMode(m,b){GM.implDiscMode=m;['gm-idm-pct','gm-idm-flat'].forEach(function(id){if($(id))$(id).classList.remove('on')});b.classList.add('on');renderGM()}
 function GMterm(y,b){GM.term=y;['gm-term-1','gm-term-2','gm-term-3'].forEach(function(id){if($(id))$(id).classList.remove('on')});b.classList.add('on');renderGM()}
+function GMnotesEdited(){GM.notesTouched=true}
 function gmRS(which){var cl=$('gm-rs-client'),lu=$('gm-rs-lucra');if(which==='client'){var v=Math.max(0,Math.min(100,parseInt(cl.value)||0));lu.value=100-v;}else{var v=Math.max(0,Math.min(100,parseInt(lu.value)||0));cl.value=100-v;}}
-function gmCompute(){
-  var monthly=0,listMonthly=0,custom=[];for(var k in GM.pkgs)if(GM.pkgs[k]){monthly+=GMprice(k);listMonthly+=GM_PRICE[k];if(GMprice(k)!==GM_PRICE[k])custom.push(k+': '+GMmoney(GMprice(k))+'/mo')}
-  var annual=monthly*12,listAnnual=listMonthly*12,discPct=0,discAmt=0;
-  if(GM.disc>0&&annual>0){if(GM.discMode==='pct'){discPct=Math.round(GM.disc);discAmt=annual*GM.disc/100;}else{discAmt=Math.min(annual,GM.disc);discPct=Math.round(discAmt/annual*100);}}
-  var amountDue=Math.max(0,annual-discAmt);
-  var implGross=GM.impl&&GM.impl!=='waived'?GM_IMPL[GM.impl]:0,implDiscAmt=0,implDiscPct=0;
-  if(GM.impl==='waived'){implGross=GM_IMPL.I;implDiscAmt=implGross;implDiscPct=100;}
-  else if(GM.implDisc>0&&implGross>0){if(GM.implDiscMode==='pct'){implDiscPct=Math.round(GM.implDisc);implDiscAmt=implGross*GM.implDisc/100;}else{implDiscAmt=Math.min(implGross,GM.implDisc);implDiscPct=Math.round(implDiscAmt/implGross*100);}}
-  var impl=Math.max(0,Math.round(implGross-implDiscAmt)),tcv=amountDue*GM.term+impl;
-  return {monthly:monthly,listMonthly:listMonthly,annual:annual,listAnnual:listAnnual,discPct:discPct,discAmt:discAmt,amountDue:amountDue,implGross:implGross,impl:impl,implDiscPct:implDiscPct,implWaived:GM.impl==='waived'||(implGross>0&&impl===0),term:GM.term,tcv:tcv,custom:custom};
-}
-function renderGM(){
-  ['A','B','C','D','E','F'].forEach(GMpriceLabel);
-  var d=gmCompute();
-  $('gm-metrics').innerHTML=
-    '<div class="stat"><div class="label">Monthly license</div><div class="val">'+GMmoney(d.monthly)+'</div><div class="sub">'+(d.custom.length?'customized':'list')+'</div></div>'+
-    '<div class="stat"><div class="label">Annual list</div><div class="val">'+GMmoney(d.annual)+'</div><div class="sub">'+(d.discPct>0?d.discPct+'% off':'')+'</div></div>'+
-    '<div class="stat"><div class="label">Amount due / yr</div><div class="val" style="color:var(--green)">'+GMmoney(d.amountDue)+'</div></div>'+
-    '<div class="stat"><div class="label">'+(d.term>1?d.term+'-yr TCV':'TCV')+'</div><div class="val" style="color:var(--green)">'+GMmoney(d.tcv)+'</div><div class="sub">incl. impl</div></div>';
-  var names={A:'A Recreational games',B:'B User-gen competitions',C:'C API wallet + risk',D:'D Play-for-Rewards',E:'E Gift cards',F:'F Marketing analytics'};
-  var sel=[];for(var k in GM.pkgs)if(GM.pkgs[k])sel.push(names[k]+' ('+GMmoney(GMprice(k))+'/mo)');
-  $('gm-summary').innerHTML=
-    '<div class="ct">'+(GM.tpl==='core'?'Core':'Mini Games')+' agreement summary</div>'+
-    '<div class="cr"><span class="k">Selected</span><span class="v">'+(sel.length?sel.join(', '):'None')+'</span></div>'+
-    '<div class="cr"><span class="k">Annual license</span><span class="v">'+GMmoney(d.annual)+'</span></div>'+
-    (d.custom.length?'<div class="cr"><span class="k">Custom pricing</span><span class="v" style="color:var(--amber)">'+d.custom.join('; ')+'</span></div>':'')+
-    (d.discPct>0?'<div class="cr"><span class="k">Discount</span><span class="v" style="color:var(--amber)">'+d.discPct+'% (–'+GMmoney(d.discAmt)+')</span></div>':'')+
-    '<div class="cr"><span class="k">Amount due / yr</span><span class="v" style="color:var(--green)">'+GMmoney(d.amountDue)+'</span></div>'+
-    '<div class="cr"><span class="k">Implementation</span><span class="v">'+(d.implGross?(d.implWaived?'Waived':GMmoney(d.impl)+(d.implDiscPct>0?' ('+d.implDiscPct+'% off '+GMmoney(d.implGross)+')':'')):'None')+'</span></div>'+
-    '<div class="cr"><span class="k">Term</span><span class="v">'+d.term+' year'+(d.term>1?'s':'')+'</span></div>'+
-    '<div class="cr sep"><span class="k">'+d.term+'-yr TCV</span><span class="v" style="color:var(--green)">'+GMmoney(d.tcv)+'</span></div>';
-  var clean={A:'recreational games & client-hosted tournaments',B:'user-generated competitions',C:'the gaming compliant wallet infrastructure + risk toolkit',D:'Play-for-Rewards + loyalty',E:'gift-card conversion',F:'marketing analytics & data insights'};
-  var picked=[];for(var pk in GM.pkgs)if(GM.pkgs[pk])picked.push(clean[pk]);
-  var lbl=GM.tpl==='core'?'Core':'Mini Games';
-  var body='Here\'s a summary of the proposed Lucra '+lbl+' agreement. It includes '+(picked.length?picked.join('; '):'the selected products')+'. '+
-    'The annual license is '+GMmoney(d.annual)+(d.custom.length?' with custom product pricing applied':'')+(d.discPct>0?', and with a '+d.discPct+'% discount your price comes to '+GMmoney(d.amountDue)+'/year':' ('+GMmoney(d.amountDue)+'/year)')+'. '+
-    'Implementation '+(d.implGross?(d.implWaived?'is fully waived':'is '+GMmoney(d.impl)+' one-time'+(d.implDiscPct>0?' ('+d.implDiscPct+'% off '+GMmoney(d.implGross)+')':'')):'is not included')+'. '+
-    'Over a '+d.term+'-year term, total contract value is '+GMmoney(d.tcv)+'.';
-  $('gm-pitch').innerHTML='<button class="cp-btn" onclick="CP(\'gm-pitch\')">Copy</button><strong>Proposal:</strong> "'+body+'"';
-  var ae=$('gm-eff');if(ae&&!ae.value)ae.value=new Date().toISOString().slice(0,10);
-  var gl=$('gm-golive');if(gl&&!gl.value){var g=new Date();g.setDate(g.getDate()+70);gl.value=g.toISOString().slice(0,10);}
-}
-function GMgenerate(){
-  var d=gmCompute(),client=($('gm-client').value||'').trim();
-  if(!client){alert('Enter the client / company name.');return;}
-  var eff=agFmtDate($('gm-eff').value)||'____________',goLive=agFmtDate($('gm-golive').value)||'____________';
-  var rsC=String(parseInt($('gm-rs-client').value)||0),rsL=String(parseInt($('gm-rs-lucra').value)||0);
-  var lic=GMmoney(d.annual).replace('$',''),amt=GMmoney(d.amountDue).replace('$',''),disc=String(d.discPct),term=String(d.term);
-  function yes(v){return v?'Yes':''}
-  function rawMoney(n){return GMmoney(n).replace('$','')}
-  var selectedImpl=GM.impl==='waived'?'I':GM.impl;
-  var implName=GM.impl==='waived'?'Waived':(selectedImpl==='G'?'Strategic':selectedImpl==='H'?'Growth':selectedImpl==='I'?'Launch':'None');
-  var notes=[];
-  if(d.custom.length)notes.push('Custom product pricing: '+d.custom.join('; '));
-  if(GM.impl==='waived')notes.push('Implementation fee waived; list implementation price intentionally retained for manual strikethrough.');
-  else if(d.implDiscPct>0)notes.push('Implementation discount: '+d.implDiscPct+'% off '+GMmoney(d.implGross)+'.');
-  var customNote=notes.join(' ');
-  var tokens={
-    '{{CLIENT_NAME}}':client,'{{EFFECTIVE_DATE}}':eff,'{{LICENSE_FEE}}':lic,'{{DISCOUNT_PERCENTAGE}}':disc,'{{AMOUNT_DUE}}':amt,'{{CLIENT_REVENUE_SHARE}}':rsC,'{{LUCRA_REVENUE_SHARE}}':rsL,'{{LICENSE_TERM}}':term,'{{KICKOFF_DATE}}':goLive,'{{DELIVERY_DATE}}':goLive,'{{TARGET_DELIVERY_DATE}}':goLive,'{{DELIVERY_COST_REDUCTION_PERCENTAGE}}':'0',
-    '{{CHK_A}}':yes(GM.pkgs.A),'{{CHK_B}}':yes(GM.pkgs.B),'{{CHK_C}}':yes(GM.pkgs.C),'{{CHK_D}}':yes(GM.pkgs.D),'{{CHK_E}}':yes(GM.pkgs.E),'{{CHK_F}}':yes(GM.pkgs.F),'{{CHK_G}}':yes(selectedImpl==='G'),'{{CHK_H}}':yes(selectedImpl==='H'),'{{CHK_I}}':yes(selectedImpl==='I'),
-    '{{A_monthly}}':rawMoney(GMprice('A')),'{{B_monthly}}':rawMoney(GMprice('B')),'{{C_monthly}}':rawMoney(GMprice('C')),'{{D_monthly_}}':rawMoney(GMprice('D')),'{{E_monthly}}':rawMoney(GMprice('E')),'{{F_monthly}}':rawMoney(GMprice('F')),
-    '{{strat_imp_price}}':GMmoney(GM_IMPL.G),'{{growth_imp_price}}':GMmoney(GM_IMPL.H),'{{launch_imp_price}}':GMmoney(GM_IMPL.I),'{{Implementation_name}}':implName,'{{NOTES}}':customNote||''
-  };
-  var payload={template:GM.tpl,clientName:client,tokens:tokens};
-  var btn=$('gm-go'),res=$('gm-result');btn.disabled=true;btn.textContent='Generating…';res.innerHTML='';
-  fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json()}).then(function(j){
-    btn.disabled=false;btn.textContent='Generate agreement';
-    if(!j.ok){res.innerHTML='<div class="warn">Error: '+(j.error||'failed')+'</div>';return;}
-    function dl(b64,mime,fn){var bin=atob(b64),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([arr],{type:mime}));a.download=fn;document.body.appendChild(a);a.click();a.remove();}
-    var safe=(j.name||'agreement').replace(/[^a-z0-9]+/gi,'-');
-    res.innerHTML='<div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:12px;font-size:13px"><div style="color:var(--green);font-weight:600;margin-bottom:8px">✓ '+(GM.tpl==='core'?'Core':'Mini Games')+' agreement generated for '+client+'</div><a href="'+j.docUrl+'" target="_blank" style="color:var(--green);font-weight:500">Open editable Google Doc ↗</a>'+(customNote?'<div style="color:var(--amber);margin-top:8px">'+customNote+'</div>':'')+'</div>';
-    var bar=document.createElement('div');bar.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:10px';
-    var bp=document.createElement('button');bp.textContent='Download PDF';bp.style.cssText='padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font);cursor:pointer';bp.onclick=function(){dl(j.pdf,'application/pdf',safe+'.pdf')};
-    var bx=document.createElement('button');bx.textContent='Download DOCX';bx.style.cssText=bp.style.cssText;bx.onclick=function(){dl(j.docx,'application/vnd.openxmlformats-officedocument.wordprocessingml.document',safe+'.docx')};
-    bar.appendChild(bp);bar.appendChild(bx);res.appendChild(bar);
-  }).catch(function(e){btn.disabled=false;btn.textContent='Generate agreement';res.innerHTML='<div class="warn">Request failed: '+e+'</div>';});
-}
+function gmCompute(){var monthly=0,listMonthly=0,custom=[],waived=[];for(var k in GM.pkgs)if(GM.pkgs[k]){var price=GMprice(k);listMonthly+=price;if(GM.waived[k])waived.push(k+': '+GM_NAMES[k]+' waived at '+GMmoney(price)+'/mo list');else monthly+=price;if(price!==GM_PRICE[k])custom.push(k+': '+GMmoney(price)+'/mo')}var annual=monthly*12,listAnnual=listMonthly*12,discPct=0,discAmt=0;if(GM.disc>0&&annual>0){if(GM.discMode==='pct'){discPct=Math.round(GM.disc);discAmt=annual*GM.disc/100;}else{discAmt=Math.min(annual,GM.disc);discPct=Math.round(discAmt/annual*100);}}var amountDue=Math.max(0,annual-discAmt);var implGross=GM.impl&&GM.impl!=='waived'?GM_IMPL[GM.impl]:0,implDiscAmt=0,implDiscPct=0;if(GM.impl==='waived'){implGross=GM_IMPL.I;implDiscAmt=implGross;implDiscPct=100;}else if(GM.implDisc>0&&implGross>0){if(GM.implDiscMode==='pct'){implDiscPct=Math.round(GM.implDisc);implDiscAmt=implGross*GM.implDisc/100;}else{implDiscAmt=Math.min(implGross,GM.implDisc);implDiscPct=Math.round(implDiscAmt/implGross*100);}}var impl=Math.max(0,Math.round(implGross-implDiscAmt)),tcv=amountDue*GM.term+impl;return {monthly:monthly,listMonthly:listMonthly,annual:annual,listAnnual:listAnnual,discPct:discPct,discAmt:discAmt,amountDue:amountDue,implGross:implGross,impl:impl,implDiscPct:implDiscPct,implWaived:GM.impl==='waived'||(implGross>0&&impl===0),term:GM.term,tcv:tcv,custom:custom,waived:waived};}
+function GMautoNotes(d){var notes=[];if(d.waived.length)notes.push('Waived line items: '+d.waived.join('; ')+'. Waived items are included in scope at $0 license fee; list prices are shown struck through in the agreement.');if(d.custom.length)notes.push('Custom product pricing: '+d.custom.join('; ')+'.');if(GM.impl==='waived')notes.push('Implementation fee waived; list implementation price intentionally retained for manual strikethrough.');else if(d.implDiscPct>0)notes.push('Implementation discount: '+d.implDiscPct+'% off '+GMmoney(d.implGross)+'.');return notes.join(' ')}
+function GMsyncNotes(d){var el=$('gm-notes');if(!el)return;var auto=GMautoNotes(d);if(!GM.notesTouched||el.value===GM.lastAutoNotes){el.value=auto;GM.notesTouched=false;}GM.lastAutoNotes=auto;}
+function renderGM(){['A','B','C','D','E','F'].forEach(function(k){GMpriceLabel(k);var wb=$('gm-waive-'+k);if(wb)wb.classList.toggle('on',!!GM.waived[k]);var pb=$('gm-'+k);if(pb)pb.classList.toggle('on',!!GM.pkgs[k]);});var d=gmCompute();GMsyncNotes(d);$('gm-metrics').innerHTML='<div class="stat"><div class="label">Monthly license</div><div class="val">'+GMmoney(d.monthly)+'</div><div class="sub">'+(d.waived.length?'after waivers':(d.custom.length?'customized':'list'))+'</div></div>'+'<div class="stat"><div class="label">Annual license</div><div class="val">'+GMmoney(d.annual)+'</div><div class="sub">'+(d.listAnnual!==d.annual?'list '+GMmoney(d.listAnnual):'')+'</div></div>'+'<div class="stat"><div class="label">Amount due / yr</div><div class="val" style="color:var(--green)">'+GMmoney(d.amountDue)+'</div></div>'+'<div class="stat"><div class="label">'+(d.term>1?d.term+'-yr TCV':'TCV')+'</div><div class="val" style="color:var(--green)">'+GMmoney(d.tcv)+'</div><div class="sub">incl. impl</div></div>';var names={A:'A Recreational games',B:'B User-gen competitions',C:'C API wallet + risk',D:'D Play-for-Rewards',E:'E Gift cards',F:'F Marketing analytics'};var sel=[];for(var k in GM.pkgs)if(GM.pkgs[k])sel.push(names[k]+' ('+(GM.waived[k]?'<span style="text-decoration:line-through;color:var(--amber)">'+GMmoney(GMprice(k))+'/mo</span> waived':GMmoney(GMprice(k))+'/mo')+')');$('gm-summary').innerHTML='<div class="ct">'+(GM.tpl==='core'?'Core':'Mini Games')+' agreement summary</div>'+'<div class="cr"><span class="k">Selected</span><span class="v">'+(sel.length?sel.join(', '):'None')+'</span></div>'+'<div class="cr"><span class="k">Annual license</span><span class="v">'+GMmoney(d.annual)+'</span></div>'+(d.waived.length?'<div class="cr"><span class="k">Waived</span><span class="v" style="color:var(--amber)">'+d.waived.join('; ')+'</span></div>':'')+(d.custom.length?'<div class="cr"><span class="k">Custom pricing</span><span class="v" style="color:var(--amber)">'+d.custom.join('; ')+'</span></div>':'')+(d.discPct>0?'<div class="cr"><span class="k">Discount</span><span class="v" style="color:var(--amber)">'+d.discPct+'% (–'+GMmoney(d.discAmt)+')</span></div>':'')+'<div class="cr"><span class="k">Amount due / yr</span><span class="v" style="color:var(--green)">'+GMmoney(d.amountDue)+'</span></div>'+'<div class="cr"><span class="k">Implementation</span><span class="v">'+(d.implGross?(d.implWaived?'Waived':GMmoney(d.impl)+(d.implDiscPct>0?' ('+d.implDiscPct+'% off '+GMmoney(d.implGross)+')':'')):'None')+'</span></div>'+'<div class="cr"><span class="k">Term</span><span class="v">'+d.term+' year'+(d.term>1?'s':'')+'</span></div>'+'<div class="cr sep"><span class="k">'+d.term+'-yr TCV</span><span class="v" style="color:var(--green)">'+GMmoney(d.tcv)+'</span></div>';var clean={A:'recreational games & client-hosted tournaments',B:'user-generated competitions',C:'the gaming compliant wallet infrastructure + risk toolkit',D:'Play-for-Rewards + loyalty',E:'gift-card conversion',F:'marketing analytics & data insights'};var picked=[];for(var pk in GM.pkgs)if(GM.pkgs[pk])picked.push(clean[pk]+(GM.waived[pk]?' (waived)':''));var lbl=GM.tpl==='core'?'Core':'Mini Games';var body='Here\'s a summary of the proposed Lucra '+lbl+' agreement. It includes '+(picked.length?picked.join('; '):'the selected products')+'. '+'The annual license is '+GMmoney(d.annual)+(d.waived.length?' after waived line items':'')+(d.custom.length?' with custom product pricing applied':'')+(d.discPct>0?', and with a '+d.discPct+'% discount your price comes to '+GMmoney(d.amountDue)+'/year':' ('+GMmoney(d.amountDue)+'/year)')+'. '+'Implementation '+(d.implGross?(d.implWaived?'is fully waived':'is '+GMmoney(d.impl)+' one-time'+(d.implDiscPct>0?' ('+d.implDiscPct+'% off '+GMmoney(d.implGross)+')':'')):'is not included')+'. '+'Over a '+d.term+'-year term, total contract value is '+GMmoney(d.tcv)+'.';$('gm-pitch').innerHTML='<button class="cp-btn" onclick="CP(\'gm-pitch\')">Copy</button><strong>Proposal:</strong> "'+body+'"';var ae=$('gm-eff');if(ae&&!ae.value)ae.value=new Date().toISOString().slice(0,10);var gl=$('gm-golive');if(gl&&!gl.value){var g=new Date();g.setDate(g.getDate()+70);gl.value=g.toISOString().slice(0,10);}}
+function GMgenerate(){var d=gmCompute(),client=($('gm-client').value||'').trim();if(!client){alert('Enter the client / company name.');return;}var eff=agFmtDate($('gm-eff').value)||'____________',goLive=agFmtDate($('gm-golive').value)||'____________';var rsC=String(parseInt($('gm-rs-client').value)||0),rsL=String(parseInt($('gm-rs-lucra').value)||0);var lic=GMmoney(d.annual).replace('$',''),amt=GMmoney(d.amountDue).replace('$',''),disc=String(d.discPct),term=String(d.term);var selectedImpl=GM.impl==='waived'?'I':GM.impl;var implName=GM.impl==='waived'?'Waived':(selectedImpl==='G'?'Strategic':selectedImpl==='H'?'Growth':selectedImpl==='I'?'Launch':'None');var noteEl=$('gm-notes'),customNote=noteEl?(noteEl.value||''):GMautoNotes(d);var tokens={'{{CLIENT_NAME}}':client,'{{EFFECTIVE_DATE}}':eff,'{{LICENSE_FEE}}':lic,'{{DISCOUNT_PERCENTAGE}}':disc,'{{AMOUNT_DUE}}':amt,'{{CLIENT_REVENUE_SHARE}}':rsC,'{{LUCRA_REVENUE_SHARE}}':rsL,'{{LICENSE_TERM}}':term,'{{KICKOFF_DATE}}':goLive,'{{DELIVERY_DATE}}':goLive,'{{TARGET_DELIVERY_DATE}}':goLive,'{{DELIVERY_COST_REDUCTION_PERCENTAGE}}':'0','{{CHK_A}}':GMselToken('A'),'{{CHK_B}}':GMselToken('B'),'{{CHK_C}}':GMselToken('C'),'{{CHK_D}}':GMselToken('D'),'{{CHK_E}}':GMselToken('E'),'{{CHK_F}}':GMselToken('F'),'{{CHK_G}}':selectedImpl==='G'?'Yes':'','{{CHK_H}}':selectedImpl==='H'?'Yes':'','{{CHK_I}}':selectedImpl==='I'?(GM.impl==='waived'?'Waived':'Yes'):'','{{A_monthly}}':GMpriceToken('A'),'{{B_monthly}}':GMpriceToken('B'),'{{C_monthly}}':GMpriceToken('C'),'{{D_monthly_}}':GMpriceToken('D'),'{{E_monthly}}':GMpriceToken('E'),'{{F_monthly}}':GMpriceToken('F'),'{{strat_imp_price}}':GMmoney(GM_IMPL.G),'{{growth_imp_price}}':GMmoney(GM_IMPL.H),'{{launch_imp_price}}':GM.impl==='waived'?GMstrike(GMmoney(GM_IMPL.I)):GMmoney(GM_IMPL.I),'{{Implementation_name}}':implName,'{{NOTES}}':customNote||''};var payload={template:GM.tpl,clientName:client,tokens:tokens};var btn=$('gm-go'),res=$('gm-result');btn.disabled=true;btn.textContent='Generating…';res.innerHTML='';fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json()}).then(function(j){btn.disabled=false;btn.textContent='Generate agreement';if(!j.ok){res.innerHTML='<div class="warn">Error: '+(j.error||'failed')+'</div>';return;}function dl(b64,mime,fn){var bin=atob(b64),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([arr],{type:mime}));a.download=fn;document.body.appendChild(a);a.click();a.remove();}var safe=(j.name||'agreement').replace(/[^a-z0-9]+/gi,'-');res.innerHTML='<div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:12px;font-size:13px"><div style="color:var(--green);font-weight:600;margin-bottom:8px">✓ '+(GM.tpl==='core'?'Core':'Mini Games')+' agreement generated for '+client+'</div><a href="'+j.docUrl+'" target="_blank" style="color:var(--green);font-weight:500">Open editable Google Doc ↗</a>'+(customNote?'<div style="color:var(--amber);margin-top:8px">'+customNote+'</div>':'')+'</div>';var bar=document.createElement('div');bar.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:10px';var bp=document.createElement('button');bp.textContent='Download PDF';bp.style.cssText='padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font);cursor:pointer';bp.onclick=function(){dl(j.pdf,'application/pdf',safe+'.pdf')};var bx=document.createElement('button');bx.textContent='Download DOCX';bx.style.cssText=bp.style.cssText;bx.onclick=function(){dl(j.docx,'application/vnd.openxmlformats-officedocument.wordprocessingml.document',safe+'.docx')};bar.appendChild(bp);bar.appendChild(bx);res.appendChild(bar);}).catch(function(e){btn.disabled=false;btn.textContent='Generate agreement';res.innerHTML='<div class="warn">Request failed: '+e+'</div>';});}
 function C(vis,arpu,fee,optPct,liftPct){var opt=optPct/100,lift=liftPct/100,al=arpu*lift,la=arpu+al,du=Math.round(vis*opt),mu=du*30,mr=du*al*30,nm=mr-fee,ar=nm*12,bu=al>0?Math.ceil(fee/(al*30)):Infinity,bv=opt>0?Math.ceil(bu/opt):Infinity,rx=fee>0?(mr/fee).toFixed(1):'0',pb=mr>0?Math.round(fee/(mr/30)*10)/10:Infinity;return{arpu:arpu,lucraARPU:la,arpuLift:al,dailyUsers:du,moUsers:mu,moRev:mr,netMo:nm,annROI:ar,brkUsers:bu,brkVis:bv,roiX:rx,paybackDays:pb}}
 function CP(id){var el=$(id);if(!el)return;var txt=el.innerText.replace(/^Copy\n?/,'').replace(/Copied!\n?/,'');navigator.clipboard.writeText(txt);var btn=el.querySelector('.cp-btn');if(btn){btn.textContent='Copied!';btn.classList.add('done');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('done')},2000)}}
 /* Glowing slider fill (matches the other calculator) — paints all range inputs without touching their handlers */
