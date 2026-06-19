@@ -1101,18 +1101,23 @@ function GMgenerate(){
   if(!client){alert('Enter the client / company name.');return;}
   var eff=agFmtDate($('gm-eff').value)||'____________',goLive=agFmtDate($('gm-golive').value)||'____________';
   var rsC=String(parseInt($('gm-rs-client').value)||0),rsL=String(parseInt($('gm-rs-lucra').value)||0);
-  var lic=GMmoney(d.annual),amt=GMmoney(d.amountDue),impl=d.implGross?(d.implWaived?'Waived':GMmoney(d.impl)):'None',disc=String(d.discPct),term=String(d.term);
-  function ck(v,l){return v?(l+' X'):''}
-  var ca=ck(GM.pkgs.A,'A'),cb=ck(GM.pkgs.B,'B'),cc=ck(GM.pkgs.C,'C'),cd=ck(GM.pkgs.D,'D'),ce=ck(GM.pkgs.E,'E'),cf=ck(GM.pkgs.F,'F'),cg=ck(GM.impl==='G','G'),ch=ck(GM.impl==='H','H'),ci=ck(GM.impl==='I'||GM.impl==='waived','I');
-  var customNote=d.custom.length?('Custom product pricing: '+d.custom.join('; ')):'';
-  var tokens=GM.tpl==='core'?{
-    '{{CLIENT_NAME}}':client,'{{EFFECTIVE_DATE}}':eff,'{{LICENSE_FEE}}':lic,'{{DISCOUNT_PERCENTAGE}}':disc,'{{AMOUNT_DUE}}':amt,'{{IMPLEMENTATION_FEE}}':impl,'{{CLIENT_REVENUE_SHARE}}':rsC,'{{LUCRA_REVENUE_SHARE}}':rsL,'{{LICENSE_TERM}}':term,'{{KICKOFF_DATE}}':goLive,'{{DELIVERY_DATE}}':goLive,'{{TARGET_DELIVERY_DATE}}':goLive,'{{DELIVERY_COST_REDUCTION_PERCENTAGE}}':'0',
-    '{{CHK_A}}':ca,'{{CHK_B}}':cb,'{{CHK_C}}':cc,'{{CHK_D}}':cd,'{{CHK_E}}':ce,'{{CHK_F}}':cf,'{{CHK_G}}':cg,'{{CHK_H}}':ch,'{{CHK_I}}':ci
-  }:{
-    '[CLIENT NAME]':client,'[EFFECTIVE DATE]':eff,'[LICENSE_FEE]':lic,'[DISCOUNT_PERCENTAGE]':disc,'[AMOUNT_DUE]':amt,'[IMPLEMENTATION_FEE]':impl,'[CLIENT_REVENUE_SHARE]':rsC,'[LUCRA_REVENUE_SHARE]':rsL,'[LICENSE_TERM]':term,'[GO_LIVE_DATE]':goLive,
-    '[CHK_A]':ca,'[CHK_B]':cb,'[CHK_C]':cc,'[CHK_D]':cd,'[CHK_E]':ce,'[CHK_F]':cf,'[CHK_G]':cg,'[CHK_H]':ch,'[CHK_I]':ci
+  var lic=GMmoney(d.annual).replace('$',''),amt=GMmoney(d.amountDue).replace('$',''),disc=String(d.discPct),term=String(d.term);
+  function yes(v){return v?'Yes':''}
+  function rawMoney(n){return GMmoney(n).replace('$','')}
+  var selectedImpl=GM.impl==='waived'?'I':GM.impl;
+  var implName=GM.impl==='waived'?'Waived':(selectedImpl==='G'?'Strategic':selectedImpl==='H'?'Growth':selectedImpl==='I'?'Launch':'None');
+  var notes=[];
+  if(d.custom.length)notes.push('Custom product pricing: '+d.custom.join('; '));
+  if(GM.impl==='waived')notes.push('Implementation fee waived; list implementation price intentionally retained for manual strikethrough.');
+  else if(d.implDiscPct>0)notes.push('Implementation discount: '+d.implDiscPct+'% off '+GMmoney(d.implGross)+'.');
+  var customNote=notes.join(' ');
+  var tokens={
+    '{{CLIENT_NAME}}':client,'{{EFFECTIVE_DATE}}':eff,'{{LICENSE_FEE}}':lic,'{{DISCOUNT_PERCENTAGE}}':disc,'{{AMOUNT_DUE}}':amt,'{{CLIENT_REVENUE_SHARE}}':rsC,'{{LUCRA_REVENUE_SHARE}}':rsL,'{{LICENSE_TERM}}':term,'{{KICKOFF_DATE}}':goLive,'{{DELIVERY_DATE}}':goLive,'{{TARGET_DELIVERY_DATE}}':goLive,'{{DELIVERY_COST_REDUCTION_PERCENTAGE}}':'0',
+    '{{CHK_A}}':yes(GM.pkgs.A),'{{CHK_B}}':yes(GM.pkgs.B),'{{CHK_C}}':yes(GM.pkgs.C),'{{CHK_D}}':yes(GM.pkgs.D),'{{CHK_E}}':yes(GM.pkgs.E),'{{CHK_F}}':yes(GM.pkgs.F),'{{CHK_G}}':yes(selectedImpl==='G'),'{{CHK_H}}':yes(selectedImpl==='H'),'{{CHK_I}}':yes(selectedImpl==='I'),
+    '{{A_monthly}}':rawMoney(GMprice('A')),'{{B_monthly}}':rawMoney(GMprice('B')),'{{C_monthly}}':rawMoney(GMprice('C')),'{{D_monthly_}}':rawMoney(GMprice('D')),'{{E_monthly}}':rawMoney(GMprice('E')),'{{F_monthly}}':rawMoney(GMprice('F')),
+    '{{strat_imp_price}}':GMmoney(GM_IMPL.G),'{{growth_imp_price}}':GMmoney(GM_IMPL.H),'{{launch_imp_price}}':GMmoney(GM_IMPL.I),'{{Implementation_name}}':implName,'{{NOTES}}':customNote||''
   };
-  var payload={template:GM.tpl,clientName:client,tokens:tokens,customPricingNote:customNote,implementationWaived:d.implWaived};
+  var payload={template:GM.tpl,clientName:client,tokens:tokens};
   var btn=$('gm-go'),res=$('gm-result');btn.disabled=true;btn.textContent='Generating…';res.innerHTML='';
   fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json()}).then(function(j){
     btn.disabled=false;btn.textContent='Generate agreement';

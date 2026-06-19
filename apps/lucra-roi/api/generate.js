@@ -10,8 +10,9 @@
 
 const ALLOWED_TEMPLATES = {
   trackman: '1bq7dy1Feb2VHZo7TvQJGYoWVrRh2_ViXCI1gvU__nJ4',
-  core: '1jV_V1ISqH8LzdlNoRH5lRUmsPHfsvCd3YZ1scuEKbg0',
-  minigames: '1TKuusASeUBmbBIfiXhc3xdevbxvpVTqZFufkutjVKYs',
+  // Gamification Core/Mini Games use Mat's current tokenized agreement template.
+  core: '1MAWYiinRZ_bLCrGcfEzU8wxJbzenDe4KmI_DiNhJo_I',
+  minigames: '1MAWYiinRZ_bLCrGcfEzU8wxJbzenDe4KmI_DiNhJo_I',
 };
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
@@ -68,24 +69,6 @@ module.exports = async (req, res) => {
       method: 'POST', headers: H, body: JSON.stringify({ requests }),
     });
     if (!bu.ok) throw new Error('Fill failed: ' + (await bu.text()).slice(0, 200));
-
-    // 2b. If the rep used deal-specific pricing/waiver controls, append an explicit addendum
-    // so those choices survive into the generated Doc/PDF even when the template has no slot for them.
-    const addendumLines = [];
-    if (d.customPricingNote) addendumLines.push(String(d.customPricingNote));
-    if (d.implementationWaived) addendumLines.push('Implementation fee waived for this agreement.');
-    if (addendumLines.length) {
-      const doc = await (await fetch(`https://docs.googleapis.com/v1/documents/${docId}?fields=body.content.endIndex`, {
-        headers: { Authorization: 'Bearer ' + token },
-      })).json();
-      const content = doc.body && Array.isArray(doc.body.content) ? doc.body.content : [];
-      const endIndex = Math.max(1, (content[content.length - 1] && content[content.length - 1].endIndex || 2) - 1);
-      const addendum = '\n\nSpecial Terms / Pricing Addendum\n' + addendumLines.join('\n') + '\n';
-      const au = await fetch(`https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`, {
-        method: 'POST', headers: H, body: JSON.stringify({ requests: [{ insertText: { location: { index: endIndex }, text: addendum } }] }),
-      });
-      if (!au.ok) throw new Error('Addendum failed: ' + (await au.text()).slice(0, 200));
-    }
 
     // 3. Export PDF + DOCX
     async function exportAs(mime) {
