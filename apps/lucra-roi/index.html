@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lucra ROI Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://use.typekit.net" crossorigin>
+<!-- Phase 2 collateral fonts: replace ADOBE_FONTS_PROJECT_ID after creating the Adobe Fonts Web Project with Hardcover Variable + Parabolica. -->
+<link id="collateral-adobe-fonts" rel="stylesheet" href="https://use.typekit.net/ADOBE_FONTS_PROJECT_ID.css" data-fonts="Hardcover Variable, Parabolica" disabled>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -181,6 +184,15 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
 .pf-input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;font-family:var(--font);outline:none;box-sizing:border-box}
 .pf-input:focus{border-color:var(--green)}
 .pf-textarea{min-height:60px;resize:vertical;line-height:1.5}
+
+/* Phase 2 collateral token boundary. Adobe Fonts are optional until a real Web Project ID is pasted above. */
+.collateral{--co-bg:#050505;--co-panel:#0B0D0A;--co-surface:#10120E;--co-surface2:#171A12;--co-line:rgba(255,255,255,.14);--co-green:#8AE91A;--co-green-soft:rgba(138,233,26,.13);--co-amber:#F2B84B;--co-blue:#8AB4FF;--co-purple:#B99CFF;--co-text:#F7F7EE;--co-text2:#C8CBBE;--co-text3:#7E8276;--co-font:'Parabolica','Hanken Grotesk',Arial,sans-serif;--co-display:'Hardcover Variable','Playfair Display',Georgia,serif;font-family:var(--co-font);color:var(--co-text)}
+.collateral .co-display{font-family:var(--co-display);font-weight:900;letter-spacing:-.03em}
+.collateral .co-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:2.2px;font-weight:800;color:var(--co-text2)}
+.collateral .co-card{background:linear-gradient(180deg,rgba(138,233,26,.08),rgba(255,255,255,.025));border:1px solid var(--co-line);border-radius:14px;padding:12px;text-align:center}
+.collateral .co-label{font-size:10px;color:var(--co-text3);margin-bottom:3px}.collateral .co-val{font-size:22px;font-weight:900;color:var(--co-green)}.collateral .co-sub{font-size:10px;color:var(--co-text3);margin-top:4px;line-height:1.35}
+.collateral .co-btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.gen-btn3{padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;font-family:var(--font);cursor:pointer}.gen-btn3:hover{border-color:var(--green);color:var(--green)}
+
 .pf-radio-group{display:flex;flex-wrap:wrap;gap:6px}
 .pf-radio{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text3);cursor:pointer;font-size:12px;font-family:var(--font);transition:all 0.15s}
 .pf-radio.on{border-color:var(--green);background:var(--green-bg);color:var(--green)}
@@ -375,6 +387,9 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
     <button class="gen-btn" onclick="UNIFIEDGEN()">Generate one-pager</button>
     <button class="gen-btn2" onclick="UNIFIEDCPH()">Copy HTML</button>
     <button class="gen-btn2" id="pdf-btn" onclick="UNIFIEDPDF()" disabled style="opacity:0.4;cursor:not-allowed">&#128196; PDF Leave-Behind</button>
+    <button class="gen-btn3" onclick="copyEmailLeaveBehind()">Copy email</button>
+    <button class="gen-btn3" onclick="copyShareableLink()">Copy share link</button>
+    <button class="gen-btn3" onclick="downloadOGImage()">OG image</button>
   </div>
   <div id="pdf-validation-msg" style="font-size:11px;color:#F59E0B;margin-top:8px;display:none">&#9888; Enter company name, website URL, and add their logo to unlock the PDF.</div>
 </div>
@@ -466,6 +481,9 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
     <button class="gen-btn" onclick="UNIFIEDGEN()">Generate one-pager</button>
     <button class="gen-btn2" onclick="UNIFIEDCPH()">Copy HTML</button>
     <button class="gen-btn2" id="pdf-btn" onclick="UNIFIEDPDF()" disabled style="opacity:0.4;cursor:not-allowed">&#128196; PDF Leave-Behind</button>
+    <button class="gen-btn3" onclick="copyEmailLeaveBehind()">Copy email</button>
+    <button class="gen-btn3" onclick="copyShareableLink()">Copy share link</button>
+    <button class="gen-btn3" onclick="downloadOGImage()">OG image</button>
   </div>
   <div id="pdf-validation-msg" style="font-size:11px;color:#F59E0B;margin-top:8px;display:none">&#9888; Enter company name, website URL, and add their logo to unlock the PDF.</div>
 </div>
@@ -1078,7 +1096,7 @@ function TMonePager(mode){
   if(!$('tm-card'))TMgenerate();
   var name=($('tm-prospect')&&$('tm-prospect').value.trim())||'Your venue';
   var fn='lucra-trackman-'+name.replace(/[^a-z0-9]+/gi,'-').toLowerCase().replace(/(^-|-$)/g,'');
-  html2canvas($('tm-card'),{scale:2,backgroundColor:'#0d0d0f',useCORS:true,allowTaint:true}).then(function(canvas){
+  captureCollateral($('tm-card'),{scale:2,backgroundColor:'#0d0d0f'}).then(function(canvas){
     var img=canvas.toDataURL('image/png');
     if(mode==='img'){var a=document.createElement('a');a.href=img;a.download=fn+'.png';document.body.appendChild(a);a.click();a.remove();return;}
     var w=canvas.width/2,h=canvas.height/2;
@@ -1220,7 +1238,7 @@ function LB(){return {
   bg:'#050505',panel:'#0B0D0A',surface:'#10120E',surface2:'#171A12',line:'rgba(255,255,255,0.14)',
   green:'#8AE91A',greenSoft:'rgba(138,233,26,0.13)',greenLine:'rgba(138,233,26,0.38)',
   amber:'#F2B84B',amberSoft:'rgba(242,184,75,0.12)',blue:'#8AB4FF',blueSoft:'rgba(138,180,255,0.10)',purple:'#B99CFF',purpleSoft:'rgba(185,156,255,0.10)',
-  text:'#F7F7EE',text2:'#C8CBBE',text3:'#7E8276',font:"'Hanken Grotesk',Arial,sans-serif",display:"'Playfair Display',Georgia,serif"
+  text:'#F7F7EE',text2:'#C8CBBE',text3:'#7E8276',font:"'Parabolica','Hanken Grotesk',Arial,sans-serif",display:"'Hardcover Variable','Playfair Display',Georgia,serif"
 }}
 function lucraWordmark(color){color=color||'#8AE91A';return '<svg viewBox="0 0 420 92" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LUCRA" style="height:28px;width:128px;display:block"><text x="0" y="68" fill="'+color+'" font-family="Hanken Grotesk, Arial, sans-serif" font-size="72" font-weight="800" letter-spacing="6">LUCRA</text></svg>'}
 function lbHeader(title,name,custLogo){var c=LB();var right=custLogo?'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><div style="font-size:9px;color:'+c.text3+';text-transform:uppercase;letter-spacing:2px;font-weight:800">Prepared for</div><img src="'+custLogo+'" style="max-height:42px;max-width:154px;object-fit:contain"><div style="font-size:11px;color:'+c.text2+'">'+name+'</div></div>':'<div style="text-align:right"><div style="font-size:9px;color:'+c.text3+';text-transform:uppercase;letter-spacing:2px;font-weight:800">Prepared for</div><div style="font-size:16px;font-weight:800;color:'+c.text+';margin-top:4px">'+name+'</div></div>';return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid '+c.line+'"><div style="display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:50%;background:'+c.green+';box-shadow:0 0 28px rgba(138,233,26,.34);display:grid;place-items:center;color:#050505;font-weight:900;font-size:20px">↯</div><div>'+lucraWordmark(c.green)+'<div style="font-size:9px;color:'+c.text3+';text-transform:uppercase;letter-spacing:2px;font-weight:800;margin-top:5px">'+title+'</div></div></div>'+right+'</div>'}
@@ -1248,7 +1266,7 @@ function cardBase(tab){
   var fa='style="background:'+amberDim+';border:1px solid rgba(242,184,75,0.26);border-radius:14px;padding:11px 16px;text-align:center;min-width:85px"';
   var aw=lbArrow();
 
-  var h = '<div style="background:radial-gradient(circle at 50% 0,rgba(138,233,26,.12),transparent 36%),'+bg+';border-radius:22px;padding:38px;max-width:720px;color:'+text+';font-family:'+c.font+';border:1px solid '+border+';box-shadow:0 28px 80px rgba(0,0,0,.45)" id="cap-'+tab+'">';
+  var h = '<div class="collateral" style="background:radial-gradient(circle at 50% 0,rgba(138,233,26,.12),transparent 36%),'+bg+';border-radius:22px;padding:38px;max-width:720px;color:'+text+';font-family:'+c.font+';border:1px solid '+border+';box-shadow:0 28px 80px rgba(0,0,0,.45)" id="cap-'+tab+'">';
   h += lbHeader('Core ROI model',name,custLogo);
   h += '<div style="text-align:right;font-size:10px;color:'+text3+';margin-top:-20px;margin-bottom:16px">Prepared '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div>';
   h += '<div style="text-align:center;padding:26px 0 22px;margin-bottom:22px">';
@@ -1286,53 +1304,33 @@ function buildPitch(V,r,op,ap,loc) {
   if (loc > 1) s += " Across " + loc + " locations: " + F(V.fee * loc) + " MRR / " + F(V.fee * loc * 12) + " ARR.";
   return s;
 }
-function GEN(tab){var b=cardBase(tab),h=b.h,r=b.r,loc=b.loc,op=b.op,ap=b.ap;if(tab==='roi'){h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Monthly lift</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(r.moRev)+'</div></div><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Net monthly</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(r.netMo)+'</div></div><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Annual impact</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(r.annROI)+'</div></div><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Payback</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+r.paybackDays+' days</div></div></div>';h+='<div style="display:flex;gap:10px;margin-bottom:18px"><div style="flex:1;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#d4920b;margin-bottom:3px">Break-even</div><div style="font-size:18px;font-weight:700;color:#F59E0B">'+r.brkVis+' visitors / '+r.brkUsers+' users per day</div><div style="font-size:10px;color:#a17922;margin-top:3px">You have '+V.vis.toLocaleString()+' daily visitors</div></div></div>';if(loc>1)h+='<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.18);border-radius:10px;padding:14px;margin-bottom:18px;text-align:center"><div style="font-size:10px;color:#60a5fa;margin-bottom:4px">Portfolio ('+loc+' locations)</div><div style="font-size:11px;color:#93c5fd">'+F(V.fee*loc)+' MRR \u2022 '+F(V.fee*loc*12)+' ARR \u2022 '+F(r.moRev*loc)+'/mo lift</div></div>';h+='<div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.18);border-radius:10px;padding:14px;margin-bottom:18px"><div style="font-size:10px;color:#a78bfa;margin-bottom:6px;font-weight:600">Repeat visit multiplier (not in ROI above)</div><div style="font-size:11px;color:#c4b5fd;line-height:1.6">+110% visit frequency: '+b.nf.toFixed(1)+'x/yr vs 1.4x. Each extra visit = '+b.ap+' full-price spend.</div></div>';if(cardType==='combined'&&V.mglic>0){var mgAnn=V.mglic*12*loc,combARR=V.fee*loc*12+mgAnn;h+='<div style="background:rgba(138,233,26,0.08);border:1px solid rgba(138,233,26,0.24);border-radius:10px;padding:14px;margin-bottom:18px">';h+='<div style="font-size:10px;color:#8AE91A;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">+ Mini games add-on (combined deal)</div>';h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Mini games / mo</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(V.mglic*loc)+'</div></div><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Mini games / yr</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(mgAnn)+'</div></div><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Combined ARR</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(combARR)+'</div></div></div>';h+='<div style="font-size:11px;color:#c4b5fd;margin-top:10px;line-height:1.5">Plus variable rev share upside — see Mini Games one-pager for full projection.</div>';h+='</div>';}h+='<div style="background:rgba(138,233,26,0.08);border:1px solid rgba(138,233,26,0.24);border-radius:10px;padding:14px 16px;margin-bottom:14px">';h+='<div style="font-size:10px;color:#8AE91A;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">&#x26A1; The Pitch</div>';var pitchCard=buildPitch(V,r,op,ap,loc);h+='<div style="font-size:13px;color:#e0e0e0;line-height:1.7;font-style:italic">“'+pitchCard+'”</div>';h+='</div>';h+='<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;display:flex;justify-content:flex-end"><div style="font-size:11px;color:#8AE91A;font-weight:500">www.lucrasports.com</div></div></div>';}if(tab==='pricing'){var po=[{t:'13-month annual',sub:'Monthly',tm:13,fm:1,pm:12,c:'#3B82F6'},{t:'14-month annual',sub:'Upfront',tm:14,fm:2,pm:12,c:'#8AE91A'},{t:'25-month 2-year',sub:'Monthly',tm:25,fm:2,pm:23,c:'#8B5CF6'},{t:'26-month 2-year',sub:'Upfront',tm:26,fm:4,pm:22,c:'#F59E0B'}];h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">'+po.map(function(o){var tot=b.pfee*o.pm,eff=Math.round(tot/o.tm),disc=b.pfee>0?((1-eff/b.pfee)*100).toFixed(1):'0',saves=b.pfee*o.tm-tot;return '<div style="border:1px solid #eee;border-radius:10px;padding:14px"><div style="font-size:12px;font-weight:600;color:'+o.c+'">'+o.t+'</div><div style="font-size:10px;color:#999;margin-bottom:8px">'+o.sub+'</div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#999">Months</span><span style="font-weight:500">'+o.tm+' ('+o.fm+' free)</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#999">Contract</span><span style="font-weight:500">$'+tot.toLocaleString()+'</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#999">Eff. rate</span><span style="font-weight:500">$'+eff.toLocaleString()+'/mo</span></div><div style="margin-top:8px;font-size:12px;font-weight:600;color:#8AE91A">Saves $'+saves.toLocaleString()+' ('+disc+'% off)</div></div>'}).join('')+'</div>'}if(tab==='discount'){h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px">';[5,10,15,20].forEach(function(d){var df=Math.round(V.fee*(1-d/100)),dr=C(V.vis,V.arpu,df,V.opt,V.lift),vs=(V.fee-df)*12*loc;h+='<div style="border:'+(d===10?'2px solid #8AE91A':'1px solid #eee')+';border-radius:10px;padding:10px;text-align:center"><div style="font-size:14px;font-weight:600;color:#b47d0a">'+d+'% off</div><div style="font-size:11px;color:#888;margin-bottom:6px">'+F(df)+'/mo</div><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#999">ROI</span><span style="font-weight:500;color:#8AE91A">'+dr.roiX+'x</span></div><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#999">Payback</span><span style="font-weight:500">'+dr.paybackDays+'d</span></div><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#999">Net/mo</span><span style="font-weight:500;color:#8AE91A">'+F(dr.netMo)+'</span></div><div style="font-size:10px;display:flex;justify-content:space-between"><span style="color:#999">Saves</span><span style="font-weight:500">'+F(vs)+'/yr</span></div></div>'});h+='</div>';var d10f=Math.round(V.fee*0.9),d10r=C(V.vis,V.arpu,d10f,V.opt,V.lift);h+='<div style="background:#ecfdf5;border-radius:10px;padding:14px;margin-bottom:18px;font-size:12px;color:#065f46;line-height:1.6"><strong>Recommended:</strong> At 10% off ('+F(d10f)+'/mo), payback in '+d10r.paybackDays+' days. '+d10r.roiX+'x ROI.'+(loc>1?' Across '+loc+' locations: saves '+F((V.fee-d10f)*12*loc)+'/yr.':'')+'</div>'}
-h+='<div style="border-top:1px solid rgba(255,255,255,0.10);padding-top:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px"><div style="font-size:10px;color:#9ca3af;max-width:460px;line-height:1.55">Sources: D&B traffic benchmarks, FSR Magazine frequency benchmark, Lucra partner data, and CEO adoption guidance. Repeat-visit lift is shown separately and is not included in core ROI math.</div><div style="font-size:12px;color:#8AE91A;font-weight:700">lucra.live</div></div></div>';
-$A('o-'+tab).innerHTML=h;$A('w-'+tab).classList.add('show');$A('w-'+tab).scrollIntoView({behavior:'smooth',block:'start'})}
-
-function DL(tab,btn){
-  var capId=tab==='mg'?'cap-roi':'cap-'+tab;if(tab==='mg')MGGEN();
-  var el=document.getElementById(capId);if(!el){setButtonState(btn,'Generate first',1400);return Promise.resolve(false)};
-  setButtonBusy(btn,'Downloading…');
-  return html2canvas(el,{scale:2,backgroundColor:'#0d0d0f',useCORS:true,allowTaint:true}).then(function(canvas){
-    var a=document.createElement('a'),nm=(getVenueName()||'venue').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();
-    a.download=(tab==='mg'?'lucra-mini-games-':'lucra-roi-')+nm+'.png';a.href=canvas.toDataURL('image/png');a.click();
-    setButtonState(btn,'Downloaded ✓',1600,true);return true;
-  }).catch(function(){setButtonState(btn,'Download failed',1800);return false;});
+function currentDealSummary(kind){
+  kind=kind||((cardType==='mg')?'mini_games':(cardType==='combined'?'combined':'core'));
+  var r=C(V.vis,V.arpu,V.fee,V.opt,V.lift),loc=Math.max(1,Math.round(V.loc||1));
+  var company=($A('n-roi')&&$A('n-roi').value.trim())||getVenueName()||'Partner';
+  var website=($A('website-url')&&$A('website-url').value.trim())||'';
+  return {version:'phase2-mvp',kind:kind,companyName:company,websiteUrl:website,logo:uploadedLogoDataUrl||'',inputs:{dailyVisitors:V.vis,currentArpu:V.arpu,monthlyFee:V.fee,optInPct:V.opt,arpuLiftPct:V.lift,locations:loc,currentLoyaltySpend:V.loy||0,miniGamesMonthlyLicense:V.mglic||0},outputs:{dailyUsers:r.dailyUsers,monthlyUsers:r.moUsers,monthlyLiftPerLocation:r.moRev,netMonthlyPerLocation:r.netMo,annualNetPerLocation:r.annROI,roiX:Number(r.roiX)||0,paybackDays:r.paybackDays,portfolioMonthlyLift:r.moRev*loc,portfolioNetMonthly:r.netMo*loc,portfolioAnnualNet:r.annROI*loc,portfolioFeeMonthly:V.fee*loc,portfolioRoiX:V.fee>0?Number((r.moRev/V.fee).toFixed(1)):0,breakEvenUsers:r.brkUsers,breakEvenVisitors:r.brkVis},assumptions:{baseFrequency:1.4,repeatVisitLift:'110%',sources:['D&B traffic benchmarks','FSR Magazine frequency benchmark','Lucra partner data','CEO adoption guidance']},createdAt:new Date().toISOString()}
 }
-function GENPDF(){
-  // Make sure card is generated first
-  GEN('roi');
-  setTimeout(function(){
-    var el=document.getElementById('cap-roi');
-    if(!el){alert('Generate the ROI card first.');return;}
-    html2canvas(el,{scale:2,backgroundColor:'#0d0d0f',useCORS:true,allowTaint:true}).then(function(canvas){
-      var imgData=canvas.toDataURL('image/png');
-      var nm=(($A('n-roi')&&$A('n-roi').value)||'prospect').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();
-      // Use jsPDF if available, else just download the PNG as "PDF"
-      if(window.jspdf&&window.jspdf.jsPDF){
-        var doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'px',format:[canvas.width/2,canvas.height/2]});
-        doc.addImage(imgData,'PNG',0,0,canvas.width/2,canvas.height/2);
-        doc.save('lucra-leave-behind-'+nm+'.pdf');
-      } else {
-        // Fallback: open in print dialog as PNG (prints to PDF natively)
-        var win=window.open('','_blank');
-        win.document.write('<html><head><title>Lucra Leave-Behind - '+nm+'</title><style>body{margin:0;background:#0d0d0f}img{max-width:100%;display:block}@media print{body{background:#0d0d0f}}</style></head><body><img src="'+imgData+'"><script>setTimeout(function(){window.print()},400);<\/script></body></html>');
-        win.document.close();
-      }
-    });
-  },300);
+function emailLeaveBehindText(){var d=currentDealSummary(),o=d.outputs,i=d.inputs;return 'Hi '+d.companyName+',\n\nBased on the assumptions we modeled live — '+Math.round(i.dailyVisitors).toLocaleString()+' daily visitors, $'+i.currentArpu+' ARPU, '+i.optInPct+'% opt-in, and +'+i.arpuLiftPct+'% ARPU lift — Lucra projects:\n\n• '+F(o.monthlyLiftPerLocation)+'/mo incremental revenue per location\n• '+F(o.netMonthlyPerLocation)+'/mo net after Lucra per location\n• '+F(o.portfolioMonthlyLift)+'/mo lift across '+i.locations+' location'+(i.locations===1?'':'s')+'\n• '+o.roiX+'x ROI with ~'+o.paybackDays+'-day payback\n\nThe repeat-visit upside is separate from this ROI math, so this is intentionally conservative.\n\nHappy to walk through the assumptions together.\n\nMat';}
+function copyEmailLeaveBehind(){var txt=emailLeaveBehindText();navigator.clipboard.writeText(txt).then(function(){alert('Email leave-behind copied.');}).catch(function(){prompt('Copy email leave-behind:',txt);});}
+function copyShareableLink(){saveState();var url=location.origin+location.pathname+'?s='+safeB64(statePayload());navigator.clipboard.writeText(url).then(function(){alert('Shareable ROI link copied.');}).catch(function(){prompt('Copy share link:',url);});}
+function awaitCollateralFonts(){if(document.fonts&&document.fonts.ready){return document.fonts.ready.catch(function(){return null;});}return Promise.resolve(null);}
+function captureCollateral(el,opts){opts=opts||{};return awaitCollateralFonts().then(function(){return html2canvas(el,{scale:opts.scale||2,backgroundColor:opts.backgroundColor||'#0d0d0f',useCORS:true,allowTaint:true});});}
+function downloadOGImage(){GEN('roi');setTimeout(function(){var el=document.getElementById('cap-roi');if(!el){alert('Generate the card first.');return;}captureCollateral(el,{scale:2}).then(function(canvas){var a=document.createElement('a'),nm=(getVenueName()||'prospect').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();a.download='lucra-og-'+nm+'.png';a.href=canvas.toDataURL('image/png');a.click();}).catch(function(){alert('Could not render OG image.');});},120)}
+function GEN(tab){var b=cardBase(tab),h=b.h,r=b.r,loc=b.loc,op=b.op,ap=b.ap,d=currentDealSummary(cardType==='combined'?'combined':'core'),portfolio=d.outputs;if(tab==='roi'){
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"><div class="co-card"><div class="co-label">Monthly lift / location</div><div class="co-val">'+F(r.moRev)+'</div></div><div class="co-card"><div class="co-label">Net monthly / location</div><div class="co-val">'+F(r.netMo)+'</div></div><div class="co-card"><div class="co-label">Annual net / location</div><div class="co-val">'+F(r.annROI)+'</div></div><div class="co-card"><div class="co-label">Payback</div><div class="co-val">'+r.paybackDays+' days</div></div></div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"><div class="co-card" style="border-color:rgba(138,180,255,.35)"><div class="co-label">Portfolio monthly lift</div><div class="co-val" style="color:#8AB4FF">'+F(portfolio.portfolioMonthlyLift)+'</div><div class="co-sub">'+F(r.moRev)+' × '+loc+' location'+(loc===1?'':'s')+'</div></div><div class="co-card" style="border-color:rgba(138,180,255,.35)"><div class="co-label">Portfolio net monthly</div><div class="co-val" style="color:#8AB4FF">'+F(portfolio.portfolioNetMonthly)+'</div><div class="co-sub">after '+F(portfolio.portfolioFeeMonthly)+'/mo fee</div></div><div class="co-card" style="border-color:rgba(138,180,255,.35)"><div class="co-label">Portfolio annual net</div><div class="co-val" style="color:#8AB4FF">'+F(portfolio.portfolioAnnualNet)+'</div></div><div class="co-card" style="border-color:rgba(138,180,255,.35)"><div class="co-label">Portfolio ROI</div><div class="co-val" style="color:#8AB4FF">'+portfolio.portfolioRoiX+'x</div><div class="co-sub">across all locations</div></div></div>';
+  h+='<div style="display:flex;gap:10px;margin-bottom:18px"><div style="flex:1;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#d4920b;margin-bottom:3px">Break-even</div><div style="font-size:18px;font-weight:700;color:#F59E0B">'+r.brkVis+' visitors / '+r.brkUsers+' users per day</div><div style="font-size:10px;color:#a17922;margin-top:3px">You have '+V.vis.toLocaleString()+' daily visitors</div></div></div>';
+  h+='<div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.18);border-radius:10px;padding:14px;margin-bottom:18px"><div style="font-size:10px;color:#a78bfa;margin-bottom:6px;font-weight:600">Repeat visit multiplier (not in ROI above)</div><div style="font-size:11px;color:#c4b5fd;line-height:1.6">+110% visit frequency: '+b.nf.toFixed(1)+'x/yr vs 1.4x. Each extra visit = '+b.ap+' full-price spend.</div></div>';
+  if(cardType==='combined'&&V.mglic>0){var mgAnn=V.mglic*12*loc,combARR=V.fee*loc*12+mgAnn;h+='<div style="background:rgba(138,233,26,0.08);border:1px solid rgba(138,233,26,0.24);border-radius:10px;padding:14px;margin-bottom:18px"><div style="font-size:10px;color:#8AE91A;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">+ Mini games add-on (combined deal)</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Mini games / mo</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(V.mglic*loc)+'</div></div><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Mini games / yr</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(mgAnn)+'</div></div><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Combined ARR</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(combARR)+'</div></div></div><div style="font-size:11px;color:#c4b5fd;margin-top:10px;line-height:1.5">Plus variable rev share upside — see Mini Games one-pager for full projection.</div></div>';}
+  h+='<div style="background:rgba(138,233,26,0.08);border:1px solid rgba(138,233,26,0.24);border-radius:10px;padding:14px 16px;margin-bottom:14px"><div style="font-size:10px;color:#8AE91A;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">&#x26A1; The Pitch</div><div style="font-size:13px;color:#e0e0e0;line-height:1.7;font-style:italic">“'+buildPitch(V,r,op,ap,loc)+'”</div></div><script type="application/json" data-deal-summary="true">'+JSON.stringify(d).replace(/</g,'\\u003c')+'</scr'+'ipt><div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;display:flex;justify-content:flex-end"><div style="font-size:11px;color:#8AE91A;font-weight:500">www.lucrasports.com</div></div></div>';
 }
-
-function CPH(tab,btn){
-  setButtonBusy(btn,'Copying…');
-  if(tab==='mg'){MGGEN()}else{GEN(tab)}
-  setTimeout(function(){var capId=tab==='mg'?'cap-roi':'cap-'+tab;var el=document.getElementById(capId);if(!el){setButtonState(btn,'Generate first',1500);return;}var html=el.outerHTML;
-    var ok=function(){setButtonState(btn,'Copied ✓',2000,true)};
-    var fail=function(){navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(html).then(ok).catch(function(){setButtonState(btn,'Copy failed',2200)}):setButtonState(btn,'Copy unavailable',2200)};
-    if(navigator.clipboard&&window.ClipboardItem){navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([el.innerText],{type:'text/plain'})})]).then(ok).catch(fail)}else fail();
-  },120)
-}
+if(tab==='pricing'){h+='<div style="padding:18px;color:'+b.r+'">Pricing card temporarily uses the Core generator in Phase 2 MVP.</div></div>'}
+if(tab==='discount'){h+='<div style="padding:18px">Discount card temporarily uses the Core generator in Phase 2 MVP.</div></div>'}
+$A('o-'+tab).innerHTML=h;$A('w-'+tab).classList.add('show');$A('w-'+tab).scrollIntoView({behavior:'smooth',block:'start'});window.lastDealSummary=currentDealSummary();}
+function DL(tab,btn){var capId=tab==='mg'?'cap-roi':'cap-'+tab;if(tab==='mg')MGGEN();var el=document.getElementById(capId);if(!el){setButtonState(btn,'Generate first',1400);return Promise.resolve(false)};setButtonBusy(btn,'Downloading…');return captureCollateral(el,{scale:2}).then(function(canvas){var a=document.createElement('a'),nm=(getVenueName()||'venue').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();a.download=(tab==='mg'?'lucra-mini-games-':'lucra-roi-')+nm+'.png';a.href=canvas.toDataURL('image/png');a.click();setButtonState(btn,'Downloaded ✓',1600,true);return true;}).catch(function(){setButtonState(btn,'Download failed',1800);return false;});}
+function GENPDF(){GEN('roi');setTimeout(function(){var el=document.getElementById('cap-roi');if(!el){alert('Generate the ROI card first.');return;}captureCollateral(el,{scale:2}).then(function(canvas){var imgData=canvas.toDataURL('image/png');var nm=(($A('n-roi')&&$A('n-roi').value)||'prospect').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();if(window.jspdf&&window.jspdf.jsPDF){var doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'px',format:[canvas.width/2,canvas.height/2]});doc.addImage(imgData,'PNG',0,0,canvas.width/2,canvas.height/2);doc.save('lucra-leave-behind-'+nm+'.pdf');}else{var win=window.open('','_blank');win.document.write('<html><head><title>Lucra Leave-Behind - '+nm+'</title><style>body{margin:0;background:#0d0d0f}img{max-width:100%;display:block}@media print{body{background:#0d0d0f}}</style></head><body><img src="'+imgData+'"><scr'+'ipt>setTimeout(function(){window.print()},500)</scr'+'ipt></body></html>');win.document.close();}}).catch(function(){alert('Could not render PDF leave-behind.');});},300);}
+function CPH(tab,btn){setButtonBusy(btn,'Copying…');if(tab==='mg'){MGGEN()}else{GEN(tab)}setTimeout(function(){var capId=tab==='mg'?'cap-roi':'cap-'+tab;var el=document.getElementById(capId);if(!el){setButtonState(btn,'Generate first',1500);return;}var html=el.outerHTML;var ok=function(){setButtonState(btn,'Copied ✓',2000,true)};var fail=function(){navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(html).then(ok).catch(function(){setButtonState(btn,'Copy failed',2200)}):setButtonState(btn,'Copy unavailable',2200)};if(navigator.clipboard&&window.ClipboardItem){navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([el.innerText],{type:'text/plain'})})]).then(ok).catch(fail)}else fail();},120)}
 
 
 var LS_KEY='lucra-v1-state';
@@ -1612,7 +1610,7 @@ function MGGEN(){
   var fa='style="background:'+amberDim+';border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:10px 14px;text-align:center;flex:1;min-width:0"';
   var fp='style="background:'+purpleDim+';border:1px solid '+purpleBorder+';border-radius:10px;padding:10px 14px;text-align:center;flex:1;min-width:0"';
   var aw='<div style="color:'+text3+';font-size:14px;align-self:center">→</div>';
-  var h = '<div style="background:radial-gradient(circle at 50% 0,rgba(138,233,26,.12),transparent 36%),'+bg+';border-radius:22px;padding:38px;max-width:780px;color:'+text+';font-family:'+c.font+';border:1px solid '+border+';box-shadow:0 28px 80px rgba(0,0,0,.45)" id="cap-roi">';
+  var h = '<div class="collateral" style="background:radial-gradient(circle at 50% 0,rgba(138,233,26,.12),transparent 36%),'+bg+';border-radius:22px;padding:38px;max-width:780px;color:'+text+';font-family:'+c.font+';border:1px solid '+border+';box-shadow:0 28px 80px rgba(0,0,0,.45)" id="cap-roi">';
   var custLogo = uploadedLogoDataUrl || '';
 
   h += lbHeader('Mini Games ROI',name,custLogo);
@@ -1674,7 +1672,7 @@ function MGGENPDF(){
   setTimeout(function(){
     var el=document.getElementById('cap-roi');
     if(!el){alert('Generate the card first.');return}
-    html2canvas(el,{scale:2,backgroundColor:'#0d0d0f',useCORS:true,allowTaint:true}).then(function(canvas){
+    captureCollateral(el,{scale:2,backgroundColor:'#0d0d0f'}).then(function(canvas){
       var imgData=canvas.toDataURL('image/png');
       var nm=(($A('n-roi')&&$A('n-roi').value)||($A('n-mg')&&$A('n-mg').value)||'partner').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();
       if(window.jspdf&&window.jspdf.jsPDF){
