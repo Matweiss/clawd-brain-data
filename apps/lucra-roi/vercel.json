@@ -1,6 +1,7 @@
 {
   "routes": [
     { "src": "/api/generate", "dest": "/api/generate.js" },
+    { "src": "/api/logo", "dest": "/api/logo.js" },
     { "src": "/(.*)", "dest": "/api/index.js" }
   ]
 }

@@ -1174,10 +1174,10 @@ var baseFreq=1.4,newFreq=baseFreq*2.1,extraVisits=newFreq-baseFreq,annRepeatPerU
 
 $('funnel').innerHTML='<div class="flow-box"><div class="label">Daily visitors</div><div class="val">'+Math.round(vis).toLocaleString()+'</div></div><div class="flow-arrow">\u00d7</div><div class="flow-box"><div class="label">Opt-in rate</div><div class="val" style="color:var(--purple)">'+op+'%</div></div><div class="flow-arrow">=</div><div class="flow-cyan"><div class="label">Daily Lucra users</div><div class="val">'+r.dailyUsers.toLocaleString()+'</div><div class="sub">'+r.moUsers.toLocaleString()+'/mo</div></div>';
 $('arpu-flow').innerHTML='<div class="flow-box"><div class="label">Current ARPU</div><div class="val">'+ap+'</div></div><div class="flow-arrow">\u00d7</div><div class="flow-box"><div class="label">+'+lp+'% lift</div><div class="val" style="color:var(--amber)">+$'+r.arpuLift.toFixed(2)+'</div></div><div class="flow-arrow">=</div><div class="flow-highlight"><div class="label">Lucra ARPU</div><div class="val">$'+r.lucraARPU.toFixed(2)+'</div><div class="sub">Per competing user</div></div>';
-$('results').innerHTML='<div class="stat"><div class="label">Monthly revenue lift</div><div class="val green">'+F(r.moRev)+'</div><div class="sub">'+r.dailyUsers+' \u00d7 $'+r.arpuLift.toFixed(2)+' \u00d7 30d</div></div><div class="stat"><div class="label">Net monthly ROI</div><div class="val '+(r.netMo>0?'green':'red')+'">'+F(r.netMo)+'</div><div class="sub">'+r.roiX+'x return</div></div><div class="stat"><div class="label">Annual net ROI</div><div class="val '+(r.annROI>0?'green':'red')+'">'+F(r.annROI)+'</div></div>';
+var portfolioMoLift=r.moRev*loc,portfolioNetMo=r.netMo*loc,portfolioAnnNet=r.annROI*loc,portfolioFee=fee*loc,portfolioRoiX=portfolioFee>0?(portfolioMoLift/portfolioFee).toFixed(1):'0';
+$('results').innerHTML='<div class="stat"><div class="label">Monthly lift / location</div><div class="val green">'+F(r.moRev)+'</div><div class="sub">'+r.dailyUsers+' \u00d7 $'+r.arpuLift.toFixed(2)+' \u00d7 30d</div></div><div class="stat"><div class="label">Net monthly / location</div><div class="val '+(r.netMo>0?'green':'red')+'">'+F(r.netMo)+'</div><div class="sub">'+r.roiX+'x return</div></div><div class="stat"><div class="label">Annual net / location</div><div class="val '+(r.annROI>0?'green':'red')+'">'+F(r.annROI)+'</div></div>';
 
-if(loc>1)$('deal-size').innerHTML='<div class="section-label"><span class="dot" style="background:var(--blue)"></span>Multi-location deal ('+loc+' locations)</div><div class="grid grid4" style="margin-bottom:20px"><div class="stat"><div class="label">Total MRR</div><div class="val" style="color:var(--blue)">'+F(fee*loc)+'</div></div><div class="stat"><div class="label">Total ARR</div><div class="val" style="color:var(--blue)">'+F(fee*loc*12)+'</div></div><div class="stat"><div class="label">Monthly lift (all)</div><div class="val green">'+F(r.moRev*loc)+'</div></div><div class="stat"><div class="label">Annual net (all)</div><div class="val green">'+F(r.annROI*loc)+'</div></div></div>';
-else $('deal-size').innerHTML='';
+$('deal-size').innerHTML='<div class="section-label"><span class="dot" style="background:var(--blue)"></span>Portfolio impact '+(loc>1?'('+loc+' locations)':'(all locations)')+'</div><div class="grid grid4" style="margin-bottom:20px"><div class="stat"><div class="label">Portfolio monthly lift</div><div class="val green">'+F(portfolioMoLift)+'</div><div class="sub">'+F(r.moRev)+' × '+loc+' loc'+(loc===1?'':'s')+'</div></div><div class="stat"><div class="label">Portfolio net monthly</div><div class="val '+(portfolioNetMo>0?'green':'red')+'">'+F(portfolioNetMo)+'</div><div class="sub">after '+F(portfolioFee)+' monthly Lucra cost</div></div><div class="stat"><div class="label">Portfolio annual net ROI</div><div class="val '+(portfolioAnnNet>0?'green':'red')+'">'+F(portfolioAnnNet)+'</div><div class="sub">across all modeled locations</div></div><div class="stat"><div class="label">Portfolio ROI multiple</div><div class="val '+(parseFloat(portfolioRoiX)>=1?'green':'red')+'">'+portfolioRoiX+'x</div><div class="sub">same unit economics, scaled footprint</div></div></div>';
 
 $('breakeven').innerHTML='<div class="grid grid4" style="margin-bottom:20px"><div class="stat"><div class="label">Min daily visitors</div><div class="val amber">'+(r.brkVis===Infinity?'\u2014':r.brkVis)+'</div><div class="sub">You have '+vis.toLocaleString()+'</div></div><div class="stat"><div class="label">Min Lucra users</div><div class="val cyan">'+(r.brkUsers===Infinity?'\u2014':r.brkUsers)+'</div><div class="sub">At '+op+'% opt-in</div></div><div class="stat"><div class="label">ARPU lift/user</div><div class="val">$'+r.arpuLift.toFixed(2)+'</div><div class="sub">'+lp+'% on '+ap+'</div></div><div class="stat"><div class="label">Payback period</div><div class="val green">'+(r.paybackDays===Infinity?'\u2014':r.paybackDays+' days')+'</div><div class="sub">Lucra pays for itself</div></div></div>';
 
@@ -1414,51 +1414,35 @@ function extractDomain(url) {
   } catch(e) { return null; }
 }
 
+function proxiedLogoUrl(params){return '/api/logo?'+params+'&cb='+Date.now()}
+function loadLogoImageToCanvas(src,label,onfail){
+  var img=new Image(); img.crossOrigin='anonymous';
+  img.onload=function(){
+    if(img.naturalWidth<8||img.naturalHeight<8){if(onfail)onfail();return;}
+    try{var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext('2d').drawImage(img,0,0);setLogoDataUrl(c.toDataURL('image/png'),label);}catch(e){setLogoDirectUrl(src,label);}
+  };
+  img.onerror=function(){if(onfail)onfail();};
+  img.src=src;
+}
 function autoFetchLogo(websiteUrl) {
   if (!websiteUrl) return;
   var domain = extractDomain(websiteUrl);
   if (!domain) return;
   var st = $A('logo-status');
   if (st) { st.textContent = '🔍 Auto-detecting logo for ' + domain + '…'; st.style.color = '#a1a1aa'; }
-
-  // 1) Clearbit — clean brand logos, free, best quality
-  var clearbitUrl = 'https://logo.clearbit.com/' + domain + '?size=200';
-  var img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = function() {
-    if (img.naturalWidth < 16) { tryFavicon(domain); return; }
-    try {
-      var c = document.createElement('canvas');
-      c.width = img.naturalWidth; c.height = img.naturalHeight;
-      c.getContext('2d').drawImage(img, 0, 0);
-      setLogoDataUrl(c.toDataURL('image/png'), domain + ' (auto)');
-    } catch(e) {
-      // CORS blocked — store direct URL, still works for display + html2canvas with allowTaint
-      setLogoDirectUrl(clearbitUrl, domain + ' (auto)');
-    }
-  };
-  img.onerror = function() { tryFavicon(domain); };
-  img.src = clearbitUrl + '&cb=' + Date.now();
+  loadLogoImageToCanvas(proxiedLogoUrl('domain='+encodeURIComponent(domain)), domain + ' logo (auto)', function(){
+    tryFavicon(domain);
+  });
 }
 
 function tryFavicon(domain) {
   var st = $A('logo-status');
-  // Google high-res favicon as fallback
-  var url = 'https://www.google.com/s2/favicons?sz=128&domain=' + domain;
-  var img2 = new Image();
-  img2.crossOrigin = 'anonymous';
-  img2.onload = function() {
-    try {
-      var c = document.createElement('canvas');
-      c.width = img2.naturalWidth; c.height = img2.naturalHeight;
-      c.getContext('2d').drawImage(img2, 0, 0);
-      setLogoDataUrl(c.toDataURL('image/png'), domain + ' icon (auto)');
-    } catch(e) { setLogoDirectUrl(url, domain + ' icon (auto)'); }
-  };
-  img2.onerror = function() {
-    if (st) { st.textContent = '⚠ No logo found — upload or paste one manually'; st.style.color='#F59E0B'; }
-  };
-  img2.src = url;
+  var url = 'https://www.google.com/s2/favicons?sz=128&domain=' + encodeURIComponent(domain);
+  loadLogoImageToCanvas(url, domain + ' icon (auto)', function(){
+    loadLogoImageToCanvas(proxiedLogoUrl('url='+encodeURIComponent(url)), domain + ' icon (proxy)', function(){
+      if (st) { st.textContent = '⚠ No logo found — upload, paste, or use a direct image URL'; st.style.color='#F59E0B'; }
+    });
+  });
 }
 
 function setLogoDirectUrl(url, label) {
