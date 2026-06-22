@@ -233,21 +233,77 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
   #trackman .card-section .cr .v,#gamification .card-section .cr .v{text-align:right;white-space:normal}
 }
 
+/* Phase 1 sales-call UX */
+.app{padding-bottom:138px}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.tool-label{font-size:12px;color:var(--text3)}
+.pres-toggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:var(--font);min-height:34px}
+.pres-toggle.on{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.reset-link{border:none;background:none;color:var(--text3);font-size:12px;font-family:var(--font);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px 0}
+.reset-link:hover{color:var(--text2)}
+.pres-mode .internal,.pres-mode .sn,.pres-mode .over-cap,.pres-mode #d-comm{display:none!important}
+.sticky-summary{position:sticky;top:0;z-index:20;margin:-8px 0 18px;background:rgba(10,10,11,.88);backdrop-filter:blur(14px);border:1px solid var(--green-border);border-radius:14px;padding:9px 12px;box-shadow:0 10px 30px rgba(0,0,0,.24)}
+.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.summary-item{min-width:0;border-left:2px solid var(--green);padding-left:8px}
+.summary-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px}
+.summary-val{font-size:15px;color:var(--text);font-weight:700;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
+.summary-val.green{color:var(--green)}
+.mobile-jumps{display:none}
+.sticky-gen-footer{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(820px,100%);z-index:30;background:rgba(20,20,22,.96);backdrop-filter:blur(16px);border:1px solid var(--border);border-bottom:none;border-radius:16px 16px 0 0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(0,0,0,.35)}
+.sticky-gen-row{display:grid;grid-template-columns:minmax(120px,1fr) 130px auto auto auto;gap:8px;align-items:center}
+.sticky-gen-footer .gen-input,.sticky-gen-footer select{min-width:0;width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;outline:none}
+.sticky-gen-footer button{padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;min-height:40px}
+.sticky-gen-footer button.primary{border-color:var(--green);background:var(--green);color:#0a0a0b}
+.sticky-gen-footer button.done{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.sticky-gen-footer button:disabled{opacity:.45;cursor:not-allowed;border-color:var(--border);background:var(--surface);color:var(--text3)}
+.stat .val,.flow-highlight .val,.flow-cyan .val,.flow-box .val{transition:color .2s,filter .2s}
+.val-flash{filter:brightness(1.45)}
+.delta-badge{display:inline-block;margin-left:6px;font-size:10px;color:var(--green);background:var(--green-bg);border:1px solid var(--green-border);border-radius:999px;padding:1px 6px;vertical-align:middle;animation:deltaFade 3s ease forwards}
+@keyframes deltaFade{0%{opacity:0;transform:translateY(2px)}15%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0}}
+.presets-wrap{position:relative}
+.presets-wrap::after{content:'';position:absolute;right:0;top:0;bottom:12px;width:32px;background:linear-gradient(90deg,rgba(10,10,11,0),var(--bg));pointer-events:none;opacity:.75;transition:opacity .2s}
+.presets-wrap.at-end::after{opacity:0}
+.vi{border-bottom-color:rgba(113,113,122,.45)}
+@media(max-width:640px){
+.app{padding:16px 12px 150px}
+.header{align-items:flex-start;gap:10px}.header-right{max-width:190px}
+.summary-grid{grid-template-columns:1fr 1fr}.sticky-summary{margin-bottom:8px}
+.mobile-jumps{display:flex;gap:6px;overflow-x:auto;padding:0 0 12px;margin-bottom:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.mobile-jumps::-webkit-scrollbar{display:none}
+.jump-pill{border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:999px;padding:8px 14px;font-size:12px;white-space:nowrap;font-family:var(--font);min-height:38px}
+input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;height:28px}input[type=range]::-moz-range-thumb{width:28px;height:28px}.preset{padding:8px 14px}.scn{min-height:40px}
+.sticky-gen-row{grid-template-columns:1fr 1fr;gap:7px}.sticky-gen-row .wide{grid-column:span 2}.sticky-gen-footer button,.sticky-gen-footer .gen-input,.sticky-gen-footer select{font-size:12px;padding:9px 10px}
+}
+
 </style>
 </head>
 <body>
 <div class="app">
 <div class="header">
 <div class="logo">Lucra<span>ROI Calculator</span></div>
-<div class="header-right">Sales toolkit v1.0</div>
+<div class="header-right"><span class="tool-label">ROI Analysis Tool</span><button class="pres-toggle" id="pres-toggle" onclick="togglePresMode()" type="button">🔒 Internal</button><button class="reset-link" onclick="resetState()" type="button">Reset</button></div>
 </div>
 
 <div class="tabs">
 <button class="tab active" onclick="T('roi',this)">Core ROI</button>
 <button class="tab" onclick="T('minigame',this)">Mini Game ROI</button>
 <button class="tab" onclick="T('trackman',this)">Trackman Partner</button>
-<button class="tab" onclick="T('analytics',this)">Analytics</button>
+<button class="tab" onclick="T('analytics',this)">Investment Plans</button>
 <button class="tab" onclick="T('gamification',this)">Gamification</button>
+</div>
+
+<div class="sticky-summary" id="sticky-summary">
+  <div class="summary-grid">
+    <div class="summary-item"><div class="summary-label">Monthly lift</div><div class="summary-val green" id="sum-mo">—</div></div>
+    <div class="summary-item"><div class="summary-label">ROI multiple</div><div class="summary-val" id="sum-roi">—</div></div>
+    <div class="summary-item"><div class="summary-label">Payback</div><div class="summary-val" id="sum-payback">—</div></div>
+    <div class="summary-item"><div class="summary-label">Annual net</div><div class="summary-val green" id="sum-ann">—</div></div>
+  </div>
+</div>
+<div class="mobile-jumps" id="mobile-jumps">
+  <button class="jump-pill" onclick="jumpToSection('funnel')">Funnel</button>
+  <button class="jump-pill" onclick="jumpToSection('results')">Results</button>
+  <button class="jump-pill" onclick="jumpToSection('breakeven')">Break-even</button>
+  <button class="jump-pill" onclick="jumpToSection('pitch')">Pitch</button>
 </div>
 
 <div id="roi">
@@ -272,15 +328,15 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
 </div>
 <p style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5">Defaults applied automatically: opt-in 10%, ARPU lift +15%, Lucra fee $2.5K/mo. Use the scenario buttons below to flex sensitivity.</p>
 </div>
-<div class="presets" id="presets"></div>
+<div class="presets-wrap"><div class="presets" id="presets"></div></div>
 <div class="scenarios"><button class="scn" data-s="cons" onclick="SC('cons')">Ultra conservative</button><button class="scn" data-s="avg" onclick="SC('avg')">Average</button><button class="scn" data-s="case" onclick="SC('case')">Case study</button></div>
 <div class="inputs">
 <div class="input-group"><div class="input-head"><span class="input-label">Daily visitors</span><input class="vi" id="i-vis" type="number" min="0" step="1" oninput="I('vis')"></div><input type="range" min="50" max="3000" step="10" value="1100" id="s-vis" oninput="S('vis')"><div id="oc-vis"></div></div>
 <div class="input-group"><div class="input-head"><span class="input-label">Current ARPU</span><div class="input-val"><span class="vp">$</span><input class="vi" id="i-arpu" type="number" min="0" step="0.25" oninput="I('arpu')"></div></div><input type="range" min="10" max="80" step="1" value="45" id="s-arpu" oninput="S('arpu')"></div>
 <div class="input-group"><div class="input-head"><span class="input-label">Monthly Lucra fee</span><div class="input-val"><span class="vp">$</span><input class="vi" id="i-fee" type="number" min="0" step="100" oninput="I('fee')"></div></div><input type="range" min="0" max="45000" step="500" value="2500" id="s-fee" oninput="S('fee')"><div id="oc-fee"></div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Opt-in rate</span><div class="input-val"><input class="vi" id="i-opt" type="number" min="0" step="0.25" oninput="I('opt')"><span class="vp">%</span></div></div><input type="range" min="3" max="40" step="1" value="10" id="s-opt" oninput="S('opt')"><div class="sn">Dylan: 5% floor, up to 40%</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">ARPU lift</span><div class="input-val"><span class="vp">+</span><input class="vi" id="i-lift" type="number" min="0" step="0.25" oninput="I('lift')"><span class="vp">%</span></div></div><input type="range" min="5" max="30" step="1" value="15" id="s-lift" oninput="S('lift')"><div class="sn">Deck: +15%. Conservative: 10%</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label"># of locations</span><input class="vi" id="i-loc" type="number" min="1" step="1" value="1" oninput="I('loc')"></div><input type="range" min="1" max="100" step="1" value="1" id="s-loc" oninput="S('loc')"><div class="sn">Multi-location deal sizing</div></div>
+<div class="input-group"><div class="input-head"><span class="input-label">Opt-in rate</span><div class="input-val"><input class="vi" id="i-opt" type="number" min="0" step="0.25" oninput="I('opt')"><span class="vp">%</span></div></div><input type="range" min="3" max="40" step="1" value="10" id="s-opt" oninput="S('opt')"><div class="sn">Industry range: 5–40% (conservative floor: 5%)</div></div>
+<div class="input-group"><div class="input-head"><span class="input-label">ARPU lift</span><div class="input-val"><span class="vp">+</span><input class="vi" id="i-lift" type="number" min="0" step="0.25" oninput="I('lift')"><span class="vp">%</span></div></div><input type="range" min="5" max="30" step="1" value="15" id="s-lift" oninput="S('lift')"><div class="sn">Partner benchmark: +15%. Conservative: 10%</div></div>
+<div class="input-group"><div class="input-head"><span class="input-label"># of locations</span><input class="vi" id="i-loc" type="number" min="1" step="1" value="1" oninput="I('loc')"></div><input type="range" min="1" max="100" step="1" value="1" id="s-loc" oninput="S('loc')"><div class="sn">Scale across locations</div></div>
 </div>
 <div class="input-group span2" style="margin-bottom:24px"><div class="input-head"><span class="input-label">Current loyalty/marketing spend per location (optional)</span><div class="input-val"><span class="vp">$</span><input class="vi" id="i-loy" type="number" min="0" step="1000" value="0" oninput="I('loy')" style="width:90px"></div></div><input type="range" min="0" max="300000" step="5000" value="0" id="s-loy" oninput="S('loy')"><div class="sn">Annual spend on loyalty, CRM, email. $50k-$200k typical</div></div>
 <div class="section-label"><span class="dot" style="background:var(--green)"></span>Core product — revenue impact</div><div class="grid grid3" id="results"></div>
@@ -349,7 +405,7 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
 <p style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5">Defaults: 10% engagement, paid-game rake, reward redemption uplift, and optional Lucra cost. Customer-facing outputs show venue/brand ROI — not Lucra revenue.</p>
 </div>
 
-<div class="presets" id="mg-presets"></div>
+<div class="presets-wrap"><div class="presets" id="mg-presets"></div></div>
 <div class="scenarios">
 <button class="scn" data-s="cons" onclick="MGSC('cons')">Conservative</button>
 <button class="scn" data-s="avg" onclick="MGSC('avg')">Average</button>
@@ -437,7 +493,7 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
 <div class="section-label" style="margin-top:32px"><span class="dot" style="background:var(--amber)"></span>Discount impact — deal economics</div>
 <p style="font-size:11px;color:var(--text3);margin-bottom:14px" id="d-ctx"></p>
 <div class="section-label" style="margin-top:14px;font-size:11px"><span class="dot" style="background:var(--amber)"></span>Venue perspective</div><div class="grid grid4" id="d-venue"></div>
-<div class="section-label" style="margin-top:14px;font-size:11px"><span class="dot" style="background:var(--purple)"></span>Your commission impact</div><div class="grid grid4" id="d-comm"></div>
+<div class="section-label internal" style="margin-top:14px;font-size:11px"><span class="dot" style="background:var(--purple)"></span>Your commission impact</div><div class="grid grid4 internal" id="d-comm"></div>
 <div class="pitch" id="d-pitch" style="margin-top:14px"></div>
 
 <div class="section-label" style="margin-top:32px"><span class="dot" style="background:var(--green)"></span>Common objections + handling</div>
@@ -857,6 +913,21 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
 </div>
 </div>
 
+<div class="sticky-gen-footer" id="sticky-gen-footer">
+  <div class="sticky-gen-row">
+    <input class="gen-input wide" id="sticky-venue" placeholder="Venue / company name" oninput="stickyVenueChanged()">
+    <select id="sticky-card-type" onchange="stickyCardTypeChanged()">
+      <option value="core">Core product</option>
+      <option value="mg">Mini games</option>
+      <option value="combined">Combined</option>
+    </select>
+    <button class="primary" id="sticky-generate" onclick="stickyGenerate()">Generate</button>
+    <button id="sticky-copy" onclick="stickyCopy()">Copy for Email</button>
+    <button id="sticky-download" onclick="stickyDownload()">Download PNG</button>
+    <button id="sticky-link" onclick="copyStateLink()">Copy link</button>
+  </div>
+</div>
+
 <script>
 var P=[{n:'Puttshack',v:1100,a:45,f:2500,l:16},{n:"Dave & Buster's",v:375,a:45,f:2000,l:220},{n:'Topgolf',v:2500,a:38,f:2500,l:89},{n:'Bowlero',v:300,a:40,f:2000,l:360},{n:'Five Iron Golf',v:120,a:30,f:1500,l:50},{n:'PopStroke',v:400,a:35,f:2000,l:12},{n:'Avg Bowling',v:175,a:25,f:1500,l:1},{n:'Custom',v:200,a:30,f:1500,l:1}];
 var SCNS={cons:{opt:5,lift:10},avg:{opt:20,lift:12.5},case:{opt:40,lift:15}};
@@ -868,8 +939,8 @@ function F(n){return '$'+Math.round(n).toLocaleString()}
 function fq(n){return n%1===0?''+n:n.toFixed(2)}
 function ap_(){return V.arpu%1===0?'$'+V.arpu:'$'+fq(V.arpu)}
 function initP(){$('presets').innerHTML=P.map(function(p,i){return '<button class="preset'+(i===sel?' on':'')+'" onclick="pk('+i+')">'+p.n+'</button>'}).join('')}
-function pk(i){sel=i;V.vis=P[i].v;V.arpu=P[i].a;V.fee=P[i].f;V.pfee=P[i].f;V.loc=P[i].l;['n-roi','n-pricing','n-discount'].forEach(function(x){if($(x))$(x).value=P[i].n});sync();initP();U()}
-function SC(k){if(curScn===k){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')});U();return}curScn=k;V.opt=SCNS[k].opt;V.lift=SCNS[k].lift;sync();document.querySelectorAll('.scn').forEach(function(b){b.classList.toggle('on',b.dataset.s===k)});U()}
+function pk(i){sel=i;V.vis=P[i].v;V.arpu=P[i].a;V.fee=P[i].f;V.pfee=P[i].f;V.loc=P[i].l;setVenueName(P[i].n);sync();initP();U();saveState()}
+function SC(k){if(curScn===k){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')});U();saveState();return}curScn=k;V.opt=SCNS[k].opt;V.lift=SCNS[k].lift;sync();document.querySelectorAll('.scn').forEach(function(b){b.classList.toggle('on',b.dataset.s===k)});U();saveState()}
 function sync(){var keys=['vis','arpu','fee','opt','lift','loc','loy','mglic'];keys.forEach(function(k){if($('s-'+k)){$('s-'+k).value=Math.min(+$('s-'+k).max,Math.max(+$('s-'+k).min,Math.round(V[k])));$('i-'+k).value=V[k]}});if($('s-pfee')){$('s-pfee').value=Math.min(45000,Math.max(0,Math.round(V.pfee)));$('i-pfee').value=Math.round(V.pfee)}checkCaps()}
 function checkCaps(){[{k:'vis',id:'oc-vis',max:3000},{k:'fee',id:'oc-fee',max:45000},{k:'pfee',id:'oc-pfee',max:45000}].forEach(function(c){if($(c.id))$(c.id).innerHTML=V[c.k]>c.max?'<div class="over-cap">Custom value above slider max ($'+c.max.toLocaleString()+')</div>':''})}
 var cardType='core';
@@ -909,10 +980,10 @@ function renderObjections(){
   });
   $('objections-content').innerHTML=html;
 }
-function S(k){V[k]=+$('s-'+k).value;if(k==='fee')V.pfee=V[k];if(k==='pfee')V.fee=V[k];$('i-'+k).value=V[k];if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U()}
-function I(k){var raw=$('i-'+k).value;if(raw===''||raw==='-')return;var v=parseFloat(raw);if(isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if(k==='pfee')V.fee=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U()}
-function discI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if($('i-'+k))$('i-'+k).value=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));checkCaps();U()}
-function T(id,b){['roi','minigame','analytics','proposal','trackman','gamification'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});b.classList.add('active');if(id==='trackman')renderTM();if(id==='gamification')renderGM();U()}
+function S(k){V[k]=+$('s-'+k).value;if(k==='fee')V.pfee=V[k];if(k==='pfee')V.fee=V[k];$('i-'+k).value=V[k];if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
+function I(k){var raw=$('i-'+k).value;if(raw===''||raw==='-')return;var v=parseFloat(raw);if(isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if(k==='pfee')V.fee=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
+function discI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if($('i-'+k))$('i-'+k).value=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));checkCaps();U();saveState()}
+function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';['roi','minigame','analytics','proposal','trackman','gamification'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn)btn.classList.add('active');if(id==='trackman')renderTM();if(id==='gamification')renderGM();U()}
 /* ════════ TRACKMAN PARTNER BUNDLE ════════ */
 var TM={bays:10,term:2,package:'core',implDisc:0,custom:{active:false,perBay:null}};
 var TM_IMPL=5000,TM_PKG={core:250,full:350};
@@ -1139,7 +1210,8 @@ var ds=[5,10,15,20];
 $('d-venue').innerHTML=ds.map(function(d){var df=Math.round(fee*(1-d/100)),dr=C(vis,arpu,df,optPct,liftPct),vs=(fee-df)*12*loc;return '<div class="dc'+(d===10?' best':'')+'">'+(d===10?'<div class="rb">sweet spot</div>':'')+'<div class="pct amber">'+d+'% off</div><div class="fee">'+F(df)+'/mo</div><div class="row"><span class="k">ROI</span><span class="v green">'+dr.roiX+'x</span></div><div class="row"><span class="k">Net/mo</span><span class="v '+(dr.netMo>0?'green':'red')+'">'+F(dr.netMo)+'</span></div><div class="row"><span class="k">Payback</span><span class="v">'+dr.paybackDays+'d</span></div><div class="row"><span class="k">Break-even</span><span class="v">'+dr.brkVis+' / '+dr.brkUsers+'</span></div><div class="row"><span class="k">Saves</span><span class="v">'+F(vs)+'/yr'+(loc>1?' (all)':'')+'</span></div></div>'}).join('');
 $('d-comm').innerHTML=ds.map(function(d){var df=Math.round(fee*(1-d/100)),arr=df*12*loc,pq=((arr/1500000)*100).toFixed(1),cm2=Math.round(arr*0.10);return '<div class="dc"><div class="pct purple">'+d+'% off</div><div class="fee">'+F(df*loc)+' MRR</div><div class="row"><span class="k">ARR</span><span class="v">'+F(arr)+'</span></div><div class="row"><span class="k">% of $1.5M</span><span class="v">'+pq+'%</span></div><div class="row"><span class="k">10% comm</span><span class="v green">'+F(cm2)+'</span></div><div class="row"><span class="k">MRR delta</span><span class="v red">-'+F((fee-df)*loc)+'</span></div></div>'}).join('');
 var d10f=Math.round(fee*0.9),d10r=C(vis,arpu,d10f,optPct,liftPct);
-$('d-pitch').innerHTML='<button class="cp-btn" onclick="CP(\'d-pitch\')">Copy</button><strong>Closing lever:</strong> "At 10% off \u2014 '+F(d10f)+'/mo \u2014 ARPU still goes '+ap+' to $'+d10r.lucraARPU.toFixed(2)+'. Payback: '+d10r.paybackDays+' days. '+d10r.roiX+'x ROI. '+(loc>1?'Across '+loc+' locations: saves '+F((fee-d10f)*12*loc)+'/yr, '+F(d10f*loc*12)+' ARR.':'Saves '+F((fee-d10f)*12)+'/yr, '+F(d10f*12)+' ARR.')+'"';
+updateSummary();
+$('d-pitch').innerHTML='<button class="cp-btn" onclick="CP(\'d-pitch\')">Copy</button><strong>Discount talk track:</strong> "At 10% off \u2014 '+F(d10f)+'/mo \u2014 ARPU still goes '+ap+' to $'+d10r.lucraARPU.toFixed(2)+'. Payback: '+d10r.paybackDays+' days. '+d10r.roiX+'x ROI. '+(loc>1?'Across '+loc+' locations: saves '+F((fee-d10f)*12*loc)+'/yr, '+F(d10f*loc*12)+' ARR.':'Saves '+F((fee-d10f)*12)+'/yr, '+F(d10f*12)+' ARR.')+'"';
 }
 
 
@@ -1178,12 +1250,14 @@ function cardBase(tab){
 
   var h = '<div style="background:radial-gradient(circle at 50% 0,rgba(138,233,26,.12),transparent 36%),'+bg+';border-radius:22px;padding:38px;max-width:720px;color:'+text+';font-family:'+c.font+';border:1px solid '+border+';box-shadow:0 28px 80px rgba(0,0,0,.45)" id="cap-'+tab+'">';
   h += lbHeader('Core ROI model',name,custLogo);
+  h += '<div style="text-align:right;font-size:10px;color:'+text3+';margin-top:-20px;margin-bottom:16px">Prepared '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div>';
   h += '<div style="text-align:center;padding:26px 0 22px;margin-bottom:22px">';
   h += '<div style="font-size:10px;color:'+text2+';text-transform:uppercase;letter-spacing:2.4px;font-weight:800;margin-bottom:8px">Projected annual net revenue</div>';
   h += '<div style="font-family:'+c.display+';font-size:58px;font-weight:900;color:'+green+';line-height:.95;letter-spacing:-1px">'+F(r.annROI)+'</div>';
   h += '<div style="font-size:13px;color:'+text2+';margin-top:12px">'+F(r.moRev)+'/mo incremental · '+r.roiX+'x ROI · '+r.paybackDays+'-day payback</div>';
   h += '</div>';
   // assumption pills
+  h += '<div style="font-size:10px;color:'+text3+';text-transform:uppercase;letter-spacing:1.4px;text-align:center;margin-bottom:8px;font-weight:800">Assumptions used</div>';
   h += '<div style="font-size:10px;margin-bottom:20px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
   h += lbPill(V.vis.toLocaleString()+' daily visitors');
   h += lbPill(ap+' ARPU');
@@ -1212,14 +1286,19 @@ function buildPitch(V,r,op,ap,loc) {
   if (loc > 1) s += " Across " + loc + " locations: " + F(V.fee * loc) + " MRR / " + F(V.fee * loc * 12) + " ARR.";
   return s;
 }
-function GEN(tab){var b=cardBase(tab),h=b.h,r=b.r,loc=b.loc,op=b.op,ap=b.ap;if(tab==='roi'){h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Monthly lift</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(r.moRev)+'</div></div><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Net monthly</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(r.netMo)+'</div></div><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Annual impact</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(r.annROI)+'</div></div><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Payback</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+r.paybackDays+' days</div></div></div>';h+='<div style="display:flex;gap:10px;margin-bottom:18px"><div style="flex:1;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#d4920b;margin-bottom:3px">Break-even</div><div style="font-size:18px;font-weight:700;color:#F59E0B">'+r.brkVis+' visitors / '+r.brkUsers+' users per day</div><div style="font-size:10px;color:#a17922;margin-top:3px">You have '+V.vis.toLocaleString()+' daily visitors</div></div></div>';if(loc>1)h+='<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.18);border-radius:10px;padding:14px;margin-bottom:18px;text-align:center"><div style="font-size:10px;color:#60a5fa;margin-bottom:4px">Portfolio ('+loc+' locations)</div><div style="font-size:11px;color:#93c5fd">'+F(V.fee*loc)+' MRR \u2022 '+F(V.fee*loc*12)+' ARR \u2022 '+F(r.moRev*loc)+'/mo lift</div></div>';h+='<div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.18);border-radius:10px;padding:14px;margin-bottom:18px"><div style="font-size:10px;color:#a78bfa;margin-bottom:6px;font-weight:600">Repeat visit multiplier (not in ROI above)</div><div style="font-size:11px;color:#c4b5fd;line-height:1.6">+110% visit frequency: '+b.nf.toFixed(1)+'x/yr vs 1.4x. Each extra visit = '+b.ap+' full-price spend.</div></div>';if(cardType==='combined'&&V.mglic>0){var mgAnn=V.mglic*12*loc,combARR=V.fee*loc*12+mgAnn;h+='<div style="background:rgba(138,233,26,0.08);border:1px solid rgba(138,233,26,0.24);border-radius:10px;padding:14px;margin-bottom:18px">';h+='<div style="font-size:10px;color:#8AE91A;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">+ Mini games add-on (combined deal)</div>';h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Mini games / mo</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(V.mglic*loc)+'</div></div><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Mini games / yr</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(mgAnn)+'</div></div><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Combined ARR</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(combARR)+'</div></div></div>';h+='<div style="font-size:11px;color:#c4b5fd;margin-top:10px;line-height:1.5">Plus variable rev share upside — see Mini Games one-pager for full projection.</div>';h+='</div>';}h+='<div style="background:rgba(138,233,26,0.08);border:1px solid rgba(138,233,26,0.24);border-radius:10px;padding:14px 16px;margin-bottom:14px">';h+='<div style="font-size:10px;color:#8AE91A;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">&#x26A1; The Pitch</div>';var pitchCard=buildPitch(V,r,op,ap,loc);h+='<div style="font-size:13px;color:#e0e0e0;line-height:1.7;font-style:italic">“'+pitchCard+'”</div>';h+='</div>';h+='<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;display:flex;justify-content:flex-end"><div style="font-size:11px;color:#8AE91A;font-weight:500">www.lucrasports.com</div></div></div>';}if(tab==='pricing'){var po=[{t:'13-month annual',sub:'Monthly',tm:13,fm:1,pm:12,c:'#3B82F6'},{t:'14-month annual',sub:'Upfront',tm:14,fm:2,pm:12,c:'#8AE91A'},{t:'25-month 2-year',sub:'Monthly',tm:25,fm:2,pm:23,c:'#8B5CF6'},{t:'26-month 2-year',sub:'Upfront',tm:26,fm:4,pm:22,c:'#F59E0B'}];h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">'+po.map(function(o){var tot=b.pfee*o.pm,eff=Math.round(tot/o.tm),disc=b.pfee>0?((1-eff/b.pfee)*100).toFixed(1):'0',saves=b.pfee*o.tm-tot;return '<div style="border:1px solid #eee;border-radius:10px;padding:14px"><div style="font-size:12px;font-weight:600;color:'+o.c+'">'+o.t+'</div><div style="font-size:10px;color:#999;margin-bottom:8px">'+o.sub+'</div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#999">Months</span><span style="font-weight:500">'+o.tm+' ('+o.fm+' free)</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#999">Contract</span><span style="font-weight:500">$'+tot.toLocaleString()+'</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#999">Eff. rate</span><span style="font-weight:500">$'+eff.toLocaleString()+'/mo</span></div><div style="margin-top:8px;font-size:12px;font-weight:600;color:#8AE91A">Saves $'+saves.toLocaleString()+' ('+disc+'% off)</div></div>'}).join('')+'</div>'}if(tab==='discount'){h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px">';[5,10,15,20].forEach(function(d){var df=Math.round(V.fee*(1-d/100)),dr=C(V.vis,V.arpu,df,V.opt,V.lift),vs=(V.fee-df)*12*loc;h+='<div style="border:'+(d===10?'2px solid #8AE91A':'1px solid #eee')+';border-radius:10px;padding:10px;text-align:center"><div style="font-size:14px;font-weight:600;color:#b47d0a">'+d+'% off</div><div style="font-size:11px;color:#888;margin-bottom:6px">'+F(df)+'/mo</div><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#999">ROI</span><span style="font-weight:500;color:#8AE91A">'+dr.roiX+'x</span></div><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#999">Payback</span><span style="font-weight:500">'+dr.paybackDays+'d</span></div><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#999">Net/mo</span><span style="font-weight:500;color:#8AE91A">'+F(dr.netMo)+'</span></div><div style="font-size:10px;display:flex;justify-content:space-between"><span style="color:#999">Saves</span><span style="font-weight:500">'+F(vs)+'/yr</span></div></div>'});h+='</div>';var d10f=Math.round(V.fee*0.9),d10r=C(V.vis,V.arpu,d10f,V.opt,V.lift);h+='<div style="background:#ecfdf5;border-radius:10px;padding:14px;margin-bottom:18px;font-size:12px;color:#065f46;line-height:1.6"><strong>Recommended:</strong> At 10% off ('+F(d10f)+'/mo), payback in '+d10r.paybackDays+' days. '+d10r.roiX+'x ROI.'+(loc>1?' Across '+loc+' locations: saves '+F((V.fee-d10f)*12*loc)+'/yr.':'')+'</div>'}$A('o-'+tab).innerHTML=h;$A('w-'+tab).classList.add('show');$A('w-'+tab).scrollIntoView({behavior:'smooth',block:'start'})}
+function GEN(tab){var b=cardBase(tab),h=b.h,r=b.r,loc=b.loc,op=b.op,ap=b.ap;if(tab==='roi'){h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Monthly lift</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(r.moRev)+'</div></div><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Net monthly</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(r.netMo)+'</div></div><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Annual impact</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(r.annROI)+'</div></div><div style="background:#181820;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Payback</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+r.paybackDays+' days</div></div></div>';h+='<div style="display:flex;gap:10px;margin-bottom:18px"><div style="flex:1;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;color:#d4920b;margin-bottom:3px">Break-even</div><div style="font-size:18px;font-weight:700;color:#F59E0B">'+r.brkVis+' visitors / '+r.brkUsers+' users per day</div><div style="font-size:10px;color:#a17922;margin-top:3px">You have '+V.vis.toLocaleString()+' daily visitors</div></div></div>';if(loc>1)h+='<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.18);border-radius:10px;padding:14px;margin-bottom:18px;text-align:center"><div style="font-size:10px;color:#60a5fa;margin-bottom:4px">Portfolio ('+loc+' locations)</div><div style="font-size:11px;color:#93c5fd">'+F(V.fee*loc)+' MRR \u2022 '+F(V.fee*loc*12)+' ARR \u2022 '+F(r.moRev*loc)+'/mo lift</div></div>';h+='<div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.18);border-radius:10px;padding:14px;margin-bottom:18px"><div style="font-size:10px;color:#a78bfa;margin-bottom:6px;font-weight:600">Repeat visit multiplier (not in ROI above)</div><div style="font-size:11px;color:#c4b5fd;line-height:1.6">+110% visit frequency: '+b.nf.toFixed(1)+'x/yr vs 1.4x. Each extra visit = '+b.ap+' full-price spend.</div></div>';if(cardType==='combined'&&V.mglic>0){var mgAnn=V.mglic*12*loc,combARR=V.fee*loc*12+mgAnn;h+='<div style="background:rgba(138,233,26,0.08);border:1px solid rgba(138,233,26,0.24);border-radius:10px;padding:14px;margin-bottom:18px">';h+='<div style="font-size:10px;color:#8AE91A;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">+ Mini games add-on (combined deal)</div>';h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Mini games / mo</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(V.mglic*loc)+'</div></div><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Mini games / yr</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(mgAnn)+'</div></div><div style="text-align:center"><div style="font-size:10px;color:#6b6b7a;margin-bottom:3px">Combined ARR</div><div style="font-family:'+b.cdisplay+';font-size:22px;font-weight:900;color:#8AE91A">'+F(combARR)+'</div></div></div>';h+='<div style="font-size:11px;color:#c4b5fd;margin-top:10px;line-height:1.5">Plus variable rev share upside — see Mini Games one-pager for full projection.</div>';h+='</div>';}h+='<div style="background:rgba(138,233,26,0.08);border:1px solid rgba(138,233,26,0.24);border-radius:10px;padding:14px 16px;margin-bottom:14px">';h+='<div style="font-size:10px;color:#8AE91A;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">&#x26A1; The Pitch</div>';var pitchCard=buildPitch(V,r,op,ap,loc);h+='<div style="font-size:13px;color:#e0e0e0;line-height:1.7;font-style:italic">“'+pitchCard+'”</div>';h+='</div>';h+='<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;display:flex;justify-content:flex-end"><div style="font-size:11px;color:#8AE91A;font-weight:500">www.lucrasports.com</div></div></div>';}if(tab==='pricing'){var po=[{t:'13-month annual',sub:'Monthly',tm:13,fm:1,pm:12,c:'#3B82F6'},{t:'14-month annual',sub:'Upfront',tm:14,fm:2,pm:12,c:'#8AE91A'},{t:'25-month 2-year',sub:'Monthly',tm:25,fm:2,pm:23,c:'#8B5CF6'},{t:'26-month 2-year',sub:'Upfront',tm:26,fm:4,pm:22,c:'#F59E0B'}];h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">'+po.map(function(o){var tot=b.pfee*o.pm,eff=Math.round(tot/o.tm),disc=b.pfee>0?((1-eff/b.pfee)*100).toFixed(1):'0',saves=b.pfee*o.tm-tot;return '<div style="border:1px solid #eee;border-radius:10px;padding:14px"><div style="font-size:12px;font-weight:600;color:'+o.c+'">'+o.t+'</div><div style="font-size:10px;color:#999;margin-bottom:8px">'+o.sub+'</div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#999">Months</span><span style="font-weight:500">'+o.tm+' ('+o.fm+' free)</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#999">Contract</span><span style="font-weight:500">$'+tot.toLocaleString()+'</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#999">Eff. rate</span><span style="font-weight:500">$'+eff.toLocaleString()+'/mo</span></div><div style="margin-top:8px;font-size:12px;font-weight:600;color:#8AE91A">Saves $'+saves.toLocaleString()+' ('+disc+'% off)</div></div>'}).join('')+'</div>'}if(tab==='discount'){h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px">';[5,10,15,20].forEach(function(d){var df=Math.round(V.fee*(1-d/100)),dr=C(V.vis,V.arpu,df,V.opt,V.lift),vs=(V.fee-df)*12*loc;h+='<div style="border:'+(d===10?'2px solid #8AE91A':'1px solid #eee')+';border-radius:10px;padding:10px;text-align:center"><div style="font-size:14px;font-weight:600;color:#b47d0a">'+d+'% off</div><div style="font-size:11px;color:#888;margin-bottom:6px">'+F(df)+'/mo</div><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#999">ROI</span><span style="font-weight:500;color:#8AE91A">'+dr.roiX+'x</span></div><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#999">Payback</span><span style="font-weight:500">'+dr.paybackDays+'d</span></div><div style="font-size:10px;display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:#999">Net/mo</span><span style="font-weight:500;color:#8AE91A">'+F(dr.netMo)+'</span></div><div style="font-size:10px;display:flex;justify-content:space-between"><span style="color:#999">Saves</span><span style="font-weight:500">'+F(vs)+'/yr</span></div></div>'});h+='</div>';var d10f=Math.round(V.fee*0.9),d10r=C(V.vis,V.arpu,d10f,V.opt,V.lift);h+='<div style="background:#ecfdf5;border-radius:10px;padding:14px;margin-bottom:18px;font-size:12px;color:#065f46;line-height:1.6"><strong>Recommended:</strong> At 10% off ('+F(d10f)+'/mo), payback in '+d10r.paybackDays+' days. '+d10r.roiX+'x ROI.'+(loc>1?' Across '+loc+' locations: saves '+F((V.fee-d10f)*12*loc)+'/yr.':'')+'</div>'}
+h+='<div style="border-top:1px solid rgba(255,255,255,0.10);padding-top:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px"><div style="font-size:10px;color:#9ca3af;max-width:460px;line-height:1.55">Sources: D&B traffic benchmarks, FSR Magazine frequency benchmark, Lucra partner data, and CEO adoption guidance. Repeat-visit lift is shown separately and is not included in core ROI math.</div><div style="font-size:12px;color:#8AE91A;font-weight:700">lucra.live</div></div></div>';
+$A('o-'+tab).innerHTML=h;$A('w-'+tab).classList.add('show');$A('w-'+tab).scrollIntoView({behavior:'smooth',block:'start'})}
 
-function DL(tab){
-  var el=document.getElementById('cap-'+tab);if(!el)return;
-  html2canvas(el,{scale:2,backgroundColor:'#0d0d0f',useCORS:true,allowTaint:true}).then(function(canvas){
-    var a=document.createElement('a'),nm=(($('n-roi')&&$('n-roi').value)||'venue').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();
-    a.download='lucra-roi-'+nm+'.png';a.href=canvas.toDataURL('image/png');a.click();
-  });
+function DL(tab,btn){
+  var capId=tab==='mg'?'cap-roi':'cap-'+tab;if(tab==='mg')MGGEN();
+  var el=document.getElementById(capId);if(!el){setButtonState(btn,'Generate first',1400);return Promise.resolve(false)};
+  setButtonBusy(btn,'Downloading…');
+  return html2canvas(el,{scale:2,backgroundColor:'#0d0d0f',useCORS:true,allowTaint:true}).then(function(canvas){
+    var a=document.createElement('a'),nm=(getVenueName()||'venue').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();
+    a.download=(tab==='mg'?'lucra-mini-games-':'lucra-roi-')+nm+'.png';a.href=canvas.toDataURL('image/png');a.click();
+    setButtonState(btn,'Downloaded ✓',1600,true);return true;
+  }).catch(function(){setButtonState(btn,'Download failed',1800);return false;});
 }
 function GENPDF(){
   // Make sure card is generated first
@@ -1245,8 +1324,39 @@ function GENPDF(){
   },300);
 }
 
-function CPH(tab){GEN(tab);setTimeout(function(){var el=document.getElementById('cap-'+tab);if(!el)return;var html=el.outerHTML;navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([el.innerText],{type:'text/plain'})})]).then(function(){}).catch(function(){navigator.clipboard.writeText(html)})},100)}
+function CPH(tab,btn){
+  setButtonBusy(btn,'Copying…');
+  if(tab==='mg'){MGGEN()}else{GEN(tab)}
+  setTimeout(function(){var capId=tab==='mg'?'cap-roi':'cap-'+tab;var el=document.getElementById(capId);if(!el){setButtonState(btn,'Generate first',1500);return;}var html=el.outerHTML;
+    var ok=function(){setButtonState(btn,'Copied ✓',2000,true)};
+    var fail=function(){navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(html).then(ok).catch(function(){setButtonState(btn,'Copy failed',2200)}):setButtonState(btn,'Copy unavailable',2200)};
+    if(navigator.clipboard&&window.ClipboardItem){navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([el.innerText],{type:'text/plain'})})]).then(ok).catch(fail)}else fail();
+  },120)
+}
 
+
+var LS_KEY='lucra-v1-state';
+function safeB64(obj){return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function safeUnb64(str){try{str=(str||'').replace(/-/g,'+').replace(/_/g,'/');while(str.length%4)str+='=';return JSON.parse(decodeURIComponent(escape(atob(str))))}catch(e){return null}}
+function getVenueName(){var el=$A('n-roi')||$('sticky-venue');return el?(el.value||'').trim():''}
+function setVenueName(v){['n-roi','sticky-venue'].forEach(function(id){document.querySelectorAll('#'+id).forEach(function(el){if(document.activeElement!==el)el.value=v||''})});checkPDFReady&&checkPDFReady()}
+function statePayload(){return {V:V,sel:sel,curScn:curScn,venue:getVenueName(),cardType:cardType||'core',pres:document.body.classList.contains('pres-mode')}}
+function saveState(){try{localStorage.setItem(LS_KEY,JSON.stringify(statePayload()))}catch(e){}}
+function applyState(st){if(!st)return;if(st.V)Object.keys(st.V).forEach(function(k){if(V.hasOwnProperty(k)&&typeof st.V[k]==='number'&&!isNaN(st.V[k]))V[k]=st.V[k]});if(typeof st.sel==='number')sel=Math.max(0,Math.min(P.length-1,st.sel));curScn=st.curScn||'';cardType=st.cardType||cardType||'core';setVenueName(st.venue||'');if(st.pres)document.body.classList.add('pres-mode')}
+function restoreState(){var params=new URLSearchParams(location.search),st=null;if(params.get('s'))st=safeUnb64(params.get('s'));if(!st){try{st=JSON.parse(localStorage.getItem(LS_KEY)||'null')}catch(e){st=null}}applyState(st)}
+function resetState(){try{localStorage.removeItem(LS_KEY)}catch(e){}location.href=location.pathname}
+function copyStateLink(){saveState();var url=location.origin+location.pathname+'?s='+safeB64(statePayload());var btn=$('sticky-link');setButtonBusy(btn,'Copying…');navigator.clipboard.writeText(url).then(function(){setButtonState(btn,'Link copied ✓',2000,true)}).catch(function(){setButtonState(btn,'Copy failed',2200)})}
+function setButtonBusy(btn,label){if(!btn)return;btn.dataset.default=btn.dataset.default||btn.textContent;btn.textContent=label;btn.disabled=true;btn.classList.remove('done')}
+function setButtonState(btn,label,ms,good){if(!btn)return;btn.textContent=label;btn.disabled=false;btn.classList.toggle('done',!!good);setTimeout(function(){btn.textContent=btn.dataset.default||btn.textContent;btn.classList.remove('done');btn.disabled=false},ms||1800)}
+function stickyVenueChanged(){setVenueName($('sticky-venue').value);saveState()}
+function stickyCardTypeChanged(){cardType=$('sticky-card-type').value;setCardType(cardType);saveState()}
+function stickyGenerate(){var t=cardType||'core';if(t==='mg')MGGEN();else GEN('roi');saveState()}
+function stickyCopy(){CPH((cardType==='mg')?'mg':'roi',$('sticky-copy'))}
+function stickyDownload(){DL((cardType==='mg')?'mg':'roi',$('sticky-download'))}
+function togglePresMode(){var on=document.body.classList.toggle('pres-mode'),btn=$('pres-toggle');if(btn){btn.classList.toggle('on',on);btn.textContent=on?'🔓 Presenting':'🔒 Internal'}if(on&&(($('proposal')&&getComputedStyle($('proposal')).display!=='none')||($('gamification')&&getComputedStyle($('gamification')).display!=='none'))){T('roi')}saveState()}
+function jumpToSection(id){var map={funnel:'funnel',results:'results',breakeven:'breakeven',pitch:'pitch'};var el=$(map[id]||id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+function updateSummary(){var r=C(V.vis,V.arpu,V.fee,V.opt,V.lift),vals={summo:F(r.moRev),sumroi:r.roiX+'x',sumpayback:(r.paybackDays===Infinity?'—':r.paybackDays+'d'),sumann:F(r.annROI)};[['sum-mo',vals.summo],['sum-roi',vals.sumroi],['sum-payback',vals.sumpayback],['sum-ann',vals.sumann]].forEach(function(x){var el=$(x[0]);if(el&&el.textContent!==x[1]){el.textContent=x[1];el.classList.add('val-flash');setTimeout(function(){el.classList.remove('val-flash')},250)}})}
+function initSalesUx(){var pv=$('sticky-venue');if(pv&&!pv.value)pv.value=getVenueName();var ct=$('sticky-card-type');if(ct)ct.value=cardType||'core';var pt=$('pres-toggle'),on=document.body.classList.contains('pres-mode');if(pt){pt.classList.toggle('on',on);pt.textContent=on?'🔓 Presenting':'🔒 Internal'}document.querySelectorAll('.presets').forEach(function(el){var wrap=el.parentElement;if(!wrap)return;function f(){wrap.classList.toggle('at-end',el.scrollLeft+el.clientWidth>=el.scrollWidth-4)}el.addEventListener('scroll',f,{passive:true});f()});updateSummary()}
 
 var uploadedLogoDataUrl = null;
 
@@ -1434,7 +1544,7 @@ function checkPDFReady() {
   if (msg) msg.style.display = ready ? 'none' : 'block';
   return ready;
 }
-initP();sync();U();
+restoreState();initP();sync();U();initSalesUx();
 
 /* ─── MINI GAMES ROI ──────────────────────────────────────────────── */
 var MGP=[
