@@ -16,6 +16,18 @@ const ALLOWED_TEMPLATES = {
 };
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
+async function shareEditableByLink(docId, token) {
+  const r = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${docId}/permissions?sendNotificationEmail=false&fields=id`,
+    {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'anyone', role: 'writer', allowFileDiscovery: false }),
+    }
+  );
+  if (!r.ok) throw new Error('Share failed: ' + (await r.text()).slice(0, 200));
+}
+
 async function getAccessToken(env) {
   const body = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
@@ -60,6 +72,11 @@ module.exports = async (req, res) => {
     )).json();
     if (!copy.id) throw new Error('Copy failed: ' + JSON.stringify(copy));
     const docId = copy.id;
+
+    // 1b. Make generated agreement editable by anyone with the link.
+    // The ROI calculator itself is password-gated; this avoids manual sharing on
+    // every generated duplicate while keeping docs out of public search/discovery.
+    await shareEditableByLink(docId, token);
 
     // 2. Fill tokens (each key is the literal token string in the doc)
     const requests = Object.keys(tokens).map((k) => ({

@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0a0a0b;--surface:#141416;--surface2:#1e1e22;--border:#2a2a2e;--text:#f5f5f5;--text2:#a1a1aa;--text3:#71717a;--green:#8AE91A;--green-bg:rgba(138,233,26,0.10);--green-border:rgba(138,233,26,0.28);--amber:#F59E0B;--amber-bg:rgba(245,158,11,0.08);--red:#EF4444;--blue:#3B82F6;--cyan:#06B6D4;--purple:#8B5CF6;--pink:#EC4899;--radius:10px;--font:'Hanken Grotesk',system-ui,sans-serif;--display:'Playfair Display',Georgia,serif;--mono:'JetBrains Mono',monospace}
@@ -286,6 +287,29 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 .sticky-gen-row{grid-template-columns:1fr 1fr;gap:7px}.sticky-gen-row .wide{grid-column:span 2}.sticky-gen-footer button,.sticky-gen-footer .gen-input,.sticky-gen-footer select{font-size:12px;padding:9px 10px}
 }
 
+
+/* Brand Arcade prompt-builder tab */
+#brandarcade{display:none;overflow-x:hidden}
+.ba-hero{background:linear-gradient(135deg,rgba(138,233,26,.10),rgba(139,92,246,.10));border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+.ba-hero h2{font-size:22px;margin:0 0 6px;color:var(--text)}
+.ba-hero p{font-size:13px;color:var(--text2);line-height:1.55;margin:0}
+.ba-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.82fr);gap:14px;align-items:start}
+.ba-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;min-width:0}
+.ba-panel h3{font-size:14px;margin:0 0 10px;color:var(--text)}
+.ba-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--green);font-weight:800;margin-bottom:4px}
+.ba-field{display:block;margin-bottom:10px}
+.ba-field span{display:block;font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.ba-field input,.ba-field textarea,.ba-field select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:13px;padding:10px;outline:none}
+.ba-field textarea{resize:vertical;line-height:1.45}
+.ba-field input:focus,.ba-field textarea:focus,.ba-field select:focus{border-color:var(--green)}
+.ba-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ba-drop{border:1px dashed var(--green-border);background:var(--green-bg);border-radius:10px;padding:18px;text-align:center;cursor:pointer;color:var(--text2);font-size:13px;line-height:1.45}
+.ba-drop strong{display:block;color:var(--text);margin-bottom:4px}.ba-drop.drag{border-color:var(--green);background:rgba(138,233,26,.16)}
+.ba-assets{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:10px;margin-top:10px}.ba-asset{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;min-width:0}.ba-asset img{width:100%;height:76px;object-fit:contain;background:#fff;border-radius:6px;margin-bottom:6px}.ba-asset strong{display:block;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ba-asset span{display:block;font-size:10px;color:var(--text3);margin-top:2px}.ba-asset button{margin-top:6px;width:100%;font-size:11px;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer}
+.ba-ref{display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:8px}.ba-ref img{width:74px;height:120px;object-fit:cover;border-radius:8px}.ba-ref div{font-size:12px;color:var(--text2);line-height:1.45}.ba-ref strong{display:block;color:var(--text);margin-bottom:3px}
+.ba-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.ba-actions .wide{grid-column:span 2}.ba-btn{border:1px solid var(--green-border);background:var(--green-bg);color:var(--green);border-radius:8px;padding:10px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}.ba-btn.secondary{border-color:var(--border);background:var(--surface2);color:var(--text2)}.ba-btn.purple{border-color:rgba(139,92,246,.4);background:rgba(139,92,246,.12);color:#c4b5fd}.ba-status{font-size:11px;color:var(--green);min-height:16px;margin:6px 0}.ba-output textarea{min-height:420px;font-family:var(--mono);font-size:11px;line-height:1.45}.ba-checklist{font-size:12px;color:var(--text2);line-height:1.65;padding-left:18px}.ba-pill{display:inline-flex;align-items:center;border:1px solid var(--border);background:var(--bg);border-radius:999px;padding:5px 9px;font-size:11px;color:var(--text3);margin:3px 4px 0 0}
+@media(max-width:760px){.ba-grid,.ba-two{grid-template-columns:1fr}.ba-output textarea{min-height:300px}}
+
 </style>
 </head>
 <body>
@@ -301,6 +325,7 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 <button class="tab" onclick="T('trackman',this)">Trackman Partner</button>
 <button class="tab" onclick="T('analytics',this)">Investment Plans</button>
 <button class="tab" onclick="T('gamification',this)">Gamification</button>
+<button class="tab" onclick="T('brandarcade',this)">Brand Arcade</button>
 </div>
 
 <div class="sticky-summary" id="sticky-summary">
@@ -397,6 +422,65 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 <div class="card-wrap" id="w-roi"><div class="card-actions"><button class="dl-btn" onclick="DL('roi')">Download image</button></div><div id="o-roi"></div></div>
 
 
+</div>
+
+
+<div id="brandarcade" style="display:none">
+  <div class="ba-hero">
+    <div class="ba-eyebrow">No API fees • Custom GPT handoff</div>
+    <h2>Brand Arcade Prompt Builder</h2>
+    <p>Prep branded mini-game screenshot concepts without sending assets to a server. This tab builds the prompt, brief, upload checklist, sales-safe copy, and a ChatGPT handoff package for the Brand Arcade Skin Generator Custom GPT.</p>
+  </div>
+
+  <div class="ba-grid">
+    <div>
+      <div class="ba-panel">
+        <div class="ba-eyebrow">Step 1</div><h3>Game template</h3>
+        <label class="ba-field"><span>Template</span><select id="ba-template"><option value="runaway">Runaway — vertical obstacle game</option><option value="plinko">Plinko / prize drop — coming soon</option><option value="hoops">Hoops — coming soon</option><option value="trivia">Trivia — coming soon</option></select></label>
+        <div class="ba-ref"><a href="./templates/runaway-reference.png" target="_blank" rel="noreferrer"><img src="./templates/runaway-reference.png" alt="Runaway reference screenshot"></a><div><strong>Reference screenshot</strong>Upload this with the handoff package in ChatGPT. The generated concept should preserve camera angle, HUD, game structure, and original production-art feel.</div></div>
+      </div>
+
+      <div class="ba-panel">
+        <div class="ba-eyebrow">Step 2</div><h3>Brand intake</h3>
+        <div class="ba-two"><label class="ba-field"><span>Brand name</span><input id="ba-brand" autocomplete="off" placeholder="Liquid Death"></label><label class="ba-field"><span>Website</span><input id="ba-site" autocomplete="off" placeholder="https://example.com"></label></div>
+        <div class="ba-two"><label class="ba-field"><span>Category</span><input id="ba-category" placeholder="Beverage, sports, QSR, retail..."></label><label class="ba-field"><span>Tagline (optional)</span><input id="ba-tagline" placeholder="Use only if approved"></label></div>
+        <label class="ba-field"><span>Brand description</span><textarea id="ba-desc" rows="3"></textarea></label>
+        <label class="ba-field"><span>Tone / personality</span><textarea id="ba-tone" rows="2" placeholder="Playful, premium, edgy, sporty, wholesome, chaotic..."></textarea></label>
+        <div class="ba-two"><label class="ba-field"><span>Primary colors</span><input id="ba-primary" placeholder="Black, gold, white"></label><label class="ba-field"><span>Secondary colors</span><input id="ba-secondary" placeholder="Accent colors"></label></div>
+      </div>
+
+      <div class="ba-panel">
+        <div class="ba-eyebrow">Step 3</div><h3>Local brand assets</h3>
+        <div class="ba-drop" id="ba-drop" role="button" tabindex="0"><input id="ba-file" type="file" accept="image/*,.svg" multiple hidden><strong>Drag in logos, product shots, mascot refs, packaging, or ad creative</strong><span>Files preview locally only. Nothing is uploaded by this ROI Calculator tab.</span></div>
+        <div class="ba-actions"><button class="ba-btn secondary" id="ba-clear-assets" type="button">Clear assets</button><button class="ba-btn secondary" id="ba-load-sample" type="button">Load Liquid Death sample text</button></div>
+        <div id="ba-asset-count" style="font-size:11px;color:var(--text3)">0 assets selected</div><div class="ba-assets" id="ba-assets"></div>
+      </div>
+
+      <div class="ba-panel">
+        <div class="ba-eyebrow">Step 4</div><h3>Skin map</h3>
+        <label class="ba-field"><span>Hero character</span><textarea id="ba-herochar" rows="2"></textarea></label>
+        <label class="ba-field"><span>Main collectable / coin</span><textarea id="ba-collect" rows="2"></textarea></label>
+        <label class="ba-field"><span>Bonus item</span><textarea id="ba-bonus" rows="2"></textarea></label>
+        <label class="ba-field"><span>Avoidable obstacles / enemies</span><textarea id="ba-obstacles" rows="2"></textarea></label>
+        <label class="ba-field"><span>Vehicles / moving objects</span><textarea id="ba-vehicles" rows="2"></textarea></label>
+        <label class="ba-field"><span>Environment theme</span><textarea id="ba-env" rows="2"></textarea></label>
+        <label class="ba-field"><span>Logo usage</span><textarea id="ba-logo" rows="2"></textarea></label>
+        <div class="ba-two"><label class="ba-field"><span>Branding intensity</span><select id="ba-intensity"><option value="low">Low — subtle</option><option value="medium" selected>Medium — sales-demo ready</option><option value="high">High — bold, still readable</option></select></label><label class="ba-field"><span>Style fidelity</span><select id="ba-fidelity"><option value="faithful" selected>Close to original</option><option value="balanced">Slightly upgraded</option><option value="stylized">Highly stylized</option></select></label></div>
+        <label class="ba-field"><span>Must avoid / legal guardrails</span><textarea id="ba-avoid" rows="3">Do not clutter the screen. Do not make the image realistic, 3D, cinematic, or more detailed than the original game. Do not imply this is final production art.</textarea></label>
+      </div>
+    </div>
+
+    <aside class="ba-panel ba-output">
+      <div class="ba-eyebrow">Step 5</div><h3>ChatGPT handoff</h3>
+      <div><span class="ba-pill">Website = prep</span><span class="ba-pill">Custom GPT = image generation</span><span class="ba-pill">OpenAI API fees = $0</span></div>
+      <div class="ba-actions"><button class="ba-btn" id="ba-copy" type="button">Copy prompt</button><button class="ba-btn secondary" id="ba-md" type="button">Download .md</button><button class="ba-btn secondary" id="ba-json" type="button">Download .json</button><button class="ba-btn purple wide" id="ba-zip" type="button">Create ChatGPT package.zip</button></div>
+      <div class="ba-status" id="ba-status"></div>
+      <label class="ba-field"><span>Generated prompt</span><textarea id="ba-prompt" spellcheck="false"></textarea></label>
+      <label class="ba-field"><span>Sales-safe email copy</span><textarea id="ba-email" rows="7" spellcheck="false"></textarea></label>
+      <h3 style="margin-top:12px">QA checklist</h3>
+      <ol class="ba-checklist"><li>Still resembles the actual game template.</li><li>Resolution/detail level feels buildable.</li><li>Branding is recognizable, not pasted everywhere.</li><li>Collectables and obstacles are readable.</li><li>Uses: “This is a visual concept mockup, not final production art.”</li></ol>
+    </aside>
+  </div>
 </div>
 
 <div id="minigame" style="display:none">
@@ -1001,7 +1085,37 @@ function renderObjections(){
 function S(k){V[k]=+$('s-'+k).value;if(k==='fee')V.pfee=V[k];if(k==='pfee')V.fee=V[k];$('i-'+k).value=V[k];if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function I(k){var raw=$('i-'+k).value;if(raw===''||raw==='-')return;var v=parseFloat(raw);if(isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if(k==='pfee')V.fee=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function discI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if($('i-'+k))$('i-'+k).value=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));checkCaps();U();saveState()}
-function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';['roi','minigame','analytics','proposal','trackman','gamification'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn)btn.classList.add('active');if(id==='trackman')renderTM();if(id==='gamification')renderGM();U()}
+function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';['roi','minigame','analytics','proposal','trackman','gamification','brandarcade'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn)btn.classList.add('active');if(id==='trackman')renderTM();if(id==='gamification')renderGM();if(id==='brandarcade')BAinit();U()}
+
+/* ════════ BRAND ARCADE PROMPT BUILDER ════════ */
+var BAready=false,BAassets=[],BAstore='lucra-brand-arcade-v1';
+var BAfields=['template','brand','site','category','tagline','desc','tone','primary','secondary','herochar','collect','bonus','obstacles','vehicles','env','logo','intensity','fidelity','avoid'];
+var BAtemplates={runaway:{name:'Runaway',aspect:'9:16 vertical mobile screenshot',style:'simple low-resolution 2D mobile arcade game, chunky outlines, clean shapes, readable mobile UI, not 3D, not cinematic',locked:['phone status bar','top HUD with close/timer/score/menu','road lanes with moving cars','dirt obstacle lane','river/canal with bridges','lower grassy grid playfield','tutorial signs','small playable character near lower-middle','strategic objects with open grid space'],editable:['hero character','collectables','bonus items','avoidable obstacles','vehicles','signage accents','HUD badge/details','background props']}};
+function BA$(id){return document.getElementById('ba-'+id)}
+function BAclean(v,f){v=String(v||'').trim();return v||f||'Not specified'}
+function BAesc(v){return String(v||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function BAslug(v){return (String(v||'brand').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'brand')}
+function BAsize(n){if(n<1024)return n+' B';if(n<1048576)return Math.round(n/1024)+' KB';return (n/1048576).toFixed(1)+' MB'}
+function BAstate(){var o={};BAfields.forEach(function(k){var el=BA$(k);if(el)o[k]=el.value});return o}
+function BAsave(){try{localStorage.setItem(BAstore,JSON.stringify(BAstate()))}catch(e){}}
+function BAload(){try{var raw=localStorage.getItem(BAstore);if(raw){var o=JSON.parse(raw);BAfields.forEach(function(k){if(BA$(k)&&o[k]!=null)BA$(k).value=o[k]})}}catch(e){}}
+function BAlist(a){return a.map(function(x){return '- '+x}).join('\n')}
+function BAmanifest(){if(!BAassets.length)return 'No local brand assets selected yet. In ChatGPT, upload logo, product, mascot, packaging, brand guidelines, and the original game reference screenshot.';return BAassets.map(function(a,i){return (i+1)+'. '+a.name+' — '+(a.type||'image')+', '+BAsize(a.size)}).join('\n')}
+function BAbrief(){var s=BAstate();return '# '+BAclean(s.brand,'Brand')+' — Brand Arcade Skin Brief\n\n## Brand\n- Name: '+BAclean(s.brand)+'\n- Website: '+BAclean(s.site)+'\n- Category: '+BAclean(s.category)+'\n- Tagline: '+BAclean(s.tagline,'Not provided')+'\n- Tone: '+BAclean(s.tone)+'\n- Primary colors: '+BAclean(s.primary)+'\n- Secondary colors: '+BAclean(s.secondary)+'\n\n## Brand description\n'+BAclean(s.desc)+'\n\n## Skin map\n- Hero: '+BAclean(s.herochar)+'\n- Main collectable: '+BAclean(s.collect)+'\n- Bonus item: '+BAclean(s.bonus)+'\n- Avoidable obstacles: '+BAclean(s.obstacles)+'\n- Vehicles / moving objects: '+BAclean(s.vehicles)+'\n- Environment: '+BAclean(s.env)+'\n- Logo usage: '+BAclean(s.logo)+'\n- Branding intensity: '+BAclean(s.intensity)+'\n- Style fidelity: '+BAclean(s.fidelity)+'\n\n## Must avoid\n'+BAclean(s.avoid)+'\n\n## Asset manifest\n'+BAmanifest()+'\n'}
+function BAprompt(){var s=BAstate(),t=BAtemplates.runaway;return 'Create a single full-screen vertical mobile game screenshot concept for a branded reskin of our existing mini game.\n\nUse the attached original game screenshot as the primary layout and style reference. Match the template closely: '+t.style+'. The output should look like a plausible custom skin of this exact game, not a new game.\n\nTarget format:\n- '+t.aspect+'\n- One full mobile screenshot only\n- Looks like a real in-game screenshot, not a poster, mockup board, app store image, or marketing ad\n\nCore layout to preserve:\n'+BAlist(t.locked)+'\n\nEditable skin elements:\n'+BAlist(t.editable)+'\n\nBrand brief:\n'+BAbrief()+'\n\nGeneration options requested:\nA. Conservative skin — closest to the real game\nB. Medium brand skin — best for email/demo\nC. High brand skin — more stylized but still readable\nD. Alternate hero/object layout\n\nImportant production guardrails:\n- This is a visual concept mockup, not final production art.\n- Do not overpromise features or mechanics that are not visible in the original game.\n- Preserve the original game camera angle, composition, UI positions, and simple art level.\n- Keep the UI readable, especially timer, score, menu, close button, and tutorial signs.\n- Keep playfield readable with strategic obstacles, not a cluttered brand collage.\n- Use uploaded brand assets as visual references, but simplify them into the original low-resolution 2D style.\n- Use logos sparingly. The screenshot should feel like a game skin, not a banner ad.\n- Avoid inventing slogans, claims, or legal language unless provided in the uploaded assets or prompt.\n\nAfter generating, provide a brief QA note: what changed, what still matches the original game, and whether it is safe to send as a concept mockup.'}
+function BAemail(){var b=BAclean(BAstate().brand,'your brand');return 'We mocked up a quick visual concept to show how '+b+' could appear inside one of our existing mini-games.\n\nThis is a visual concept mockup, not final production art, but it shows the type of branded treatment we can create using approved assets: custom player character, branded collectables, themed obstacles, environment props, vehicles, and UI accents.\n\nThe goal is to align on creative direction before any production art or engineering work begins.'}
+function BAjson(){return JSON.stringify({version:'1.1',mode:'no-api-chatgpt-handoff',template:BAtemplates.runaway,form:BAstate(),assets:BAassets.map(function(a){return {name:a.name,type:a.type,size:a.size,sizeLabel:BAsize(a.size)}}),prompt:BA$('prompt').value||BAprompt(),emailCopy:BAemail(),note:'Images preview locally only. JSON contains asset metadata, not embedded files.'},null,2)}
+function BArender(){if(!BA$('prompt'))return;BA$('prompt').value=BAprompt();BA$('email').value=BAemail();BAsave()}
+function BAstatus(m){var el=BA$('status');if(!el)return;el.textContent=m||'';clearTimeout(BAstatus.t);if(m)BAstatus.t=setTimeout(function(){el.textContent=''},3500)}
+function BAdownload(name,text,type){var blob=new Blob([text],{type:type||'text/plain'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},200)}
+function BAcopy(text,label){if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){BAstatus(label+' copied.')}).catch(function(){BAdownload(BAslug(BAstate().brand)+'-'+label.toLowerCase()+'.txt',text)})}else{BAdownload(BAslug(BAstate().brand)+'-'+label.toLowerCase()+'.txt',text)}}
+function BArenderAssets(){var grid=BA$('assets'),cnt=BA$('asset-count');if(!grid)return;cnt.textContent=BAassets.length+' asset'+(BAassets.length===1?'':'s')+' selected';grid.innerHTML='';if(!BAassets.length){grid.innerHTML='<div class="ba-asset"><strong>No assets yet</strong><span>Add approved brand files for the handoff package.</span></div>';return}BAassets.forEach(function(a){var card=document.createElement('div');card.className='ba-asset';var img=document.createElement('img');img.src=a.url;img.alt=a.name;var st=document.createElement('strong');st.textContent=a.name;var sp=document.createElement('span');sp.textContent=(a.type||'image')+' • '+BAsize(a.size);var btn=document.createElement('button');btn.type='button';btn.textContent='Remove';btn.onclick=function(){URL.revokeObjectURL(a.url);BAassets=BAassets.filter(function(x){return x.id!==a.id});BArenderAssets();BArender()};card.appendChild(img);card.appendChild(st);card.appendChild(sp);card.appendChild(btn);grid.appendChild(card)})}
+function BAaddFiles(files){Array.from(files||[]).filter(function(f){return (f.type||'').indexOf('image/')===0||f.name.toLowerCase().endsWith('.svg')}).forEach(function(f){BAassets.push({id:Date.now()+'-'+Math.random().toString(16).slice(2),name:f.name,type:f.type||'image/svg+xml',size:f.size,file:f,url:URL.createObjectURL(f)})});BAassets=BAassets.slice(0,20);BArenderAssets();BArender()}
+function BAchecklist(){return 'Upload checklist\n\n1. Open the Brand Arcade Skin Generator Custom GPT.\n2. Upload reference/runaway-reference.png first.\n3. Upload every file in assets/.\n4. Upload brief.md and prompt.txt.\n5. Ask for 2-4 options: conservative, medium, high, alternate layout.\n6. QA that it still looks like the real game and is safe to send.\n\nRequired phrase: This is a visual concept mockup, not final production art.\n'}
+async function BAzip(){var brand=BAslug(BAstate().brand);if(!window.JSZip){BAdownload(brand+'-brand-arcade-brief.md',BAbrief(),'text/markdown');BAdownload(brand+'-brand-arcade-prompt.txt',BA$('prompt').value||BAprompt(),'text/plain');BAdownload(brand+'-brand-arcade-skin-map.json',BAjson(),'application/json');BAstatus('JSZip unavailable; downloaded separate handoff files.');return}var z=new JSZip();z.file('prompt.txt',BA$('prompt').value||BAprompt());z.file('brief.md',BAbrief());z.file('skin-map.json',BAjson());z.file('upload-checklist.txt',BAchecklist());z.file('email-copy.txt',BAemail());z.file('qa-checklist.txt','QA checklist\n- Still resembles actual game template\n- Resolution/detail level feels buildable\n- Logos/products recognizable, not pasted everywhere\n- Obstacles and collectables readable\n- Does not imply game already exists\n- Uses visual concept mockup disclaimer\n');try{var r=await fetch('./templates/runaway-reference.png');if(r.ok)z.file('reference/runaway-reference.png',await r.blob())}catch(e){}BAassets.forEach(function(a,i){z.file('assets/'+String(i+1).padStart(2,'0')+'-'+a.name,a.file)});var blob=await z.generateAsync({type:'blob'});var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=brand+'-brand-arcade-handoff.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},500);BAstatus('ChatGPT handoff package downloaded.')}
+function BAsample(){var vals={brand:'Liquid Death',site:'https://liquiddeath.com/',category:'Canned water / beverage',tagline:'Murder Your Thirst',desc:'Edgy canned water brand with heavy-metal humor, skulls, mountains, black/white/gold packaging, and anti-plastic positioning.',tone:'Rebellious, funny, dark, bold, metal-inspired, irreverent, clean-but-aggressive.',primary:'Black, white, metallic gold',secondary:'Muted blue, aluminum silver',herochar:'Small playable character inspired by Liquid Death can-headed hero artwork, simplified to match the low-res Runaway style.',collect:'Skull coin, gold can-tab coin, or small death-to-plastic token as the main point pickup.',bonus:'Only 1-2 Liquid Death cans as larger bonus-point items.',obstacles:'Plastic bottles, trash bags, and small piles of litter as avoidable enemy objects.',vehicles:'Subtle black/gold vehicle accents; do not turn every vehicle into an ad.',env:'Keep grassy park, road, dirt lane, river, and bridge layout with subtle gritty Liquid Death vibe.',logo:'Use logos sparingly on one vehicle, one HUD accent, and bonus cans.',intensity:'medium',fidelity:'faithful',avoid:'Avoid too many cans, too many logos, overly detailed rendering, realistic lighting, 3D style, cluttered trash everywhere, or changing the game mechanics visually.'};Object.keys(vals).forEach(function(k){if(BA$(k))BA$(k).value=vals[k]});BArender();BAstatus('Liquid Death sample text loaded.')}
+function BAinit(){if(BAready){BArender();return}BAready=true;BAload();BAfields.forEach(function(k){var el=BA$(k);if(el){el.addEventListener('input',BArender);el.addEventListener('change',BArender)}});var drop=BA$('drop'),inp=BA$('file');if(drop&&inp){drop.onclick=function(){inp.click()};drop.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();inp.click()}};inp.onchange=function(e){BAaddFiles(e.target.files)};['dragenter','dragover'].forEach(function(n){drop.addEventListener(n,function(e){e.preventDefault();drop.classList.add('drag')})});['dragleave','drop'].forEach(function(n){drop.addEventListener(n,function(e){e.preventDefault();drop.classList.remove('drag')})});drop.addEventListener('drop',function(e){BAaddFiles(e.dataTransfer.files)})}if(BA$('clear-assets'))BA$('clear-assets').onclick=function(){BAassets.forEach(function(a){URL.revokeObjectURL(a.url)});BAassets=[];if(inp)inp.value='';BArenderAssets();BArender();BAstatus('Assets cleared.')};if(BA$('load-sample'))BA$('load-sample').onclick=BAsample;if(BA$('copy'))BA$('copy').onclick=function(){BAcopy(BA$('prompt').value||BAprompt(),'Prompt')};if(BA$('md'))BA$('md').onclick=function(){BAdownload(BAslug(BAstate().brand)+'-brand-arcade-brief.md',BAbrief()+'\n## Prompt\n\n'+(BA$('prompt').value||BAprompt())+'\n\n## Email copy\n\n'+BAemail(),'text/markdown');BAstatus('Markdown brief downloaded.')};if(BA$('json'))BA$('json').onclick=function(){BAdownload(BAslug(BAstate().brand)+'-brand-arcade-skin-map.json',BAjson(),'application/json');BAstatus('JSON skin map downloaded.')};if(BA$('zip'))BA$('zip').onclick=BAzip;BArenderAssets();BArender()}
+
 /* ════════ TRACKMAN PARTNER BUNDLE ════════ */
 var TM={bays:10,term:2,package:'core',implDisc:0,custom:{active:false,perBay:null}};
 var TM_IMPL=5000,TM_PKG={core:250,full:350};
