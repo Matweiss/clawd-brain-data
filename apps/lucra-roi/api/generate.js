@@ -108,14 +108,15 @@ function sanitizeName(raw) {
     .slice(0, 80) || 'Client';
 }
 
-// P0-2: Default to viewer-only sharing (not editable-by-link).
-async function shareViewerByLink(docId, token) {
+// Agreement workflow default: anyone with the link can edit. The containing
+// calculator remains access-controlled, and Drive link discovery stays off.
+async function shareEditorByLink(docId, token) {
   const r = await fetch(
     `https://www.googleapis.com/drive/v3/files/${docId}/permissions?sendNotificationEmail=false&fields=id`,
     {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'anyone', role: 'reader', allowFileDiscovery: false }),
+      body: JSON.stringify({ type: 'anyone', role: 'writer', allowFileDiscovery: false }),
     }
   );
   if (!r.ok) throw new Error('Share failed: ' + (await r.text()).slice(0, 200));
@@ -195,8 +196,9 @@ module.exports = async (req, res) => {
     if (!copy.id) throw new Error('Copy failed: ' + JSON.stringify(copy));
     const docId = copy.id;
 
-    // 1b. Share as viewer-only (P0-2). Docs remain out of public search/discovery.
-    await shareViewerByLink(docId, token);
+    // 1b. Agreements are collaborative working documents: editable by link,
+    // while remaining excluded from public search/discovery.
+    await shareEditorByLink(docId, token);
 
     // 2. Fill tokens (each key is the literal token string in the doc)
     const requests = tokenKeys.map((k) => ({
