@@ -81,8 +81,7 @@ describe('/api/generate contract tests', () => {
     }
   });
 
-  // Enabled after Release 1B security hardening adds body size limit
-  it.skip('rejects request body over 64KB (Release 1B)', async () => {
+  it('rejects request body over 64KB', async () => {
     const bigTokens = {};
     for (let i = 0; i < 500; i++) {
       bigTokens[`{{TOKEN_${i}}}`] = 'A'.repeat(200);

@@ -1,6 +1,6 @@
 // Agreement generator (serverless) — shared by all proposal tabs.
 // Copies a tokenized template Doc, fills the tokens, exports PDF + DOCX,
-// drops the filled Doc in the Drive folder, returns the editable link + files.
+// drops the filled Doc in the Drive folder, returns the viewer link + files.
 //
 // Body: { template: 'trackman'|'core'|'minigames', tokens: {"<literal token>": "<value>", ...}, clientName }
 // Templates are allowlisted server-side so the public endpoint can't be pointed at arbitrary docs.
@@ -15,14 +15,78 @@ const ALLOWED_TEMPLATES = {
   minigames: '1MAWYiinRZ_bLCrGcfEzU8wxJbzenDe4KmI_DiNhJo_I',
 };
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const MAX_BODY_BYTES = 64 * 1024; // 64KB
 
-async function shareEditableByLink(docId, token) {
+// P0-7: Enforceable rate limiting (in-memory, per serverless instance).
+// On Vercel serverless each cold-start gets a fresh Map, so this limits
+// burst abuse within a single warm instance. Not a substitute for WAF-level
+// rate limiting, but prevents a single IP from hammering the Google API.
+const RATE_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_GENERATE = 10; // max requests per window per IP
+const _rateMap = new Map();
+
+function checkRateLimit(req) {
+  const ip = (req.headers && (req.headers['x-forwarded-for'] || req.headers['x-real-ip'])) || 'unknown';
+  const key = ip.split(',')[0].trim();
+  const now = Date.now();
+  let entry = _rateMap.get(key);
+  if (!entry || now - entry.start > RATE_WINDOW_MS) {
+    entry = { start: now, count: 0 };
+    _rateMap.set(key, entry);
+  }
+  entry.count++;
+  // Evict old entries to prevent memory leak in long-lived instances
+  if (_rateMap.size > 1000) {
+    for (const [k, v] of _rateMap) {
+      if (now - v.start > RATE_WINDOW_MS) _rateMap.delete(k);
+    }
+  }
+  return entry.count <= RATE_LIMIT_GENERATE;
+}
+
+// P0-1: Explicit origin allowlist instead of CORS wildcard.
+const ALLOWED_ORIGINS = [
+  'https://lucra-roi-calculator.vercel.app',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:8765',
+  'http://127.0.0.1:8765',
+];
+
+function corsOrigin(req) {
+  const origin = (req.headers && req.headers.origin) || '';
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  // Same-origin requests (e.g. from the Vercel-served app) may not send Origin.
+  // In that case, allow the request but don't reflect an origin.
+  return '';
+}
+
+function setCorsHeaders(req, res) {
+  const origin = corsOrigin(req);
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+// P0-8: Sanitize clientName for filename — alphanumeric, spaces, dashes only, max 80 chars.
+function sanitizeName(raw) {
+  return String(raw || 'Client')
+    .replace(/[^a-zA-Z0-9 \-]/g, '')
+    .trim()
+    .slice(0, 80) || 'Client';
+}
+
+// P0-2: Default to viewer-only sharing (not editable-by-link).
+async function shareViewerByLink(docId, token) {
   const r = await fetch(
     `https://www.googleapis.com/drive/v3/files/${docId}/permissions?sendNotificationEmail=false&fields=id`,
     {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'anyone', role: 'writer', allowFileDiscovery: false }),
+      body: JSON.stringify({ type: 'anyone', role: 'reader', allowFileDiscovery: false }),
     }
   );
   if (!r.ok) throw new Error('Share failed: ' + (await r.text()).slice(0, 200));
@@ -42,11 +106,14 @@ async function getAccessToken(env) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+
+  // P0-7: Rate limit enforcement
+  if (!checkRateLimit(req)) {
+    return res.status(429).json({ error: 'Rate limit exceeded. Try again in 60 seconds.' });
+  }
 
   const env = process.env;
   for (const k of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REFRESH_TOKEN', 'AGREEMENT_FOLDER_ID']) {
@@ -54,12 +121,23 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // P0-3: Enforce body size limit.
+    const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
+    if (Buffer.byteLength(raw, 'utf8') > MAX_BODY_BYTES) {
+      return res.status(413).json({ error: 'Request body exceeds 64KB limit' });
+    }
+
     const d = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const templateId = ALLOWED_TEMPLATES[d.template];
     if (!templateId) return res.status(400).json({ error: 'Unknown template: ' + d.template });
     const tokens = d.tokens && typeof d.tokens === 'object' ? d.tokens : {};
     if (!Object.keys(tokens).length) return res.status(400).json({ error: 'No tokens provided' });
-    const clientName = (d.clientName || 'Client').toString();
+
+    // P0-3: Validate token keys against expected pattern ({{...}} placeholders).
+    const tokenKeys = Object.keys(tokens);
+    if (tokenKeys.length > 100) return res.status(400).json({ error: 'Too many tokens' });
+
+    const clientName = sanitizeName(d.clientName);
 
     const token = await getAccessToken(env);
     const H = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
@@ -73,13 +151,11 @@ module.exports = async (req, res) => {
     if (!copy.id) throw new Error('Copy failed: ' + JSON.stringify(copy));
     const docId = copy.id;
 
-    // 1b. Make generated agreement editable by anyone with the link.
-    // The ROI calculator itself is password-gated; this avoids manual sharing on
-    // every generated duplicate while keeping docs out of public search/discovery.
-    await shareEditableByLink(docId, token);
+    // 1b. Share as viewer-only (P0-2). Docs remain out of public search/discovery.
+    await shareViewerByLink(docId, token);
 
     // 2. Fill tokens (each key is the literal token string in the doc)
-    const requests = Object.keys(tokens).map((k) => ({
+    const requests = tokenKeys.map((k) => ({
       replaceAllText: { containsText: { text: k, matchCase: true }, replaceText: String(tokens[k] == null ? '' : tokens[k]) },
     }));
     const bu = await fetch(`https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`, {
