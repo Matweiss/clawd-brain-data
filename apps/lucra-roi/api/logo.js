@@ -5,6 +5,30 @@
 
 const MAX_BYTES = 2 * 1024 * 1024;
 
+// P0-5: Explicit origin allowlist instead of CORS wildcard.
+const ALLOWED_ORIGINS = [
+  'https://lucra-roi-calculator.vercel.app',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:8765',
+  'http://127.0.0.1:8765',
+];
+
+function corsOrigin(req) {
+  const origin = (req.headers && req.headers.origin) || '';
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  return '';
+}
+
+function setCorsHeaders(req, res) {
+  const origin = corsOrigin(req);
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+}
+
 function cleanDomain(v = '') {
   v = String(v || '').trim();
   if (!v) return '';
@@ -44,10 +68,16 @@ async function fetchImage(url) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
+
+  // Reject cross-origin requests from disallowed origins.
+  // Same-origin requests omit the Origin header — those are allowed.
+  const reqOrigin = (req.headers && req.headers.origin) || '';
+  if (reqOrigin && !ALLOWED_ORIGINS.includes(reqOrigin)) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
 
   const q = req.query || {};
   const direct = safeUrl(q.url);
