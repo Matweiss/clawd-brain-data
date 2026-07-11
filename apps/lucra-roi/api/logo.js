@@ -72,6 +72,13 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
 
+  // Reject cross-origin requests from disallowed origins.
+  // Same-origin requests omit the Origin header — those are allowed.
+  const reqOrigin = (req.headers && req.headers.origin) || '';
+  if (reqOrigin && !ALLOWED_ORIGINS.includes(reqOrigin)) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+
   const q = req.query || {};
   const direct = safeUrl(q.url);
   const domain = cleanDomain(q.domain || q.website || '');

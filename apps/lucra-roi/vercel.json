@@ -20,32 +20,6 @@
           "value": "strict-origin-when-cross-origin"
         }
       ]
-    },
-    {
-      "source": "/api/generate",
-      "headers": [
-        {
-          "key": "X-RateLimit-Limit",
-          "value": "10"
-        },
-        {
-          "key": "X-RateLimit-Window",
-          "value": "60"
-        }
-      ]
-    },
-    {
-      "source": "/api/logo",
-      "headers": [
-        {
-          "key": "X-RateLimit-Limit",
-          "value": "60"
-        },
-        {
-          "key": "X-RateLimit-Window",
-          "value": "60"
-        }
-      ]
     }
   ],
   "routes": [

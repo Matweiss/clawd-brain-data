@@ -17,10 +17,39 @@ const ALLOWED_TEMPLATES = {
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const MAX_BODY_BYTES = 64 * 1024; // 64KB
 
-// P0-7: Enforceable rate limiting (in-memory, per serverless instance).
-// On Vercel serverless each cold-start gets a fresh Map, so this limits
-// burst abuse within a single warm instance. Not a substitute for WAF-level
-// rate limiting, but prevents a single IP from hammering the Google API.
+// Strict per-template token-key allowlists.
+// Only these exact keys are accepted — anything else returns 400 with no Google API call.
+// Trackman uses bracket tokens from TMagreement(); core/minigames use {{...}} from GMgenerate().
+const ALLOWED_TOKEN_KEYS = {
+  trackman: new Set([
+    '[CLIENT NAME]', '[EFFECTIVE DATE]', '[PACKAGE NAME]', '[LIST PRICE AMOUNT]',
+    '[MONTHLY PER BAY FEE]', '[NUMBER OF BAYS]', '[TOTAL MONTHLY FEE]',
+    '[IMPLEMENTATION FEE AMOUNT]', '[CLIENT REVENUE SHARE %]', '[LUCRA REVENUE SHARE %]',
+    '[LICENSE TERM YEARS]', '[GO-LIVE DATE]', '[CLIENT SIGNATURE NAME]',
+    '[CHK_A]', '[CHK_B]', '[CHK_C]', '[CHK_D]', '[CHK_E]', '[CHK_IMPL]',
+  ]),
+  core: new Set([
+    '{{CLIENT_NAME}}', '{{EFFECTIVE_DATE}}', '{{LICENSE_FEE}}', '{{DISCOUNT_PERCENTAGE}}',
+    '{{AMOUNT_DUE}}', '{{CLIENT_REVENUE_SHARE}}', '{{LUCRA_REVENUE_SHARE}}',
+    '{{LICENSE_TERM}}', '{{KICKOFF_DATE}}', '{{DELIVERY_DATE}}', '{{TARGET_DELIVERY_DATE}}',
+    '{{DELIVERY_COST_REDUCTION_PERCENTAGE}}',
+    '{{CHK_A}}', '{{CHK_B}}', '{{CHK_C}}', '{{CHK_D}}', '{{CHK_E}}', '{{CHK_F}}',
+    '{{CHK_G}}', '{{CHK_H}}', '{{CHK_I}}',
+    '{{A_monthly}}', '{{B_monthly}}', '{{C_monthly}}', '{{D_monthly_}}',
+    '{{E_monthly}}', '{{F_monthly}}',
+    '{{strat_imp_price}}', '{{growth_imp_price}}', '{{launch_imp_price}}',
+    '{{Implementation_name}}', '{{NOTES}}',
+  ]),
+};
+// minigames shares the same template & token set as core.
+ALLOWED_TOKEN_KEYS.minigames = ALLOWED_TOKEN_KEYS.core;
+
+// Defense-in-depth: in-memory rate limiter (per serverless instance).
+// On Vercel each cold-start gets a fresh Map, so this only limits burst
+// abuse within a single warm instance. It is NOT enforceable across
+// distributed instances and does NOT fully resolve P0-7.
+// Production enforcement requires a Vercel Firewall rate-limit rule
+// configured externally before go-live.
 const RATE_WINDOW_MS = 60 * 1000; // 1 minute
 const RATE_LIMIT_GENERATE = 10; // max requests per window per IP
 const _rateMap = new Map();
@@ -110,7 +139,14 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  // P0-7: Rate limit enforcement
+  // Reject cross-origin requests from disallowed origins.
+  // Same-origin requests omit the Origin header entirely — those are allowed.
+  const reqOrigin = (req.headers && req.headers.origin) || '';
+  if (reqOrigin && !ALLOWED_ORIGINS.includes(reqOrigin)) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+
+  // Defense-in-depth rate limit (not distributed — see comment above)
   if (!checkRateLimit(req)) {
     return res.status(429).json({ error: 'Rate limit exceeded. Try again in 60 seconds.' });
   }
@@ -133,9 +169,17 @@ module.exports = async (req, res) => {
     const tokens = d.tokens && typeof d.tokens === 'object' ? d.tokens : {};
     if (!Object.keys(tokens).length) return res.status(400).json({ error: 'No tokens provided' });
 
-    // P0-3: Validate token keys against expected pattern ({{...}} placeholders).
     const tokenKeys = Object.keys(tokens);
     if (tokenKeys.length > 100) return res.status(400).json({ error: 'Too many tokens' });
+
+    // Strict token-key allowlist: reject unexpected keys before any Google API call.
+    const allowed = ALLOWED_TOKEN_KEYS[d.template];
+    if (allowed) {
+      const unexpected = tokenKeys.filter((k) => !allowed.has(k));
+      if (unexpected.length) {
+        return res.status(400).json({ error: 'Unexpected token keys: ' + unexpected.slice(0, 5).join(', ') });
+      }
+    }
 
     const clientName = sanitizeName(d.clientName);
 

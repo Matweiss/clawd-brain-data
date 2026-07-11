@@ -66,6 +66,22 @@ describe('/api/logo contract tests', () => {
     expect([400, 404]).toContain(res.statusCode);
   });
 
+  it('rejects disallowed non-empty origin with 403', async () => {
+    const req = { method: 'GET', query: { domain: 'example.com' }, headers: { origin: 'https://evil.example.com' } };
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toContain('Origin not allowed');
+  });
+
+  it('allows requests with no origin header (same-origin)', async () => {
+    const req = { method: 'GET', query: { domain: 'nonexistent-test-domain-12345.invalid' }, headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    // Should not be 403 — it will 404 because domain doesn't resolve
+    expect(res.statusCode).not.toBe(403);
+  });
+
   it('builds candidates from domain query param', async () => {
     // This will try to fetch real URLs — we just verify it doesn't crash
     // and returns either success or 404 (no DNS resolution in test)
