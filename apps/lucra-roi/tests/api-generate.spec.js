@@ -201,4 +201,57 @@ describe('/api/generate contract tests', () => {
     // Should not be 400
     expect(res.statusCode).not.toBe(400);
   });
+
+  it('shares generated agreements as editable by anyone with the link', async () => {
+    const originalFetch = globalThis.fetch;
+    const permissionBodies = [];
+
+    globalThis.fetch = vi.fn(async (url, options = {}) => {
+      const target = String(url);
+      if (target.includes('oauth2.googleapis.com/token')) {
+        return new Response(JSON.stringify({ access_token: 'test-access-token' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (target.includes('/copy?')) {
+        return new Response(JSON.stringify({ id: 'doc-123', webViewLink: 'https://docs.google.com/document/d/doc-123/edit' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (target.includes('/permissions?')) {
+        permissionBodies.push(JSON.parse(options.body));
+        return new Response(JSON.stringify({ id: 'permission-123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (target.includes(':batchUpdate')) {
+        return new Response('{}', { status: 200 });
+      }
+      if (target.includes('/export?')) {
+        return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
+      }
+      throw new Error(`Unexpected fetch: ${target}`);
+    });
+
+    try {
+      const req = mockReq({
+        template: 'core',
+        tokens: { '{{CLIENT_NAME}}': 'Editable Agreement' },
+        clientName: 'Editable Agreement',
+      });
+      req.headers['x-forwarded-for'] = '203.0.113.42';
+      const res = mockRes();
+      await handler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(permissionBodies).toEqual([
+        { type: 'anyone', role: 'writer', allowFileDiscovery: false },
+      ]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
