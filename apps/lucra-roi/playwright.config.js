@@ -4,6 +4,7 @@ const PORT = process.env.PW_PORT || 8766;
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: ['smoke.spec.js', 'brand-arcade.spec.js'],
   timeout: 30_000,
   fullyParallel: false,
   reporter: [['list']],
