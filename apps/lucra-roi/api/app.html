@@ -319,13 +319,13 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 <div class="header-right"><span class="tool-label">ROI Analysis Tool</span><button class="pres-toggle" id="pres-toggle" onclick="togglePresMode()" type="button">🔒 Internal</button><button class="reset-link" onclick="resetState()" type="button">Reset</button></div>
 </div>
 
-<div class="tabs">
-<button class="tab active" onclick="T('roi',this)">Core ROI</button>
-<button class="tab" onclick="T('minigame',this)">Mini Game ROI</button>
-<button class="tab" onclick="T('trackman',this)">Trackman Partner</button>
-<button class="tab" onclick="T('analytics',this)">Investment Plans</button>
-<button class="tab" onclick="T('gamification',this)">Gamification</button>
-<button class="tab" onclick="T('brandarcade',this)">Brand Arcade</button>
+<div class="tabs" role="tablist" aria-label="ROI Calculator sections">
+<button class="tab active" role="tab" aria-selected="true" aria-controls="roi" id="tab-roi" tabindex="0" onclick="T('roi',this)">Core ROI</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="minigame" id="tab-minigame" tabindex="-1" onclick="T('minigame',this)">Mini Game ROI</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="trackman" id="tab-trackman" tabindex="-1" onclick="T('trackman',this)">Trackman Partner</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="analytics" id="tab-analytics" tabindex="-1" onclick="T('analytics',this)">Investment Plans</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="gamification" id="tab-gamification" tabindex="-1" onclick="T('gamification',this)">Gamification</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="brandarcade" id="tab-brandarcade" tabindex="-1" onclick="T('brandarcade',this)">Brand Arcade</button>
 </div>
 
 <div class="sticky-summary" id="sticky-summary">
@@ -343,7 +343,7 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
   <button class="jump-pill" onclick="jumpToSection('pitch')">Pitch</button>
 </div>
 
-<div id="roi">
+<div id="roi" role="tabpanel" aria-labelledby="tab-roi">
 <div class="pf-section" style="margin-bottom:14px">
 <div class="pf-section-title">Discovery — fill in customer answers</div>
 <div class="pf-row">
@@ -371,8 +371,8 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 <div class="input-group"><div class="input-head"><span class="input-label">Daily visitors</span><input class="vi" id="i-vis" type="number" min="0" step="1" oninput="I('vis')"></div><input type="range" min="50" max="3000" step="10" value="1100" id="s-vis" oninput="S('vis')"><div id="oc-vis"></div></div>
 <div class="input-group"><div class="input-head"><span class="input-label">Current ARPU</span><div class="input-val"><span class="vp">$</span><input class="vi" id="i-arpu" type="number" min="0" step="0.25" oninput="I('arpu')"></div></div><input type="range" min="10" max="80" step="1" value="45" id="s-arpu" oninput="S('arpu')"></div>
 <div class="input-group"><div class="input-head"><span class="input-label">Monthly Lucra fee</span><div class="input-val"><span class="vp">$</span><input class="vi" id="i-fee" type="number" min="0" step="100" oninput="I('fee')"></div></div><input type="range" min="0" max="45000" step="500" value="2500" id="s-fee" oninput="S('fee')"><div id="oc-fee"></div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Opt-in rate</span><div class="input-val"><input class="vi" id="i-opt" type="number" min="0" step="0.25" oninput="I('opt')"><span class="vp">%</span></div></div><input type="range" min="3" max="40" step="1" value="10" id="s-opt" oninput="S('opt')"><div class="sn">Industry range: 5–40% (conservative floor: 5%)</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">ARPU lift</span><div class="input-val"><span class="vp">+</span><input class="vi" id="i-lift" type="number" min="0" step="0.25" oninput="I('lift')"><span class="vp">%</span></div></div><input type="range" min="5" max="30" step="1" value="15" id="s-lift" oninput="S('lift')"><div class="sn">Partner benchmark: +15%. Conservative: 10%</div></div>
+<div class="input-group"><div class="input-head"><span class="input-label">Opt-in rate</span><div class="input-val"><input class="vi" id="i-opt" type="number" min="0" step="0.25" oninput="I('opt')"><span class="vp">%</span></div></div><input type="range" min="3" max="40" step="1" value="10" id="s-opt" oninput="S('opt')"><div class="sn">Industry range: 5–40% (conservative floor: 5%) — Lucra internal estimate</div></div>
+<div class="input-group"><div class="input-head"><span class="input-label">ARPU lift</span><div class="input-val"><span class="vp">+</span><input class="vi" id="i-lift" type="number" min="0" step="0.25" oninput="I('lift')"><span class="vp">%</span></div></div><input type="range" min="5" max="30" step="1" value="15" id="s-lift" oninput="S('lift')"><div class="sn">Partner benchmark: +15%. Conservative: 10% — Lucra internal estimate</div></div>
 <div class="input-group"><div class="input-head"><span class="input-label"># of locations</span><input class="vi" id="i-loc" type="number" min="1" step="1" value="1" oninput="I('loc')"></div><input type="range" min="1" max="100" step="1" value="1" id="s-loc" oninput="S('loc')"><div class="sn">Scale across locations</div></div>
 </div>
 <div class="input-group span2" style="margin-bottom:24px"><div class="input-head"><span class="input-label">Current loyalty/marketing spend per location (optional)</span><div class="input-val"><span class="vp">$</span><input class="vi" id="i-loy" type="number" min="0" step="1000" value="0" oninput="I('loy')" style="width:90px"></div></div><input type="range" min="0" max="300000" step="5000" value="0" id="s-loy" oninput="S('loy')"><div class="sn">Annual spend on loyalty, CRM, email. $50k-$200k typical</div></div>
@@ -425,7 +425,7 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 </div>
 
 
-<div id="brandarcade" style="display:none">
+<div id="brandarcade" role="tabpanel" aria-labelledby="tab-brandarcade" style="display:none">
   <div class="ba-hero">
     <div class="ba-eyebrow">No API fees • Custom GPT handoff</div>
     <h2>Brand Arcade Prompt Builder</h2>
@@ -483,7 +483,7 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
   </div>
 </div>
 
-<div id="minigame" style="display:none">
+<div id="minigame" role="tabpanel" aria-labelledby="tab-minigame" style="display:none">
 <div style="margin-top:32px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
 <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Mini Game ROI</div>
 <div style="font-size:12px;color:var(--text3);line-height:1.5">Fill out below for app-based / mini games partnerships. Skip if this is a venue-only deal. Use both sections to model hybrid deals (core + mini games).</div>
@@ -535,12 +535,12 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 <div class="brand-fields">
   <div style="font-size:11px;color:#71717a;margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px">Leave-behind generator — all fields required</div>
   <div class="brand-row" style="margin-bottom:10px">
-    <input class="gen-input" id="n-roi" placeholder="Company name (required)" oninput="checkPDFReady()" style="flex:1;min-width:140px">
-    <input class="gen-input" id="website-url" placeholder="Website URL (e.g. draftkings.com)" oninput="checkPDFReady()" onblur="var v=this.value.trim();if(v&&!uploadedLogoDataUrl)autoFetchLogo(v);" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v&&!uploadedLogoDataUrl)autoFetchLogo(v);}" style="flex:1;min-width:140px">
+    <input class="gen-input" id="mg-n-roi" placeholder="Company name (required)" oninput="checkPDFReady()" style="flex:1;min-width:140px">
+    <input class="gen-input" id="mg-website-url" placeholder="Website URL (e.g. draftkings.com)" oninput="checkPDFReady()" onblur="var v=this.value.trim();if(v&&!uploadedLogoDataUrl)autoFetchLogo(v);" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v&&!uploadedLogoDataUrl)autoFetchLogo(v);}" style="flex:1;min-width:140px">
   </div>
-  <div id="logo-drop-zone" class="logo-drop-zone" onclick="this.closest('.brand-fields').querySelector('#logo-upload').click()" ondragover="logoDragOver(event)" ondragleave="logoDragLeave(event)" ondrop="logoDrop(event)">
-    <img id="logo-preview-img" class="logo-preview" style="display:none">
-    <div id="drop-placeholder" style="pointer-events:none">
+  <div id="mg-logo-drop-zone" class="logo-drop-zone" onclick="this.closest('.brand-fields').querySelector('#mg-logo-upload').click()" ondragover="logoDragOver(event)" ondragleave="logoDragLeave(event)" ondrop="logoDrop(event)">
+    <img id="mg-logo-preview-img" class="logo-preview" style="display:none">
+    <div id="mg-drop-placeholder" style="pointer-events:none">
       <div class="drop-icon">&#128444;&#65039;</div>
       <div class="drop-label"><strong>Drop logo here</strong> &middot; click to browse &middot; or Ctrl+V to paste screenshot</div>
       <div class="drop-sub">PNG, JPG, SVG, WebP accepted</div>
@@ -548,12 +548,12 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
   </div>
   <div style="font-size:11px;color:#6b6b7a;margin-bottom:8px">💡 Logo auto-detects when you enter a website URL — or drop/paste one manually below</div>
   <div class="logo-url-row">
-    <input class="logo-url-input" id="logo-url-input" placeholder="Or paste image URL (https://...)" onkeydown="if(event.key==='Enter')loadLogoFromUrl()">
+    <input class="logo-url-input" id="mg-logo-url-input" placeholder="Or paste image URL (https://...)" onkeydown="if(event.key==='Enter')loadLogoFromUrl()">
     <button class="logo-url-btn" onclick="loadLogoFromUrl()">Load URL</button>
   </div>
-  <input type="file" id="logo-upload" accept="image/*" style="display:none" onchange="handleLogoUpload(this)">
-  <span id="logo-status" style="font-size:11px;display:block;margin-bottom:8px"></span>
-  <div id="card-type-row" style="margin-bottom:10px">
+  <input type="file" id="mg-logo-upload" accept="image/*" style="display:none" onchange="handleLogoUpload(this)">
+  <span id="mg-logo-status" style="font-size:11px;display:block;margin-bottom:8px"></span>
+  <div id="mg-card-type-row" style="margin-bottom:10px">
     <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px">Card type — what to generate</div>
     <div class="pf-radio-group">
       <button class="pf-radio on" data-ct="core" onclick="setCardType('core')">Core product only</button>
@@ -564,19 +564,19 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
   <div class="gen-row">
     <button class="gen-btn" onclick="UNIFIEDGEN()">Generate one-pager</button>
     <button class="gen-btn2" onclick="UNIFIEDCPH()">Copy HTML</button>
-    <button class="gen-btn2" id="pdf-btn" onclick="UNIFIEDPDF()" disabled style="opacity:0.4;cursor:not-allowed">&#128196; PDF Leave-Behind</button>
+    <button class="gen-btn2" id="mg-pdf-btn" onclick="UNIFIEDPDF()" disabled style="opacity:0.4;cursor:not-allowed">&#128196; PDF Leave-Behind</button>
     <button class="gen-btn3" onclick="copyEmailLeaveBehind()">Copy email</button>
     <button class="gen-btn3" onclick="copyShareableLink()">Copy share link</button>
     <button class="gen-btn3" onclick="downloadOGImage()">OG image</button>
   </div>
-  <div id="pdf-validation-msg" style="font-size:11px;color:#F59E0B;margin-top:8px;display:none">&#9888; Enter company name, website URL, and add their logo to unlock the PDF.</div>
+  <div id="mg-pdf-validation-msg" style="font-size:11px;color:#F59E0B;margin-top:8px;display:none">&#9888; Enter company name, website URL, and add their logo to unlock the PDF.</div>
 </div>
 </div>
-<div class="card-wrap" id="w-roi"><div class="card-actions"><button class="dl-btn" onclick="DL('roi')">Download image</button></div><div id="o-roi"></div></div>
+<div class="card-wrap" id="mg-w-roi"><div class="card-actions"><button class="dl-btn" onclick="DL('roi')">Download image</button></div><div id="mg-o-roi"></div></div>
 
 </div>
 
-<div id="analytics" style="display:none">
+<div id="analytics" role="tabpanel" aria-labelledby="tab-analytics" style="display:none">
 <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">How the ROI is captured — math visualization, scenario sensitivity, discount impact, and objection handling. Numbers below reflect the inputs on the ROI calculator tab and update live.</p>
 
 <div class="section-label" style="margin-top:8px"><span class="dot" style="background:var(--purple)"></span>Visitor funnel</div><div class="flow" id="funnel"></div>
@@ -805,7 +805,7 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 </div>
 
 <!-- ════════ TRACKMAN PARTNER TAB ════════ -->
-<div id="gamification" style="display:none">
+<div id="gamification" role="tabpanel" aria-labelledby="tab-gamification" style="display:none">
   <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:14px;margin-bottom:20px;font-size:13px;line-height:1.6;color:var(--text2)">
     <strong style="color:var(--green)">Gamification license</strong> — same offering &amp; pricing for Core and Mini Games; pick the agreement type, build the package, set the discount, and generate the signature-ready agreement.
   </div>
@@ -914,7 +914,7 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
   </div>
 </div>
 
-<div id="trackman" style="display:none">
+<div id="trackman" role="tabpanel" aria-labelledby="tab-trackman" style="display:none">
 
   <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:14px;margin-bottom:20px;font-size:13px;line-height:1.6;color:var(--text2)">
     <strong style="color:var(--green)">⚡ Trackman Partner bundle</strong> — multi-year bundles include both core products (A &amp; B) at a 50% Trackman partnership discount. Add all three add-ons for a flat +$100/bay/month. Implementation is $5,000 on every order, discountable at your discretion.
@@ -1036,7 +1036,7 @@ var SCNS={cons:{opt:5,lift:10},avg:{opt:20,lift:12.5},case:{opt:40,lift:15}};
 var sel=0,curScn='',V={vis:1100,arpu:45,fee:2500,opt:10,lift:15,pfee:2500,loc:1,loy:0,mglic:0};
 function $(id){return document.getElementById(id)}
 function activePane(){var ids=['roi','minigame','analytics','proposal','trackman','gamification'],i,p;for(i=0;i<ids.length;i++){p=document.getElementById(ids[i]);if(p&&getComputedStyle(p).display!=='none')return p;}return document;}
-function $A(id){var p=activePane();return (p.querySelector&&p.querySelector('#'+id))||document.getElementById(id);}
+function $A(id){var p=activePane();if(p.querySelector){var el=p.querySelector('#'+id);if(el)return el;var pid=p.id;if(pid==='minigame'){el=p.querySelector('#mg-'+id);if(el)return el;}}return document.getElementById(id);}
 function F(n){return '$'+Math.round(n).toLocaleString()}
 function fq(n){return n%1===0?''+n:n.toFixed(2)}
 function ap_(){return V.arpu%1===0?'$'+V.arpu:'$'+fq(V.arpu)}
@@ -1085,7 +1085,9 @@ function renderObjections(){
 function S(k){V[k]=+$('s-'+k).value;if(k==='fee')V.pfee=V[k];if(k==='pfee')V.fee=V[k];$('i-'+k).value=V[k];if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function I(k){var raw=$('i-'+k).value;if(raw===''||raw==='-')return;var v=parseFloat(raw);if(isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if(k==='pfee')V.fee=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function discI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if($('i-'+k))$('i-'+k).value=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));checkCaps();U();saveState()}
-function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';['roi','minigame','analytics','proposal','trackman','gamification','brandarcade'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn)btn.classList.add('active');if(id==='trackman')renderTM();if(id==='gamification')renderGM();if(id==='brandarcade')BAinit();U()}
+function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';['roi','minigame','analytics','proposal','trackman','gamification','brandarcade'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');t.setAttribute('aria-selected','false');t.setAttribute('tabindex','-1')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn){btn.classList.add('active');btn.setAttribute('aria-selected','true');btn.setAttribute('tabindex','0')}if(id==='trackman')renderTM();if(id==='gamification')renderGM();if(id==='brandarcade')BAinit();U()}
+// Keyboard navigation for tabs (arrow keys per WAI-ARIA tablist pattern)
+document.addEventListener('keydown',function(e){var tab=e.target;if(!tab||tab.getAttribute('role')!=='tab')return;var tabs=Array.from(tab.parentElement.querySelectorAll('[role=tab]'));var idx=tabs.indexOf(tab),next=-1;if(e.key==='ArrowRight'||e.key==='ArrowDown'){next=(idx+1)%tabs.length}else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){next=(idx-1+tabs.length)%tabs.length}else if(e.key==='Home'){next=0}else if(e.key==='End'){next=tabs.length-1}if(next>=0){e.preventDefault();tabs[next].click();tabs[next].focus()}})
 
 /* ════════ BRAND ARCADE PROMPT BUILDER ════════ */
 var BAready=false,BAassets=[],BAstore='lucra-brand-arcade-v1';
@@ -1307,13 +1309,13 @@ var baseFreq=1.4,newFreq=baseFreq*2.1,extraVisits=newFreq-baseFreq,annRepeatPerU
 $('funnel').innerHTML='<div class="flow-box"><div class="label">Daily visitors</div><div class="val">'+Math.round(vis).toLocaleString()+'</div></div><div class="flow-arrow">\u00d7</div><div class="flow-box"><div class="label">Opt-in rate</div><div class="val" style="color:var(--purple)">'+op+'%</div></div><div class="flow-arrow">=</div><div class="flow-cyan"><div class="label">Daily Lucra users</div><div class="val">'+r.dailyUsers.toLocaleString()+'</div><div class="sub">'+r.moUsers.toLocaleString()+'/mo</div></div>';
 $('arpu-flow').innerHTML='<div class="flow-box"><div class="label">Current ARPU</div><div class="val">'+ap+'</div></div><div class="flow-arrow">\u00d7</div><div class="flow-box"><div class="label">+'+lp+'% lift</div><div class="val" style="color:var(--amber)">+$'+r.arpuLift.toFixed(2)+'</div></div><div class="flow-arrow">=</div><div class="flow-highlight"><div class="label">Lucra ARPU</div><div class="val">$'+r.lucraARPU.toFixed(2)+'</div><div class="sub">Per competing user</div></div>';
 var portfolioMoLift=r.moRev*loc,portfolioNetMo=r.netMo*loc,portfolioAnnNet=r.annROI*loc,portfolioFee=fee*loc,portfolioRoiX=portfolioFee>0?(portfolioMoLift/portfolioFee).toFixed(1):'0';
-$('results').innerHTML='<div class="stat"><div class="label">Monthly lift / location</div><div class="val green">'+F(r.moRev)+'</div><div class="sub">'+r.dailyUsers+' \u00d7 $'+r.arpuLift.toFixed(2)+' \u00d7 30d</div></div><div class="stat"><div class="label">Net monthly / location</div><div class="val '+(r.netMo>0?'green':'red')+'">'+F(r.netMo)+'</div><div class="sub">'+r.roiX+'x return</div></div><div class="stat"><div class="label">Annual net / location</div><div class="val '+(r.annROI>0?'green':'red')+'">'+F(r.annROI)+'</div></div>';
+$('results').innerHTML='<div class="stat"><div class="label">Monthly lift / location</div><div class="val green">'+F(r.moRev)+'</div><div class="sub">'+r.dailyUsers+' \u00d7 $'+r.arpuLift.toFixed(2)+' \u00d7 30d</div></div><div class="stat"><div class="label">Net monthly / location</div><div class="val '+(r.netMo>0?'green':'red')+'">'+F(r.netMo)+'</div><div class="sub">'+r.roiX+'x return</div></div><div class="stat"><div class="label">Annual net / location</div><div class="val '+(r.annROI>0?'green':'red')+'">'+F(r.annROI)+'</div><div class="sub" style="color:var(--text3);font-style:italic">Modeled estimate &middot; 30d/mo avg</div></div>';
 
 $('deal-size').innerHTML='<div class="section-label"><span class="dot" style="background:var(--blue)"></span>Portfolio impact '+(loc>1?'('+loc+' locations)':'(all locations)')+'</div><div class="grid grid4" style="margin-bottom:20px"><div class="stat"><div class="label">Portfolio monthly lift</div><div class="val green">'+F(portfolioMoLift)+'</div><div class="sub">'+F(r.moRev)+' × '+loc+' loc'+(loc===1?'':'s')+'</div></div><div class="stat"><div class="label">Portfolio net monthly</div><div class="val '+(portfolioNetMo>0?'green':'red')+'">'+F(portfolioNetMo)+'</div><div class="sub">after '+F(portfolioFee)+' monthly Lucra cost</div></div><div class="stat"><div class="label">Portfolio annual net ROI</div><div class="val '+(portfolioAnnNet>0?'green':'red')+'">'+F(portfolioAnnNet)+'</div><div class="sub">across all modeled locations</div></div><div class="stat"><div class="label">Portfolio ROI multiple</div><div class="val '+(parseFloat(portfolioRoiX)>=1?'green':'red')+'">'+portfolioRoiX+'x</div><div class="sub">same unit economics, scaled footprint</div></div></div>';
 
 $('breakeven').innerHTML='<div class="grid grid4" style="margin-bottom:20px"><div class="stat"><div class="label">Min daily visitors</div><div class="val amber">'+(r.brkVis===Infinity?'\u2014':r.brkVis)+'</div><div class="sub">You have '+vis.toLocaleString()+'</div></div><div class="stat"><div class="label">Min Lucra users</div><div class="val cyan">'+(r.brkUsers===Infinity?'\u2014':r.brkUsers)+'</div><div class="sub">At '+op+'% opt-in</div></div><div class="stat"><div class="label">ARPU lift/user</div><div class="val">$'+r.arpuLift.toFixed(2)+'</div><div class="sub">'+lp+'% on '+ap+'</div></div><div class="stat"><div class="label">Payback period</div><div class="val green">'+(r.paybackDays===Infinity?'\u2014':r.paybackDays+' days')+'</div><div class="sub">Lucra pays for itself</div></div></div>';
 
-$('repeat-visit').innerHTML='<div class="rv-section"><div class="section-label" style="margin-bottom:12px"><span class="dot" style="background:var(--purple)"></span>Repeat visit multiplier (the hidden ROI)</div><div class="grid grid4"><div class="stat"><div class="label">Current frequency</div><div class="val">'+baseFreq+'x/yr</div><div class="sub">D&B benchmark</div></div><div class="stat"><div class="label">With Lucra</div><div class="val purple">'+newFreq.toFixed(1)+'x/yr</div><div class="sub">+110% lift</div></div><div class="stat"><div class="label">Extra visits/yr</div><div class="val purple">+'+extraVisits.toFixed(1)+'</div><div class="sub">Per customer</div></div><div class="stat"><div class="label">Rev/customer/yr</div><div class="val green">'+F(annRepeatPerUser)+'</div><div class="sub">Repeat visits alone</div></div></div><div style="font-size:12px;color:var(--text3);margin-top:10px;text-align:center">~'+annLucraCustomers.toLocaleString()+' unique Lucra customers/yr \u00d7 '+F(annRepeatPerUser)+' = <strong style="color:var(--green)">'+F(annRepeatPerUser*annLucraCustomers)+'/yr</strong> in repeat visit revenue (not included above)</div></div>';
+$('repeat-visit').innerHTML='<div class="rv-section"><div class="section-label" style="margin-bottom:12px"><span class="dot" style="background:var(--purple)"></span>Repeat visit multiplier (the hidden ROI)</div><div class="grid grid4"><div class="stat"><div class="label">Current frequency</div><div class="val">'+baseFreq+'x/yr</div><div class="sub" style="color:var(--amber)">Lucra internal estimate</div></div><div class="stat"><div class="label">With Lucra</div><div class="val purple">'+newFreq.toFixed(1)+'x/yr</div><div class="sub" style="color:var(--amber)">+110% lift &middot; internal estimate</div></div><div class="stat"><div class="label">Extra visits/yr</div><div class="val purple">+'+extraVisits.toFixed(1)+'</div><div class="sub">Per customer</div></div><div class="stat"><div class="label">Rev/customer/yr</div><div class="val green">'+F(annRepeatPerUser)+'</div><div class="sub">Repeat visits alone</div></div></div><div style="font-size:12px;color:var(--text3);margin-top:10px;text-align:center">~'+annLucraCustomers.toLocaleString()+' unique Lucra customers/yr \u00d7 '+F(annRepeatPerUser)+' = <strong style="color:var(--green)">'+F(annRepeatPerUser*annLucraCustomers)+'/yr</strong> in repeat visit revenue (not included above)</div><div style="font-size:10px;color:var(--amber);margin-top:8px;text-align:center;font-style:italic">Modeled as flat monthly average. Actual results vary seasonally. Assumptions: baseFreq 1.4x/yr, +110% repeat lift &mdash; Lucra internal estimates, unverified.</div></div>';
 
 if(loy>0){var lucCost=fee*12,savings=loy-lucCost;$('loyalty-compare').innerHTML='<div class="section-label"><span class="dot" style="background:var(--pink)"></span>Lucra vs current loyalty spend</div><div class="grid grid3" style="margin-bottom:20px"><div class="stat"><div class="label">Current annual spend</div><div class="val red">'+F(loy)+'</div><div class="sub">1-3% adoption</div></div><div class="stat"><div class="label">Lucra annual cost</div><div class="val green">'+F(lucCost)+'</div><div class="sub">'+op+'% adoption</div></div><div class="stat"><div class="label">'+(savings>0?'Savings':'Additional cost')+'</div><div class="val '+(savings>0?'green':'amber')+'">'+F(Math.abs(savings))+'</div><div class="sub">'+(savings>0?'Cheaper + higher adoption':'But '+Math.round(V.opt/1.5)+'x adoption')+'</div></div></div>'}else $('loyalty-compare').innerHTML='';
 
