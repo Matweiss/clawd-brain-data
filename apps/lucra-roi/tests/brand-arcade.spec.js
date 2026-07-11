@@ -9,7 +9,14 @@ test('Brand Arcade prompt builder creates a ChatGPT handoff ZIP', async ({ page 
   page.on('pageerror', err => errors.push(err.message));
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'Brand Arcade' }).click();
+  // Tab buttons have role="tab" (canonical) or role="button" (fallback)
+  const tab = page.getByRole('tab', { name: 'Brand Arcade' });
+  const btn = page.getByRole('button', { name: 'Brand Arcade' });
+  if (await tab.count() > 0) {
+    await tab.click();
+  } else {
+    await btn.click();
+  }
 
   await expect(page.getByRole('heading', { name: 'Brand Arcade Prompt Builder' })).toBeVisible();
   await expect(page.locator('img[alt="Runaway reference screenshot"]')).toBeVisible();
