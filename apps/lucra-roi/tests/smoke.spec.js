@@ -127,6 +127,37 @@ test('Core ROI tab has visible inputs and computes values', async ({ page }) => 
   expect(errors).toEqual([]);
 });
 
+test('typed client restores deal state and renders financial intelligence', async ({ page }) => {
+  await page.goto('/');
+  await expect.poll(() => page.locator('html').getAttribute('data-typed-client')).toBe('ready');
+  await expect(page.locator('#financial-intelligence')).toBeVisible();
+  await expect(page.locator('[data-cash-chart] .cash-month')).toHaveCount(12);
+  await expect(page.locator('[data-sensitivity] .sensitivity-row')).toHaveCount(4);
+
+  await page.locator('#seasonality-profile').selectOption('venue');
+  await page.locator('#upfront-investment').fill('50000');
+  await expect(page.locator('[data-year-net]')).not.toHaveText('—');
+
+  await page.locator('#i-vis').fill('1780');
+  await page.waitForTimeout(250);
+  await page.reload();
+  await expect(page.locator('#i-vis')).toHaveValue('1780');
+});
+
+test('scenario desk saves, clones, compares, and loads deal assumptions', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#scenario-name').fill('Base case');
+  await page.locator('[data-save-scenario]').click();
+  await expect(page.locator('.scenario-row')).toHaveCount(1);
+  await page.locator('.scenario-row [data-clone]').click();
+  await expect(page.locator('.scenario-row')).toHaveCount(2);
+  await page.locator('.scenario-row [data-compare]').nth(0).check();
+  await page.locator('.scenario-row [data-compare]').nth(1).check();
+  await expect(page.locator('[data-scenario-compare] > div')).toHaveCount(2);
+  await page.locator('#prospect-mode').check();
+  await expect(page.locator('body')).toHaveClass(/prospect-mode/);
+});
+
 test('guided archetypes prefill Core ROI without hiding assumptions', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
@@ -197,6 +228,28 @@ test('Mini Game ROI tab renders inputs', async ({ page }) => {
   await expect(page.locator('#mgi-tau')).toBeVisible();
 
   expect(errors).toEqual([]);
+});
+
+test('Mini Game ROI commercial and experience modes stay financially consistent', async ({ page }) => {
+  await page.goto('/');
+  await tabButton(page, 'Mini Game ROI').click();
+
+  await page.locator('[data-mg-pricing="revshare"]').click();
+  await expect(page.locator('#mgi-license')).toBeDisabled();
+  await expect(page.locator('#mgi-license')).toHaveValue('0');
+  await expect(page.locator('#mg-mode-note')).toContainText('rake share only');
+
+  await page.locator('[data-mg-experience="f2p"]').click();
+  await expect(page.locator('[data-mg-pricing="license"]')).toHaveClass(/on/);
+  await expect(page.locator('#mgi-wager')).toBeDisabled();
+  await expect(page.locator('#mgi-rake')).toHaveValue('0');
+  await expect(page.locator('#mgi-rs')).toHaveValue('0');
+  await expect(page.locator('#mg-mode-note')).toContainText('no wager or rake');
+
+  await page.locator('[data-mg-experience="cash"]').click();
+  await expect(page.locator('#mgi-rewardValue')).toBeDisabled();
+  await expect(page.locator('#mgi-rewardValue')).toHaveValue('0');
+  await expect(page.locator('#mg-revenue')).toContainText('$0');
 });
 
 test('Investment Plans tab renders', async ({ page }) => {

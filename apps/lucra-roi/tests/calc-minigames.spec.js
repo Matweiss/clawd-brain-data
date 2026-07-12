@@ -70,4 +70,33 @@ describe('Mini Games ROI — MGcalc()', () => {
     expect(r.grossBrandMo).toBe(r.monthlyRake);
     expect(r.netBrandMo).toBe(r.monthlyRake - r.lucraMo);
   });
+
+  it('supports revenue-share-only cash games with no license or reward value', () => {
+    const r = MGcalc(100000, 10, 20, 2, 10, 25, 0, {
+      rewardGames: 0, win: 0, redeem: 0, rewardValue: 0
+    });
+    expect(r.licenseMo).toBe(0);
+    expect(r.revshareMo).toBe(10000);
+    expect(r.rewardMo).toBe(0);
+    expect(r.lucraMo).toBe(r.revshareMo);
+  });
+
+  it('supports F2P rewards-only games with no wager, rake, or revenue share', () => {
+    const r = MGcalc(100000, 10, 20, 0, 0, 0, 15000, {
+      rewardGames: 8, win: 50, redeem: 25, rewardValue: 8
+    });
+    expect(r.monthlyWager).toBe(0);
+    expect(r.monthlyRake).toBe(0);
+    expect(r.revshareMo).toBe(0);
+    expect(r.rewardMo).toBe(80000);
+    expect(r.lucraMo).toBe(15000);
+  });
+
+  it('supports cash-only games with reward value fully excluded', () => {
+    const r = MGcalc(100000, 10, 20, 2, 10, 25, 0, {
+      rewardGames: 0, win: 0, redeem: 0, rewardValue: 0
+    });
+    expect(r.rewardMo).toBe(0);
+    expect(r.grossBrandMo).toBe(r.monthlyRake);
+  });
 });
