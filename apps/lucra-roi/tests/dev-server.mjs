@@ -15,7 +15,7 @@ const contentTypes = {
 
 http.createServer((req, res) => {
   const urlPath = new URL(req.url, `http://${req.headers.host}`).pathname;
-  const relative = urlPath === '/' ? 'api/app.html' : urlPath.replace(/^\//, '');
+  const relative = urlPath === '/' ? 'api/app.html' : urlPath === '/assets/app.js' ? 'dist/app.js' : urlPath.replace(/^\//, '');
   const filePath = path.resolve(root, relative);
   if (!filePath.startsWith(root + path.sep) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
     res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });

@@ -127,6 +127,23 @@ test('Core ROI tab has visible inputs and computes values', async ({ page }) => 
   expect(errors).toEqual([]);
 });
 
+test('typed client restores deal state and renders financial intelligence', async ({ page }) => {
+  await page.goto('/');
+  await expect.poll(() => page.locator('html').getAttribute('data-typed-client')).toBe('ready');
+  await expect(page.locator('#financial-intelligence')).toBeVisible();
+  await expect(page.locator('[data-cash-chart] .cash-month')).toHaveCount(12);
+  await expect(page.locator('[data-sensitivity] .sensitivity-row')).toHaveCount(4);
+
+  await page.locator('#seasonality-profile').selectOption('venue');
+  await page.locator('#upfront-investment').fill('50000');
+  await expect(page.locator('[data-year-net]')).not.toHaveText('—');
+
+  await page.locator('#i-vis').fill('1780');
+  await page.waitForTimeout(250);
+  await page.reload();
+  await expect(page.locator('#i-vis')).toHaveValue('1780');
+});
+
 test('guided archetypes prefill Core ROI without hiding assumptions', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
