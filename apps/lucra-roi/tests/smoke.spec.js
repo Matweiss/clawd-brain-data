@@ -144,6 +144,20 @@ test('typed client restores deal state and renders financial intelligence', asyn
   await expect(page.locator('#i-vis')).toHaveValue('1780');
 });
 
+test('scenario desk saves, clones, compares, and loads deal assumptions', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#scenario-name').fill('Base case');
+  await page.locator('[data-save-scenario]').click();
+  await expect(page.locator('.scenario-row')).toHaveCount(1);
+  await page.locator('.scenario-row [data-clone]').click();
+  await expect(page.locator('.scenario-row')).toHaveCount(2);
+  await page.locator('.scenario-row [data-compare]').nth(0).check();
+  await page.locator('.scenario-row [data-compare]').nth(1).check();
+  await expect(page.locator('[data-scenario-compare] > div')).toHaveCount(2);
+  await page.locator('#prospect-mode').check();
+  await expect(page.locator('body')).toHaveClass(/prospect-mode/);
+});
+
 test('guided archetypes prefill Core ROI without hiding assumptions', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));

@@ -1,5 +1,6 @@
 import { installDealStatePersistence } from './state';
 import { buildCashFlow, buildSensitivity, type CoreInputs, type SeasonalityProfile } from './financial';
+import { ScenarioStore, type ScenarioRecord } from './scenarios';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
@@ -57,6 +58,48 @@ function installFinancialIntelligence(): void {
   renderFinancialIntelligence();
 }
 
+function scenarioSummary(record: ScenarioRecord): string {
+  const value = (id: string, fallback = '—') => String(record.state.fields[id] ?? fallback);
+  return `${value('i-vis')} visitors · $${value('i-arpu')} ARPU · ${value('i-opt')}% opt-in · ${value('i-lift')}% lift`;
+}
+
+function safeText(value: string): string { return value.replace(/[<>&"]/g, ''); }
+
+function installScenarioWorkspace(): void {
+  const mount = document.getElementById('scenario-workspace');
+  if (!mount) return;
+  const store = new ScenarioStore();
+  const list = mount.querySelector<HTMLElement>('[data-scenario-list]')!;
+  const compare = mount.querySelector<HTMLElement>('[data-scenario-compare]')!;
+  const name = mount.querySelector<HTMLInputElement>('#scenario-name')!;
+  const selected = new Set<string>();
+  const render = (): void => {
+    const records = store.list();
+    list.innerHTML = records.length ? records.map((record) => `<article class="scenario-row" data-id="${record.id}"><label><input type="checkbox" data-compare ${selected.has(record.id) ? 'checked' : ''}><span><strong>${safeText(record.name)}</strong><small>${scenarioSummary(record)}</small></span></label><div><button type="button" data-load>Load</button><button type="button" data-clone>Clone</button><button type="button" data-delete aria-label="Delete ${safeText(record.name)}">Delete</button></div></article>`).join('') : '<p class="scenario-empty">Save the current deal to create a comparison set.</p>';
+    const compared = records.filter((record) => selected.has(record.id)).slice(0, 3);
+    compare.innerHTML = compared.length > 1 ? compared.map((record) => `<div><strong>${safeText(record.name)}</strong><span>${scenarioSummary(record)}</span></div>`).join('') : '<p>Select two or three saved scenarios to compare their assumptions.</p>';
+  };
+  mount.querySelector<HTMLButtonElement>('[data-save-scenario]')!.addEventListener('click', () => { store.save(name.value); name.value = ''; render(); });
+  mount.querySelector<HTMLInputElement>('#prospect-mode')!.addEventListener('change', (event) => document.body.classList.toggle('prospect-mode', (event.currentTarget as HTMLInputElement).checked));
+  list.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    const row = target.closest<HTMLElement>('[data-id]');
+    if (!row) return;
+    if (target.closest('[data-load]')) store.load(row.dataset.id!);
+    if (target.closest('[data-clone]')) store.clone(row.dataset.id!);
+    if (target.closest('[data-delete]')) { store.remove(row.dataset.id!); selected.delete(row.dataset.id!); }
+    renderFinancialIntelligence(); render();
+  });
+  list.addEventListener('change', (event) => {
+    const checkbox = (event.target as HTMLElement).closest<HTMLInputElement>('[data-compare]');
+    const row = checkbox?.closest<HTMLElement>('[data-id]');
+    if (!checkbox || !row) return;
+    if (checkbox.checked && selected.size < 3) selected.add(row.dataset.id!); else selected.delete(row.dataset.id!);
+    render();
+  });
+  render();
+}
+
 function announceReady(): void {
   document.documentElement.dataset.typedClient = 'ready';
   document.dispatchEvent(new CustomEvent('lucra:typed-client-ready'));
@@ -65,6 +108,7 @@ function announceReady(): void {
 function boot(): void {
   installDealStatePersistence();
   installFinancialIntelligence();
+  installScenarioWorkspace();
   announceReady();
 }
 
