@@ -198,6 +198,14 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
 .pf-radio{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text3);cursor:pointer;font-size:12px;font-family:var(--font);transition:all 0.15s}
 .pf-radio.on{border-color:var(--green);background:var(--green-bg);color:var(--green)}
 .pf-radio:hover:not(.on){border-color:var(--text3);color:var(--text2)}
+.mg-models{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0 18px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.mg-model-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.mg-model-help{font-size:11px;color:var(--text3);line-height:1.45;margin-top:7px;max-width:62ch}
+.mg-mode-note{grid-column:1/-1;margin-top:2px;padding:10px 12px;border-radius:8px;background:var(--green-bg);border:1px solid var(--green-border);color:var(--text2);font-size:12px;line-height:1.45}
+.mg-mode-note strong{color:var(--green)}
+.input-group.mg-disabled{opacity:.48}
+.input-group.mg-disabled input{pointer-events:none}
+@media(max-width:720px){.mg-models{grid-template-columns:1fr}.mg-mode-note{grid-column:auto}}
 .pf-checkbox{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;padding:8px 0}
 .pf-checkbox input{width:16px;height:16px;accent-color:var(--green)}
 .pf-totals{background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
@@ -641,18 +649,40 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 <button class="scn" data-s="case" onclick="MGSC('case')">Case study</button>
 </div>
 
+<div class="mg-models" aria-label="Mini games deal structure">
+  <div>
+    <div class="mg-model-title">How Lucra gets paid</div>
+    <div class="pf-radio-group" id="mg-pricing-group" role="group" aria-label="Mini games commercial model">
+      <button class="pf-radio on" data-mg-pricing="hybrid" onclick="MGsetPricing('hybrid')">License + rev share</button>
+      <button class="pf-radio" data-mg-pricing="revshare" onclick="MGsetPricing('revshare')">Revenue share only</button>
+      <button class="pf-radio" data-mg-pricing="license" onclick="MGsetPricing('license')">License only</button>
+    </div>
+    <div class="mg-model-help">Pricing is separate from game type. Revenue share only removes the fixed monthly license.</div>
+  </div>
+  <div>
+    <div class="mg-model-title">What players experience</div>
+    <div class="pf-radio-group" id="mg-experience-group" role="group" aria-label="Mini games experience model">
+      <button class="pf-radio on" data-mg-experience="hybrid" onclick="MGsetExperience('hybrid')">Cash + rewards</button>
+      <button class="pf-radio" data-mg-experience="f2p" onclick="MGsetExperience('f2p')">F2P rewards only</button>
+      <button class="pf-radio" data-mg-experience="cash" onclick="MGsetExperience('cash')">Cash only</button>
+    </div>
+    <div class="mg-model-help">F2P removes wagering and rake. Cash only removes reward games and reward value.</div>
+  </div>
+  <div class="mg-mode-note" id="mg-mode-note" aria-live="polite"></div>
+</div>
+
 <div class="inputs">
 <div class="input-group"><div class="input-head"><span class="input-label">Total addressable users</span><input class="vi" id="mgi-tau" type="number" min="0" step="1000" oninput="MGI('tau')" aria-label="Total addressable users"></div><input type="range" min="10000" max="50000000" step="10000" value="1000000" id="mgs-tau" oninput="MGS('tau')" aria-label="Total addressable users slider"><div class="sn">App users, ambassadors, or community size</div></div>
 <div class="input-group"><div class="input-head"><span class="input-label">Engagement rate</span><div class="input-val"><input class="vi" id="mgi-eng" type="number" min="0" step="0.5" oninput="MGI('eng')" aria-label="Engagement rate"><span class="vp">%</span></div></div><input type="range" min="1" max="60" step="1" value="10" id="mgs-eng" oninput="MGS('eng')"><div class="sn">% of users actively playing mini games</div></div>
 <div class="input-group"><div class="input-head"><span class="input-label">Plays / user / month</span><input class="vi" id="mgi-plays" type="number" min="0" step="1" oninput="MGI('plays')" aria-label="Plays per user per month"></div><input type="range" min="1" max="200" step="1" value="20" id="mgs-plays" oninput="MGS('plays')" aria-label="Plays slider"><div class="sn">Frequency among engaged players</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Avg wager / play</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-wager" type="number" min="0" step="0.25" oninput="MGI('wager')" aria-label="Average wager per play"></div></div><input type="range" min="0.25" max="20" step="0.25" value="2" id="mgs-wager" oninput="MGS('wager')"><div class="sn">Real-money wager amount per play</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Rake rate</span><div class="input-val"><input class="vi" id="mgi-rake" type="number" min="0" max="50" step="0.5" oninput="MGI('rake')" aria-label="Rake rate"><span class="vp">%</span></div></div><input type="range" min="2" max="30" step="0.5" value="10" id="mgs-rake" oninput="MGS('rake')"><div class="sn">% of wagered $ created as paid-game revenue / rake (industry: 5–15%)</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Lucra rev share / platform cost</span><div class="input-val"><input class="vi" id="mgi-rs" type="number" min="0" max="100" step="1" oninput="MGI('rs')" aria-label="Lucra revenue share"><span class="vp">%</span></div></div><input type="range" min="0" max="50" step="1" value="25" id="mgs-rs" oninput="MGS('rs')"><div class="sn">% of paid-game rake paid to Lucra; set 0% for license-only deals</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Monthly license fee (mini games)</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-license" type="number" min="0" max="30000" step="500" oninput="MGI('license')" aria-label="Monthly license fee"></div></div><input type="range" min="0" max="30000" step="500" value="0" id="mgs-license" oninput="MGS('license')"><div class="sn">Platform cost deducted from brand ROI</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Reward games / user / month</span><input class="vi" id="mgi-rewardGames" type="number" min="0" step="1" oninput="MGI('rewardGames')"></div><input type="range" min="0" max="50" step="1" value="8" id="mgs-rewardGames" oninput="MGS('rewardGames')"><div class="sn">Free-to-play reward games among engaged users</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Reward win rate</span><div class="input-val"><input class="vi" id="mgi-win" type="number" min="0" max="100" step="1" oninput="MGI('win')"><span class="vp">%</span></div></div><input type="range" min="0" max="100" step="1" value="50" id="mgs-win" oninput="MGS('win')"><div class="sn">% of reward games that create a reward opportunity</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Reward redemption rate</span><div class="input-val"><input class="vi" id="mgi-redeem" type="number" min="0" max="100" step="1" oninput="MGI('redeem')"><span class="vp">%</span></div></div><input type="range" min="0" max="100" step="1" value="25" id="mgs-redeem" oninput="MGS('redeem')"><div class="sn">% of wins redeemed into visits/purchases</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Value per redeemed visit</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-rewardValue" type="number" min="0" step="0.5" oninput="MGI('rewardValue')"></div></div><input type="range" min="0" max="50" step="0.5" value="8" id="mgs-rewardValue" oninput="MGS('rewardValue')"><div class="sn">Incremental venue/brand value per redemption</div></div>
+<div class="input-group" data-mg-field="cash"><div class="input-head"><span class="input-label">Avg wager / play</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-wager" type="number" min="0" step="0.25" oninput="MGI('wager')" aria-label="Average wager per play"></div></div><input type="range" min="0" max="20" step="0.25" value="2" id="mgs-wager" oninput="MGS('wager')"><div class="sn">Real-money wager amount per play</div></div>
+<div class="input-group" data-mg-field="cash"><div class="input-head"><span class="input-label">Rake rate</span><div class="input-val"><input class="vi" id="mgi-rake" type="number" min="0" max="50" step="0.5" oninput="MGI('rake')" aria-label="Rake rate"><span class="vp">%</span></div></div><input type="range" min="0" max="30" step="0.5" value="10" id="mgs-rake" oninput="MGS('rake')"><div class="sn">% of wagered $ created as paid-game revenue / rake (industry: 5–15%)</div></div>
+<div class="input-group" data-mg-field="revshare"><div class="input-head"><span class="input-label">Lucra rev share / platform cost</span><div class="input-val"><input class="vi" id="mgi-rs" type="number" min="0" max="100" step="1" oninput="MGI('rs')" aria-label="Lucra revenue share"><span class="vp">%</span></div></div><input type="range" min="0" max="50" step="1" value="25" id="mgs-rs" oninput="MGS('rs')"><div class="sn">% of paid-game rake paid to Lucra</div></div>
+<div class="input-group" data-mg-field="license"><div class="input-head"><span class="input-label">Monthly license fee (mini games)</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-license" type="number" min="0" max="30000" step="500" oninput="MGI('license')" aria-label="Monthly license fee"></div></div><input type="range" min="0" max="30000" step="500" value="0" id="mgs-license" oninput="MGS('license')"><div class="sn">Fixed platform cost deducted from brand ROI</div></div>
+<div class="input-group" data-mg-field="rewards"><div class="input-head"><span class="input-label">Reward games / user / month</span><input class="vi" id="mgi-rewardGames" type="number" min="0" step="1" oninput="MGI('rewardGames')"></div><input type="range" min="0" max="50" step="1" value="8" id="mgs-rewardGames" oninput="MGS('rewardGames')"><div class="sn">Free-to-play reward games among engaged users</div></div>
+<div class="input-group" data-mg-field="rewards"><div class="input-head"><span class="input-label">Reward win rate</span><div class="input-val"><input class="vi" id="mgi-win" type="number" min="0" max="100" step="1" oninput="MGI('win')"><span class="vp">%</span></div></div><input type="range" min="0" max="100" step="1" value="50" id="mgs-win" oninput="MGS('win')"><div class="sn">% of reward games that create a reward opportunity</div></div>
+<div class="input-group" data-mg-field="rewards"><div class="input-head"><span class="input-label">Reward redemption rate</span><div class="input-val"><input class="vi" id="mgi-redeem" type="number" min="0" max="100" step="1" oninput="MGI('redeem')"><span class="vp">%</span></div></div><input type="range" min="0" max="100" step="1" value="25" id="mgs-redeem" oninput="MGS('redeem')"><div class="sn">% of wins redeemed into visits/purchases</div></div>
+<div class="input-group" data-mg-field="rewards"><div class="input-head"><span class="input-label">Value per redeemed visit</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-rewardValue" type="number" min="0" step="0.5" oninput="MGI('rewardValue')"></div></div><input type="range" min="0" max="50" step="0.5" value="8" id="mgs-rewardValue" oninput="MGS('rewardValue')"><div class="sn">Incremental venue/brand value per redemption</div></div>
 </div>
 
 <div class="section-label" style="margin-top:18px"><span class="dot" style="background:var(--green)"></span>Mini games — engaged players & monthly volume</div>
@@ -1818,16 +1848,55 @@ var MGP=[
   {n:'Custom',tau:1000000,eng:10,plays:20,wager:2,rake:10,rs:25,license:0,rewardGames:8,win:50,redeem:25,rewardValue:8}
 ];
 var MGSCN={cons:{eng:5,plays:10,rake:5,rewardGames:8,win:50,redeem:25,rewardValue:8},avg:{eng:10,plays:20,rake:10,rewardGames:8,win:50,redeem:25,rewardValue:8},case:{eng:20,plays:40,rake:15,rewardGames:12,win:50,redeem:30,rewardValue:10}};
-var MG={tau:1000000,eng:10,plays:20,wager:2,rake:10,rs:25,license:0,rewardGames:8,win:50,redeem:25,rewardValue:8};
+var MG={tau:1000000,eng:10,plays:20,wager:2,rake:10,rs:25,license:0,rewardGames:8,win:50,redeem:25,rewardValue:8,pricing:'hybrid',experience:'hybrid'};
+var MGlast={wager:2,rake:10,rs:25,license:15000,rewardGames:8,win:50,redeem:25,rewardValue:8};
 var mgSel=5,mgScn='';
 
 function MGinitP(){$('mg-presets').innerHTML=MGP.map(function(p,i){return '<button class="preset'+(i===mgSel?' on':'')+'" onclick="MGpk('+i+')">'+p.n+'</button>'}).join('')}
-function MGpk(i){mgSel=i;var p=MGP[i];MG.tau=p.tau;MG.eng=p.eng;MG.plays=p.plays;MG.wager=p.wager;MG.rake=p.rake;MG.rs=p.rs;MG.license=p.license||0;MG.rewardGames=p.rewardGames||8;MG.win=p.win||50;MG.redeem=p.redeem||25;MG.rewardValue=p.rewardValue||8;MGsync();MGinitP();MGu()}
+function MGpk(i){mgSel=i;var p=MGP[i];MG.tau=p.tau;MG.eng=p.eng;MG.plays=p.plays;MG.wager=p.wager;MG.rake=p.rake;MG.rs=p.rs;MG.license=p.license||0;MG.rewardGames=p.rewardGames||8;MG.win=p.win||50;MG.redeem=p.redeem||25;MG.rewardValue=p.rewardValue||8;MG.pricing=MG.rs>0?(MG.license>0?'hybrid':'revshare'):'license';MG.experience=MG.rewardGames>0?(MG.wager>0?'hybrid':'f2p'):'cash';MGremember();MGsync();MGrenderModes();MGinitP();MGu()}
 function MGSC(k){if(mgScn===k){mgScn='';document.querySelectorAll('#mg .scn').forEach(function(b){b.classList.remove('on')});MGu();return}mgScn=k;var s=MGSCN[k];MG.eng=s.eng;MG.plays=s.plays;MG.rake=s.rake;MG.rewardGames=s.rewardGames;MG.win=s.win;MG.redeem=s.redeem;MG.rewardValue=s.rewardValue;MGsync();document.querySelectorAll('#mg .scn').forEach(function(b){b.classList.toggle('on',b.dataset.s===k)});MGu()}
 function MGsync(){['tau','eng','plays','wager','rake','rs','license','rewardGames','win','redeem','rewardValue'].forEach(function(k){var s=$('mgs-'+k),i=$('mgi-'+k);if(s){s.value=Math.min(+s.max,Math.max(+s.min,Math.round(MG[k]*1000)/1000))}if(i){i.value=MG[k]}})}
 function MGS(k){MG[k]=+$('mgs-'+k).value;$('mgi-'+k).value=MG[k];if(k==='eng'||k==='plays'||k==='rake'){mgScn='';document.querySelectorAll('#mg .scn').forEach(function(b){b.classList.remove('on')})}MGu()}
 function MGI(k){var raw=$('mgi-'+k).value;if(raw===''||raw==='-')return;var v=parseFloat(raw);if(isNaN(v)||v<0)return;MG[k]=v;var sr=$('mgs-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,v));if(k==='eng'||k==='plays'||k==='rake'){mgScn='';document.querySelectorAll('#mg .scn').forEach(function(b){b.classList.remove('on')})}MGu()}
 function discMGI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;MG[k]=v;if($('mgi-'+k))$('mgi-'+k).value=v;var sr=$('mgs-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,v));MGu()}
+
+function MGremember(){['wager','rake','rs','license','rewardGames','win','redeem','rewardValue'].forEach(function(k){if(MG[k]>0)MGlast[k]=MG[k]})}
+function MGsetPricing(mode){
+  MGremember();
+  if(mode==='revshare'&&MG.experience==='f2p')MG.experience='cash';
+  MG.pricing=mode;
+  if(mode==='revshare'){MG.license=0;MG.rs=MG.rs||MGlast.rs||25}
+  if(mode==='license'){MG.rs=0;MG.license=MG.license||MGlast.license||15000}
+  if(mode==='hybrid'){MG.rs=MG.rs||MGlast.rs||25;MG.license=MG.license||MGlast.license||15000}
+  MGsync();MGrenderModes();MGu();
+}
+function MGsetExperience(mode){
+  MGremember();MG.experience=mode;
+  if(mode==='f2p'){
+    MG.wager=0;MG.rake=0;MG.rs=0;
+    if(MG.pricing!=='license')MG.pricing='license';
+    MG.license=MG.license||MGlast.license||15000;
+    MG.rewardGames=MG.rewardGames||MGlast.rewardGames||8;MG.win=MG.win||MGlast.win||50;MG.redeem=MG.redeem||MGlast.redeem||25;MG.rewardValue=MG.rewardValue||MGlast.rewardValue||8;
+  }
+  if(mode==='cash'){
+    MG.wager=MG.wager||MGlast.wager||2;MG.rake=MG.rake||MGlast.rake||10;
+    MG.rewardGames=0;MG.win=0;MG.redeem=0;MG.rewardValue=0;
+  }
+  if(mode==='hybrid'){
+    MG.wager=MG.wager||MGlast.wager||2;MG.rake=MG.rake||MGlast.rake||10;
+    MG.rewardGames=MG.rewardGames||MGlast.rewardGames||8;MG.win=MG.win||MGlast.win||50;MG.redeem=MG.redeem||MGlast.redeem||25;MG.rewardValue=MG.rewardValue||MGlast.rewardValue||8;
+  }
+  MGsync();MGrenderModes();MGu();
+}
+function MGrenderModes(){
+  document.querySelectorAll('[data-mg-pricing]').forEach(function(b){var on=b.dataset.mgPricing===MG.pricing;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false')});
+  document.querySelectorAll('[data-mg-experience]').forEach(function(b){var on=b.dataset.mgExperience===MG.experience;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false')});
+  var cashOff=MG.experience==='f2p',rewardOff=MG.experience==='cash',revOff=MG.pricing==='license'||cashOff,licenseOff=MG.pricing==='revshare';
+  document.querySelectorAll('[data-mg-field]').forEach(function(g){var f=g.dataset.mgField,off=(f==='cash'&&cashOff)||(f==='rewards'&&rewardOff)||(f==='revshare'&&revOff)||(f==='license'&&licenseOff);g.classList.toggle('mg-disabled',off);g.querySelectorAll('input').forEach(function(i){i.disabled=off})});
+  var labels={hybrid:'Cash play plus reward-driven visits',f2p:'Free-to-play rewards, no wager or rake',cash:'Cash play only, reward value is excluded'};
+  var prices={hybrid:'fixed license plus rake share',revshare:'rake share only, no fixed license',license:'fixed license only, no rake share'};
+  var note=$('mg-mode-note');if(note)note.innerHTML='<strong>'+labels[MG.experience]+'</strong> · '+prices[MG.pricing]+'.';
+}
 
 function MGcalc(tau,eng,plays,wager,rake,rs,license){
   var engaged=Math.round(tau*eng/100);
@@ -1851,17 +1920,23 @@ function MGcalc(tau,eng,plays,wager,rake,rs,license){
 function MGu(){
   var r=MGcalc(MG.tau,MG.eng,MG.plays,MG.wager,MG.rake,MG.rs,MG.license);
   var costLabel=(r.lucraMo>0?F(r.lucraMo)+'/mo Lucra cost':'no Lucra cost modeled');
+  var paidLabel=MG.experience==='f2p'?'Reward plays / mo':'Paid plays / mo';
+  var paidValue=MG.experience==='f2p'?r.monthlyRewardPlays:r.monthlyPlays;
+  var paidSub=MG.experience==='f2p'?MG.rewardGames+' reward plays / engaged user':MG.plays+' paid plays / engaged user';
+  var volumeLabel=MG.experience==='f2p'?'Reward wins / mo':'Monthly wagered';
+  var volumeValue=MG.experience==='f2p'?Math.round(r.monthlyRewardWins).toLocaleString():F(r.monthlyWager);
+  var volumeSub=MG.experience==='f2p'?MG.win+'% reward win rate':'at $'+MG.wager.toFixed(2)+' / play';
   $('mg-funnel').innerHTML=
     '<div class="stat"><div class="label">Engaged players</div><div class="val cyan">'+r.engaged.toLocaleString()+'</div><div class="sub">'+MG.eng+'% of '+MG.tau.toLocaleString()+'</div></div>'+
-    '<div class="stat"><div class="label">Paid plays / mo</div><div class="val">'+r.monthlyPlays.toLocaleString()+'</div><div class="sub">'+MG.plays+' paid plays / engaged user</div></div>'+
-    '<div class="stat"><div class="label">Monthly wagered</div><div class="val">'+F(r.monthlyWager)+'</div><div class="sub">at $'+MG.wager.toFixed(2)+' / play</div></div>'+
+    '<div class="stat"><div class="label">'+paidLabel+'</div><div class="val">'+paidValue.toLocaleString()+'</div><div class="sub">'+paidSub+'</div></div>'+
+    '<div class="stat"><div class="label">'+volumeLabel+'</div><div class="val">'+volumeValue+'</div><div class="sub">'+volumeSub+'</div></div>'+
     '<div class="stat"><div class="label">Reward redemptions / mo</div><div class="val amber">'+Math.round(r.monthlyRedemptions).toLocaleString()+'</div><div class="sub">'+MG.rewardGames+' games × '+MG.win+'% win × '+MG.redeem+'% redeem</div></div>';
   $('mg-revenue').innerHTML=
     '<div class="stat"><div class="label">Annual paid-game value</div><div class="val green">'+F(r.rakeAnn)+'</div><div class="sub">'+MG.rake+'% rake created by paid games</div></div>'+
     '<div class="stat"><div class="label">Annual reward uplift</div><div class="val green">'+F(r.rewardAnn)+'</div><div class="sub">redeemed visits × '+F(MG.rewardValue)+'</div></div>'+
     '<div class="stat"><div class="label">Total annual value created</div><div class="val green">'+F(r.grossBrandAnn)+'</div><div class="sub">paid-game value + reward uplift</div></div>';
   $('mg-client').innerHTML=
-    '<div class="stat"><div class="label">Lucra annual cost</div><div class="val purple">'+F(r.lucraAnn)+'</div><div class="sub">license + '+MG.rs+'% rake share</div></div>'+
+    '<div class="stat"><div class="label">Lucra annual cost</div><div class="val purple">'+F(r.lucraAnn)+'</div><div class="sub">'+(MG.pricing==='revshare'?MG.rs+'% rake share only':MG.pricing==='license'?'fixed license only':'license + '+MG.rs+'% rake share')+'</div></div>'+
     '<div class="stat"><div class="label">Net annual brand value</div><div class="val purple">'+F(r.netBrandAnn)+'</div><div class="sub">after '+costLabel+'</div></div>'+
     '<div class="stat"><div class="label">Value per engaged user</div><div class="val">'+F(r.engaged>0?Math.round(r.grossBrandAnn/r.engaged):0)+'</div><div class="sub">gross annual value / engaged user</div></div>';
 }
@@ -1871,9 +1946,9 @@ function MGcheckReady(){if(!$('n-mg')||!$('mg-pdf-btn'))return;var n=$('n-mg').v
 
 function MGbuildPitch(p,r){
   var s = p.tau.toLocaleString()+' reachable users at '+p.eng+'% engagement = '+r.engaged.toLocaleString()+' engaged mini-game players.';
-  s += ' Paid games create '+F(r.monthlyWager)+'/mo in wager volume and '+F(r.rakeAnn)+'/yr in paid-game value at '+p.rake+'% rake.';
-  s += ' Reward games create about '+Math.round(r.monthlyRedemptions).toLocaleString()+' redeemed visits/mo, worth '+F(r.rewardMo)+'/mo or '+F(r.rewardAnn)+'/yr to the venue/brand.';
-  s += ' Combined, mini games create '+F(r.grossBrandAnn)+'/yr in gross venue/brand value.';
+  if(p.experience!=='f2p')s += ' Paid games create '+F(r.monthlyWager)+'/mo in wager volume and '+F(r.rakeAnn)+'/yr in paid-game value at '+p.rake+'% rake.';
+  if(p.experience!=='cash')s += ' Reward games create about '+Math.round(r.monthlyRedemptions).toLocaleString()+' redeemed visits/mo, worth '+F(r.rewardMo)+'/mo or '+F(r.rewardAnn)+'/yr to the venue/brand.';
+  s += ' This '+(p.experience==='f2p'?'F2P rewards':p.experience==='cash'?'cash-only':'cash + rewards')+' model creates '+F(r.grossBrandAnn)+'/yr in gross venue/brand value.';
   if (r.lucraAnn>0) s += ' After modeled Lucra cost of '+F(r.lucraAnn)+'/yr, net annual brand value is '+F(r.netBrandAnn)+'.';
   return s;
 }
@@ -1896,17 +1971,17 @@ function MGGEN(){
   h += '<div style="text-align:center;padding:22px 0;margin-bottom:22px">';
   h += '<div style="font-size:10px;color:'+text2+';text-transform:uppercase;letter-spacing:2.4px;font-weight:800;margin-bottom:8px">Projected annual value created for '+name+'</div>';
   h += '<div style="font-family:'+c.display+';font-size:58px;font-weight:900;color:'+green+';line-height:.95;letter-spacing:-1px">'+F(r.grossBrandAnn)+'</div>';
-  h += '<div style="font-size:13px;color:'+text2+';margin-top:6px">'+F(r.rakeAnn)+' paid-game value + '+F(r.rewardAnn)+' reward uplift</div>';
+  h += '<div style="font-size:13px;color:'+text2+';margin-top:6px">'+(MG.experience==='f2p'?F(r.rewardAnn)+' reward uplift':MG.experience==='cash'?F(r.rakeAnn)+' paid-game value':F(r.rakeAnn)+' paid-game value + '+F(r.rewardAnn)+' reward uplift')+'</div>';
   if(r.lucraAnn>0) h += '<div style="font-size:12px;color:'+text3+';margin-top:5px">Net after modeled Lucra cost: '+F(r.netBrandAnn)+'</div>';
   h += '</div>';
 
   h += '<div style="font-size:10px;margin-bottom:18px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
   h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.tau.toLocaleString()+' reachable</span>';
   h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.eng+'% engaged</span>';
-  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.plays+' paid plays/user/mo</span>';
-  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">$'+MG.wager.toFixed(2)+' avg wager</span>';
-  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.rewardGames+' reward games/user/mo</span>';
-  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.win+'% win / '+MG.redeem+'% redeem</span>';
+  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+(MG.pricing==='revshare'?'Revenue share only':MG.pricing==='license'?'License only':'License + rev share')+'</span>';
+  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+(MG.experience==='f2p'?'F2P rewards only':MG.experience==='cash'?'Cash only':'Cash + rewards')+'</span>';
+  if(MG.experience!=='f2p')h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.plays+' paid plays/user/mo · $'+MG.wager.toFixed(2)+' avg wager</span>';
+  if(MG.experience!=='cash')h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.rewardGames+' reward games/user/mo · '+MG.win+'% win / '+MG.redeem+'% redeem</span>';
   h += '</div>';
 
   h += '<div style="display:flex;align-items:stretch;gap:8px;margin-bottom:12px">';
@@ -1916,9 +1991,9 @@ function MGGEN(){
   h += '</div>';
 
   h += '<div style="display:flex;align-items:stretch;gap:8px;margin-bottom:18px">';
-  h += '<div '+fb+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Monthly wagered</div><div style="font-size:16px;font-weight:600;color:'+text+'">'+F(r.monthlyWager)+'</div></div>'+aw;
-  h += '<div '+fa+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Paid-game value</div><div style="font-size:16px;font-weight:600;color:'+amber+'">'+F(r.rakeAnn)+'/yr</div></div>'+aw;
-  h += '<div '+fp+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Reward uplift</div><div style="font-size:16px;font-weight:600;color:'+purple+'">'+F(r.rewardAnn)+'/yr</div></div>';
+  if(MG.experience!=='f2p')h += '<div '+fb+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Monthly wagered</div><div style="font-size:16px;font-weight:600;color:'+text+'">'+F(r.monthlyWager)+'</div></div>'+aw+'<div '+fa+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Paid-game value</div><div style="font-size:16px;font-weight:600;color:'+amber+'">'+F(r.rakeAnn)+'/yr</div></div>';
+  if(MG.experience==='hybrid')h += aw;
+  if(MG.experience!=='cash')h += '<div '+fp+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Reward uplift</div><div style="font-size:16px;font-weight:600;color:'+purple+'">'+F(r.rewardAnn)+'/yr</div></div>';
   h += '</div>';
 
   h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">';
@@ -1966,7 +2041,7 @@ function MGGENPDF(){
   },300);
 }
 
-MGinitP();MGsync();MGu();MGcheckReady();
+MGinitP();MGsync();MGrenderModes();MGu();MGcheckReady();
 
 /* ─── PROPOSAL BUILDER ─────────────────────────────────────────────── */
 function PRtoday(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}

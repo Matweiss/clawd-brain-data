@@ -159,7 +159,9 @@ function k() {
   t.querySelector("[data-save-scenario]").addEventListener("click", () => {
     e.save(i.value), i.value = "", d();
   }), t.querySelector("#prospect-mode").addEventListener("change", (c) => document.body.classList.toggle("prospect-mode", c.currentTarget.checked)), n.addEventListener("click", (c) => {
-    const r = c.target, o = r.closest("[data-id]");
+    const r = c.target;
+    if (r.closest("[data-compare]")) return;
+    const o = r.closest("[data-id]");
     o && (r.closest("[data-load]") && e.load(o.dataset.id), r.closest("[data-clone]") && e.clone(o.dataset.id), r.closest("[data-delete]") && (e.remove(o.dataset.id), s.delete(o.dataset.id)), h(), d());
   }), n.addEventListener("change", (c) => {
     const r = c.target.closest("[data-compare]"), o = r?.closest("[data-id]");

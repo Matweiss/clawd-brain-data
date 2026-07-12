@@ -83,6 +83,9 @@ function installScenarioWorkspace(): void {
   mount.querySelector<HTMLInputElement>('#prospect-mode')!.addEventListener('change', (event) => document.body.classList.toggle('prospect-mode', (event.currentTarget as HTMLInputElement).checked));
   list.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
+    // Comparison checkboxes are handled by the change listener below. Do not
+    // re-render on their click or the checked element is replaced mid-action.
+    if (target.closest('[data-compare]')) return;
     const row = target.closest<HTMLElement>('[data-id]');
     if (!row) return;
     if (target.closest('[data-load]')) store.load(row.dataset.id!);

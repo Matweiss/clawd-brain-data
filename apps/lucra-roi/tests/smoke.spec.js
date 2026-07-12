@@ -230,6 +230,28 @@ test('Mini Game ROI tab renders inputs', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('Mini Game ROI commercial and experience modes stay financially consistent', async ({ page }) => {
+  await page.goto('/');
+  await tabButton(page, 'Mini Game ROI').click();
+
+  await page.locator('[data-mg-pricing="revshare"]').click();
+  await expect(page.locator('#mgi-license')).toBeDisabled();
+  await expect(page.locator('#mgi-license')).toHaveValue('0');
+  await expect(page.locator('#mg-mode-note')).toContainText('rake share only');
+
+  await page.locator('[data-mg-experience="f2p"]').click();
+  await expect(page.locator('[data-mg-pricing="license"]')).toHaveClass(/on/);
+  await expect(page.locator('#mgi-wager')).toBeDisabled();
+  await expect(page.locator('#mgi-rake')).toHaveValue('0');
+  await expect(page.locator('#mgi-rs')).toHaveValue('0');
+  await expect(page.locator('#mg-mode-note')).toContainText('no wager or rake');
+
+  await page.locator('[data-mg-experience="cash"]').click();
+  await expect(page.locator('#mgi-rewardValue')).toBeDisabled();
+  await expect(page.locator('#mgi-rewardValue')).toHaveValue('0');
+  await expect(page.locator('#mg-revenue')).toContainText('$0');
+});
+
 test('Investment Plans tab renders', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
