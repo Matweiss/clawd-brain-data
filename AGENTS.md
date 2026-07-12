@@ -222,3 +222,42 @@ The goal: Be helpful without being annoying. Check in a few times a day, do usef
 ## Make It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.
+
+## Proactivity and Self-Improving — Scoped Rollout
+
+- **Proactivity:** `~/proactivity/` (via `proactivity` skill) — proactive operating state, action boundaries, active task recovery, and follow-through rules.
+- **Self-improving:** `~/self-improving/` (via `self-improving` skill) — execution-improvement memory: preferences, workflows, style patterns, and lessons from corrections/reflection.
+
+Scoped rollout approved by Mat on 2026-05-01:
+- Enabled for Clawd and Arty only.
+- Do not expand to Luke, Sage, or other agents without explicit later approval.
+- Proactively notice and surface errors, missing fixes, feature ideas, skill enhancements, and efficiency/power upgrades.
+- Execution remains approval-gated for external, public/customer-facing, destructive, financial, credential/security, scheduling, and broad config/infra actions.
+
+Before non-trivial proactive work:
+- Read `~/proactivity/memory.md` and `~/self-improving/memory.md`.
+- Read `~/proactivity/session-state.md` for active/multi-step work.
+- Recover from local state before asking Mat to repeat recent context.
+- Leave one clear next move in state when work remains ongoing.
+
+## gstack — AI Engineering Workflow (installed 2026-06-04)
+
+[gstack](https://github.com/garrytan/gstack) (Garry Tan's Claude Code toolkit, v1.56.0.0) is installed at `~/.claude/skills/gstack` and registered as `gstack-*` OpenClaw skills. It turns a Claude Code session into a structured engineering team: CEO/eng/design planning review, production-grade code review, real-browser QA, OWASP+STRIDE security audit, and release automation. **Full playbooks: [`docs/gstack-sops.md`](docs/gstack-sops.md).**
+
+### Coding Tasks — route real code work through gstack
+When spawning a Claude Code session for code (in `clawd-dashboard`, `clawd-mission-control-v2`, `scripts/`, or any repo), tell the session to **load gstack and run the right skill**:
+
+| Task | Tell the session |
+|------|------------------|
+| Plan before building | "Load gstack. Run /office-hours then /autoplan. Save the plan, don't implement." |
+| Build a feature end-to-end | "Load gstack. Run /autoplan, implement the plan, then run /ship." |
+| Code review a branch | "Load gstack. Run /review" |
+| Security audit | "Load gstack. Run /cso" |
+| QA a URL in a real browser | "Load gstack. Run /qa https://..." |
+| Root-cause a bug | "Load gstack. Run /investigate" |
+
+### Rules
+- Use gstack's `/browse` for web browsing in coding sessions; do not use `mcp__claude-in-chrome__*` tools.
+- **Trivial edits** (typos, one-liners, config tweaks) skip gstack — keep them lightweight.
+- Anything that **ships customer-facing or touches infra/credentials** stays approval-gated per the Safety / External-vs-Internal rules above, even inside gstack.
+- Update with `/gstack-upgrade`.

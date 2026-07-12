@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Lucra ROI Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://use.typekit.net" crossorigin>
 <!-- Phase 2 collateral fonts: replace ADOBE_FONTS_PROJECT_ID after creating the Adobe Fonts Web Project with Hardcover Variable + Parabolica. -->
 <link id="collateral-adobe-fonts" rel="stylesheet" href="https://use.typekit.net/ADOBE_FONTS_PROJECT_ID.css" data-fonts="Hardcover Variable, Parabolica" disabled>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0a0a0b;--surface:#141416;--surface2:#1e1e22;--border:#2a2a2e;--text:#f5f5f5;--text2:#a1a1aa;--text3:#71717a;--green:#8AE91A;--green-bg:rgba(138,233,26,0.10);--green-border:rgba(138,233,26,0.28);--amber:#F59E0B;--amber-bg:rgba(245,158,11,0.08);--red:#EF4444;--blue:#3B82F6;--cyan:#06B6D4;--purple:#8B5CF6;--pink:#EC4899;--radius:10px;--font:'Hanken Grotesk',system-ui,sans-serif;--display:'Playfair Display',Georgia,serif;--mono:'JetBrains Mono',monospace}
@@ -198,6 +198,14 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
 .pf-radio{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text3);cursor:pointer;font-size:12px;font-family:var(--font);transition:all 0.15s}
 .pf-radio.on{border-color:var(--green);background:var(--green-bg);color:var(--green)}
 .pf-radio:hover:not(.on){border-color:var(--text3);color:var(--text2)}
+.mg-models{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0 18px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.mg-model-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.mg-model-help{font-size:11px;color:var(--text3);line-height:1.45;margin-top:7px;max-width:62ch}
+.mg-mode-note{grid-column:1/-1;margin-top:2px;padding:10px 12px;border-radius:8px;background:var(--green-bg);border:1px solid var(--green-border);color:var(--text2);font-size:12px;line-height:1.45}
+.mg-mode-note strong{color:var(--green)}
+.input-group.mg-disabled{opacity:.48}
+.input-group.mg-disabled input{pointer-events:none}
+@media(max-width:720px){.mg-models{grid-template-columns:1fr}.mg-mode-note{grid-column:auto}}
 .pf-checkbox{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;padding:8px 0}
 .pf-checkbox input{width:16px;height:16px;accent-color:var(--green)}
 .pf-totals{background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
@@ -310,22 +318,132 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 .ba-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.ba-actions .wide{grid-column:span 2}.ba-btn{border:1px solid var(--green-border);background:var(--green-bg);color:var(--green);border-radius:8px;padding:10px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}.ba-btn.secondary{border-color:var(--border);background:var(--surface2);color:var(--text2)}.ba-btn.purple{border-color:rgba(139,92,246,.4);background:rgba(139,92,246,.12);color:#c4b5fd}.ba-status{font-size:11px;color:var(--green);min-height:16px;margin:6px 0}.ba-output textarea{min-height:420px;font-family:var(--mono);font-size:11px;line-height:1.45}.ba-checklist{font-size:12px;color:var(--text2);line-height:1.65;padding-left:18px}.ba-pill{display:inline-flex;align-items:center;border:1px solid var(--border);background:var(--bg);border-radius:999px;padding:5px 9px;font-size:11px;color:var(--text3);margin:3px 4px 0 0}
 @media(max-width:760px){.ba-grid,.ba-two{grid-template-columns:1fr}.ba-output textarea{min-height:300px}}
 
+/* Lucra 2026 partner-system UX layer */
+:root{
+  --bg:#061D3B;
+  --surface:#0B2748;
+  --surface2:#123252;
+  --border:#294663;
+  --text:#F8FBF5;
+  --text2:#C3D0D8;
+  --text3:#91A6B4;
+  --green:#8AE91A;
+  --green-bg:#173D2C;
+  --green-border:#4F7D33;
+  --cyan:#31E5F7;
+  --blue:#77CDF9;
+  --amber:#FFFA77;
+  --radius:14px;
+  --display:'Playfair Display','Hardcover',Georgia,serif;
+}
+body{background:var(--bg);background-image:radial-gradient(80% 54% at 100% 0%,rgba(49,229,247,.08),transparent 68%);letter-spacing:.01em}
+.app{max-width:1180px;padding:28px 28px 150px}
+.header{margin-bottom:22px;padding:0 0 20px;border-color:var(--border);align-items:flex-start}
+.brand-lockup{display:flex;align-items:center;gap:13px;color:var(--green)}
+.brand-lockup svg{display:block;flex:none}
+.brand-copy{display:flex;flex-direction:column;gap:2px}
+.brand-wordmark{width:118px;height:auto;color:var(--green)}
+.brand-product{font-size:12px;color:var(--text2);letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.header-right{gap:12px}.tool-label{color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-size:10px;font-weight:700}
+.pres-toggle,.reset-link{min-height:44px}
+.pres-toggle{border-radius:10px;padding:9px 13px;background:var(--surface);border-color:var(--border)}
+.pres-toggle.on{background:var(--green-bg);border-color:var(--green-border)}
+.reset-link{padding:10px 4px;text-decoration:none}
+.workspace-intro{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:28px;align-items:end;margin:8px 0 26px}
+.workspace-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.16em;font-weight:800;color:var(--green);margin-bottom:10px}
+.workspace-intro h1{font-family:var(--display);font-size:clamp(34px,5vw,58px);line-height:1.02;letter-spacing:-.025em;max-width:13ch;margin:0}
+.workspace-intro p{color:var(--text2);font-size:15px;line-height:1.65;max-width:50ch;margin:0 0 3px}
+.deal-setup{border:1px solid var(--border);border-radius:20px;background:var(--surface);padding:22px;margin-bottom:20px}
+.setup-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:18px}
+.setup-head h2{font-family:var(--display);font-size:27px;line-height:1.08;letter-spacing:-.015em;margin:0 0 5px}
+.setup-head p{font-size:13px;color:var(--text2);line-height:1.5;max-width:60ch}
+.setup-progress{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.setup-progress span{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:50%;border:1px solid var(--border);color:var(--text2)}
+.setup-progress span:first-child{background:var(--green);border-color:var(--green);color:#012E2B}
+.archetypes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.archetype{appearance:none;border:0;border-right:1px solid var(--border);background:transparent;color:var(--text);text-align:left;padding:18px 18px 19px;cursor:pointer;font-family:var(--font);min-height:128px;transition:background .2s cubic-bezier(.16,1,.3,1),color .2s cubic-bezier(.16,1,.3,1)}
+.archetype:last-child{border-right:0}.archetype:hover{background:#123252}.archetype:focus-visible{outline:2px solid var(--green);outline-offset:-3px}
+.archetype.on{background:var(--green-bg)}
+.archetype strong{display:block;font-size:15px;margin-bottom:7px}.archetype.on strong{color:var(--green)}
+.archetype small{display:block;font-size:12px;line-height:1.45;color:var(--text2);font-weight:400}
+.archetype-meta{display:block;margin-top:12px;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:700}
+.setup-next{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px}
+.setup-note{font-size:12px;color:var(--text3);line-height:1.45}
+.setup-cta{border:0;border-radius:10px;background:var(--green);color:#012E2B;font-family:var(--font);font-weight:800;font-size:13px;padding:12px 18px;min-height:44px;cursor:pointer;white-space:nowrap}
+.setup-cta:hover{background:#A7F45A}.setup-cta:active{transform:scale(.97)}.setup-cta:focus-visible{outline:2px solid var(--text);outline-offset:3px}
+.workflow-label{font-size:10px;text-transform:uppercase;letter-spacing:.15em;font-weight:800;color:var(--text3);margin:0 0 8px 2px}
+.tabs{background:#04182E;border:1px solid var(--border);border-radius:14px;padding:5px;margin-bottom:20px;gap:3px;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:10px 15px;border-radius:10px;color:var(--text3);white-space:nowrap;font-weight:650}
+.tab.active{background:var(--surface2);color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+.tab.active::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:8px}
+.tab.secondary-tool{font-size:12px;color:#7F97A7}.tab.secondary-tool.first-secondary{margin-left:13px;position:relative}
+.tab.secondary-tool.first-secondary::after{content:'';position:absolute;left:-8px;top:9px;bottom:9px;width:1px;background:var(--border)}
+.sticky-summary{top:10px;background:#08213C;border-color:var(--border);box-shadow:0 14px 34px rgba(1,18,38,.35);backdrop-filter:blur(18px)}
+.summary-item{border-left:0;padding:2px 12px}.summary-item+.summary-item{border-left:1px solid var(--border)}
+.summary-label{text-transform:uppercase;letter-spacing:.08em;font-size:10px;font-weight:700;color:var(--text3)}
+.summary-val{font-variant-numeric:tabular-nums}
+.pf-section,.card-section,.stat,.flow-box,.flow-highlight,.flow-cyan,.dc,.brand-fields,.ba-panel{border-color:var(--border);background:var(--surface)}
+.pf-section-title,.section-label{letter-spacing:.11em;text-transform:uppercase;font-size:11px;font-weight:750;color:var(--text2)}
+.pf-input,.gen-input,.ba-field input,.ba-field textarea,.ba-field select{background:#04182E;border-color:var(--border);min-height:44px}
+.pf-input:focus,.gen-input:focus,.ba-field input:focus,.ba-field textarea:focus,.ba-field select:focus{outline:2px solid var(--green);outline-offset:2px;border-color:var(--green)}
+.preset,.scn,.pf-radio,.gen-btn2,.gen-btn3,.dl-btn{background:#0A2440;border-color:var(--border);color:var(--text2);border-radius:10px}
+.preset.on,.pf-radio.on,.scn.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.gen-btn,.sticky-gen-footer button.primary,#gm-go,#ag-go{background:var(--green)!important;color:#012E2B!important;font-weight:800!important;border-radius:10px!important}
+.gen-btn:hover,.sticky-gen-footer button.primary:hover{background:#A7F45A!important}
+.pitch{background:#0A2E32;border-color:#275A50}.pitch strong{color:var(--green)}
+.warn{color:var(--amber);background:#332F19;border:1px solid #605B27}
+.sticky-gen-footer{display:none!important}
+.sticky-gen-footer button,.sticky-gen-footer select{background:var(--surface);border-color:var(--border);color:var(--text2);border-radius:10px}
+button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+@media(max-width:820px){
+  .app{padding:20px 16px 145px}.workspace-intro{grid-template-columns:1fr;gap:13px}.workspace-intro h1{max-width:18ch}.setup-head{flex-direction:column}.archetypes{grid-template-columns:1fr}.archetype{border-right:0;border-bottom:1px solid var(--border);min-height:0}.archetype:last-child{border-bottom:0}.setup-next{align-items:flex-start;flex-direction:column}.setup-cta{width:100%}.tab.secondary-tool.first-secondary{margin-left:7px}.summary-item{padding:2px 8px}
+}
+@media(max-width:560px){
+  .header{gap:16px}.brand-wordmark{width:96px}.brand-product{font-size:10px}.tool-label{display:none}.workspace-intro h1{font-size:36px}.workspace-intro p{font-size:14px}.deal-setup{padding:18px 14px}.setup-head h2{font-size:24px}.setup-progress{font-size:9px}.setup-progress span{width:24px;height:24px}.tabs{margin-left:-4px;margin-right:-4px}.tab{padding:10px 12px}.summary-grid{grid-template-columns:1fr 1fr}.summary-item:nth-child(3){border-left:0;border-top:1px solid var(--border);padding-top:8px}.summary-item:nth-child(4){border-top:1px solid var(--border);padding-top:8px}.sticky-summary{position:relative;top:auto}.header-right{justify-content:flex-end}.reset-link{display:none}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+.financial-intelligence{margin:28px 0;padding:24px;border:1px solid rgba(138,233,26,.22);border-radius:16px;background:#091f3d}.financial-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:8px}.financial-heading h2{font-family:var(--display);font-size:28px;line-height:1.08;font-weight:700}.financial-controls{display:flex;gap:12px}.financial-controls label{display:grid;gap:6px;color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em}.financial-controls select,.financial-controls input{min-height:44px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font:500 13px var(--font)}.financial-note{max-width:70ch;color:var(--text2);font-size:13px;line-height:1.5}.financial-kpis{display:flex;gap:28px;margin:22px 0}.financial-kpis div{display:grid;gap:4px}.financial-kpis span{color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.financial-kpis strong{font-size:22px;color:var(--green)}.financial-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr);gap:28px}.financial-grid h3{margin-bottom:14px;font-size:14px}.cash-chart{height:160px;display:grid;grid-template-columns:repeat(12,minmax(18px,1fr));align-items:end;gap:5px;border-bottom:1px solid var(--border)}.cash-month{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;position:relative}.cash-bar{width:100%;max-width:28px;border-radius:4px 4px 0 0;background:var(--blue)}.cash-bar.positive{background:var(--green)}.cash-bar.negative{background:var(--amber)}.cash-month span{font:10px var(--mono);color:var(--text3)}.cash-month output{display:none;position:absolute;bottom:calc(100% + 6px);z-index:2;padding:5px 7px;border-radius:6px;background:var(--ink);color:var(--text);white-space:nowrap;font:10px var(--mono)}.cash-month:focus-within output,.cash-month:hover output{display:block}.sensitivity{display:grid;gap:13px}.sensitivity-row{display:grid;grid-template-columns:110px 1fr;gap:8px 12px;align-items:center}.sensitivity-row div:first-child{display:grid}.sensitivity-row strong{font-size:12px}.sensitivity-row span{font-size:10px;color:var(--text3)}.sensitivity-track{height:9px;border-radius:5px;background:var(--surface);overflow:hidden}.sensitivity-track span{display:block;height:100%;border-radius:inherit;background:var(--cyan)}.sensitivity-row output{grid-column:2;color:var(--text2);font:10px var(--mono)}@media(max-width:760px){.financial-heading{align-items:stretch;flex-direction:column}.financial-controls{display:grid;grid-template-columns:1fr 1fr}.financial-grid{grid-template-columns:1fr}.cash-chart{gap:3px}.financial-intelligence{padding:18px}}@media(max-width:420px){.financial-controls{grid-template-columns:1fr}.financial-kpis{display:grid;grid-template-columns:1fr 1fr;gap:14px}.financial-grid{gap:22px}}
+.scenario-workspace{margin:28px 0 34px;padding:24px;border:1px solid var(--border);border-radius:16px;background:var(--surface)}.scenario-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}.scenario-heading h2{font-family:var(--display);font-size:27px;line-height:1.1}.prospect-toggle{display:flex;align-items:center;gap:9px;min-height:44px;color:var(--text2);font-size:12px}.prospect-toggle input{width:18px;height:18px;accent-color:var(--green)}.scenario-create{display:grid;grid-template-columns:minmax(220px,1fr) auto;align-items:end;gap:12px;margin:22px 0}.scenario-create label{display:grid;gap:7px;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.scenario-create input{min-height:44px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font:500 14px var(--font)}.scenario-create button{min-height:44px;padding:10px 16px;border:0;border-radius:10px;background:var(--green);color:#012e2b;font-weight:700;cursor:pointer}.scenario-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(250px,.75fr);gap:18px}.scenario-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--border)}.scenario-row label{display:flex;align-items:center;gap:10px;min-width:0}.scenario-row label input{width:18px;height:18px;accent-color:var(--green)}.scenario-row label span{display:grid;min-width:0}.scenario-row strong{font-size:13px}.scenario-row small{overflow:hidden;color:var(--text3);font:10px var(--mono);text-overflow:ellipsis;white-space:nowrap}.scenario-row>div{display:flex;gap:5px}.scenario-row button{min-height:36px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:11px;cursor:pointer}.scenario-layout aside{display:grid;align-content:start;gap:8px;padding:14px;border-radius:12px;background:#091f3d}.scenario-layout aside div{display:grid;gap:3px;padding:10px;border-bottom:1px solid rgba(255,255,255,.08)}.scenario-layout aside span,.scenario-layout aside p,.scenario-empty{color:var(--text3);font-size:11px;line-height:1.45}.prospect-mode .internal-only,.prospect-mode .jump-nav,.prospect-mode #pitch{display:none!important}@media(max-width:760px){.scenario-layout{grid-template-columns:1fr}.scenario-heading{align-items:flex-start;flex-direction:column}.scenario-create{grid-template-columns:1fr}.scenario-row{align-items:flex-start;flex-direction:column}.scenario-row>div{width:100%}.scenario-row button{flex:1}} 
 </style>
 </head>
 <body>
+<script type="module" src="/assets/app.js"></script>
 <div class="app">
 <div class="header">
-<div class="logo">Lucra<span>ROI Calculator</span></div>
+<div class="brand-lockup" aria-label="Lucra ROI Calculator">
+  <svg width="34" height="34" viewBox="0 0 101.113 101.112" fill="none" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M101.113 50.556C101.113 78.477 78.478 101.112 50.556 101.112 22.635 101.112 0 78.477 0 50.556 0 22.635 22.635 0 50.556 0c27.922 0 50.557 22.635 50.557 50.556ZM45.843 91.01l8.235-24.711H25.825l16.748-55.684C23.905 14.325 9.833 30.797 9.833 50.556c0 20.897 15.739 38.117 36.01 40.454Zm4.844.269 28.464-43.732H56.586s-3.576.347-10.222 5.18l-1.812-2.416c6.041-3.625 8.751-7.533 8.751-7.533l9.191-31.168c16.666 5.102 28.786 20.609 28.786 38.946 0 22.447-18.162 40.653-40.593 40.723Z"/></svg>
+  <div class="brand-copy"><strong style="font-size:20px;letter-spacing:-.02em">LUCRA</strong><span class="brand-product">ROI Calculator</span></div>
+</div>
 <div class="header-right"><span class="tool-label">ROI Analysis Tool</span><button class="pres-toggle" id="pres-toggle" onclick="togglePresMode()" type="button">🔒 Internal</button><button class="reset-link" onclick="resetState()" type="button">Reset</button></div>
 </div>
 
+<section class="workspace-intro" aria-labelledby="workspace-title">
+  <div><div class="workspace-eyebrow">Deal workspace</div><h1 id="workspace-title">Shape the deal. Prove the upside.</h1></div>
+  <p>Start with a credible venue profile, validate the economics, then create the right customer-ready output. Every assumption stays visible and editable.</p>
+</section>
+
+<section class="deal-setup" aria-labelledby="setup-title">
+  <div class="setup-head">
+    <div><div class="workspace-eyebrow">Guided setup</div><h2 id="setup-title">Choose a starting point</h2><p>These archetypes prefill common deal assumptions. Review every value in Core ROI before presenting results.</p></div>
+    <div class="setup-progress" aria-label="Deal workflow"><span>1</span> Setup <span>2</span> Model <span>3</span> Deliver</div>
+  </div>
+  <div class="archetypes" role="group" aria-label="Deal archetypes">
+    <button class="archetype on" type="button" data-archetype="venue" onclick="applyDealArchetype('venue',this)"><strong>Venue entertainment</strong><small>High-footfall social venue with repeat visits and a broad guest mix.</small><span class="archetype-meta">1,100 visits · $45 spend</span></button>
+    <button class="archetype" type="button" data-archetype="golf" onclick="applyDealArchetype('golf',this)"><strong>Golf &amp; simulator</strong><small>Reservation-led golf concept with fewer guests and strong per-visit value.</small><span class="archetype-meta">120 visits · $30 spend</span></button>
+    <button class="archetype" type="button" data-archetype="multi" onclick="applyDealArchetype('multi',this)"><strong>Multi-location rollout</strong><small>Portfolio model for validating economics across a scaled operator footprint.</small><span class="archetype-meta">300 visits · 12 locations</span></button>
+  </div>
+  <div class="setup-next"><div class="setup-note" id="archetype-status" role="status">Venue entertainment assumptions are loaded. Continue to Core ROI to review them.</div><button class="setup-cta" type="button" onclick="goToWorkflow('roi')">Review Core ROI</button></div>
+</section>
+
+<div class="workflow-label">Workflows · primary tools first</div>
 <div class="tabs" role="tablist" aria-label="ROI Calculator sections">
 <button class="tab active" role="tab" aria-selected="true" aria-controls="roi" id="tab-roi" tabindex="0" onclick="T('roi',this)">Core ROI</button>
-<button class="tab" role="tab" aria-selected="false" aria-controls="minigame" id="tab-minigame" tabindex="-1" onclick="T('minigame',this)">Mini Game ROI</button>
-<button class="tab" role="tab" aria-selected="false" aria-controls="trackman" id="tab-trackman" tabindex="-1" onclick="T('trackman',this)">Trackman Partner</button>
-<button class="tab" role="tab" aria-selected="false" aria-controls="analytics" id="tab-analytics" tabindex="-1" onclick="T('analytics',this)">Investment Plans</button>
 <button class="tab" role="tab" aria-selected="false" aria-controls="gamification" id="tab-gamification" tabindex="-1" onclick="T('gamification',this)">Gamification</button>
-<button class="tab" role="tab" aria-selected="false" aria-controls="brandarcade" id="tab-brandarcade" tabindex="-1" onclick="T('brandarcade',this)">Brand Arcade</button>
+<button class="tab secondary-tool first-secondary" role="tab" aria-selected="false" aria-controls="minigame" id="tab-minigame" tabindex="-1" onclick="T('minigame',this)">More · Mini Game ROI</button>
+<button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="trackman" id="tab-trackman" tabindex="-1" onclick="T('trackman',this)">Trackman Partner</button>
+<button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="analytics" id="tab-analytics" tabindex="-1" onclick="T('analytics',this)">Investment Plans</button>
+<button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="brandarcade" id="tab-brandarcade" tabindex="-1" onclick="T('brandarcade',this)">Brand Arcade</button>
 </div>
 
 <div class="sticky-summary" id="sticky-summary">
@@ -378,6 +496,26 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 <div class="input-group span2" style="margin-bottom:24px"><div class="input-head"><span class="input-label">Current loyalty/marketing spend per location (optional)</span><div class="input-val"><span class="vp">$</span><input class="vi" id="i-loy" type="number" min="0" step="1000" value="0" oninput="I('loy')" style="width:90px"></div></div><input type="range" min="0" max="300000" step="5000" value="0" id="s-loy" oninput="S('loy')"><div class="sn">Annual spend on loyalty, CRM, email. $50k-$200k typical</div></div>
 <div class="section-label"><span class="dot" style="background:var(--green)"></span>Core product — revenue impact</div><div class="grid grid3" id="results"></div>
 <div class="pitch" id="pitch"></div>
+<section class="financial-intelligence" id="financial-intelligence" aria-labelledby="financial-intelligence-title">
+  <div class="financial-heading">
+    <div><span class="eyebrow">Decision view</span><h2 id="financial-intelligence-title">How the return develops</h2></div>
+    <div class="financial-controls">
+      <label>Seasonality profile<select id="seasonality-profile"><option value="flat">Flat monthly average</option><option value="venue">Venue entertainment</option><option value="golf">Golf and simulator</option><option value="multi">Multi-location blend</option></select></label>
+      <label>Upfront investment<input id="upfront-investment" type="number" min="0" step="1000" value="0" inputmode="decimal"></label>
+    </div>
+  </div>
+  <p class="financial-note">Profiles redistribute the tested annual baseline across twelve months. They do not inflate annual revenue.</p>
+  <div class="financial-kpis"><div><span>Modeled payback</span><strong data-payback>—</strong></div><div><span>Year-one cumulative net</span><strong data-year-net>—</strong></div></div>
+  <div class="financial-grid">
+    <div><h3>Cumulative cash flow</h3><div class="cash-chart" data-cash-chart aria-label="Twelve month cumulative cash flow"></div></div>
+    <div><h3>Driver sensitivity</h3><div class="sensitivity" data-sensitivity></div></div>
+  </div>
+</section>
+<section class="scenario-workspace" id="scenario-workspace" aria-labelledby="scenario-workspace-title">
+  <div class="scenario-heading"><div><span class="eyebrow">Scenario desk</span><h2 id="scenario-workspace-title">Save the decision, not a screenshot</h2></div><label class="prospect-toggle"><input id="prospect-mode" type="checkbox"><span>Prospect-safe view</span></label></div>
+  <div class="scenario-create"><label>Scenario name<input id="scenario-name" placeholder="e.g. Conservative rollout"></label><button type="button" data-save-scenario>Save current deal</button></div>
+  <div class="scenario-layout"><div data-scenario-list></div><aside data-scenario-compare aria-live="polite"></aside></div>
+</section>
 <div class="gen-section">
 <div class="brand-fields">
   <div style="font-size:11px;color:#71717a;margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px">Leave-behind generator — all fields required</div>
@@ -511,18 +649,40 @@ input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:28px;
 <button class="scn" data-s="case" onclick="MGSC('case')">Case study</button>
 </div>
 
+<div class="mg-models" aria-label="Mini games deal structure">
+  <div>
+    <div class="mg-model-title">How Lucra gets paid</div>
+    <div class="pf-radio-group" id="mg-pricing-group" role="group" aria-label="Mini games commercial model">
+      <button class="pf-radio on" data-mg-pricing="hybrid" onclick="MGsetPricing('hybrid')">License + rev share</button>
+      <button class="pf-radio" data-mg-pricing="revshare" onclick="MGsetPricing('revshare')">Revenue share only</button>
+      <button class="pf-radio" data-mg-pricing="license" onclick="MGsetPricing('license')">License only</button>
+    </div>
+    <div class="mg-model-help">Pricing is separate from game type. Revenue share only removes the fixed monthly license.</div>
+  </div>
+  <div>
+    <div class="mg-model-title">What players experience</div>
+    <div class="pf-radio-group" id="mg-experience-group" role="group" aria-label="Mini games experience model">
+      <button class="pf-radio on" data-mg-experience="hybrid" onclick="MGsetExperience('hybrid')">Cash + rewards</button>
+      <button class="pf-radio" data-mg-experience="f2p" onclick="MGsetExperience('f2p')">F2P rewards only</button>
+      <button class="pf-radio" data-mg-experience="cash" onclick="MGsetExperience('cash')">Cash only</button>
+    </div>
+    <div class="mg-model-help">F2P removes wagering and rake. Cash only removes reward games and reward value.</div>
+  </div>
+  <div class="mg-mode-note" id="mg-mode-note" aria-live="polite"></div>
+</div>
+
 <div class="inputs">
 <div class="input-group"><div class="input-head"><span class="input-label">Total addressable users</span><input class="vi" id="mgi-tau" type="number" min="0" step="1000" oninput="MGI('tau')" aria-label="Total addressable users"></div><input type="range" min="10000" max="50000000" step="10000" value="1000000" id="mgs-tau" oninput="MGS('tau')" aria-label="Total addressable users slider"><div class="sn">App users, ambassadors, or community size</div></div>
 <div class="input-group"><div class="input-head"><span class="input-label">Engagement rate</span><div class="input-val"><input class="vi" id="mgi-eng" type="number" min="0" step="0.5" oninput="MGI('eng')" aria-label="Engagement rate"><span class="vp">%</span></div></div><input type="range" min="1" max="60" step="1" value="10" id="mgs-eng" oninput="MGS('eng')"><div class="sn">% of users actively playing mini games</div></div>
 <div class="input-group"><div class="input-head"><span class="input-label">Plays / user / month</span><input class="vi" id="mgi-plays" type="number" min="0" step="1" oninput="MGI('plays')" aria-label="Plays per user per month"></div><input type="range" min="1" max="200" step="1" value="20" id="mgs-plays" oninput="MGS('plays')" aria-label="Plays slider"><div class="sn">Frequency among engaged players</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Avg wager / play</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-wager" type="number" min="0" step="0.25" oninput="MGI('wager')" aria-label="Average wager per play"></div></div><input type="range" min="0.25" max="20" step="0.25" value="2" id="mgs-wager" oninput="MGS('wager')"><div class="sn">Real-money wager amount per play</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Rake rate</span><div class="input-val"><input class="vi" id="mgi-rake" type="number" min="0" max="50" step="0.5" oninput="MGI('rake')" aria-label="Rake rate"><span class="vp">%</span></div></div><input type="range" min="2" max="30" step="0.5" value="10" id="mgs-rake" oninput="MGS('rake')"><div class="sn">% of wagered $ created as paid-game revenue / rake (industry: 5–15%)</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Lucra rev share / platform cost</span><div class="input-val"><input class="vi" id="mgi-rs" type="number" min="0" max="100" step="1" oninput="MGI('rs')" aria-label="Lucra revenue share"><span class="vp">%</span></div></div><input type="range" min="0" max="50" step="1" value="25" id="mgs-rs" oninput="MGS('rs')"><div class="sn">% of paid-game rake paid to Lucra; set 0% for license-only deals</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Monthly license fee (mini games)</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-license" type="number" min="0" max="30000" step="500" oninput="MGI('license')" aria-label="Monthly license fee"></div></div><input type="range" min="0" max="30000" step="500" value="0" id="mgs-license" oninput="MGS('license')"><div class="sn">Platform cost deducted from brand ROI</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Reward games / user / month</span><input class="vi" id="mgi-rewardGames" type="number" min="0" step="1" oninput="MGI('rewardGames')"></div><input type="range" min="0" max="50" step="1" value="8" id="mgs-rewardGames" oninput="MGS('rewardGames')"><div class="sn">Free-to-play reward games among engaged users</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Reward win rate</span><div class="input-val"><input class="vi" id="mgi-win" type="number" min="0" max="100" step="1" oninput="MGI('win')"><span class="vp">%</span></div></div><input type="range" min="0" max="100" step="1" value="50" id="mgs-win" oninput="MGS('win')"><div class="sn">% of reward games that create a reward opportunity</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Reward redemption rate</span><div class="input-val"><input class="vi" id="mgi-redeem" type="number" min="0" max="100" step="1" oninput="MGI('redeem')"><span class="vp">%</span></div></div><input type="range" min="0" max="100" step="1" value="25" id="mgs-redeem" oninput="MGS('redeem')"><div class="sn">% of wins redeemed into visits/purchases</div></div>
-<div class="input-group"><div class="input-head"><span class="input-label">Value per redeemed visit</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-rewardValue" type="number" min="0" step="0.5" oninput="MGI('rewardValue')"></div></div><input type="range" min="0" max="50" step="0.5" value="8" id="mgs-rewardValue" oninput="MGS('rewardValue')"><div class="sn">Incremental venue/brand value per redemption</div></div>
+<div class="input-group" data-mg-field="cash"><div class="input-head"><span class="input-label">Avg wager / play</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-wager" type="number" min="0" step="0.25" oninput="MGI('wager')" aria-label="Average wager per play"></div></div><input type="range" min="0" max="20" step="0.25" value="2" id="mgs-wager" oninput="MGS('wager')"><div class="sn">Real-money wager amount per play</div></div>
+<div class="input-group" data-mg-field="cash"><div class="input-head"><span class="input-label">Rake rate</span><div class="input-val"><input class="vi" id="mgi-rake" type="number" min="0" max="50" step="0.5" oninput="MGI('rake')" aria-label="Rake rate"><span class="vp">%</span></div></div><input type="range" min="0" max="30" step="0.5" value="10" id="mgs-rake" oninput="MGS('rake')"><div class="sn">% of wagered $ created as paid-game revenue / rake (industry: 5–15%)</div></div>
+<div class="input-group" data-mg-field="revshare"><div class="input-head"><span class="input-label">Lucra rev share / platform cost</span><div class="input-val"><input class="vi" id="mgi-rs" type="number" min="0" max="100" step="1" oninput="MGI('rs')" aria-label="Lucra revenue share"><span class="vp">%</span></div></div><input type="range" min="0" max="50" step="1" value="25" id="mgs-rs" oninput="MGS('rs')"><div class="sn">% of paid-game rake paid to Lucra</div></div>
+<div class="input-group" data-mg-field="license"><div class="input-head"><span class="input-label">Monthly license fee (mini games)</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-license" type="number" min="0" max="30000" step="500" oninput="MGI('license')" aria-label="Monthly license fee"></div></div><input type="range" min="0" max="30000" step="500" value="0" id="mgs-license" oninput="MGS('license')"><div class="sn">Fixed platform cost deducted from brand ROI</div></div>
+<div class="input-group" data-mg-field="rewards"><div class="input-head"><span class="input-label">Reward games / user / month</span><input class="vi" id="mgi-rewardGames" type="number" min="0" step="1" oninput="MGI('rewardGames')"></div><input type="range" min="0" max="50" step="1" value="8" id="mgs-rewardGames" oninput="MGS('rewardGames')"><div class="sn">Free-to-play reward games among engaged users</div></div>
+<div class="input-group" data-mg-field="rewards"><div class="input-head"><span class="input-label">Reward win rate</span><div class="input-val"><input class="vi" id="mgi-win" type="number" min="0" max="100" step="1" oninput="MGI('win')"><span class="vp">%</span></div></div><input type="range" min="0" max="100" step="1" value="50" id="mgs-win" oninput="MGS('win')"><div class="sn">% of reward games that create a reward opportunity</div></div>
+<div class="input-group" data-mg-field="rewards"><div class="input-head"><span class="input-label">Reward redemption rate</span><div class="input-val"><input class="vi" id="mgi-redeem" type="number" min="0" max="100" step="1" oninput="MGI('redeem')"><span class="vp">%</span></div></div><input type="range" min="0" max="100" step="1" value="25" id="mgs-redeem" oninput="MGS('redeem')"><div class="sn">% of wins redeemed into visits/purchases</div></div>
+<div class="input-group" data-mg-field="rewards"><div class="input-head"><span class="input-label">Value per redeemed visit</span><div class="input-val"><span class="vp">$</span><input class="vi" id="mgi-rewardValue" type="number" min="0" step="0.5" oninput="MGI('rewardValue')"></div></div><input type="range" min="0" max="50" step="0.5" value="8" id="mgs-rewardValue" oninput="MGS('rewardValue')"><div class="sn">Incremental venue/brand value per redemption</div></div>
 </div>
 
 <div class="section-label" style="margin-top:18px"><span class="dot" style="background:var(--green)"></span>Mini games — engaged players & monthly volume</div>
@@ -1051,13 +1211,27 @@ var P=[{n:'Puttshack',v:1100,a:45,f:2500,l:16},{n:"Dave & Buster's",v:375,a:45,f
 var SCNS={cons:{opt:5,lift:10},avg:{opt:20,lift:12.5},case:{opt:40,lift:15}};
 var sel=0,curScn='',V={vis:1100,arpu:45,fee:2500,opt:10,lift:15,pfee:2500,loc:1,loy:0,mglic:0};
 function $(id){return document.getElementById(id)}
-function activePane(){var ids=['roi','minigame','analytics','proposal','trackman','gamification'],i,p;for(i=0;i<ids.length;i++){p=document.getElementById(ids[i]);if(p&&getComputedStyle(p).display!=='none')return p;}return document;}
+function activePane(){var ids=['roi','minigame','analytics','proposal','trackman','gamification','brandarcade'],i,p;for(i=0;i<ids.length;i++){p=document.getElementById(ids[i]);if(p&&getComputedStyle(p).display!=='none')return p;}return document;}
 function $A(id){var p=activePane();if(p.querySelector){var el=p.querySelector('#'+id);if(el)return el;var pid=p.id;if(pid==='minigame'){el=p.querySelector('#mg-'+id);if(el)return el;}}return document.getElementById(id);}
 function F(n){return '$'+Math.round(n).toLocaleString()}
 function fq(n){return n%1===0?''+n:n.toFixed(2)}
 function ap_(){return V.arpu%1===0?'$'+V.arpu:'$'+fq(V.arpu)}
 function initP(){$('presets').innerHTML=P.map(function(p,i){return '<button class="preset'+(i===sel?' on':'')+'" onclick="pk('+i+')">'+p.n+'</button>'}).join('')}
 function pk(i){sel=i;V.vis=P[i].v;V.arpu=P[i].a;V.fee=P[i].f;V.pfee=P[i].f;V.loc=P[i].l;setVenueName(P[i].n);sync();initP();U();saveState()}
+var DEAL_ARCHETYPES={
+  venue:{name:'Venue entertainment',venue:'Venue entertainment',vis:1100,arpu:45,fee:2500,loc:1,opt:10,lift:15},
+  golf:{name:'Golf & simulator',venue:'Golf & simulator venue',vis:120,arpu:30,fee:1500,loc:1,opt:10,lift:15},
+  multi:{name:'Multi-location rollout',venue:'Multi-location operator',vis:300,arpu:40,fee:2000,loc:12,opt:10,lift:15}
+};
+function applyDealArchetype(key,btn){
+  var a=DEAL_ARCHETYPES[key];if(!a)return;
+  V.vis=a.vis;V.arpu=a.arpu;V.fee=a.fee;V.pfee=a.fee;V.loc=a.loc;V.opt=a.opt;V.lift=a.lift;curScn='';
+  setVenueName(a.venue);sync();U();saveState();
+  document.querySelectorAll('.archetype').forEach(function(b){b.classList.toggle('on',b===btn)});
+  document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')});
+  var s=$('archetype-status');if(s)s.textContent=a.name+' assumptions are loaded. Continue to Core ROI to review them.';
+}
+function goToWorkflow(id){var b=document.getElementById('tab-'+id);T(id,b);var tabs=document.querySelector('.tabs');if(tabs)tabs.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});if(b)b.focus({preventScroll:true})}
 function SC(k){if(curScn===k){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')});U();saveState();return}curScn=k;V.opt=SCNS[k].opt;V.lift=SCNS[k].lift;sync();document.querySelectorAll('.scn').forEach(function(b){b.classList.toggle('on',b.dataset.s===k)});U();saveState()}
 function sync(){var keys=['vis','arpu','fee','opt','lift','loc','loy','mglic'];keys.forEach(function(k){if($('s-'+k)){$('s-'+k).value=Math.min(+$('s-'+k).max,Math.max(+$('s-'+k).min,Math.round(V[k])));$('i-'+k).value=V[k]}});if($('s-pfee')){$('s-pfee').value=Math.min(45000,Math.max(0,Math.round(V.pfee)));$('i-pfee').value=Math.round(V.pfee)}checkCaps()}
 function checkCaps(){[{k:'vis',id:'oc-vis',max:3000},{k:'fee',id:'oc-fee',max:45000},{k:'pfee',id:'oc-pfee',max:45000}].forEach(function(c){if($(c.id))$(c.id).innerHTML=V[c.k]>c.max?'<div class="over-cap">Custom value above slider max ($'+c.max.toLocaleString()+')</div>':''})}
@@ -1674,16 +1848,55 @@ var MGP=[
   {n:'Custom',tau:1000000,eng:10,plays:20,wager:2,rake:10,rs:25,license:0,rewardGames:8,win:50,redeem:25,rewardValue:8}
 ];
 var MGSCN={cons:{eng:5,plays:10,rake:5,rewardGames:8,win:50,redeem:25,rewardValue:8},avg:{eng:10,plays:20,rake:10,rewardGames:8,win:50,redeem:25,rewardValue:8},case:{eng:20,plays:40,rake:15,rewardGames:12,win:50,redeem:30,rewardValue:10}};
-var MG={tau:1000000,eng:10,plays:20,wager:2,rake:10,rs:25,license:0,rewardGames:8,win:50,redeem:25,rewardValue:8};
+var MG={tau:1000000,eng:10,plays:20,wager:2,rake:10,rs:25,license:0,rewardGames:8,win:50,redeem:25,rewardValue:8,pricing:'hybrid',experience:'hybrid'};
+var MGlast={wager:2,rake:10,rs:25,license:15000,rewardGames:8,win:50,redeem:25,rewardValue:8};
 var mgSel=5,mgScn='';
 
 function MGinitP(){$('mg-presets').innerHTML=MGP.map(function(p,i){return '<button class="preset'+(i===mgSel?' on':'')+'" onclick="MGpk('+i+')">'+p.n+'</button>'}).join('')}
-function MGpk(i){mgSel=i;var p=MGP[i];MG.tau=p.tau;MG.eng=p.eng;MG.plays=p.plays;MG.wager=p.wager;MG.rake=p.rake;MG.rs=p.rs;MG.license=p.license||0;MG.rewardGames=p.rewardGames||8;MG.win=p.win||50;MG.redeem=p.redeem||25;MG.rewardValue=p.rewardValue||8;MGsync();MGinitP();MGu()}
+function MGpk(i){mgSel=i;var p=MGP[i];MG.tau=p.tau;MG.eng=p.eng;MG.plays=p.plays;MG.wager=p.wager;MG.rake=p.rake;MG.rs=p.rs;MG.license=p.license||0;MG.rewardGames=p.rewardGames||8;MG.win=p.win||50;MG.redeem=p.redeem||25;MG.rewardValue=p.rewardValue||8;MG.pricing=MG.rs>0?(MG.license>0?'hybrid':'revshare'):'license';MG.experience=MG.rewardGames>0?(MG.wager>0?'hybrid':'f2p'):'cash';MGremember();MGsync();MGrenderModes();MGinitP();MGu()}
 function MGSC(k){if(mgScn===k){mgScn='';document.querySelectorAll('#mg .scn').forEach(function(b){b.classList.remove('on')});MGu();return}mgScn=k;var s=MGSCN[k];MG.eng=s.eng;MG.plays=s.plays;MG.rake=s.rake;MG.rewardGames=s.rewardGames;MG.win=s.win;MG.redeem=s.redeem;MG.rewardValue=s.rewardValue;MGsync();document.querySelectorAll('#mg .scn').forEach(function(b){b.classList.toggle('on',b.dataset.s===k)});MGu()}
 function MGsync(){['tau','eng','plays','wager','rake','rs','license','rewardGames','win','redeem','rewardValue'].forEach(function(k){var s=$('mgs-'+k),i=$('mgi-'+k);if(s){s.value=Math.min(+s.max,Math.max(+s.min,Math.round(MG[k]*1000)/1000))}if(i){i.value=MG[k]}})}
 function MGS(k){MG[k]=+$('mgs-'+k).value;$('mgi-'+k).value=MG[k];if(k==='eng'||k==='plays'||k==='rake'){mgScn='';document.querySelectorAll('#mg .scn').forEach(function(b){b.classList.remove('on')})}MGu()}
 function MGI(k){var raw=$('mgi-'+k).value;if(raw===''||raw==='-')return;var v=parseFloat(raw);if(isNaN(v)||v<0)return;MG[k]=v;var sr=$('mgs-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,v));if(k==='eng'||k==='plays'||k==='rake'){mgScn='';document.querySelectorAll('#mg .scn').forEach(function(b){b.classList.remove('on')})}MGu()}
 function discMGI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;MG[k]=v;if($('mgi-'+k))$('mgi-'+k).value=v;var sr=$('mgs-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,v));MGu()}
+
+function MGremember(){['wager','rake','rs','license','rewardGames','win','redeem','rewardValue'].forEach(function(k){if(MG[k]>0)MGlast[k]=MG[k]})}
+function MGsetPricing(mode){
+  MGremember();
+  if(mode==='revshare'&&MG.experience==='f2p')MG.experience='cash';
+  MG.pricing=mode;
+  if(mode==='revshare'){MG.license=0;MG.rs=MG.rs||MGlast.rs||25}
+  if(mode==='license'){MG.rs=0;MG.license=MG.license||MGlast.license||15000}
+  if(mode==='hybrid'){MG.rs=MG.rs||MGlast.rs||25;MG.license=MG.license||MGlast.license||15000}
+  MGsync();MGrenderModes();MGu();
+}
+function MGsetExperience(mode){
+  MGremember();MG.experience=mode;
+  if(mode==='f2p'){
+    MG.wager=0;MG.rake=0;MG.rs=0;
+    if(MG.pricing!=='license')MG.pricing='license';
+    MG.license=MG.license||MGlast.license||15000;
+    MG.rewardGames=MG.rewardGames||MGlast.rewardGames||8;MG.win=MG.win||MGlast.win||50;MG.redeem=MG.redeem||MGlast.redeem||25;MG.rewardValue=MG.rewardValue||MGlast.rewardValue||8;
+  }
+  if(mode==='cash'){
+    MG.wager=MG.wager||MGlast.wager||2;MG.rake=MG.rake||MGlast.rake||10;
+    MG.rewardGames=0;MG.win=0;MG.redeem=0;MG.rewardValue=0;
+  }
+  if(mode==='hybrid'){
+    MG.wager=MG.wager||MGlast.wager||2;MG.rake=MG.rake||MGlast.rake||10;
+    MG.rewardGames=MG.rewardGames||MGlast.rewardGames||8;MG.win=MG.win||MGlast.win||50;MG.redeem=MG.redeem||MGlast.redeem||25;MG.rewardValue=MG.rewardValue||MGlast.rewardValue||8;
+  }
+  MGsync();MGrenderModes();MGu();
+}
+function MGrenderModes(){
+  document.querySelectorAll('[data-mg-pricing]').forEach(function(b){var on=b.dataset.mgPricing===MG.pricing;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false')});
+  document.querySelectorAll('[data-mg-experience]').forEach(function(b){var on=b.dataset.mgExperience===MG.experience;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false')});
+  var cashOff=MG.experience==='f2p',rewardOff=MG.experience==='cash',revOff=MG.pricing==='license'||cashOff,licenseOff=MG.pricing==='revshare';
+  document.querySelectorAll('[data-mg-field]').forEach(function(g){var f=g.dataset.mgField,off=(f==='cash'&&cashOff)||(f==='rewards'&&rewardOff)||(f==='revshare'&&revOff)||(f==='license'&&licenseOff);g.classList.toggle('mg-disabled',off);g.querySelectorAll('input').forEach(function(i){i.disabled=off})});
+  var labels={hybrid:'Cash play plus reward-driven visits',f2p:'Free-to-play rewards, no wager or rake',cash:'Cash play only, reward value is excluded'};
+  var prices={hybrid:'fixed license plus rake share',revshare:'rake share only, no fixed license',license:'fixed license only, no rake share'};
+  var note=$('mg-mode-note');if(note)note.innerHTML='<strong>'+labels[MG.experience]+'</strong> · '+prices[MG.pricing]+'.';
+}
 
 function MGcalc(tau,eng,plays,wager,rake,rs,license){
   var engaged=Math.round(tau*eng/100);
@@ -1707,17 +1920,23 @@ function MGcalc(tau,eng,plays,wager,rake,rs,license){
 function MGu(){
   var r=MGcalc(MG.tau,MG.eng,MG.plays,MG.wager,MG.rake,MG.rs,MG.license);
   var costLabel=(r.lucraMo>0?F(r.lucraMo)+'/mo Lucra cost':'no Lucra cost modeled');
+  var paidLabel=MG.experience==='f2p'?'Reward plays / mo':'Paid plays / mo';
+  var paidValue=MG.experience==='f2p'?r.monthlyRewardPlays:r.monthlyPlays;
+  var paidSub=MG.experience==='f2p'?MG.rewardGames+' reward plays / engaged user':MG.plays+' paid plays / engaged user';
+  var volumeLabel=MG.experience==='f2p'?'Reward wins / mo':'Monthly wagered';
+  var volumeValue=MG.experience==='f2p'?Math.round(r.monthlyRewardWins).toLocaleString():F(r.monthlyWager);
+  var volumeSub=MG.experience==='f2p'?MG.win+'% reward win rate':'at $'+MG.wager.toFixed(2)+' / play';
   $('mg-funnel').innerHTML=
     '<div class="stat"><div class="label">Engaged players</div><div class="val cyan">'+r.engaged.toLocaleString()+'</div><div class="sub">'+MG.eng+'% of '+MG.tau.toLocaleString()+'</div></div>'+
-    '<div class="stat"><div class="label">Paid plays / mo</div><div class="val">'+r.monthlyPlays.toLocaleString()+'</div><div class="sub">'+MG.plays+' paid plays / engaged user</div></div>'+
-    '<div class="stat"><div class="label">Monthly wagered</div><div class="val">'+F(r.monthlyWager)+'</div><div class="sub">at $'+MG.wager.toFixed(2)+' / play</div></div>'+
+    '<div class="stat"><div class="label">'+paidLabel+'</div><div class="val">'+paidValue.toLocaleString()+'</div><div class="sub">'+paidSub+'</div></div>'+
+    '<div class="stat"><div class="label">'+volumeLabel+'</div><div class="val">'+volumeValue+'</div><div class="sub">'+volumeSub+'</div></div>'+
     '<div class="stat"><div class="label">Reward redemptions / mo</div><div class="val amber">'+Math.round(r.monthlyRedemptions).toLocaleString()+'</div><div class="sub">'+MG.rewardGames+' games × '+MG.win+'% win × '+MG.redeem+'% redeem</div></div>';
   $('mg-revenue').innerHTML=
     '<div class="stat"><div class="label">Annual paid-game value</div><div class="val green">'+F(r.rakeAnn)+'</div><div class="sub">'+MG.rake+'% rake created by paid games</div></div>'+
     '<div class="stat"><div class="label">Annual reward uplift</div><div class="val green">'+F(r.rewardAnn)+'</div><div class="sub">redeemed visits × '+F(MG.rewardValue)+'</div></div>'+
     '<div class="stat"><div class="label">Total annual value created</div><div class="val green">'+F(r.grossBrandAnn)+'</div><div class="sub">paid-game value + reward uplift</div></div>';
   $('mg-client').innerHTML=
-    '<div class="stat"><div class="label">Lucra annual cost</div><div class="val purple">'+F(r.lucraAnn)+'</div><div class="sub">license + '+MG.rs+'% rake share</div></div>'+
+    '<div class="stat"><div class="label">Lucra annual cost</div><div class="val purple">'+F(r.lucraAnn)+'</div><div class="sub">'+(MG.pricing==='revshare'?MG.rs+'% rake share only':MG.pricing==='license'?'fixed license only':'license + '+MG.rs+'% rake share')+'</div></div>'+
     '<div class="stat"><div class="label">Net annual brand value</div><div class="val purple">'+F(r.netBrandAnn)+'</div><div class="sub">after '+costLabel+'</div></div>'+
     '<div class="stat"><div class="label">Value per engaged user</div><div class="val">'+F(r.engaged>0?Math.round(r.grossBrandAnn/r.engaged):0)+'</div><div class="sub">gross annual value / engaged user</div></div>';
 }
@@ -1727,9 +1946,9 @@ function MGcheckReady(){if(!$('n-mg')||!$('mg-pdf-btn'))return;var n=$('n-mg').v
 
 function MGbuildPitch(p,r){
   var s = p.tau.toLocaleString()+' reachable users at '+p.eng+'% engagement = '+r.engaged.toLocaleString()+' engaged mini-game players.';
-  s += ' Paid games create '+F(r.monthlyWager)+'/mo in wager volume and '+F(r.rakeAnn)+'/yr in paid-game value at '+p.rake+'% rake.';
-  s += ' Reward games create about '+Math.round(r.monthlyRedemptions).toLocaleString()+' redeemed visits/mo, worth '+F(r.rewardMo)+'/mo or '+F(r.rewardAnn)+'/yr to the venue/brand.';
-  s += ' Combined, mini games create '+F(r.grossBrandAnn)+'/yr in gross venue/brand value.';
+  if(p.experience!=='f2p')s += ' Paid games create '+F(r.monthlyWager)+'/mo in wager volume and '+F(r.rakeAnn)+'/yr in paid-game value at '+p.rake+'% rake.';
+  if(p.experience!=='cash')s += ' Reward games create about '+Math.round(r.monthlyRedemptions).toLocaleString()+' redeemed visits/mo, worth '+F(r.rewardMo)+'/mo or '+F(r.rewardAnn)+'/yr to the venue/brand.';
+  s += ' This '+(p.experience==='f2p'?'F2P rewards':p.experience==='cash'?'cash-only':'cash + rewards')+' model creates '+F(r.grossBrandAnn)+'/yr in gross venue/brand value.';
   if (r.lucraAnn>0) s += ' After modeled Lucra cost of '+F(r.lucraAnn)+'/yr, net annual brand value is '+F(r.netBrandAnn)+'.';
   return s;
 }
@@ -1752,17 +1971,17 @@ function MGGEN(){
   h += '<div style="text-align:center;padding:22px 0;margin-bottom:22px">';
   h += '<div style="font-size:10px;color:'+text2+';text-transform:uppercase;letter-spacing:2.4px;font-weight:800;margin-bottom:8px">Projected annual value created for '+name+'</div>';
   h += '<div style="font-family:'+c.display+';font-size:58px;font-weight:900;color:'+green+';line-height:.95;letter-spacing:-1px">'+F(r.grossBrandAnn)+'</div>';
-  h += '<div style="font-size:13px;color:'+text2+';margin-top:6px">'+F(r.rakeAnn)+' paid-game value + '+F(r.rewardAnn)+' reward uplift</div>';
+  h += '<div style="font-size:13px;color:'+text2+';margin-top:6px">'+(MG.experience==='f2p'?F(r.rewardAnn)+' reward uplift':MG.experience==='cash'?F(r.rakeAnn)+' paid-game value':F(r.rakeAnn)+' paid-game value + '+F(r.rewardAnn)+' reward uplift')+'</div>';
   if(r.lucraAnn>0) h += '<div style="font-size:12px;color:'+text3+';margin-top:5px">Net after modeled Lucra cost: '+F(r.netBrandAnn)+'</div>';
   h += '</div>';
 
   h += '<div style="font-size:10px;margin-bottom:18px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
   h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.tau.toLocaleString()+' reachable</span>';
   h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.eng+'% engaged</span>';
-  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.plays+' paid plays/user/mo</span>';
-  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">$'+MG.wager.toFixed(2)+' avg wager</span>';
-  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.rewardGames+' reward games/user/mo</span>';
-  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.win+'% win / '+MG.redeem+'% redeem</span>';
+  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+(MG.pricing==='revshare'?'Revenue share only':MG.pricing==='license'?'License only':'License + rev share')+'</span>';
+  h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+(MG.experience==='f2p'?'F2P rewards only':MG.experience==='cash'?'Cash only':'Cash + rewards')+'</span>';
+  if(MG.experience!=='f2p')h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.plays+' paid plays/user/mo · $'+MG.wager.toFixed(2)+' avg wager</span>';
+  if(MG.experience!=='cash')h += '<span style="background:'+surf+';border:1px solid '+border+';padding:3px 10px;border-radius:20px;color:'+text2+'">'+MG.rewardGames+' reward games/user/mo · '+MG.win+'% win / '+MG.redeem+'% redeem</span>';
   h += '</div>';
 
   h += '<div style="display:flex;align-items:stretch;gap:8px;margin-bottom:12px">';
@@ -1772,9 +1991,9 @@ function MGGEN(){
   h += '</div>';
 
   h += '<div style="display:flex;align-items:stretch;gap:8px;margin-bottom:18px">';
-  h += '<div '+fb+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Monthly wagered</div><div style="font-size:16px;font-weight:600;color:'+text+'">'+F(r.monthlyWager)+'</div></div>'+aw;
-  h += '<div '+fa+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Paid-game value</div><div style="font-size:16px;font-weight:600;color:'+amber+'">'+F(r.rakeAnn)+'/yr</div></div>'+aw;
-  h += '<div '+fp+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Reward uplift</div><div style="font-size:16px;font-weight:600;color:'+purple+'">'+F(r.rewardAnn)+'/yr</div></div>';
+  if(MG.experience!=='f2p')h += '<div '+fb+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Monthly wagered</div><div style="font-size:16px;font-weight:600;color:'+text+'">'+F(r.monthlyWager)+'</div></div>'+aw+'<div '+fa+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Paid-game value</div><div style="font-size:16px;font-weight:600;color:'+amber+'">'+F(r.rakeAnn)+'/yr</div></div>';
+  if(MG.experience==='hybrid')h += aw;
+  if(MG.experience!=='cash')h += '<div '+fp+'><div style="font-size:9px;color:'+text3+';margin-bottom:3px">Reward uplift</div><div style="font-size:16px;font-weight:600;color:'+purple+'">'+F(r.rewardAnn)+'/yr</div></div>';
   h += '</div>';
 
   h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">';
@@ -1822,7 +2041,7 @@ function MGGENPDF(){
   },300);
 }
 
-MGinitP();MGsync();MGu();MGcheckReady();
+MGinitP();MGsync();MGrenderModes();MGu();MGcheckReady();
 
 /* ─── PROPOSAL BUILDER ─────────────────────────────────────────────── */
 function PRtoday(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}

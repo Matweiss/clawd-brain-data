@@ -1,0 +1,45 @@
+{
+  "name": "panel-synthesis",
+  "version": "0.1.0",
+  "description": "Panel a question to Claude/Opus and Codex/GPT-5.5 using existing subscriptions, then have Clawd synthesize the best response.",
+  "triggers": [
+    "panel a question",
+    "fusion",
+    "synthesize Claude and Codex",
+    "ask Opus and GPT-5.5",
+    "compare multiple agents",
+    "get best answer from multiple models",
+    "Debby debate",
+    "blind parallel cross-review",
+    "agents revise after seeing each other"
+  ],
+  "runtimes": [
+    "openclaw",
+    "omnigent",
+    "claude",
+    "codex"
+  ],
+  "requires": {
+    "bins": [],
+    "env": [],
+    "tools": [
+      "sessions_spawn",
+      "sessions_history",
+      "sessions_send"
+    ]
+  },
+  "safety": {
+    "external_writes": false,
+    "destructive": false,
+    "approval_required": [
+      "external actions",
+      "destructive actions",
+      "deploy",
+      "publish",
+      "send email",
+      "credential changes",
+      "purchases",
+      "scheduling commitments"
+    ]
+  }
+}

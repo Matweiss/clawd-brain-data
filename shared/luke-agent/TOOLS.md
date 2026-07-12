@@ -128,3 +128,19 @@ export PAPERCLIP_API_KEY="..."
 export PAPERCLIP_API_URL="http://127.0.0.1:3100"
 export PAPERCLIP_COMPANY_ID="b453f88c-22e0-4521-8843-8427a4e20538"
 ```
+
+## HubSpot (service key via Mission Control)
+
+Wired 2026-05-05 (TMW-619). Read-only smoke test for Luke's sales execution path:
+
+```bash
+python3 /root/.openclaw/workspace/scripts/luke-hubspot-smoke.py
+```
+
+Token source: Mission Control `.env.local` (`HUBSPOT_ACCESS_TOKEN`, `HUBSPOT_PRIVATE_APP_TOKEN`, or legacy `HUBSPOT_API_KEY`). Do not paste the token into task comments or logs.
+
+Dashboard status endpoint:
+
+```bash
+curl -s http://localhost:3000/api/hubspot/status
+```

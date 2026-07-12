@@ -1,0 +1,13 @@
+{
+  "name": "dangerous-action-guard",
+  "version": "0.1.0",
+  "description": "Require explicit approval before irreversible, external, destructive, credential, financial, scheduling, or public/customer-facing actions.",
+  "triggers": ["delete", "deploy", "push", "publish", "send email", "external message", "credential", "payment", "schedule", "public post", "destructive action"],
+  "runtimes": ["openclaw", "omnigent", "claude", "codex"],
+  "requires": {"bins": [], "env": [], "tools": []},
+  "safety": {
+    "external_writes": true,
+    "destructive": true,
+    "approval_required": ["all destructive/external/public/credential/financial/scheduling actions"]
+  }
+}

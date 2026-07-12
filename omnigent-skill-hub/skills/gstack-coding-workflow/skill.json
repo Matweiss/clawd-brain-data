@@ -1,0 +1,13 @@
+{
+  "name": "gstack-coding-workflow",
+  "version": "0.1.0",
+  "description": "Use gstack-style structured planning, implementation, review, QA, security, and ship gates for real coding work.",
+  "triggers": ["build a feature", "code review", "security audit", "QA a URL", "investigate a bug", "production-grade coding task"],
+  "runtimes": ["openclaw", "omnigent", "claude", "codex"],
+  "requires": {"bins": [], "env": [], "tools": []},
+  "safety": {
+    "external_writes": false,
+    "destructive": false,
+    "approval_required": ["deploy", "push", "release", "infra changes", "credential changes"]
+  }
+}
