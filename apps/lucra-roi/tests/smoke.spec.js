@@ -10,19 +10,19 @@ import { test, expect } from '@playwright/test';
 
 const TAB_NAMES = [
   'Core ROI',
+  'Gamification',
   'Mini Game ROI',
   'Trackman Partner',
   'Investment Plans',
-  'Gamification',
   'Brand Arcade',
 ];
 
 const TAB_PANEL_IDS = [
   'roi',
+  'gamification',
   'minigame',
   'trackman',
   'analytics',
-  'gamification',
   'brandarcade',
 ];
 
@@ -125,6 +125,32 @@ test('Core ROI tab has visible inputs and computes values', async ({ page }) => 
   await expect(summary).toBeVisible();
 
   expect(errors).toEqual([]);
+});
+
+test('guided archetypes prefill Core ROI without hiding assumptions', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', err => errors.push(err.message));
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /Golf & simulator/ }).click();
+
+  await expect(page.locator('#i-vis')).toHaveValue('120');
+  await expect(page.locator('#i-arpu')).toHaveValue('30');
+  await expect(page.locator('#i-loc')).toHaveValue('1');
+  await expect(page.locator('#archetype-status')).toContainText('Golf & simulator assumptions are loaded');
+  await expect(page.locator('#i-vis')).toBeVisible();
+
+  expect(errors).toEqual([]);
+});
+
+test('narrow layout has no document-level horizontal overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  const sizes = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(sizes.scrollWidth).toBeLessThanOrEqual(sizes.clientWidth + 1);
 });
 
 test('Gamification tab renders deal configuration', async ({ page }) => {
