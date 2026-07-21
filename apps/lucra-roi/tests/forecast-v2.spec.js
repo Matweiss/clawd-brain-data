@@ -58,12 +58,14 @@ test('wager break-even replaces TrackMan and matches the approved example', asyn
   await expect(page.getByRole('tab', { name: 'Trackman Partner' })).toHaveCount(0);
   await page.getByRole('tab', { name: 'Wager Break-even' }).click();
   await expect(page.locator('#wagerbreakeven')).toBeVisible();
-  await expect(page.locator('#wb-results')).toContainText('$6,250');
-  await expect(page.locator('#wb-results')).toContainText('$208.33');
-  await expect(page.locator('#wb-results')).toContainText('42');
-  await expect(page.locator('#wb-pitch-text')).toContainText('$6,250');
-  await expect(page.locator('#wb-pitch-text')).toContainText('80% Lucra share');
+  await expect(page.locator('#wb-results')).toContainText('$10,000');
+  await expect(page.locator('#wb-results')).toContainText('$333.34');
+  await expect(page.locator('#wb-results')).toContainText('10%');
+  await expect(page.locator('#wb-pitch-text')).toContainText('$10,000');
+  await expect(page.locator('#wb-pitch-text')).toContainText('50% customer share');
   await expect(page.locator('#wb-pitch-text')).toContainText('20% take rate');
+  await expect(page.locator('#wb-wager')).toHaveCount(0);
+  await expect(page.locator('#wb-days')).toHaveCount(0);
 });
 
 test('new planning tools remain usable on mobile', async ({ page }) => {
