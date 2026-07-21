@@ -66,6 +66,23 @@ test('wager break-even replaces TrackMan and matches the approved example', asyn
   await expect(page.locator('#wb-pitch-text')).toContainText('20% take rate');
   await expect(page.locator('#wb-wager')).toHaveCount(0);
   await expect(page.locator('#wb-days')).toHaveCount(0);
+
+  await page.locator('#wb-locations').fill('250');
+  await expect(page.locator('#wb-breakdowns')).toContainText('Monthly handle / location');
+  await expect(page.locator('#wb-breakdowns')).toContainText('$40');
+  await expect(page.locator('#wb-breakdowns')).toContainText('$1.34');
+
+  await page.locator('#wb-mau').fill('100000');
+  await expect(page.locator('#wb-breakdowns')).toContainText('$0.10');
+  await expect(page.locator('#wb-breakdowns')).toContainText('$0.0034');
+  await expect(page.locator('#wb-breakdowns')).toContainText('400');
+
+  await page.locator('#wb-dau-location').fill('40');
+  await expect(page.locator('#wb-breakdowns')).toContainText('10,000');
+  await expect(page.locator('#wb-breakdowns')).toContainText('$0.04');
+  await expect(page.locator('#wb-pitch-text')).toContainText('250 locations');
+  await expect(page.locator('#wb-pitch-text')).toContainText('100,000 monthly active users');
+  await expect(page.locator('#wb-pitch-text')).toContainText('40 daily active users per location');
 });
 
 test('new planning tools remain usable on mobile', async ({ page }) => {
