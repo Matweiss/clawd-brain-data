@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// All-six-tabs smoke test.
+// All-seven-tabs smoke test.
 // Verifies every tab renders without JS errors, all panels become visible,
 // console-error capture, and keyboard tab navigation.
 //
@@ -12,7 +12,8 @@ const TAB_NAMES = [
   'Core ROI',
   'Gamification',
   'Mini Game ROI',
-  'Trackman Partner',
+  'Launch Forecast',
+  'Wager Break-even',
   'Investment Plans',
   'Brand Arcade',
 ];
@@ -21,7 +22,8 @@ const TAB_PANEL_IDS = [
   'roi',
   'gamification',
   'minigame',
-  'trackman',
+  'forecast',
+  'wagerbreakeven',
   'analytics',
   'brandarcade',
 ];
@@ -30,7 +32,7 @@ function tabButton(page, name) {
   return page.locator('.tabs button', { hasText: name });
 }
 
-test('all six tabs load without console errors', async ({ page }) => {
+test('all seven tabs load without console errors', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
 
