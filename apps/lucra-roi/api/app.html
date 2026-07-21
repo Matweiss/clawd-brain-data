@@ -116,6 +116,39 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
 .card-actions span{font-size:12px;color:var(--text3)}
 .dl-btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:13px;color:var(--text2);cursor:pointer;font-family:var(--font);min-height:40px}
 .green{color:var(--green)}.red{color:var(--red)}.amber{color:var(--amber)}.cyan{color:var(--cyan)}.purple{color:var(--purple)}
+.lf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 12px;flex-wrap:wrap}
+.lf-toolbar-copy{max-width:58ch;font-size:12px;line-height:1.55;color:var(--text3)}
+.lf-sync{min-height:44px;padding:10px 14px;border-radius:8px;border:1px solid var(--green-border);background:var(--green-bg);color:var(--green);font:600 12px var(--font);cursor:pointer}
+.lf-sync:hover{background:rgba(138,233,26,.16)}
+.lf-sync:focus-visible,.lf-use:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.lf-formula{font-size:11px;line-height:1.6;color:var(--text3);padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:20px}
+.lf-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:24px}
+.lf-summary .stat{text-align:left}
+.lf-summary .stat .val{font-variant-numeric:tabular-nums}
+.lf-comparison{width:100%;min-width:620px;border-collapse:collapse;font-size:12px;margin-bottom:24px}
+.lf-comparison th,.lf-comparison td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums}
+.lf-comparison th:first-child,.lf-comparison td:first-child{text-align:left}
+.lf-comparison thead th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.lf-use{min-height:36px;padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font:500 11px var(--font);cursor:pointer}
+.lf-use:hover{border-color:var(--green);color:var(--green)}
+.lf-trends{display:grid;gap:12px;margin-bottom:24px}
+.lf-trend{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.lf-trend:last-child{border-bottom:0}
+.lf-trend-label{font-size:11px;color:var(--text3)}
+.lf-trend-label strong{display:block;margin-top:2px;color:var(--text);font:600 15px var(--mono)}
+.lf-spark{width:100%;height:64px;display:block;overflow:visible}
+.lf-table-wrap{overflow:auto;max-height:520px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:24px}
+.lf-table{width:100%;min-width:940px;border-collapse:separate;border-spacing:0;font-size:11px;font-variant-numeric:tabular-nums}
+.lf-table caption{text-align:left;padding:12px 14px;color:var(--text2);font-weight:600;background:var(--surface)}
+.lf-table th,.lf-table td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
+.lf-table th{position:sticky;top:0;z-index:2;background:var(--surface2);color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.lf-table th:first-child,.lf-table td:first-child{position:sticky;left:0;text-align:left;background:var(--surface);z-index:1}
+.lf-table th:first-child{z-index:3;background:var(--surface2)}
+.lf-table tbody tr:last-child td{border-bottom:0}
+.lf-table tbody tr:hover td{background:#19191c}
+.lf-table tbody tr:hover td:first-child{background:#19191c}
+.lf-validation{display:none;margin:-8px 0 18px;padding:10px 12px;border:1px solid rgba(239,68,68,.25);border-radius:8px;background:rgba(239,68,68,.08);color:var(--red);font-size:12px}
+.forecast-mode .sticky-summary,.forecast-mode .mobile-jumps,.forecast-mode .sticky-gen-footer{display:none!important}
 @media(max-width:640px){
 .app{padding:16px 12px 40px}
 .header{margin-bottom:20px;padding-bottom:14px}
@@ -146,6 +179,8 @@ input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:l
 .gen-input{width:100%;min-width:0}
 .gen-btn,.gen-btn2{width:100%;text-align:center}
 .card-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.lf-summary{grid-template-columns:1fr 1fr;gap:8px}.lf-toolbar{align-items:stretch}.lf-sync{width:100%}
+.lf-trend{grid-template-columns:1fr;gap:6px}.lf-spark{height:54px}.lf-table-wrap{max-height:none}
 }
 @media(max-width:380px){
 .grid3,.grid4{grid-template-columns:1fr}
@@ -430,6 +465,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 <button class="tab active" role="tab" aria-selected="true" aria-controls="roi" id="tab-roi" tabindex="0" onclick="T('roi',this)">Core ROI</button>
 <button class="tab" role="tab" aria-selected="false" aria-controls="gamification" id="tab-gamification" tabindex="-1" onclick="T('gamification',this)">Gamification</button>
 <button class="tab secondary-tool first-secondary" role="tab" aria-selected="false" aria-controls="minigame" id="tab-minigame" tabindex="-1" onclick="T('minigame',this)">More · Mini Game ROI</button>
+<button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="forecast" id="tab-forecast" tabindex="-1" onclick="T('forecast',this)">Launch Forecast</button>
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="trackman" id="tab-trackman" tabindex="-1" onclick="T('trackman',this)">Trackman Partner</button>
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="analytics" id="tab-analytics" tabindex="-1" onclick="T('analytics',this)">Investment Plans</button>
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="brandarcade" id="tab-brandarcade" tabindex="-1" onclick="T('brandarcade',this)">Brand Arcade</button>
@@ -681,6 +717,61 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 </div>
 <div class="card-wrap" id="mg-w-roi"><div class="card-actions"><button class="dl-btn" onclick="DL('roi')">Download image</button></div><div id="mg-o-roi"></div></div>
 
+</div>
+
+<div id="forecast" role="tabpanel" aria-labelledby="tab-forecast" style="display:none">
+<div style="margin-top:32px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+  <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Launch Forecast</div>
+  <div style="font-size:12px;color:var(--text3);line-height:1.5">Turn the agreed sales case into a 12-month implementation target for active players, handle, and revenue.</div>
+</div>
+
+<div class="lf-toolbar">
+  <div class="lf-toolbar-copy">Start from the current Mini Game ROI assumptions, then set a realistic activation ramp. Scenario comparisons below are alternative outcomes, not calendar milestones.</div>
+  <button type="button" class="lf-sync" onclick="LFloadFromMG(false)">Load Mini Game assumptions</button>
+</div>
+
+<div class="pf-section">
+  <div class="pf-section-title">Audience and activation ramp</div>
+  <div class="inputs" style="margin-bottom:0">
+    <div class="input-group"><label class="input-label" for="lf-startMau">Starting monthly active users</label><input class="pf-input" id="lf-startMau" type="number" min="0" step="1000" inputmode="numeric" oninput="LFI('startMau',this.value)"><div class="sn">Use real 30-day MAU, not downloads or registered accounts</div></div>
+    <div class="input-group"><label class="input-label" for="lf-mauGrowth">Monthly MAU growth</label><div class="input-val"><input class="pf-input" id="lf-mauGrowth" type="number" min="-100" max="500" step="0.5" oninput="LFI('mauGrowth',this.value)"><span class="vp">%</span></div><div class="sn">Compounds each month; negative values model contraction</div></div>
+    <div class="input-group"><label class="input-label" for="lf-m1Activation">Month 1 activation</label><div class="input-val"><input class="pf-input" id="lf-m1Activation" type="number" min="0" max="100" step="0.5" oninput="LFI('m1Activation',this.value)"><span class="vp">%</span></div><div class="sn">Share of MAU expected to play in the launch month</div></div>
+    <div class="input-group"><label class="input-label" for="lf-targetActivation">Target activation</label><div class="input-val"><input class="pf-input" id="lf-targetActivation" type="number" min="0" max="100" step="0.5" oninput="LFI('targetActivation',this.value)"><span class="vp">%</span></div><div class="sn">Steady-state share of MAU actively playing</div></div>
+    <div class="input-group"><label class="input-label" for="lf-targetMonth">Target reached in month</label><input class="pf-input" id="lf-targetMonth" type="number" min="1" max="12" step="1" inputmode="numeric" oninput="LFI('targetMonth',this.value)"><div class="sn">Activation ramps linearly to this month, then stays flat</div></div>
+  </div>
+</div>
+
+<div class="pf-section">
+  <div class="pf-section-title">Player economics</div>
+  <div class="inputs" style="margin-bottom:0">
+    <div class="input-group"><label class="input-label" for="lf-plays">Paid plays per active player</label><input class="pf-input" id="lf-plays" type="number" min="0" step="1" inputmode="numeric" oninput="LFI('plays',this.value)"><div class="sn">Monthly frequency among active players</div></div>
+    <div class="input-group"><label class="input-label" for="lf-wager">Average wager per play</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="lf-wager" type="number" min="0" step="0.25" oninput="LFI('wager',this.value)"></div></div>
+    <div class="input-group"><label class="input-label" for="lf-rake">Rake / GGR rate</label><div class="input-val"><input class="pf-input" id="lf-rake" type="number" min="0" max="100" step="0.5" oninput="LFI('rake',this.value)"><span class="vp">%</span></div></div>
+    <div class="input-group"><label class="input-label" for="lf-lucraShare">Lucra revenue share</label><div class="input-val"><input class="pf-input" id="lf-lucraShare" type="number" min="0" max="100" step="1" oninput="LFI('lucraShare',this.value)"><span class="vp">%</span></div><div class="sn">Applied to GGR, not total handle</div></div>
+    <div class="input-group"><label class="input-label" for="lf-license">Monthly license fee</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="lf-license" type="number" min="0" step="500" inputmode="numeric" oninput="LFI('license',this.value)"></div></div>
+  </div>
+</div>
+
+<div id="lf-validation" class="lf-validation" role="alert"></div>
+<div class="lf-formula"><strong style="color:var(--text2)">Model:</strong> MAU × activation = active players; active players × plays × average wager = handle; handle × rake = GGR; GGR × Lucra share + license = Lucra revenue; GGR − Lucra revenue = client net revenue.</div>
+
+<div class="section-label"><span class="dot" style="background:var(--green)"></span>12-month forecast</div>
+<div class="lf-summary" id="lf-summary" aria-live="polite"></div>
+
+<div class="section-label"><span class="dot" style="background:var(--blue)"></span>Alternative scenarios</div>
+<p style="font-size:11px;color:var(--text3);margin:-4px 0 8px">Conservative, base, and upside are parallel cases using the same MAU growth and player economics.</p>
+<div style="overflow-x:auto">
+  <table class="lf-comparison">
+    <thead><tr><th>Case</th><th>Month 1</th><th>Target</th><th>Year 1 handle</th><th>Lucra revenue</th><th></th></tr></thead>
+    <tbody id="lf-comparison"></tbody>
+  </table>
+</div>
+
+<div class="section-label"><span class="dot" style="background:var(--cyan)"></span>Monthly trend</div>
+<div class="lf-trends" id="lf-trends"></div>
+
+<div class="section-label"><span class="dot" style="background:var(--purple)"></span>Monthly implementation targets</div>
+<div class="lf-table-wrap" id="lf-table-wrap"></div>
 </div>
 
 <div id="analytics" role="tabpanel" aria-labelledby="tab-analytics" style="display:none">
@@ -1158,7 +1249,7 @@ var P=[{n:'Puttshack',v:1100,a:45,f:2500,l:16},{n:"Dave & Buster's",v:375,a:45,f
 var SCNS={cons:{opt:5,lift:10},avg:{opt:20,lift:12.5},case:{opt:40,lift:15}};
 var sel=0,curScn='',V={vis:1100,arpu:45,fee:2500,opt:10,lift:15,pfee:2500,loc:1,loy:0,mglic:0};
 function $(id){return document.getElementById(id)}
-function activePane(){var ids=['roi','minigame','analytics','proposal','trackman','gamification','brandarcade'],i,p;for(i=0;i<ids.length;i++){p=document.getElementById(ids[i]);if(p&&getComputedStyle(p).display!=='none')return p;}return document;}
+function activePane(){var ids=['roi','minigame','forecast','analytics','proposal','trackman','gamification','brandarcade'],i,p;for(i=0;i<ids.length;i++){p=document.getElementById(ids[i]);if(p&&getComputedStyle(p).display!=='none')return p;}return document;}
 function $A(id){var p=activePane();if(p.querySelector){var el=p.querySelector('#'+id);if(el)return el;var pid=p.id;if(pid==='minigame'){el=p.querySelector('#mg-'+id);if(el)return el;}}return document.getElementById(id);}
 function F(n){return '$'+Math.round(n).toLocaleString()}
 function fq(n){return n%1===0?''+n:n.toFixed(2)}
@@ -1222,7 +1313,7 @@ function renderObjections(){
 function S(k){V[k]=+$('s-'+k).value;if(k==='fee')V.pfee=V[k];if(k==='pfee')V.fee=V[k];$('i-'+k).value=V[k];if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function I(k){var raw=$('i-'+k).value;if(raw===''||raw==='-')return;var v=parseFloat(raw);if(isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if(k==='pfee')V.fee=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function discI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if($('i-'+k))$('i-'+k).value=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));checkCaps();U();saveState()}
-function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';['roi','minigame','analytics','proposal','trackman','gamification','brandarcade'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');t.setAttribute('aria-selected','false');t.setAttribute('tabindex','-1')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn){btn.classList.add('active');btn.setAttribute('aria-selected','true');btn.setAttribute('tabindex','0')}if(id==='trackman')renderTM();if(id==='gamification')renderGM();if(id==='brandarcade')BAinit();U()}
+function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';document.body.classList.toggle('forecast-mode',id==='forecast');['roi','minigame','forecast','analytics','proposal','trackman','gamification','brandarcade'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');t.setAttribute('aria-selected','false');t.setAttribute('tabindex','-1')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn){btn.classList.add('active');btn.setAttribute('aria-selected','true');btn.setAttribute('tabindex','0')}if(id==='trackman')renderTM();if(id==='gamification')renderGM();if(id==='brandarcade')BAinit();if(id==='forecast')LFinit();U()}
 // Keyboard navigation for tabs (arrow keys per WAI-ARIA tablist pattern)
 document.addEventListener('keydown',function(e){var tab=e.target;if(!tab||tab.getAttribute('role')!=='tab')return;var tabs=Array.from(tab.parentElement.querySelectorAll('[role=tab]'));var idx=tabs.indexOf(tab),next=-1;if(e.key==='ArrowRight'||e.key==='ArrowDown'){next=(idx+1)%tabs.length}else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){next=(idx-1+tabs.length)%tabs.length}else if(e.key==='Home'){next=0}else if(e.key==='End'){next=tabs.length-1}if(next>=0){e.preventDefault();tabs[next].click();tabs[next].focus()}})
 
@@ -1854,6 +1945,25 @@ function MGbuildPitch(p,r){
   if (r.lucraAnn>0) s += ' After modeled Lucra cost of '+F(r.lucraAnn)+'/yr, net annual brand value is '+F(r.netBrandAnn)+'.';
   return s;
 }
+
+/* ─── LAUNCH FORECAST ────────────────────────────────────────────── */
+var LF={startMau:1000000,mauGrowth:0,m1Activation:5,targetActivation:10,targetMonth:6,plays:20,wager:2,rake:10,lucraShare:25,license:0};
+var LFloaded=false;
+var LFCASES={conservative:{label:'Conservative',m1Activation:2.5,targetActivation:5},base:{label:'Base',m1Activation:5,targetActivation:10},upside:{label:'Upside',m1Activation:10,targetActivation:20}};
+function LFclamp(n,min,max){return Math.min(max,Math.max(min,n))}
+function LFmoney(n){n=Math.round(isFinite(n)?n:0);return(n<0?'-$':'$')+Math.abs(n).toLocaleString()}
+function LFnumber(n){return Math.round(isFinite(n)?n:0).toLocaleString()}
+function LFpct(n){return (Math.round(n*10)/10).toFixed(n%1?1:0)+'%'}
+function LFsanitize(state){var s=Object.assign({},state);s.startMau=Math.max(0,Number(s.startMau)||0);s.mauGrowth=LFclamp(Number(s.mauGrowth)||0,-100,500);s.m1Activation=LFclamp(Number(s.m1Activation)||0,0,100);s.targetActivation=LFclamp(Number(s.targetActivation)||0,0,100);s.targetMonth=Math.round(LFclamp(Number(s.targetMonth)||1,1,12));s.plays=Math.max(0,Number(s.plays)||0);s.wager=Math.max(0,Number(s.wager)||0);s.rake=LFclamp(Number(s.rake)||0,0,100);s.lucraShare=LFclamp(Number(s.lucraShare)||0,0,100);s.license=Math.max(0,Number(s.license)||0);return s}
+function LFcalculate(state){var s=LFsanitize(state),months=[],totals={handle:0,ggr:0,lucra:0,client:0,plays:0,activePlayerMonths:0};for(var month=1;month<=12;month++){var mau=Math.round(s.startMau*Math.pow(1+s.mauGrowth/100,month-1));var progress=s.targetMonth===1?1:Math.min(1,(month-1)/(s.targetMonth-1));var activation=s.m1Activation+(s.targetActivation-s.m1Activation)*progress;var active=Math.round(mau*activation/100);var plays=active*s.plays;var handle=plays*s.wager;var ggr=handle*s.rake/100;var variableLucra=ggr*s.lucraShare/100;var lucra=variableLucra+s.license;var client=ggr-lucra;var row={month:month,mau:mau,activation:activation,active:active,plays:plays,handle:handle,ggr:ggr,lucra:lucra,client:client};months.push(row);totals.handle+=handle;totals.ggr+=ggr;totals.lucra+=lucra;totals.client+=client;totals.plays+=plays;totals.activePlayerMonths+=active}return{state:s,months:months,totals:totals}}
+function LFI(key,raw){if(raw===''||raw==='-'||raw==='.')return;var n=Number(raw);if(!isFinite(n))return;var bounds={mauGrowth:[-100,500],m1Activation:[0,100],targetActivation:[0,100],targetMonth:[1,12],rake:[0,100],lucraShare:[0,100]};if(bounds[key])n=LFclamp(n,bounds[key][0],bounds[key][1]);else n=Math.max(0,n);if(key==='targetMonth')n=Math.round(n);LF[key]=n;LFrender()}
+function LFsyncInputs(){Object.keys(LF).forEach(function(k){var el=$('lf-'+k);if(el&&document.activeElement!==el)el.value=LF[k]})}
+function LFloadFromMG(silent){LF.startMau=Math.max(0,MG.tau||0);LF.targetActivation=LFclamp(MG.eng||0,0,100);LF.m1Activation=Math.min(5,LF.targetActivation);LF.plays=Math.max(0,MG.plays||0);LF.wager=Math.max(0,MG.wager||0);LF.rake=LFclamp(MG.rake||0,0,100);LF.lucraShare=LFclamp(MG.rs||0,0,100);LF.license=Math.max(0,MG.license||0);LFloaded=true;LFrender();if(!silent){var btn=document.querySelector('.lf-sync');if(btn){var old=btn.textContent;btn.textContent='Assumptions loaded';setTimeout(function(){btn.textContent=old},1200)}}}
+function LFapplyScenario(key){var scenario=LFCASES[key];if(!scenario)return;LF.m1Activation=scenario.m1Activation;LF.targetActivation=scenario.targetActivation;LFrender()}
+function LFspark(values,color,label){var width=620,height=64,pad=4,max=Math.max.apply(null,values.concat([0])),min=Math.min.apply(null,values.concat([0]));var range=max-min||1;var points=values.map(function(v,i){var x=pad+i*((width-pad*2)/(values.length-1));var y=height-pad-((v-min)/range)*(height-pad*2);return x.toFixed(1)+','+y.toFixed(1)}).join(' ');return '<svg class="lf-spark" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+label+' over 12 months"><line x1="4" y1="60" x2="616" y2="60" stroke="#2a2a2e" stroke-width="1"/><polyline points="'+points+'" fill="none" stroke="'+color+'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>'}
+function LFvalidation(result){var issues=[],s=result.state;if(s.startMau===0)issues.push('Starting MAU is zero, so player and variable-revenue forecasts remain zero.');if(s.plays===0||s.wager===0)issues.push('Paid plays or average wager is zero, so handle and GGR remain zero.');if(s.rake===0)issues.push('Rake is zero, so GGR and revenue-share amounts remain zero.');var box=$('lf-validation');if(!box)return;box.style.display=issues.length?'block':'none';box.innerHTML=issues.join('<br>')}
+function LFrender(){if(!$('lf-summary'))return;LF=LFsanitize(LF);LFsyncInputs();var result=LFcalculate(LF),last=result.months[11];LFvalidation(result);$('lf-summary').innerHTML='<div class="stat"><div class="label">Month 12 active players</div><div class="val cyan">'+LFnumber(last.active)+'</div><div class="sub">'+LFpct(last.activation)+' of '+LFnumber(last.mau)+' MAU</div></div>'+'<div class="stat"><div class="label">Year 1 handle</div><div class="val">'+LFmoney(result.totals.handle)+'</div><div class="sub">'+LFnumber(result.totals.plays)+' paid plays</div></div>'+'<div class="stat"><div class="label">Year 1 GGR</div><div class="val amber">'+LFmoney(result.totals.ggr)+'</div><div class="sub">'+LFpct(result.state.rake)+' of handle</div></div>'+'<div class="stat"><div class="label">Year 1 Lucra revenue</div><div class="val green">'+LFmoney(result.totals.lucra)+'</div><div class="sub">Revenue share + '+LFmoney(result.state.license*12)+' license</div></div>';$('lf-comparison').innerHTML=Object.keys(LFCASES).map(function(key){var c=LFCASES[key],scenarioState=Object.assign({},LF,{m1Activation:c.m1Activation,targetActivation:c.targetActivation}),r=LFcalculate(scenarioState);return '<tr><td><strong>'+c.label+'</strong></td><td>'+LFpct(c.m1Activation)+'</td><td>'+LFpct(c.targetActivation)+'</td><td>'+LFmoney(r.totals.handle)+'</td><td>'+LFmoney(r.totals.lucra)+'</td><td><button type="button" class="lf-use" onclick="LFapplyScenario(\''+key+'\')">Use case</button></td></tr>'}).join('');$('lf-trends').innerHTML='<div class="lf-trend"><div class="lf-trend-label">Active players<strong>'+LFnumber(last.active)+'</strong></div>'+LFspark(result.months.map(function(m){return m.active}),'#06B6D4','Active players')+'</div>'+'<div class="lf-trend"><div class="lf-trend-label">Monthly handle<strong>'+LFmoney(last.handle)+'</strong></div>'+LFspark(result.months.map(function(m){return m.handle}),'#F59E0B','Monthly handle')+'</div>'+'<div class="lf-trend"><div class="lf-trend-label">Lucra revenue<strong>'+LFmoney(last.lucra)+'</strong></div>'+LFspark(result.months.map(function(m){return m.lucra}),'#8AE91A','Lucra revenue')+'</div>';var rows=result.months.map(function(m){return '<tr data-lf-month="'+m.month+'"><td>Month '+m.month+'</td><td>'+LFnumber(m.mau)+'</td><td>'+LFpct(m.activation)+'</td><td>'+LFnumber(m.active)+'</td><td>'+LFnumber(m.plays)+'</td><td>'+LFmoney(m.handle)+'</td><td>'+LFmoney(m.ggr)+'</td><td>'+LFmoney(m.lucra)+'</td><td>'+LFmoney(m.client)+'</td></tr>'}).join('');$('lf-table-wrap').innerHTML='<table class="lf-table"><caption>Forecast targets by month</caption><thead><tr><th>Month</th><th>MAU</th><th>Activation</th><th>Active players</th><th>Plays</th><th>Handle</th><th>GGR</th><th>Lucra revenue</th><th>Client net revenue</th></tr></thead><tbody>'+rows+'</tbody></table>'}
+function LFinit(){if(!LFloaded)LFloadFromMG(true);else LFrender()}
 
 
 function MGGEN(){
