@@ -72,17 +72,32 @@ test('wager break-even replaces TrackMan and matches the approved example', asyn
   await expect(page.locator('#wb-breakdowns')).toContainText('$40');
   await expect(page.locator('#wb-breakdowns')).toContainText('$1.34');
 
-  await page.locator('#wb-mau').fill('100000');
-  await expect(page.locator('#wb-breakdowns')).toContainText('$0.10');
-  await expect(page.locator('#wb-breakdowns')).toContainText('$0.0034');
-  await expect(page.locator('#wb-breakdowns')).toContainText('400');
+  await page.locator('#wb-mau').fill('50000');
+  await expect(page.locator('#wb-breakdowns')).toContainText('5,000');
+  await expect(page.locator('#wb-breakdowns')).toContainText('$2 / month');
+  await expect(page.locator('#wb-breakdowns')).toContainText('$0.07');
+  await expect(page.locator('#wb-breakdowns')).toContainText('200');
+
+  await page.locator('#wb-monthly-wager').fill('5');
+  const monthlyScenario = page.locator('#wb-scenarios').getByText('Monthly wager scenario').locator('..');
+  await expect(monthlyScenario).toContainText('$25,000');
+  await expect(monthlyScenario).toContainText('$5,000');
+  await expect(monthlyScenario).toContainText('$2,500');
+  await expect(monthlyScenario).toContainText('$1,500');
+
+  await page.locator('#wb-daily-wager').fill('1');
+  await expect(page.locator('#wb-scenarios')).toContainText('Daily wager scenario');
+  await expect(page.locator('#wb-scenarios')).toContainText('$150,000');
+  await expect(page.locator('#wb-scenarios')).toContainText('$14,000');
 
   await page.locator('#wb-dau-location').fill('40');
   await expect(page.locator('#wb-breakdowns')).toContainText('10,000');
   await expect(page.locator('#wb-breakdowns')).toContainText('$0.04');
   await expect(page.locator('#wb-pitch-text')).toContainText('250 locations');
-  await expect(page.locator('#wb-pitch-text')).toContainText('100,000 monthly active users');
+  await expect(page.locator('#wb-pitch-text')).toContainText('50,000 monthly users');
+  await expect(page.locator('#wb-pitch-text')).toContainText('5,000 engaged users');
   await expect(page.locator('#wb-pitch-text')).toContainText('40 daily active users per location');
+  await expect(page.locator('#wb-pitch-text')).toContainText('$1,500 above the license fee');
 });
 
 test('new planning tools remain usable on mobile', async ({ page }) => {
