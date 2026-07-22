@@ -6,6 +6,14 @@ async function openServedApp(page) {
   await expect(page.locator('#forecast')).toBeVisible();
 }
 
+async function saveMonthlyCheckin(page, month, mau, active, handle) {
+  await page.locator('#lf-checkinMonth').selectOption(String(month));
+  await page.locator('#lf-actualMau').fill(String(mau));
+  await page.locator('#lf-actualActive').fill(String(active));
+  await page.locator('#lf-actualHandle').fill(String(handle));
+  await page.getByRole('button', { name: 'Save monthly check-in' }).click();
+}
+
 test('remaining-term forecast starts at the selected contract month', async ({ page }) => {
   await openServedApp(page);
   await page.locator('#lf-startMonth').selectOption('3');
@@ -68,6 +76,68 @@ test('monthly check-ins save actuals and customer export content', async ({ page
   expect(report).toContain('OneFootball');
   expect(report).toContain('Recorded progress');
   expect(report).toContain('Month 3');
+});
+
+test('quarterly reviews roll up check-ins and highlight target and QoQ performance', async ({ page }) => {
+  await openServedApp(page);
+  await page.locator('#lf-customerName').fill('OneFootball');
+  await page.locator('#lf-rake').fill('10');
+  await page.locator('#lf-lucraShare').fill('25');
+  await page.locator('#lf-license').fill('1000');
+
+  await saveMonthlyCheckin(page, 1, 10000, 1000, 10000);
+  await saveMonthlyCheckin(page, 2, 11000, 1200, 20000);
+  await saveMonthlyCheckin(page, 3, 12000, 1500, 30000);
+
+  await expect(page.locator('#lf-q-status')).toContainText('3 of 3 active-term months checked in');
+  await expect(page.locator('#lf-q-review tr').filter({ hasText: 'Quarter-ending MAU' })).toContainText('12,000');
+  await expect(page.locator('#lf-q-review tr').filter({ hasText: 'Quarter-ending active players' })).toContainText('1,500');
+  await expect(page.locator('#lf-q-review tr').filter({ hasText: 'Quarter handle' })).toContainText('$60,000');
+  await expect(page.locator('#lf-q-review tr').filter({ hasText: 'Quarter GGR' })).toContainText('$6,000');
+  await expect(page.locator('#lf-q-review tr').filter({ hasText: 'Customer revenue' })).toContainText('$1,500');
+  await expect(page.locator('#lf-q-review tr').filter({ hasText: 'Lucra revenue' })).toContainText('$4,500');
+
+  await page.getByRole('button', { name: 'Q2' }).click();
+  await page.locator('#lf-q-mau').fill('20000');
+  await page.locator('#lf-q-active').fill('2500');
+  await page.locator('#lf-q-handle').fill('90000');
+  await page.locator('#lf-q-ggr').fill('12000');
+  await page.locator('#lf-q-client').fill('8000');
+  await page.locator('#lf-q-lucra').fill('4000');
+  await page.locator('#lf-q-wins').fill('Activation improved after the second campaign.');
+  await page.locator('#lf-q-risks').fill('Month 6 retention needs attention.');
+  await page.locator('#lf-q-goals').fill('Reach 3,000 active players next quarter.');
+  await page.getByRole('button', { name: 'Save quarterly review' }).click();
+
+  const q2Handle = page.locator('#lf-q-review tr').filter({ hasText: 'Quarter handle' });
+  await expect(q2Handle).toContainText('$90,000');
+  await expect(q2Handle).toContainText('+50%');
+  await expect(page.locator('#lf-q-status')).toContainText('Manual overrides applied');
+
+  const reports = await page.evaluate(() => ({
+    customer: LFquarterReportHTML(LFcalculate(LF), 2, 'customer'),
+    internal: LFquarterReportHTML(LFcalculate(LF), 2, 'internal')
+  }));
+  expect(reports.customer).toContain('Quarterly business review');
+  expect(reports.customer).toContain('Customer revenue');
+  expect(reports.customer).toContain('Activation improved');
+  expect(reports.customer).not.toContain('Lucra revenue');
+  expect(reports.customer).not.toContain('monthly license fee');
+  expect(reports.internal).toContain('Lucra internal quarterly review');
+  expect(reports.internal).toContain('Lucra revenue');
+  expect(reports.internal).toContain('monthly license fee');
+
+  const customerDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download customer QBR PDF' }).click();
+  expect((await customerDownloadPromise).suggestedFilename()).toBe('onefootball-q2-business-review.pdf');
+  const internalDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download internal QBR PDF' }).click();
+  expect((await internalDownloadPromise).suggestedFilename()).toBe('onefootball-q2-internal-review.pdf');
+
+  await page.reload();
+  await page.getByRole('tab', { name: 'Launch Forecast' }).click();
+  await expect(page.getByRole('button', { name: 'Q2' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#lf-q-wins')).toHaveValue('Activation improved after the second campaign.');
 });
 
 test('customer plan exports as a named PDF', async ({ page }) => {
@@ -149,6 +219,7 @@ test('new planning tools remain usable on mobile', async ({ page }) => {
   await openServedApp(page);
   await expect(page.getByRole('button', { name: 'Download customer plan PDF' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Download Lucra plan PDF' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Download customer QBR PDF' })).toBeVisible();
   expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(375);
   await page.getByRole('tab', { name: 'Wager Break-even' }).click();
   await expect(page.locator('#wb-results')).toBeVisible();
