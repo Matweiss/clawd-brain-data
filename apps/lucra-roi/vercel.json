@@ -22,9 +22,9 @@
       ]
     }
   ],
-  "routes": [
-    { "src": "/api/generate", "dest": "/api/generate.js" },
-    { "src": "/api/logo", "dest": "/api/logo.js" },
-    { "src": "/(.*)", "dest": "/api/index.js" }
+  "rewrites": [
+    { "source": "/api/generate", "destination": "/api/generate" },
+    { "source": "/api/logo", "destination": "/api/logo" },
+    { "source": "/(.*)", "destination": "/api/index" }
   ]
 }
