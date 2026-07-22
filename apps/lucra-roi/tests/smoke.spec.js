@@ -172,18 +172,20 @@ test('Gamification tab renders deal configuration', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('Trackman tab renders pricing controls', async ({ page }) => {
+test('Wager Break-even tab renders economics controls', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
 
   await page.goto('/');
-  await tabButton(page, 'Trackman Partner').click();
+  await tabButton(page, 'Wager Break-even').click();
 
-  // Bay count input should be visible
-  await expect(page.locator('#tm-bays')).toBeVisible();
+  // The three required economics inputs should be visible
+  await expect(page.locator('#wb-license')).toBeVisible();
+  await expect(page.locator('#wb-take')).toBeVisible();
+  await expect(page.locator('#wb-share')).toBeVisible();
 
-  // Metrics area should render
-  await expect(page.locator('#tm-metrics')).toBeVisible();
+  // Break-even results should render
+  await expect(page.locator('#wb-results')).toBeVisible();
 
   expect(errors).toEqual([]);
 });

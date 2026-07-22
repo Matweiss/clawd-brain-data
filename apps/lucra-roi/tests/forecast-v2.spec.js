@@ -24,6 +24,32 @@ test('remaining-term forecast starts at the selected contract month', async ({ p
   await expect(page.locator('[data-lf-month="3"]')).toContainText('1,250');
   await expect(page.locator('[data-lf-month="3"]')).toContainText('$50,000');
   await expect(page.locator('[data-lf-month="2"]')).toHaveCount(0);
+  await expect(page.locator('#lf-summary')).toContainText('Customer revenue');
+  await expect(page.locator('#lf-trends')).toContainText('Customer revenue');
+  await expect(page.locator('#lf-table-wrap')).toContainText('Customer revenue');
+});
+
+test('Lucra revenue visibility toggles without hiding customer earnings', async ({ page }) => {
+  await openServedApp(page);
+
+  await expect(page.locator('#lf-showLucra')).toBeChecked();
+  await expect(page.locator('#lf-summary')).toContainText('Remaining Lucra revenue');
+  await expect(page.locator('#lf-summary')).toContainText('Customer revenue');
+  await expect(page.locator('[data-lucra-revenue]')).not.toHaveCount(0);
+
+  await page.getByText('Show Lucra revenue', { exact: true }).click();
+
+  await expect(page.locator('[data-lucra-revenue]')).toHaveCount(0);
+  await expect(page.locator('#lf-summary')).not.toContainText('Lucra revenue');
+  await expect(page.locator('#lf-trends')).not.toContainText('Lucra revenue');
+  await expect(page.locator('#lf-table-wrap')).not.toContainText('Lucra revenue');
+  await expect(page.locator('#lf-comparison-head')).not.toContainText('Lucra revenue');
+  await expect(page.locator('#lf-summary')).toContainText('Customer revenue');
+  await expect(page.locator('#lf-trends')).toContainText('Customer revenue');
+
+  await page.reload();
+  await page.getByRole('tab', { name: 'Launch Forecast' }).click();
+  await expect(page.locator('#lf-showLucra')).not.toBeChecked();
 });
 
 test('monthly check-ins save actuals and customer export content', async ({ page }) => {
@@ -47,10 +73,28 @@ test('monthly check-ins save actuals and customer export content', async ({ page
 test('customer plan exports as a named PDF', async ({ page }) => {
   await openServedApp(page);
   await page.locator('#lf-customerName').fill('OneFootball');
+  const reports = await page.evaluate(() => ({
+    customer: LFreportHTML(LFcalculate(LF), 'customer'),
+    internal: LFreportHTML(LFcalculate(LF), 'internal')
+  }));
+  expect(reports.customer).toContain('Customer revenue');
+  expect(reports.customer).not.toContain('Lucra revenue');
+  expect(reports.customer).not.toContain('Lucra revenue share');
+  expect(reports.customer).not.toContain('monthly license fee');
+  expect(reports.internal).toContain('Customer revenue');
+  expect(reports.internal).toContain('Lucra revenue');
+  expect(reports.internal).toContain('Lucra revenue share');
+  expect(reports.internal).toContain('monthly license fee');
+
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download customer plan PDF' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('onefootball-implementation-growth-plan.pdf');
+
+  const internalDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download Lucra plan PDF' }).click();
+  const internalDownload = await internalDownloadPromise;
+  expect(internalDownload.suggestedFilename()).toBe('onefootball-lucra-launch-forecast.pdf');
 });
 
 test('wager break-even replaces TrackMan and matches the approved example', async ({ page }) => {
@@ -104,6 +148,7 @@ test('new planning tools remain usable on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await openServedApp(page);
   await expect(page.getByRole('button', { name: 'Download customer plan PDF' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Download Lucra plan PDF' })).toBeVisible();
   expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(375);
   await page.getByRole('tab', { name: 'Wager Break-even' }).click();
   await expect(page.locator('#wb-results')).toBeVisible();
