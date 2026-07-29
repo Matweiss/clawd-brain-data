@@ -72,6 +72,7 @@ test('wager break-even replaces TrackMan and matches the approved example', asyn
   await expect(page.locator('#wb-breakdowns')).toContainText('$40');
   await expect(page.locator('#wb-breakdowns')).toContainText('$1.34');
 
+  await page.locator('#wb-audience-basis').selectOption('portfolio');
   await page.locator('#wb-mau').fill('50000');
   await expect(page.locator('#wb-breakdowns')).toContainText('5,000');
   await expect(page.locator('#wb-breakdowns')).toContainText('$2 / month');
@@ -94,10 +95,33 @@ test('wager break-even replaces TrackMan and matches the approved example', asyn
   await expect(page.locator('#wb-breakdowns')).toContainText('10,000');
   await expect(page.locator('#wb-breakdowns')).toContainText('$0.04');
   await expect(page.locator('#wb-pitch-text')).toContainText('250 locations');
-  await expect(page.locator('#wb-pitch-text')).toContainText('50,000 monthly users');
+  await expect(page.locator('#wb-pitch-text')).toContainText('50,000 total monthly users');
   await expect(page.locator('#wb-pitch-text')).toContainText('5,000 engaged users');
   await expect(page.locator('#wb-pitch-text')).toContainText('40 daily active users per location');
   await expect(page.locator('#wb-pitch-text')).toContainText('$1,500 above the license fee');
+});
+
+test('wager break-even applies location count to scoped audience and license inputs', async ({ page }) => {
+  await page.goto('/api/app.html');
+  await page.getByRole('tab', { name: 'Wager Break-even' }).click();
+
+  await page.locator('#wb-locations').fill('5');
+  await page.locator('#wb-mau').fill('10000');
+  await page.locator('#wb-monthly-wager').fill('5');
+
+  await expect(page.locator('#wb-scope-summary')).toContainText('50,000 total monthly users');
+  await expect(page.locator('#wb-breakdowns')).toContainText('5,000');
+  await expect(page.locator('#wb-scenarios')).toContainText('$25,000');
+
+  await page.locator('#wb-audience-basis').selectOption('portfolio');
+  await expect(page.locator('#wb-scope-summary')).toContainText('10,000 total monthly users');
+  await expect(page.locator('#wb-breakdowns')).toContainText('1,000');
+  await expect(page.locator('#wb-scenarios')).toContainText('$5,000');
+
+  await page.locator('#wb-license-basis').selectOption('location');
+  await expect(page.locator('#wb-scope-summary')).toContainText('$5,000 total monthly license');
+  await expect(page.locator('#wb-results')).toContainText('$50,000');
+  await expect(page.locator('#wb-breakdowns')).toContainText('$10,000');
 });
 
 test('new planning tools remain usable on mobile', async ({ page }) => {
