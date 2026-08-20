@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// All-seven-tabs smoke test.
+// All-eight-tabs smoke test.
 // Verifies every tab renders without JS errors, all panels become visible,
 // console-error capture, and keyboard tab navigation.
 //
@@ -13,6 +13,7 @@ const TAB_NAMES = [
   'Gamification',
   'Mini Game ROI',
   'Launch Forecast',
+  'Digital Media ROI',
   'Wager Break-even',
   'Investment Plans',
   'Brand Arcade',
@@ -23,6 +24,7 @@ const TAB_PANEL_IDS = [
   'gamification',
   'minigame',
   'forecast',
+  'digitalmedia',
   'wagerbreakeven',
   'analytics',
   'brandarcade',
@@ -32,7 +34,7 @@ function tabButton(page, name) {
   return page.locator('.tabs button', { hasText: name });
 }
 
-test('all seven tabs load without console errors', async ({ page }) => {
+test('all eight tabs load without console errors', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
 
@@ -202,6 +204,39 @@ test('Mini Game ROI tab renders inputs', async ({ page }) => {
   await expect(page.locator('#minigame')).toBeVisible();
   await expect(page.locator('#mgi-tau')).toBeVisible();
 
+  expect(errors).toEqual([]);
+});
+
+test('Digital Media ROI tab calculates, toggles, and persists', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', err => errors.push(err.message));
+
+  await page.goto('/');
+  await tabButton(page, 'Digital Media ROI').click();
+  await expect(page.locator('#digitalmedia')).toBeVisible();
+  await expect(page.locator('#dm-cost-table')).toBeVisible();
+  await expect(page.locator('#dm-funding .stat')).toHaveCount(3);
+  await expect(page.locator('#dm-traffic-fields')).toBeHidden();
+
+  await page.locator('#dm-equivalence').fill('50');
+  await expect(page.locator('#dm-cost-table')).toContainText('Your CAC');
+
+  await page.locator('#dm-traffic-on').check();
+  await expect(page.locator('#dm-traffic-fields')).toBeVisible();
+  await page.locator('#dm-rpm').fill('12');
+
+  await page.locator('#dm-full-toggle').click();
+  await expect(page.locator('#dm-full')).toBeVisible();
+  await expect(page.locator('#dm-rollup')).toContainText('Net ROI');
+
+  await page.reload();
+  await tabButton(page, 'Digital Media ROI').click();
+  await expect(page.locator('#dm-equivalence')).toHaveValue('50');
+  await expect(page.locator('#dm-traffic-on')).toBeChecked();
+  await expect(page.locator('#dm-rpm')).toHaveValue('12');
+
+  const overflow = await page.locator('#digitalmedia').evaluate(el => el.scrollWidth - el.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
   expect(errors).toEqual([]);
 });
 
