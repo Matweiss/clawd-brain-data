@@ -5,7 +5,7 @@ const { DMcalc, DM_DEFAULTS } = calc;
 
 describe('Digital Media ROI', () => {
   it('calculates the documented expected case', () => {
-    const r = DMcalc({ ...DM_DEFAULTS, acquisitionEquivalence: 50, traffic: true });
+    const r = DMcalc({ ...DM_DEFAULTS, mu: 100000, aov: 55, grossMargin: 40, valuePerProfile: 3.5, rpm: 8, acquisitionEquivalence: 50, traffic: true });
     expect(r.EP).toBe(10000);
     expect(r.TC).toBeCloseTo(11333.333333, 5);
     expect(r.redeemed).toBe(1400);
@@ -25,7 +25,7 @@ describe('Digital Media ROI', () => {
   });
 
   it('preserves negative commerce value', () => {
-    const r = DMcalc({ aov: 0, rewardUnitCost: 100, fulfillment: 20, publisherFundedShare: 100 });
+    const r = DMcalc({ mu: 1000, er: 100, aov: 0, rewardUnitCost: 100, fulfillment: 20, publisherFundedShare: 100 });
     expect(r.netCommerce).toBeLessThan(0);
   });
 
@@ -41,7 +41,7 @@ describe('Digital Media ROI', () => {
   });
 
   it('cost-per-outcome rows are fully loaded alternative lenses', () => {
-    const r = DMcalc({ ...DM_DEFAULTS, acquisitionEquivalence: 50, traffic: true });
+    const r = DMcalc({ ...DM_DEFAULTS, mu: 100000, aov: 55, grossMargin: 40, valuePerProfile: 3.5, rpm: 8, acquisitionEquivalence: 50, traffic: true });
     expect(r.costEngaged).toBeCloseTo(r.TC / r.EP, 10);
     expect(r.costProfile).toBeCloseTo(r.TC / r.newProfiles, 10);
     expect(r.costOrder).toBeCloseTo(r.TC / r.orders, 10);
@@ -53,5 +53,23 @@ describe('Digital Media ROI', () => {
       const r = DMcalc({ mu: i * 1234, er: i % 101, acquisitionEquivalence: i % 101, publisherFundedShare: i % 101, traffic: i % 2 === 0 });
       expect(r.netBenefit).toBeCloseTo(r.grossBenefit - r.TC, 8);
     }
+  });
+
+  it('ships customer facts blank and no hidden sponsorship benefit', () => {
+    expect(DM_DEFAULTS.mu).toBe('');
+    expect(DM_DEFAULTS.aov).toBe('');
+    expect(DM_DEFAULTS.grossMargin).toBe('');
+    expect(DM_DEFAULTS.valuePerProfile).toBe('');
+    expect(DM_DEFAULTS.rpm).toBe('');
+    const r = DMcalc({ ...DM_DEFAULTS, license: 0, implementation: 0, opex: 0, campaignsPerYear: 4, avgCampaignRevenue: 15000, sponsorAttrib: 50 });
+    expect(r.sponsorContribution).toBe(0);
+    expect(r.grossBenefit).toBe(0);
+  });
+
+  it('applies discount mechanics without double-subtracting reward cost', () => {
+    const r = DMcalc({ ...DM_DEFAULTS, mu: 1000, er: 100, aov: 100, grossMargin: 50, mechanic: 'discount', discountPct: 20, rewardUnitCost: 50, publisherFundedShare: 100 });
+    expect(r.aovEffective).toBe(80);
+    expect(r.rewardCost).toBe(0);
+    expect(r.commerceRevenue).toBeCloseTo(r.orders * 80, 8);
   });
 });

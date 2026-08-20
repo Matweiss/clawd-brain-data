@@ -217,9 +217,17 @@ test('Digital Media ROI tab calculates, toggles, and persists', async ({ page })
   await expect(page.locator('#dm-cost-table')).toBeVisible();
   await expect(page.locator('#dm-funding .stat')).toHaveCount(3);
   await expect(page.locator('#dm-traffic-fields')).toBeHidden();
+  await expect(page.locator('#dm-mu')).toHaveValue('');
+  await expect(page.locator('#dm-aov')).toHaveValue('');
+  await expect(page.locator('#dm-profile-value')).toHaveValue('');
+  await expect(page.locator('#dm-cost-table')).not.toContainText('Your CAC: $3.50');
 
+  await page.locator('#dm-mu').fill('100000');
+  await page.locator('#dm-aov').fill('55');
+  await page.locator('#dm-margin').fill('40');
+  await page.locator('#dm-profile-value').fill('3.5');
   await page.locator('#dm-equivalence').fill('50');
-  await expect(page.locator('#dm-cost-table')).toContainText('Your CAC');
+  await expect(page.locator('#dm-cost-table')).toContainText('Your CAC (as entered)');
 
   await page.locator('#dm-traffic-on').check();
   await expect(page.locator('#dm-traffic-fields')).toBeVisible();
@@ -228,6 +236,8 @@ test('Digital Media ROI tab calculates, toggles, and persists', async ({ page })
   await page.locator('#dm-full-toggle').click();
   await expect(page.locator('#dm-full')).toBeVisible();
   await expect(page.locator('#dm-rollup')).toContainText('Net ROI');
+  await page.locator('#dm-pitch .cp-btn').click();
+  await expect(page.locator('#dm-pitch .cp-btn')).toHaveText('Copied!');
 
   await page.reload();
   await tabButton(page, 'Digital Media ROI').click();
@@ -238,6 +248,32 @@ test('Digital Media ROI tab calculates, toggles, and persists', async ({ page })
   const overflow = await page.locator('#digitalmedia').evaluate(el => el.scrollWidth - el.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
   expect(errors).toEqual([]);
+});
+
+test('Digital Media scenarios rebaseline safely and break-even strings render', async ({ page }) => {
+  await page.goto('/');
+  await tabButton(page, 'Digital Media ROI').click();
+  await page.locator('#dm-mu').fill('100000');
+  await page.locator('#dm-aov').fill('55');
+  await page.locator('#dm-margin').fill('40');
+  await page.locator('#dm-profile-value').fill('3.5');
+  await page.locator('#dm-equivalence').fill('50');
+  await page.locator('#dm-traffic-on').check();
+  await page.locator('#dm-rpm').fill('8');
+
+  const lift = page.locator('#dm-break-even .stat').filter({ hasText: 'Sitewide page-view lift' }).locator('.val');
+  await expect(lift).not.toHaveText('—');
+
+  await page.locator('[data-dms="cons"]').click();
+  await expect(page.locator('#dm-er')).toHaveValue('5');
+  await page.locator('#dm-aov').fill('80');
+  await expect(page.locator('[data-dms="expected"]')).toHaveClass(/on/);
+  await expect(page.locator('#dm-er')).toHaveValue('10');
+  await page.locator('[data-dms="aggr"]').click();
+  await expect(page.locator('#dm-er')).toHaveValue('17.5');
+  await page.locator('[data-dms="expected"]').click();
+  await expect(page.locator('#dm-er')).toHaveValue('10');
+  await expect(page.locator('#dm-aov')).toHaveValue('80');
 });
 
 test('Investment Plans tab renders', async ({ page }) => {
