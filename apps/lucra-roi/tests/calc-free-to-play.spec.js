@@ -49,6 +49,12 @@ describe('Free-to-Play Value', () => {
 });
 
 describe('BDR Quick Estimate', () => {
+  it('shows the explicit fully loaded monthly commercial cost', () => {
+    const r = BQcalc({ license: 12000, implementation: 24000, amortMonths: 12, opex: 500 });
+    expect(r.baseMonthlyCost).toBe(14500);
+    expect(r.f2p.customerCost).toBe(14500);
+  });
+
   it('keeps tournament entries separate from prize cost and never applies rake', () => {
     const r = BQcalc({ mode: 'paid', paidFormat: 'tournament', participants: 100, frequency: 2, price: 10, prizeCost: 500, rake: 1 });
     expect(r.paidGross).toBe(2000);
@@ -58,5 +64,12 @@ describe('BDR Quick Estimate', () => {
   it('applies rake only to peer-to-peer handle', () => {
     const r = BQcalc({ mode: 'paid', paidFormat: 'p2p', participants: 100, frequency: 2, price: 50, rake: 20 });
     expect(r.paidGross).toBe(2000);
+  });
+
+  it('calculates paid participants required to cover commercial cost', () => {
+    const tournament = BQcalc({ mode: 'paid', paidFormat: 'tournament', license: 1000, implementation: 0, participants: 100, frequency: 2, price: 10, prizeCost: 500 });
+    expect(tournament.requiredPaidParticipants).toBe(75);
+    const p2p = BQcalc({ mode: 'paid', paidFormat: 'p2p', license: 1000, implementation: 0, frequency: 2, price: 50, rake: 20 });
+    expect(p2p.requiredPaidParticipants).toBe(50);
   });
 });

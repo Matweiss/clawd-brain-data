@@ -16,6 +16,11 @@ test.beforeEach(async ({ page }) => {
 test('BDR Quick Estimate switches between free, paid, and both live-call paths', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('#bq-results')).toContainText('Preliminary scenario—not a forecast');
+  await expect(page.locator('#bq-license')).toHaveValue('10000');
+  await expect(page.locator('#bq-implementation')).toHaveValue('10000');
+  await expect(page.locator('#bq-amort')).toHaveValue('12');
+  await expect(page.locator('#bq-results')).toContainText('Fully loaded monthly cost');
+  await expect(page.locator('#bq-results')).toContainText('$10,833.33');
   await page.getByRole('button', { name: 'Paid Play', exact: true }).click();
   await expect(page.locator('#bq-paid-fields')).toBeVisible();
   await expect(page.locator('#bq-f2p-fields')).toBeHidden();
@@ -33,6 +38,7 @@ test('paid quick estimate distinguishes tournament pool from P2P rake', async ({
   await page.locator('#bq-prize').fill('500');
   await expect(page.locator('#bq-results')).toContainText('$2,000');
   await expect(page.locator('#bq-results')).toContainText('$1,500');
+  await expect(page.locator('#bq-results')).toContainText('Participants to cover cost');
   await page.locator('#bq-paid-format').selectOption('p2p');
   await page.locator('#bq-price').fill('50');
   await page.locator('#bq-rake').fill('20');
@@ -47,10 +53,17 @@ test('routes free-to-play discovery answers into the proof-first tab', async ({ 
   await page.locator('#bq-audience').fill('100000');
   await page.locator('#bq-value').fill('25');
   await page.locator('#bq-reward').fill('2');
+  await page.locator('#bq-license').fill('12000');
+  await page.locator('#bq-implementation').fill('24000');
+  await page.locator('#bq-amort').fill('12');
+  await page.locator('#bq-opex').fill('500');
   await page.getByRole('button', { name: 'Build live scenario' }).click();
   await expect(page.locator('#freetoplay')).toBeVisible();
   await expect(page.locator('#ftp-customer')).toHaveValue('Acme Coffee');
   await expect(page.locator('#ftp-audience')).toHaveValue('100000');
+  await expect(page.locator('#ftp-license')).toHaveValue('12000');
+  await expect(page.locator('#ftp-implementation')).toHaveValue('24000');
+  await expect(page.locator('#ftp-opex')).toHaveValue('500');
   await expect(page.locator('.deal-setup')).toHaveClass(/bq-collapsed/);
 });
 
