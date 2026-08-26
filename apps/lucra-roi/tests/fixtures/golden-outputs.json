@@ -1,0 +1,82 @@
+{
+  "_comment": "Golden fixture outputs captured from production behavior at commit ffac86d. Do not modify unless calculation logic intentionally changes.",
+  "coreROI": {
+    "puttshack_default": {
+      "inputs": { "vis": 1100, "arpu": 45, "fee": 2500, "optPct": 10, "liftPct": 15 },
+      "expected": {
+        "arpu": 45,
+        "lucraARPU": 51.75,
+        "arpuLift": 6.75,
+        "dailyUsers": 110,
+        "moUsers": 3300,
+        "moRev": 22275,
+        "netMo": 19775,
+        "annROI": 237300,
+        "brkUsers": 13,
+        "brkVis": 130,
+        "roiX": "8.9",
+        "paybackDays": 3.4
+      }
+    },
+    "db_multi_location": {
+      "inputs": { "vis": 375, "arpu": 45, "fee": 2000, "optPct": 20, "liftPct": 12.5 },
+      "expected": {
+        "dailyUsers": 75,
+        "moUsers": 2250,
+        "arpuLift": 5.625,
+        "moRev": 12656.25,
+        "netMo": 10656.25,
+        "annROI": 127875,
+        "roiX": "6.3"
+      }
+    }
+  },
+  "miniGames": {
+    "case_study": {
+      "inputs": {
+        "tau": 1000000, "eng": 20, "plays": 40, "wager": 2, "rake": 15, "rs": 25, "license": 0,
+        "rewardGames": 8, "win": 50, "redeem": 25, "rewardValue": 8
+      },
+      "expected": {
+        "engaged": 200000,
+        "monthlyPlays": 8000000,
+        "monthlyWager": 16000000,
+        "monthlyRake": 2400000,
+        "revshareMo": 600000,
+        "grossBrandMo": 4000000,
+        "netBrandMo": 3400000,
+        "grossBrandAnn": 48000000,
+        "netBrandAnn": 40800000
+      }
+    }
+  },
+  "trackman": {
+    "ten_bay_full": {
+      "inputs": { "bays": 10, "term": 2, "package": "full", "implDisc": 0 },
+      "expected": {
+        "full": true,
+        "perBay": 350,
+        "monthly": 3500,
+        "annual": 42000,
+        "impl": 5000,
+        "tcv": 89000
+      }
+    }
+  },
+  "gamification": {
+    "a_b_d_10pct_2yr": {
+      "inputs": {
+        "pkgs": { "A": true, "B": true, "D": true },
+        "disc": 10, "discMode": "pct", "term": 2
+      },
+      "expected": {
+        "monthly": 25000,
+        "annual": 300000,
+        "discPct": 10,
+        "discAmt": 30000,
+        "amountDue": 270000,
+        "tcv": 540000
+      }
+    }
+  }
+}
