@@ -1,0 +1,16 @@
+{
+  "name": "lucra-roi",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:brand-arcade": "playwright test tests/brand-arcade.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.60.0",
+    "vitest": "^4.1.10"
+  }
+}
