@@ -23,6 +23,7 @@ test('renders the payoff workspace, schedule, and first-class break-even map', a
   await expect(page.locator('#lp-months tr')).toHaveCount(24);
   await expect(page.locator('#lp-map .lp-map td')).toHaveCount(25);
   await expect(page.locator('#lp-map')).toContainText('required');
+  await expect(page.locator('#lp-story')).toContainText('Licence retired from activity');
   await expect(page.getByText('Gross available to split = entries × entry price. No rake is applied.')).toBeVisible();
   await page.getByText('Head-to-head / peer-to-peer').click();
   await expect(page.getByText('Gross available to split = handle × rake.')).toBeVisible();
@@ -76,7 +77,19 @@ test('shows the payoff-phase cash-negative prize warning', async ({ page }) => {
   await fields.nth(4).fill('450');
 
   await expect(page.locator('#lp-warnings')).toContainText('Cash-negative prize warning');
+  await expect(page.locator('#lp-warnings')).toContainText('maximum safe board');
   await expect(page.locator('#lp-months tr').first()).toHaveClass(/cash-negative/);
+});
+
+test('Build and Present views preserve the payoff story and break-even map', async ({ page }) => {
+  await openPayoff(page);
+  await expect(page.locator('.lp-controls')).toBeVisible();
+  await page.getByRole('button', { name: 'Present', exact: true }).click();
+  await expect(page.locator('.lp-controls')).toBeHidden();
+  await expect(page.locator('#lp-story')).toBeVisible();
+  await expect(page.locator('#lp-map')).toBeVisible();
+  await page.getByRole('button', { name: 'Build', exact: true }).click();
+  await expect(page.locator('.lp-controls')).toBeVisible();
 });
 
 test('saves and restores deal scenarios and states excluded channels', async ({ page }) => {

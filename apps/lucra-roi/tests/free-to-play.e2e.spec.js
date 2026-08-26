@@ -1,0 +1,100 @@
+import { test, expect } from '@playwright/test';
+
+async function openFTP(page) {
+  await page.goto('/');
+  await page.locator('.tabs button', { hasText: 'Free-to-Play Value' }).click();
+  await expect(page.locator('#freetoplay')).toBeVisible();
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.removeItem('lucraFreeToPlayValueV1');
+    localStorage.removeItem('lucraFreeToPlayScenariosV1');
+  });
+});
+
+test('BDR Quick Estimate switches between free, paid, and both live-call paths', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#bq-results')).toContainText('Preliminary scenario—not a forecast');
+  await page.getByRole('button', { name: 'Paid Play', exact: true }).click();
+  await expect(page.locator('#bq-paid-fields')).toBeVisible();
+  await expect(page.locator('#bq-f2p-fields')).toBeHidden();
+  await page.getByRole('button', { name: 'Both', exact: true }).click();
+  await expect(page.locator('#bq-paid-fields')).toBeVisible();
+  await expect(page.locator('#bq-f2p-fields')).toBeVisible();
+});
+
+test('paid quick estimate distinguishes tournament pool from P2P rake', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Paid Play', exact: true }).click();
+  await page.locator('#bq-participants').fill('100');
+  await page.locator('#bq-price').fill('10');
+  await page.locator('#bq-frequency').fill('2');
+  await page.locator('#bq-prize').fill('500');
+  await expect(page.locator('#bq-results')).toContainText('$2,000');
+  await expect(page.locator('#bq-results')).toContainText('$1,500');
+  await page.locator('#bq-paid-format').selectOption('p2p');
+  await page.locator('#bq-price').fill('50');
+  await page.locator('#bq-rake').fill('20');
+  await expect(page.locator('#bq-results')).toContainText('P2P GGR available');
+  await expect(page.locator('#bq-results')).toContainText('$2,000');
+  await expect(page.locator('#bq-prize-field')).toBeHidden();
+});
+
+test('routes free-to-play discovery answers into the proof-first tab', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#bq-customer').fill('Acme Coffee');
+  await page.locator('#bq-audience').fill('100000');
+  await page.locator('#bq-value').fill('25');
+  await page.locator('#bq-reward').fill('2');
+  await page.getByRole('button', { name: 'Build live scenario' }).click();
+  await expect(page.locator('#freetoplay')).toBeVisible();
+  await expect(page.locator('#ftp-customer')).toHaveValue('Acme Coffee');
+  await expect(page.locator('#ftp-audience')).toHaveValue('100000');
+  await expect(page.locator('.deal-setup')).toHaveClass(/bq-collapsed/);
+});
+
+test('renders scorecard, 5×5 map, funnel, thresholds, and full opportunity', async ({ page }) => {
+  await openFTP(page);
+  await page.locator('#ftp-audience').fill('100000');
+  await page.locator('#ftp-reward-cost').fill('2');
+  await page.locator('#ftp-outcome-rate').fill('50');
+  await page.locator('#ftp-outcome-value').fill('30');
+  await expect(page.locator('#ftp-scorecard .ftp-score')).toHaveCount(5);
+  await expect(page.locator('#ftp-matrix .ftp-matrix td')).toHaveCount(25);
+  await expect(page.locator('#ftp-funnel .ftp-funnel-step')).toHaveCount(5);
+  await expect(page.locator('#ftp-conditions .ftp-condition')).toHaveCount(3);
+  await page.locator('#ftp-full-toggle').click();
+  await expect(page.locator('#ftp-full')).toBeVisible();
+  await expect(page.locator('#ftp-modules .ftp-module')).toHaveCount(8);
+  await expect(page.locator('#ftp-ramp .ftp-ramp-col')).toHaveCount(12);
+});
+
+test('Build and Present modes preserve results while hiding controls', async ({ page }) => {
+  await openFTP(page);
+  await expect(page.locator('.ftp-controls')).toBeVisible();
+  await page.getByRole('button', { name: 'Present', exact: true }).click();
+  await expect(page.locator('.ftp-controls')).toBeHidden();
+  await expect(page.locator('#ftp-scorecard')).toBeVisible();
+  await page.getByRole('button', { name: 'Build', exact: true }).click();
+  await expect(page.locator('.ftp-controls')).toBeVisible();
+});
+
+test('free-to-play view persists scenarios and has no mobile overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openFTP(page);
+  await page.locator('#ftp-customer').fill('Mobile Coffee');
+  await page.getByRole('button', { name: 'Save scenario' }).click();
+  await expect(page.locator('#ftp-scenarios .lp-scenario')).toHaveCount(1);
+  const sizes = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+  expect(sizes.scrollWidth).toBeLessThanOrEqual(sizes.clientWidth + 1);
+});
+
+test('exports the free-to-play one-page PDF through the existing path', async ({ page }) => {
+  await openFTP(page);
+  await page.locator('#ftp-customer').fill('Acme Coffee');
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export one-page PDF' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('acme-coffee-free-to-play-value.pdf');
+});
