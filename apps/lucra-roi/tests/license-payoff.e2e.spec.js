@@ -249,6 +249,10 @@ test('toggles from full-term payoff to annual step-up resets and shows yearly ea
   await expect(page.locator('#lp-yearly-summary .lp-year-card').nth(0)).toContainText('Clears month 6');
   await expect(page.locator('#lp-yearly-summary .lp-year-card').nth(1)).toContainText('$-4,800 net');
   await expect(page.locator('#lp-yearly-summary .lp-year-card').nth(1)).toContainText('$24,000');
+  await expect(page.locator('#lp-summary')).toContainText('Year 1 customer earnings');
+  await expect(page.locator('#lp-summary')).toContainText('$31,200');
+  await expect(page.locator('#lp-summary')).toContainText('Year 2 customer earnings');
+  await expect(page.locator('#lp-summary')).toContainText('$-4,800');
 });
 
 test('payoff view has no document-level mobile overflow', async ({ page }) => {
