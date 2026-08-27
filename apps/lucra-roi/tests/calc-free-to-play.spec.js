@@ -58,18 +58,22 @@ describe('BDR Quick Estimate', () => {
   it('keeps tournament entries separate from prize cost and never applies rake', () => {
     const r = BQcalc({ mode: 'paid', paidFormat: 'tournament', participants: 100, frequency: 2, price: 10, prizeCost: 500, rake: 1 });
     expect(r.paidGross).toBe(2000);
-    expect(r.paidNet).toBe(1500);
+    expect(r.monthlyPrize).toBe(1000);
+    expect(r.paidNet).toBe(1000);
   });
 
-  it('applies rake only to peer-to-peer handle', () => {
+  it('applies rake to monthly peer-to-peer handle without a tournament-frequency multiplier', () => {
     const r = BQcalc({ mode: 'paid', paidFormat: 'p2p', participants: 100, frequency: 2, price: 50, rake: 20 });
-    expect(r.paidGross).toBe(2000);
+    expect(r.paidGross).toBe(1000);
   });
 
-  it('calculates paid participants required to cover commercial cost', () => {
-    const tournament = BQcalc({ mode: 'paid', paidFormat: 'tournament', license: 1000, implementation: 0, participants: 100, frequency: 2, price: 10, prizeCost: 500 });
-    expect(tournament.requiredPaidParticipants).toBe(75);
+  it('calculates the tournament cadence and entries required to cover commercial cost', () => {
+    const tournament = BQcalc({ mode: 'paid', paidFormat: 'tournament', audience: 5000, license: 1000, implementation: 0, participants: 100, frequency: 2, price: 10, prizeCost: 500 });
+    expect(tournament.requiredPaidParticipants).toBe(100);
+    expect(tournament.requiredMonthlyEntries).toBe(200);
+    expect(tournament.requiredTournaments).toBe(2);
+    expect(tournament.requiredEngagement).toBe(4);
     const p2p = BQcalc({ mode: 'paid', paidFormat: 'p2p', license: 1000, implementation: 0, frequency: 2, price: 50, rake: 20 });
-    expect(p2p.requiredPaidParticipants).toBe(50);
+    expect(p2p.requiredPaidParticipants).toBe(100);
   });
 });

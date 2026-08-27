@@ -24,6 +24,8 @@ test('BDR Quick Estimate switches between free, paid, and both live-call paths',
   await page.getByRole('button', { name: 'Paid Play', exact: true }).click();
   await expect(page.locator('#bq-paid-fields')).toBeVisible();
   await expect(page.locator('#bq-f2p-fields')).toBeHidden();
+  await expect(page.locator('#bq-frequency')).toHaveValue('4');
+  await expect(page.locator('#bq-frequency-field')).toContainText('Tournaments / month');
   await page.getByRole('button', { name: 'Both', exact: true }).click();
   await expect(page.locator('#bq-paid-fields')).toBeVisible();
   await expect(page.locator('#bq-f2p-fields')).toBeVisible();
@@ -37,14 +39,37 @@ test('paid quick estimate distinguishes tournament pool from P2P rake', async ({
   await page.locator('#bq-frequency').fill('2');
   await page.locator('#bq-prize').fill('500');
   await expect(page.locator('#bq-results')).toContainText('$2,000');
-  await expect(page.locator('#bq-results')).toContainText('$1,500');
-  await expect(page.locator('#bq-results')).toContainText('Participants to cover cost');
+  await expect(page.locator('#bq-results')).toContainText('$1,000');
+  await expect(page.locator('#bq-results')).toContainText('Entries / tournament to cover cost');
+  await expect(page.locator('#bq-results')).toContainText('Illustrative operating plan');
+  await expect(page.locator('#bq-results')).toContainText('2 tournaments / month');
+  await page.locator('#bq-audience').fill('50000');
+  await page.locator('#bq-frequency').fill('4');
+  await expect(page.locator('#bq-results')).toContainText('2.6% of the audience');
   await page.locator('#bq-paid-format').selectOption('p2p');
   await page.locator('#bq-price').fill('50');
   await page.locator('#bq-rake').fill('20');
   await expect(page.locator('#bq-results')).toContainText('P2P GGR available');
-  await expect(page.locator('#bq-results')).toContainText('$2,000');
+  await expect(page.locator('#bq-results')).toContainText('$1,000');
   await expect(page.locator('#bq-prize-field')).toBeHidden();
+  await expect(page.locator('#bq-frequency-field')).toBeHidden();
+});
+
+test('routes the multi-tournament plan into Licence Payoff', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Paid Play', exact: true }).click();
+  await page.locator('#bq-audience').fill('50000');
+  await page.locator('#bq-participants').fill('300');
+  await page.locator('#bq-price').fill('10');
+  await page.locator('#bq-frequency').fill('4');
+  await page.locator('#bq-prize').fill('500');
+  await page.getByRole('button', { name: 'Build live scenario' }).click();
+  const tournament = page.locator('#lp-tournaments .lp-repeat').first();
+  await expect(tournament).toContainText('Planned pool $12,000 / month');
+  await expect(tournament.locator('input').nth(1)).toHaveValue('10');
+  await expect(tournament.locator('input').nth(2)).toHaveValue('300');
+  await expect(tournament.locator('input').nth(3)).toHaveValue('4');
+  await expect(tournament.locator('input').nth(4)).toHaveValue('500');
 });
 
 test('routes free-to-play discovery answers into the proof-first tab', async ({ page }) => {
