@@ -30,6 +30,30 @@ test('renders the payoff workspace, schedule, and first-class break-even map', a
   expect(errors).toEqual([]);
 });
 
+test('heat map responds to usable entry capacity and event cadence', async ({ page }) => {
+  await openPayoff(page);
+  await page.locator('#lp-term').selectOption('1');
+  await page.locator('#lp-fees input').first().fill('12000');
+  await page.locator('#lp-audience').fill('1000');
+  await page.locator('#lp-rebuy').fill('1');
+  await page.locator('#lp-growth').fill('0');
+  await page.locator('#lp-tournaments .lp-repeat').nth(1).getByRole('button', { name: 'Remove' }).click();
+  const fields = page.locator('#lp-tournaments .lp-repeat').first().locator('input');
+  await fields.nth(1).fill('10');
+  await fields.nth(2).fill('50');
+  await fields.nth(3).fill('1');
+  await fields.nth(4).fill('0');
+  const limited = await page.locator('#lp-map').innerText();
+  await fields.nth(2).fill('100');
+  const moreEntries = await page.locator('#lp-map').innerText();
+  await fields.nth(3).fill('4');
+  const moreEvents = await page.locator('#lp-map').innerText();
+  expect(moreEntries).not.toBe(limited);
+  expect(moreEvents).not.toBe(moreEntries);
+  await expect(page.locator('#lp-map')).toContainText('400 available slots across 4 events per month');
+  await expect(page.locator('#lp-map')).toContainText('capacity above demand remains unused');
+});
+
 test('blocks invalid splits and disables the shared PDF export path', async ({ page }) => {
   await openPayoff(page);
   await page.locator('#lp-pay-c').fill('41');

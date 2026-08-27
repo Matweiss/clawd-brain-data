@@ -17,6 +17,23 @@ describe('Licence Payoff Engine', () => {
     expect(r.months[0].licenceCredit).toBe(500);
   });
 
+  it('repeats audience demand per event and responds to entry capacity', () => {
+    const shared = {termYears:1, annualFees:[100000], audience:1000, engagement:10, rebuy:1, growthRate:0,
+      h2hOn:false, miniOn:false, sponsorOn:false};
+    const limited = LPcalculate(base({...shared,
+      tournaments:[{name:'Open',entryPrice:10,entriesPerEvent:50,eventsPerMonth:1,prizeCost:0}]}));
+    const moreEntries = LPcalculate(base({...shared,
+      tournaments:[{name:'Open',entryPrice:10,entriesPerEvent:100,eventsPerMonth:1,prizeCost:0}]}));
+    const moreEvents = LPcalculate(base({...shared,
+      tournaments:[{name:'Open',entryPrice:10,entriesPerEvent:100,eventsPerMonth:2,prizeCost:0}]}));
+    const unusedCapacity = LPcalculate(base({...shared,
+      tournaments:[{name:'Open',entryPrice:10,entriesPerEvent:200,eventsPerMonth:2,prizeCost:0}]}));
+    expect(limited.months[0].tournamentGross).toBe(500);
+    expect(moreEntries.months[0].tournamentGross).toBe(1000);
+    expect(moreEvents.months[0].tournamentGross).toBe(2000);
+    expect(unusedCapacity.months[0].tournamentGross).toBe(2000);
+  });
+
   it('applies rake only to peer-to-peer handle', () => {
     const s = base({termYears:1, annualFees:[100000], tournamentsOn:false, h2hOn:true,
       h2h:{players:100,monthlyWager:50,rake:20}, miniOn:false, sponsorOn:false});
@@ -91,5 +108,18 @@ describe('Licence Payoff Engine', () => {
     expect(map.columns[0].cells.some(c => c.status === 'miss')).toBe(true);
     expect(map.columns[4].cells.some(c => c.status !== 'miss')).toBe(true);
     expect(map.columns[4].required).not.toBe(null);
+  });
+
+  it('updates heat-map coverage when tournament entries or events add usable capacity', () => {
+    const shared = {termYears:1,annualFees:[12000],audience:1000,rebuy:1,growthRate:0,
+      h2hOn:false,miniOn:false,sponsorOn:false};
+    const limited = LPbreakEvenMap(base({...shared,
+      tournaments:[{name:'Open',entryPrice:10,entriesPerEvent:50,eventsPerMonth:1,prizeCost:0}]}));
+    const expanded = LPbreakEvenMap(base({...shared,
+      tournaments:[{name:'Open',entryPrice:10,entriesPerEvent:100,eventsPerMonth:4,prizeCost:0}]}));
+    expect(limited.columns[2].cells[1].coverage).toBeCloseTo(.25, 5);
+    expect(expanded.columns[2].cells[1].coverage).toBeCloseTo(2, 5);
+    expect(expanded.monthlyCapacity).toBe(400);
+    expect(expanded.eventCount).toBe(4);
   });
 });
