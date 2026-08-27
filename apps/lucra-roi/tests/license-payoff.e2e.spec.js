@@ -51,7 +51,37 @@ test('heat map responds to usable entry capacity and event cadence', async ({ pa
   expect(moreEntries).not.toBe(limited);
   expect(moreEvents).not.toBe(moreEntries);
   await expect(page.locator('#lp-map')).toContainText('400 available slots across 4 events per month');
-  await expect(page.locator('#lp-map')).toContainText('capacity above demand remains unused');
+  await expect(page.locator('#lp-map')).toContainText('Manual override drives economics');
+});
+
+test('generates an audience-guided plan, then honors manual overrides and prize cash', async ({ page }) => {
+  await openPayoff(page);
+  await page.locator('#lp-term').selectOption('1');
+  await page.locator('#lp-fees input').first().fill('12000');
+  await page.locator('#lp-audience').fill('1000');
+  await page.locator('#lp-engagement').fill('10');
+  await page.locator('#lp-rebuy').fill('1');
+  await page.locator('#lp-growth').fill('0');
+  await page.locator('#lp-plan-count').fill('1');
+  await page.locator('#lp-plan-cadence').selectOption('4');
+  await page.getByRole('button', { name: 'Create prize-board inputs' }).click();
+  const fields = page.locator('#lp-tournaments .lp-repeat').first().locator('input');
+  await fields.nth(4).fill('400');
+  await page.getByRole('button', { name: 'Generate minimum plan' }).click();
+  await expect(page.locator('#lp-plan-status')).toContainText('Minimum viable plan generated');
+  await expect(fields.nth(1)).toHaveValue('10');
+  await expect(fields.nth(2)).toHaveValue('100');
+  await expect(fields.nth(3)).toHaveValue('4');
+  await expect(page.locator('#lp-headlines .lp-headline').nth(2)).toContainText('Month 6');
+  await expect(page.locator('#lp-headlines .lp-headline').nth(3)).toContainText('$19,200');
+  const grossBefore = await page.locator('#lp-months tr').first().locator('td').nth(1).innerText();
+  await page.locator('#lp-engagement').fill('5');
+  await expect(page.locator('#lp-months tr').first().locator('td').nth(1)).toHaveText(grossBefore);
+  await expect(page.locator('#lp-warnings')).toContainText('Manual plan exceeds audience support');
+  await fields.nth(4).fill('500');
+  await expect(page.locator('#lp-headlines .lp-headline').nth(2)).toContainText('Month 6');
+  await expect(page.locator('#lp-headlines .lp-headline').nth(3)).toContainText('$24,000');
+  await expect(page.locator('#lp-warnings')).toContainText('Cash-negative prize warning');
 });
 
 test('blocks invalid splits and disables the shared PDF export path', async ({ page }) => {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import calc from './calc-functions.js';
 
-const { LPcalculate, LPbreakEvenMap, LPvalidate, LP_DEFAULTS } = calc;
+const { LPcalculate, LPbreakEvenMap, LPrecommendPlan, LPvalidate, LP_DEFAULTS } = calc;
 
 function base(overrides = {}) {
   return Object.assign({}, JSON.parse(JSON.stringify(LP_DEFAULTS)), overrides);
@@ -32,6 +32,42 @@ describe('Licence Payoff Engine', () => {
     expect(moreEntries.months[0].tournamentGross).toBe(1000);
     expect(moreEvents.months[0].tournamentGross).toBe(2000);
     expect(unusedCapacity.months[0].tournamentGross).toBe(2000);
+  });
+
+  it('lets a manual tournament plan override audience demand while retaining a feasibility check', () => {
+    const shared = {termYears:1, annualFees:[100000], audience:1000, engagement:1, rebuy:1, growthRate:0,
+      tournaments:[{name:'Open',entryPrice:10,entriesPerEvent:100,eventsPerMonth:2,prizeCost:0}],
+      h2hOn:false,miniOn:false,sponsorOn:false};
+    const guided = LPcalculate(base({...shared,tournamentMode:'audience'}));
+    const manual = LPcalculate(base({...shared,tournamentMode:'manual'}));
+    expect(guided.months[0].tournamentGross).toBe(200);
+    expect(manual.months[0].tournamentGross).toBe(2000);
+    expect(manual.planFeasible).toBe(false);
+    expect(manual.requiredEngagementForPlan).toBe(10);
+  });
+
+  it('counts every prize board as customer cash without reducing licence credit', () => {
+    const shared = {termYears:1,annualFees:[100000],audience:100,engagement:100,rebuy:1,growthRate:0,
+      tournaments:[{name:'Open',entryPrice:10,entriesPerEvent:100,eventsPerMonth:1,prizeCost:0}]};
+    const withoutPrize = LPcalculate(base(shared));
+    const withPrize = LPcalculate(base({...shared,
+      tournaments:[{name:'Open',entryPrice:10,entriesPerEvent:100,eventsPerMonth:1,prizeCost:500}]}));
+    expect(withPrize.creditApplied).toBe(withoutPrize.creditApplied);
+    expect(withPrize.totalPrize).toBe(6000);
+    expect(withPrize.totalMonthlyShortfall).toBe(1200);
+    expect(withPrize.cashOutOfPocket-withoutPrize.cashOutOfPocket).toBe(6000);
+  });
+
+  it('generates the lowest tested cash-safe plan supported by the audience', () => {
+    const s = base({termYears:1,annualFees:[12000],audience:1000,engagement:10,rebuy:1,growthRate:0,
+      tournaments:[{name:'Weekly',entryPrice:0,entriesPerEvent:0,eventsPerMonth:4,prizeCost:400}],
+      h2hOn:false,miniOn:false,sponsorOn:false});
+    const rec = LPrecommendPlan(s);
+    expect(rec.error).toBe(null);
+    expect(rec.price).toBe(10);
+    expect(rec.entriesPerEvent).toBe(100);
+    expect(rec.result.totalTrueUp).toBe(0);
+    expect(rec.result.totalMonthlyShortfall).toBe(0);
   });
 
   it('applies rake only to peer-to-peer handle', () => {
