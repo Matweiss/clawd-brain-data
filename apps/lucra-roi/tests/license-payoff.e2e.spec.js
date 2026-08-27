@@ -218,6 +218,39 @@ test('shows shared per-tier waterfalls and combined monthly customer net', async
   await expect(page.locator('#lp-tier-econ-1')).toContainText('$600');
 });
 
+test('toggles from full-term payoff to annual step-up resets and shows yearly earnings', async ({ page }) => {
+  await openPayoff(page);
+  await page.locator('#lp-term').selectOption('2');
+  await page.locator('#lp-fees input').nth(0).fill('12000');
+  await page.locator('#lp-fees input').nth(1).fill('48000');
+  await page.locator('#lp-audience').fill('1000');
+  await page.locator('#lp-engagement').fill('100');
+  await page.locator('#lp-rebuy').fill('1');
+  await page.locator('#lp-growth').fill('0');
+  await page.locator('#lp-tournaments .lp-repeat').nth(1).getByRole('button', { name: 'Remove' }).click();
+  const fields = page.locator('#lp-tournaments .lp-repeat').first().locator('input');
+  await fields.nth(1).fill('10');
+  await fields.nth(2).fill('100');
+  await fields.nth(3).fill('4');
+  await fields.nth(4).fill('0');
+
+  await expect(page.locator('#lp-basis-note')).toContainText('Full-term payoff');
+  await expect(page.locator('#lp-months tr').nth(6)).toContainText('Payoff');
+  await expect(page.locator('#lp-months tr').nth(12).locator('td').nth(4)).toHaveText('$34,000');
+
+  await page.locator('#lp-post-mode').selectOption('year');
+  await expect(page.locator('#lp-basis-note')).toContainText('Annual step-up payoff');
+  await expect(page.locator('#lp-balance-heading')).toHaveText('Annual balance remaining');
+  await expect(page.locator('#lp-months tr').nth(5).locator('td').nth(4)).toHaveText('$0');
+  await expect(page.locator('#lp-months tr').nth(6)).toContainText('Post-payoff · Y1');
+  await expect(page.locator('#lp-months tr').nth(12)).toHaveClass(/annual-reset/);
+  await expect(page.locator('#lp-months tr').nth(12).locator('td').nth(4)).toHaveText('$46,000');
+  await expect(page.locator('#lp-yearly-summary .lp-year-card').nth(0)).toContainText('$31,200 net');
+  await expect(page.locator('#lp-yearly-summary .lp-year-card').nth(0)).toContainText('Clears month 6');
+  await expect(page.locator('#lp-yearly-summary .lp-year-card').nth(1)).toContainText('$-4,800 net');
+  await expect(page.locator('#lp-yearly-summary .lp-year-card').nth(1)).toContainText('$24,000');
+});
+
 test('payoff view has no document-level mobile overflow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openPayoff(page);

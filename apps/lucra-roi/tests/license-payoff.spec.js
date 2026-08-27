@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import calc from './calc-functions.js';
 
-const { LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPrecommendPlan, LPvalidate, LP_DEFAULTS } = calc;
+const { LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS } = calc;
 
 function base(overrides = {}) {
   return Object.assign({}, JSON.parse(JSON.stringify(LP_DEFAULTS)), overrides);
@@ -127,6 +127,26 @@ describe('Licence Payoff Engine', () => {
     expect(r.months[1].split).toBe('Crossover');
     expect(r.months[1].licenceCredit).toBe(250);
     expect(r.months[1].customerShare).toBe(650);
+  });
+
+  it('resets payoff against each stepped annual fee without losing the full-term option', () => {
+    const shared = {termYears:2,annualFees:[12000,48000],audience:1000,engagement:100,rebuy:1,growthRate:0,tournamentMode:'manual',
+      tournaments:[{name:'Weekly',entryPrice:10,entriesPerEvent:100,eventsPerMonth:4,prizeCost:0}],
+      payoff:{customer:40,lucra:10,credit:50},post:{customer:90,lucra:10},h2hOn:false,miniOn:false,sponsorOn:false};
+    const annual = LPyearlySummary(base({...shared,postMode:'year'}));
+    const term = LPyearlySummary(base({...shared,postMode:'term'}));
+
+    expect(annual.years[0]).toMatchObject({fee:12000,activityCredit:12000,clearMonth:6,monthsAtHigherSplit:6,postPayoffCustomer:21600,customerNet:31200,trueUp:0,customerNetAfterTrueUp:31200});
+    expect(annual.years[1]).toMatchObject({fee:48000,activityCredit:24000,clearMonth:null,monthsAtHigherSplit:0,customerNet:19200,trueUp:24000,customerNetAfterTrueUp:-4800});
+    expect(annual.result.months[5].payoffBalanceRemaining).toBe(0);
+    expect(annual.result.months[6].split).toBe('Post-payoff');
+    expect(annual.result.months[12].payoffBalanceRemaining).toBe(46000);
+    expect(annual.result.months[12].split).toBe('Payoff');
+
+    expect(term.result.months[6].split).toBe('Payoff');
+    expect(term.result.months[12].balanceRemaining).toBe(34000);
+    expect(term.result.totalTrueUp).toBe(12000);
+    expect(term.years[0].customerNet).toBe(19200);
   });
 
   it('flags prize boards that exceed the customer share during payoff', () => {
