@@ -171,6 +171,53 @@ test('exports the one-page payoff report through the existing PDF workflow', asy
   expect(download.suggestedFilename()).toBe('acme-structure-licence-payoff.pdf');
 });
 
+test('shows shared per-tier waterfalls and combined monthly customer net', async ({ page }) => {
+  await openPayoff(page);
+  await page.locator('#lp-term').selectOption('1');
+  await page.locator('#lp-fees input').first().fill('48000');
+  await page.locator('#lp-audience').fill('1000');
+  await page.locator('#lp-engagement').fill('100');
+  await page.locator('#lp-rebuy').fill('1');
+  await page.locator('#lp-growth').fill('0');
+
+  const first = page.locator('#lp-tournaments .lp-repeat').nth(0).locator('input');
+  await first.nth(1).fill('10');
+  await first.nth(2).fill('100');
+  await first.nth(3).fill('4');
+  await first.nth(4).fill('50');
+  const second = page.locator('#lp-tournaments .lp-repeat').nth(1).locator('input');
+  await second.nth(1).fill('20');
+  await second.nth(2).fill('50');
+  await second.nth(3).fill('1');
+  await second.nth(4).fill('100');
+
+  const totals = page.locator('#lp-tournament-totals');
+  await expect(totals.locator('.lp-total-hero')).toContainText('$1,700');
+  await expect(totals).toContainText('Licence credit');
+  await expect(totals).toContainText('$2,500');
+  await expect(totals).toContainText('$500');
+  await expect(totals).toContainText('Monthly licence obligation');
+  await expect(totals).toContainText('$4,000');
+  await expect(totals).toContainText('Customer share needed for gap');
+  await expect(totals).toContainText('$1,500');
+  await expect(totals).toContainText('Customer net after licence gap');
+  await expect(totals).toContainText('$200');
+
+  await first.nth(4).fill('100');
+  await expect(totals.locator('.lp-total-hero')).toContainText('$1,500');
+  await expect(totals).toContainText('Customer net after licence gap');
+  await expect(totals).toContainText('$0');
+
+  await page.locator('#lp-tour-pay-c').fill('30');
+  await page.locator('#lp-tour-pay-l').fill('10');
+  await page.locator('#lp-tour-pay-credit').fill('60');
+  await expect(page.locator('#lp-pay-c')).toHaveValue('30');
+  await expect(page.locator('#lp-pay-l')).toHaveValue('10');
+  await expect(page.locator('#lp-pay-credit')).toHaveValue('60');
+  await expect(page.locator('#lp-tier-econ-0')).toContainText('$2,400');
+  await expect(page.locator('#lp-tier-econ-1')).toContainText('$600');
+});
+
 test('payoff view has no document-level mobile overflow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openPayoff(page);

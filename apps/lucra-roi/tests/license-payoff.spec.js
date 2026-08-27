@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import calc from './calc-functions.js';
 
-const { LPcalculate, LPbreakEvenMap, LPrecommendPlan, LPvalidate, LP_DEFAULTS } = calc;
+const { LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPrecommendPlan, LPvalidate, LP_DEFAULTS } = calc;
 
 function base(overrides = {}) {
   return Object.assign({}, JSON.parse(JSON.stringify(LP_DEFAULTS)), overrides);
@@ -68,6 +68,36 @@ describe('Licence Payoff Engine', () => {
     expect(rec.entriesPerEvent).toBe(100);
     expect(rec.result.totalTrueUp).toBe(0);
     expect(rec.result.totalMonthlyShortfall).toBe(0);
+  });
+
+  it('shows a shared tournament split and combined monthly customer net waterfall', () => {
+    const s = base({termYears:1,annualFees:[48000],audience:1000,engagement:100,rebuy:1,growthRate:0,tournamentMode:'manual',
+      payoff:{customer:40,lucra:10,credit:50},h2hOn:false,miniOn:false,sponsorOn:false,
+      tournaments:[
+        {name:'Weekly',entryPrice:10,entriesPerEvent:100,eventsPerMonth:4,prizeCost:50},
+        {name:'Headline',entryPrice:20,entriesPerEvent:50,eventsPerMonth:1,prizeCost:100}
+      ]});
+    const r = LPtournamentMonthly(s);
+    expect(r.rows).toHaveLength(2);
+    expect(r.totals).toEqual({gross:5000,licenceCredit:2500,lucraRevenue:500,customerGross:2000,prizeCost:300,customerNet:1700});
+    expect(r.monthlyLicence).toBe(4000);
+    expect(r.licenceCreditCovers).toBe(false);
+    expect(r.licenceGap).toBe(1500);
+    expect(r.customerShareNeeded).toBe(1500);
+    expect(r.customerNetAfterGap).toBe(200);
+    expect(r.customerNetVsFullLicence).toBe(-2300);
+  });
+
+  it('applies a changed contract split consistently across every tournament tier', () => {
+    const s = base({termYears:1,annualFees:[36000],tournamentMode:'manual',payoff:{customer:30,lucra:10,credit:60},
+      tournaments:[
+        {name:'A',entryPrice:10,entriesPerEvent:100,eventsPerMonth:1,prizeCost:0},
+        {name:'B',entryPrice:20,entriesPerEvent:50,eventsPerMonth:1,prizeCost:0}
+      ]});
+    const r = LPtournamentMonthly(s);
+    expect(r.rows.map(x => x.licenceCredit)).toEqual([600,600]);
+    expect(r.rows.map(x => x.lucraRevenue)).toEqual([100,100]);
+    expect(r.rows.map(x => x.customerGross)).toEqual([300,300]);
   });
 
   it('applies rake only to peer-to-peer handle', () => {
