@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import calc from './calc-functions.js';
 
-const { TPcalculate, TPparticipants, TPsplitRates, TPvalidate, TPcustomerProjection, TPstate, TP_DEFAULTS } = calc;
+const { TPcalculate, TPparticipants, TPsplitRates, TPvalidate, TPcustomerProjection, TPstate, TPtypeParticipants, TPentriesPerEvent, TP_DEFAULTS } = calc;
 const TPstateFromLegacy = (o) => TPstate(o);
 
 // One tournament: 100 participants, no rebuys, $10 entry, 4 events, $200 cash
@@ -378,5 +378,126 @@ describe('Multi-year terms with custom fees per year', () => {
 
   it('caps the term at five years', () => {
     expect(TPcalculate(base({ termYears: 9, annualFees: [1, 1, 1, 1, 1] })).months).toHaveLength(60);
+  });
+});
+
+describe('MAU-based participation', () => {
+  const mauBase = (o = {}) => base(Object.assign({
+    participantBasis: 'mau', mau: 20000, participantPct: 1,
+    tournaments: [{ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, rebuys: 0, rebuyMode: 'avg', participationMode: 'shared', customerCashCost: 200 }],
+  }, o));
+
+  it('derives participants from MAU times the participation rate', () => {
+    expect(TPparticipants(mauBase(), 1)).toBe(200);
+    expect(TPcalculate(mauBase()).months[0].detail[0].entriesPerEvent).toBe(200);
+  });
+
+  it('scales with MAU', () => {
+    expect(TPparticipants(mauBase({ mau: 50000 }), 1)).toBe(500);
+    expect(TPparticipants(mauBase({ participantPct: 2.5 }), 1)).toBe(500);
+  });
+
+  it('ramps the percentage, not just the headcount', () => {
+    const s = mauBase({ volumeMode: 'ramp', rampStartPct: 1, rampPlateauPct: 5, rampMonths: 5 });
+    expect(TPparticipants(s, 1)).toBe(200);
+    expect(TPparticipants(s, 5)).toBe(1000);
+    expect(TPparticipants(s, 12)).toBe(1000);
+    expect(TPparticipants(s, 3)).toBeCloseTo(20000 * (1 + 4 * 2 / 4) / 100, 6);
+  });
+
+  it('requires MAU when the basis is a share of it', () => {
+    expect(TPvalidate(mauBase({ mau: 0 })).join(' ')).toMatch(/monthly active users/i);
+  });
+
+  it('leaves the headcount basis untouched', () => {
+    expect(TPvalidate(base({ mau: 0 }))).toEqual([]);
+    expect(TPparticipants(base(), 1)).toBe(100);
+  });
+});
+
+describe('Per-tournament participation', () => {
+  const two = (o = {}) => base(Object.assign({
+    participants: 100,
+    tournaments: [
+      { id: 'a', name: 'Dollar open', entryPrice: 1, eventsPerMonth: 4, participationMode: 'custom', participantsCustom: 400, rebuyMode: 'avg', rebuys: 0, customerCashCost: 0 },
+      { id: 'b', name: 'Headline', entryPrice: 20, eventsPerMonth: 1, participationMode: 'shared', rebuyMode: 'avg', rebuys: 0, customerCashCost: 0 },
+    ],
+  }, o));
+
+  it('lets a cheap tournament draw its own crowd', () => {
+    const d = TPcalculate(two()).months[0].detail;
+    expect(d[0].participants).toBe(400);
+    expect(d[1].participants).toBe(100);
+    expect(d[0].handle).toBe(400 * 1 * 4);
+    expect(d[1].handle).toBe(100 * 20 * 1);
+  });
+
+  it('falls back to the shared number when not overridden', () => {
+    const shared = two({ tournaments: [{ id: 'a', name: 'A', entryPrice: 1, eventsPerMonth: 1, participationMode: 'shared', rebuyMode: 'avg', customerCashCost: 0 }] });
+    expect(TPcalculate(shared).months[0].detail[0].participants).toBe(100);
+  });
+
+  it('reads a custom count as the number at full ramp and ramps it too', () => {
+    const s = two({ volumeMode: 'ramp', rampStart: 50, rampPlateau: 200, rampMonths: 5 });
+    const m1 = TPcalculate(s).months[0].detail[0];
+    const m5 = TPcalculate(s).months[4].detail[0];
+    expect(m5.participants).toBe(400);
+    expect(m1.participants).toBeCloseTo(400 * (50 / 200), 6);
+  });
+
+  it('supports a custom share of MAU per tournament', () => {
+    const s = two({
+      participantBasis: 'mau', mau: 20000, participantPct: 1,
+      tournaments: [{ id: 'a', name: 'A', entryPrice: 1, eventsPerMonth: 1, participationMode: 'custom', participantPctCustom: 4, rebuyMode: 'avg', customerCashCost: 0 }],
+    });
+    expect(TPcalculate(s).months[0].detail[0].participants).toBe(800);
+  });
+});
+
+describe('Percentage-based rebuys', () => {
+  const withRebuy = (t) => base({
+    participants: 100,
+    tournaments: [Object.assign({ id: 'a', name: 'A', entryPrice: 10, eventsPerMonth: 1, participationMode: 'shared', customerCashCost: 0 }, t)],
+  });
+
+  it('treats the rate as extra entries as a share of participants', () => {
+    expect(TPcalculate(withRebuy({ rebuyMode: 'pct', rebuyPct: 40 })).months[0].detail[0].entriesPerEvent).toBe(140);
+    expect(TPcalculate(withRebuy({ rebuyMode: 'pct', rebuyPct: 0 })).months[0].detail[0].entriesPerEvent).toBe(100);
+  });
+
+  it('allows more than one rebuy each above 100%', () => {
+    expect(TPcalculate(withRebuy({ rebuyMode: 'pct', rebuyPct: 250 })).months[0].detail[0].entriesPerEvent).toBe(350);
+  });
+
+  it('matches the average mode at equivalent settings', () => {
+    const pct = TPcalculate(withRebuy({ rebuyMode: 'pct', rebuyPct: 150 })).months[0].handle;
+    const avg = TPcalculate(withRebuy({ rebuyMode: 'avg', rebuys: 1.5 })).months[0].handle;
+    expect(pct).toBe(avg);
+  });
+
+  it('ignores the unused field when switching modes', () => {
+    expect(TPcalculate(withRebuy({ rebuyMode: 'pct', rebuyPct: 40, rebuys: 9 })).months[0].detail[0].entriesPerEvent).toBe(140);
+    expect(TPcalculate(withRebuy({ rebuyMode: 'avg', rebuys: 1, rebuyPct: 900 })).months[0].detail[0].entriesPerEvent).toBe(200);
+  });
+
+  it('describes a percentage rebuy to customers without publishing the estimate', () => {
+    const p = TPcustomerProjection(withRebuy({ rebuyMode: 'pct', rebuyPct: 40 }));
+    expect(p.tournaments[0].rebuyLabel).toBe('Rebuys available');
+    expect(JSON.stringify(p)).not.toContain('40');
+  });
+});
+
+describe('Loss visibility', () => {
+  it('counts months where prize cost exceeds handle', () => {
+    const s = base({ tournaments: [{ id: 'a', name: 'A', entryPrice: 1, eventsPerMonth: 1, participationMode: 'shared', rebuyMode: 'avg', customerCashCost: 5000 }] });
+    const r = TPcalculate(s);
+    expect(r.lossMonths).toBe(12);
+    expect(r.months[0].grossMargin).toBe(-4900);
+    expect(r.months[0].netRevenue).toBe(0);
+  });
+
+  it('flags the losing tournament type in the month detail', () => {
+    const s = base({ tournaments: [{ id: 'a', name: 'A', entryPrice: 1, eventsPerMonth: 1, participationMode: 'shared', rebuyMode: 'avg', customerCashCost: 5000 }] });
+    expect(TPcalculate(s).months[0].detail[0].loss).toBe(true);
   });
 });

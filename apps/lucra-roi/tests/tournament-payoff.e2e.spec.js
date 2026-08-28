@@ -251,12 +251,14 @@ test('state persists across a reload', async ({ page }) => {
 test('ramp mode replaces the flat input and drives month one', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page);
-  await expect(page.locator('#tp-flat-fields')).toBeVisible();
-  await expect(page.locator('#tp-ramp-fields')).toBeHidden();
+  // Ids split when the MAU basis landed: count and percentage fields are separate.
+  await expect(page.locator('#tp-flat-count')).toBeVisible();
+  await expect(page.locator('#tp-ramp-count')).toBeHidden();
 
   await page.locator('.tp-volume-switch button[data-volume="ramp"]').click();
-  await expect(page.locator('#tp-ramp-fields')).toBeVisible();
-  await expect(page.locator('#tp-flat-fields')).toBeHidden();
+  await expect(page.locator('#tp-ramp-count')).toBeVisible();
+  await expect(page.locator('#tp-ramp-months-wrap')).toBeVisible();
+  await expect(page.locator('#tp-flat-count')).toBeHidden();
 
   await page.locator('#tp-ramp-start').fill('50');
   await page.locator('#tp-ramp-plateau').fill('200');
@@ -368,4 +370,101 @@ test('the customer export stays clean on a multi-year deal', async ({ page }) =>
   for (const forbidden of ['12,000', '48,000', '60,000', 'true-up', 'True-up', 'Opening balance', 'Year 2', 'Internal only']) {
     expect(customer).not.toContain(forbidden);
   }
+});
+
+test('participation can be expressed as a share of MAU', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await expect(page.locator('#tp-mau-block')).toBeHidden();
+  await expect(page.locator('#tp-flat-count')).toBeVisible();
+
+  await page.locator('.tp-basis-participants button[data-pbasis="mau"]').click();
+  await expect(page.locator('#tp-mau-block')).toBeVisible();
+  await expect(page.locator('#tp-flat-pct')).toBeVisible();
+  await expect(page.locator('#tp-flat-count')).toBeHidden();
+
+  // MAU is required on this basis.
+  await page.locator('#tp-mau').fill('0');
+  await expect(page.locator('#tp-validation')).toContainText('monthly active users');
+
+  await page.locator('#tp-mau').fill('20000');
+  await page.locator('#tp-participant-pct').fill('1');
+  await expect(page.locator('#tp-validation')).toBeHidden();
+  await expect(page.locator('#tp-mau-note')).toContainText('200 participants per event');
+  expect(await page.evaluate(() => TPparticipants(TP, 1))).toBe(200);
+
+  await page.locator('.tp-basis-participants button[data-pbasis="count"]').click();
+  await expect(page.locator('#tp-mau-block')).toBeHidden();
+  expect(await page.evaluate(() => TPparticipants(TP, 1))).toBe(100);
+});
+
+test('a tournament type can carry its own participation', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await page.evaluate(() => {
+    TP.participants = 100;
+    TP.tournaments = [
+      { id: 'a', name: 'Dollar open', entryPrice: 1, eventsPerMonth: 4, participationMode: 'shared', rebuyMode: 'avg', rebuys: 0, customerCashCost: 0 },
+      { id: 'b', name: 'Headline', entryPrice: 20, eventsPerMonth: 1, participationMode: 'shared', rebuyMode: 'avg', rebuys: 0, customerCashCost: 0 },
+    ];
+    TPsave(); TPrenderTournaments(); TPrender();
+  });
+
+  await page.locator('.tp-tour[data-tour="0"] .tp-participation-switch button[data-participation="custom"]').click();
+  await expect(page.locator('#tp-pcustom-0')).toBeVisible();
+  await page.locator('#tp-pcustom-0').fill('400');
+
+  const d = await page.evaluate(() => TPcalculate(TP).months[0].detail);
+  expect(d[0].participants).toBe(400);
+  expect(d[1].participants).toBe(100);
+  await expect(page.locator('.tp-tour[data-tour="0"] .tp-tour-readout')).toContainText('400 participants');
+  await expect(page.locator('.tp-tour[data-tour="1"] .tp-tour-readout')).toContainText('100 participants');
+});
+
+test('rebuys can be a percentage of participants', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await expect(page.locator('#tp-rebuys-0')).toBeVisible();
+
+  await page.locator('.tp-tour[data-tour="0"] .tp-rebuy-switch button[data-rebuy="pct"]').click();
+  await expect(page.locator('#tp-rebuypct-0')).toBeVisible();
+  await expect(page.locator('#tp-rebuys-0')).toHaveCount(0);
+
+  await page.locator('#tp-rebuypct-0').fill('40');
+  const entries = await page.evaluate(() => TPcalculate(TP).months[0].detail[0].entriesPerEvent);
+  expect(entries).toBe(140);
+  await expect(page.locator('.tp-tour[data-tour="0"] .tp-tour-readout')).toContainText('140 entries per event');
+});
+
+test('a tournament whose prize outruns its handle is flagged, not hidden', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await page.evaluate(() => {
+    TP.tournaments = [{ id: 'a', name: 'Loss maker', entryPrice: 1, eventsPerMonth: 1, participationMode: 'shared', rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 0, customerCashCost: 5000 }];
+    TPsave(); TPrenderTournaments(); TPrender();
+  });
+  await expect(page.locator('.tp-tour-warn')).toBeVisible();
+  await expect(page.locator('.tp-tour-warn')).toContainText('exceeds this tournament');
+  const r = await page.evaluate(() => TPcalculate(TP));
+  expect(r.lossMonths).toBe(12);
+  expect(r.months[0].netRevenue).toBe(0);
+  // Raw handle and prize cost stay on the table so the loss is visible.
+  await expect(page.locator('#tp-table tbody tr').first()).toContainText('$5,000');
+});
+
+test('MAU and per-type settings survive a reload', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await page.locator('.tp-basis-participants button[data-pbasis="mau"]').click();
+  await page.locator('#tp-mau').fill('35000');
+  await page.locator('#tp-participant-pct').fill('2');
+  await page.locator('.tp-tour[data-tour="0"] .tp-rebuy-switch button[data-rebuy="pct"]').click();
+  await page.locator('#tp-rebuypct-0').fill('60');
+
+  await page.reload();
+  await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
+  await expect(page.locator('#tp-mau')).toHaveValue('35000');
+  await expect(page.locator('#tp-participant-pct')).toHaveValue('2');
+  await expect(page.locator('#tp-rebuypct-0')).toHaveValue('60');
+  expect(await page.evaluate(() => TPparticipants(TP, 1))).toBe(700);
 });

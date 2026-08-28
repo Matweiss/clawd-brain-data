@@ -447,12 +447,14 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 #tournaments [hidden],#tp-print-root[hidden]{display:none!important}
 .tp-row{margin-top:16px}
 .tp-row .input-label{display:block;margin-bottom:8px}
-.tp-basis-switch,.tp-shortfall-switch{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.tp-basis-switch button,.tp-shortfall-switch button{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:11px 14px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer}
-.tp-basis-switch button span,.tp-shortfall-switch button span{font-size:11px;font-weight:500;color:var(--text3)}
-.tp-basis-switch button.on,.tp-shortfall-switch button.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
-.tp-basis-switch button.on span,.tp-shortfall-switch button.on span{color:var(--green)}
-.tp-basis-switch button:focus-visible,.tp-shortfall-switch button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.tp-basis-switch,.tp-shortfall-switch,.tp-basis-participants,.tp-rebuy-switch,.tp-participation-switch{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.tp-basis-switch button,.tp-shortfall-switch button,.tp-basis-participants button,.tp-rebuy-switch button,.tp-participation-switch button{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:11px 14px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer}
+.tp-basis-switch button span,.tp-shortfall-switch button span,.tp-basis-participants button span,.tp-rebuy-switch button span,.tp-participation-switch button span{font-size:11px;font-weight:500;color:var(--text3)}
+.tp-basis-switch button.on,.tp-shortfall-switch button.on,.tp-basis-participants button.on,.tp-rebuy-switch button.on,.tp-participation-switch button.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.tp-basis-switch button.on span,.tp-shortfall-switch button.on span,.tp-basis-participants button.on span,.tp-rebuy-switch button.on span,.tp-participation-switch button.on span{color:var(--green)}
+.tp-basis-switch button:focus-visible,.tp-shortfall-switch button:focus-visible,.tp-basis-participants button:focus-visible,.tp-rebuy-switch button:focus-visible,.tp-participation-switch button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.tp-tour .tp-row{margin-top:12px}
+.tp-tour-warn{margin-top:10px;border:1px solid var(--amber);background:var(--amber-bg);color:var(--amber);border-radius:8px;padding:8px 11px;font-size:12px}
 #tp-fee-total{margin-top:8px}
 #tp-years{margin-top:26px}
 .tp-bars.dense{gap:2px}
@@ -1562,14 +1564,34 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <button type="button" data-volume="flat" aria-pressed="true" onclick="TPsetVolume('flat')">Flat</button>
       <button type="button" data-volume="ramp" aria-pressed="false" onclick="TPsetVolume('ramp')">Ramp</button>
     </div>
-    <div class="inputs" id="tp-flat-fields" style="margin-bottom:0">
-      <div class="input-group"><label class="input-label" for="tp-participants">Average participants per event</label><input class="pf-input" id="tp-participants" type="number" min="0" step="10" oninput="TPset('participants',this.value)"><div class="sn">Estimated · planning placeholder, replace with customer numbers. Applied identically across all 12 months.</div></div>
+    <div class="tp-row">
+      <span class="input-label">Express participation as</span>
+      <div class="tp-basis-participants" role="group" aria-label="Participation basis">
+        <button type="button" data-pbasis="count" aria-pressed="true" onclick="TPsetParticipantBasis('count')">A headcount<span>Participants per event</span></button>
+        <button type="button" data-pbasis="mau" aria-pressed="false" onclick="TPsetParticipantBasis('mau')">% of MAU<span>Share of monthly active users</span></button>
+      </div>
     </div>
-    <div class="inputs tp-three" id="tp-ramp-fields" hidden style="margin-bottom:0">
+    <div class="inputs" id="tp-mau-block" hidden style="margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-mau">Monthly active users</label><input class="pf-input" id="tp-mau" type="number" min="0" step="1000" placeholder="Enter the customer's MAU" oninput="TPset('mau',this.value)"><div class="sn">Customer system · required when participation is a share of MAU</div></div>
+    </div>
+    <div class="inputs" id="tp-flat-count" style="margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-participants">Average participants per event</label><input class="pf-input" id="tp-participants" type="number" min="0" step="10" oninput="TPset('participants',this.value)"><div class="sn">Estimated · planning placeholder, replace with customer numbers. Applied identically across every month.</div></div>
+    </div>
+    <div class="inputs" id="tp-flat-pct" hidden style="margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-participant-pct">Participants per event, % of MAU</label><div class="input-val"><input class="pf-input" id="tp-participant-pct" type="number" min="0" step="0.25" oninput="TPset('participantPct',this.value)"><span class="vp">%</span></div><div class="sn">Estimated · no Lucra benchmark is asserted here, use the customer's own figure</div></div>
+    </div>
+    <div class="inputs tp-three" id="tp-ramp-count" hidden style="margin-bottom:0">
       <div class="input-group"><label class="input-label" for="tp-ramp-start">Starting participants</label><input class="pf-input" id="tp-ramp-start" type="number" min="0" step="10" oninput="TPset('rampStart',this.value)"><div class="sn">Estimated</div></div>
       <div class="input-group"><label class="input-label" for="tp-ramp-plateau">Plateau participants</label><input class="pf-input" id="tp-ramp-plateau" type="number" min="0" step="10" oninput="TPset('rampPlateau',this.value)"><div class="sn">Estimated</div></div>
+    </div>
+    <div class="inputs tp-three" id="tp-ramp-pct" hidden style="margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-ramp-start-pct">Starting % of MAU</label><div class="input-val"><input class="pf-input" id="tp-ramp-start-pct" type="number" min="0" step="0.25" oninput="TPset('rampStartPct',this.value)"><span class="vp">%</span></div><div class="sn">Estimated</div></div>
+      <div class="input-group"><label class="input-label" for="tp-ramp-plateau-pct">Plateau % of MAU</label><div class="input-val"><input class="pf-input" id="tp-ramp-plateau-pct" type="number" min="0" step="0.25" oninput="TPset('rampPlateauPct',this.value)"><span class="vp">%</span></div><div class="sn">Estimated</div></div>
+    </div>
+    <div class="inputs" id="tp-ramp-months-wrap" hidden style="margin-bottom:0">
       <div class="input-group"><label class="input-label" for="tp-ramp-months">Months to plateau</label><input class="pf-input" id="tp-ramp-months" type="number" min="1" max="12" step="1" oninput="TPset('rampMonths',this.value)"><div class="sn">Linear to plateau, then flat</div></div>
     </div>
+    <div class="sn" id="tp-mau-note" role="status"></div>
   </div>
 
   <div class="pf-section"><div class="pf-section-title">Tournament types</div>
@@ -3071,13 +3093,18 @@ var TP_DEFAULTS = {
   custom: { credit: 50, operator: 40, lucra: 10 },
   post: { operator: 90, lucra: 10 },
   volumeMode: 'flat',
+  participantBasis: 'count',
+  mau: 0,
   participants: 100,
+  participantPct: 5,
   rampStart: 50,
   rampPlateau: 200,
+  rampStartPct: 2,
+  rampPlateauPct: 8,
   rampMonths: 6,
   tournaments: [
-    { id: 't1', name: 'Weekly open', entryPrice: 10, eventsPerMonth: 4, rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200, cashPrizeAmount: 500 },
-    { id: 't2', name: 'Monthly headline', entryPrice: 25, eventsPerMonth: 1, rebuys: 1, isCash: true, rewardFaceValue: 1000, customerCashCost: 1000, cashPrizeAmount: 1000 }
+    { id: 't1', name: 'Weekly open', entryPrice: 10, eventsPerMonth: 4, participationMode: 'shared', participantsCustom: 100, participantPctCustom: 5, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200, cashPrizeAmount: 500 },
+    { id: 't2', name: 'Monthly headline', entryPrice: 25, eventsPerMonth: 1, participationMode: 'shared', participantsCustom: 50, participantPctCustom: 2, rebuyMode: 'avg', rebuys: 1, rebuyPct: 0, isCash: true, rewardFaceValue: 1000, customerCashCost: 1000, cashPrizeAmount: 1000 }
   ]
 };
 
@@ -3116,7 +3143,7 @@ function TPstate(s) {
     out.annualFees.push(out.annualFees.length ? out.annualFees[out.annualFees.length - 1] : 0);
   }
   out.tournaments = (src.tournaments || out.tournaments).map(function (t) {
-    var c = Object.assign({}, t);
+    var c = Object.assign({ participationMode: 'shared', rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, participantsCustom: 0, participantPctCustom: 0 }, t);
     if (c.isCash) { c.rewardFaceValue = TPnum(c.cashPrizeAmount, 0); c.customerCashCost = TPnum(c.cashPrizeAmount, 0); }
     return c;
   });
@@ -3138,14 +3165,50 @@ function TPsplitRates(s) {
   };
 }
 
-/* Participants per event for a 1-based month. Flat applies one number to every
-   month; ramp interpolates linearly to plateau then holds. */
-function TPparticipants(s, month) {
-  if (s.volumeMode !== 'ramp') return TPnum(s.participants, 0);
-  var start = TPnum(s.rampStart, 0), plateau = TPnum(s.rampPlateau, 0),
+/* The month's value on the ramp, expressed in whatever unit the participant
+   basis uses: a headcount, or a percentage of MAU. */
+function TPrampValue(s, month) {
+  var mau = s.participantBasis === 'mau',
+    flat = mau ? TPnum(s.participantPct, 0) : TPnum(s.participants, 0);
+  if (s.volumeMode !== 'ramp') return flat;
+  var start = mau ? TPnum(s.rampStartPct, 0) : TPnum(s.rampStart, 0),
+    plateau = mau ? TPnum(s.rampPlateauPct, 0) : TPnum(s.rampPlateau, 0),
     M = Math.max(1, Math.round(TPnum(s.rampMonths, 1)));
   if (M === 1 || month >= M) return plateau;
   return start + (plateau - start) * (month - 1) / (M - 1);
+}
+
+/* Where the ramp sits this month relative to its plateau, 0..1. Used to ramp a
+   tournament type's own participation alongside the shared curve, so a custom
+   entry count is read as the number at full ramp rather than from month one. */
+function TPrampFactor(s, month) {
+  if (s.volumeMode !== 'ramp') return 1;
+  var plateau = s.participantBasis === 'mau' ? TPnum(s.rampPlateauPct, 0) : TPnum(s.rampPlateau, 0);
+  return plateau > 0 ? TPrampValue(s, month) / plateau : 1;
+}
+
+/* Participants per event for a 1-based month, before any per-type override. */
+function TPparticipants(s, month) {
+  var v = TPrampValue(s, month);
+  return s.participantBasis === 'mau' ? TPnum(s.mau, 0) * v / 100 : v;
+}
+
+/* Participants for one tournament type. A $1 open draws a different crowd from
+   a $20 headline, so a type can carry its own number instead of the shared one. */
+function TPtypeParticipants(s, t, month) {
+  if (!t || t.participationMode !== 'custom') return TPparticipants(s, month);
+  var full = s.participantBasis === 'mau'
+    ? TPnum(s.mau, 0) * TPnum(t.participantPctCustom, 0) / 100
+    : TPnum(t.participantsCustom, 0);
+  return full * TPrampFactor(s, month);
+}
+
+/* Entries for one running of a tournament type. Rebuys are either an average
+   number of extra entries per participant, or extra entries as a percentage of
+   participants (over 100% is allowed, meaning more than one rebuy each). */
+function TPentriesPerEvent(s, t, month) {
+  var p = TPtypeParticipants(s, t, month);
+  return p + (t.rebuyMode === 'pct' ? p * TPnum(t.rebuyPct, 0) / 100 : p * TPnum(t.rebuys, 0));
 }
 
 function TPvalidate(input) {
@@ -3162,6 +3225,7 @@ function TPvalidate(input) {
     if (fees.reduce(function (a, b) { return a + b; }, 0) <= 0) errors.push('Enter a licence fee for at least one year, or switch the licence to free.');
     fees.forEach(function (f, i) { if (f < 0) errors.push('Year ' + (i + 1) + ' fee cannot be negative.'); });
   }
+  if (s.participantBasis === 'mau' && TPnum(s.mau, 0) <= 0) errors.push('Enter monthly active users, or switch participants back to a headcount.');
   if (!(s.tournaments || []).length) errors.push('Add at least one tournament type.');
   return errors;
 }
@@ -3193,7 +3257,7 @@ function TPcalculate(input) {
     remaining = s.freeLicense ? 0 : (annual ? fees[0] : totalContract),
     years = [], cumulativeLicense = 0, trueUpTotal = 0,
     totalOperator = 0, totalLucra = 0, totalHandle = 0, totalPrizeCost = 0, totalNet = 0,
-    payoffMonth = null, months = [];
+    lossMonths = 0, payoffMonth = null, months = [];
 
   for (var y = 0; y < (s.freeLicense ? termYears : fees.length); y++) {
     years.push({ year: y + 1, fee: s.freeLicense ? 0 : fees[y], opening: 0, credited: 0, trueUp: 0, clearMonth: null, closing: 0 });
@@ -3218,15 +3282,21 @@ function TPcalculate(input) {
     var participants = TPparticipants(s, month), handle = 0, prizeCost = 0, detail = [];
     s.tournaments.forEach(function (t) {
       var events = TPnum(t.eventsPerMonth, 0),
-        entriesPerEvent = participants * (1 + TPnum(t.rebuys, 0)),
+        typeParticipants = TPtypeParticipants(s, t, month),
+        entriesPerEvent = TPentriesPerEvent(s, t, month),
         tHandle = entriesPerEvent * TPnum(t.entryPrice, 0) * events,
         tPrize = TPnum(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0) * events;
       handle += tHandle;
       prizeCost += tPrize;
-      detail.push({ name: t.name, entriesPerEvent: entriesPerEvent, events: events, handle: tHandle, prizeCost: tPrize });
+      detail.push({
+        name: t.name, participants: typeParticipants, entriesPerEvent: entriesPerEvent,
+        events: events, handle: tHandle, prizeCost: tPrize,
+        loss: tPrize > tHandle
+      });
     });
 
-    var netRevenue = Math.max(0, handle - prizeCost),
+    var grossMargin = handle - prizeCost,
+      netRevenue = Math.max(0, grossMargin),
       licenseGross = rates.credit > 0 ? Math.min(netRevenue, remaining / rates.credit) : 0,
       postGross = netRevenue - licenseGross,
       toLicense = Math.min(remaining, licenseGross * rates.credit),
@@ -3234,6 +3304,7 @@ function TPcalculate(input) {
       toLucra = licenseGross * rates.lucra + postGross * rates.postLucra,
       openingRemaining = remaining;
 
+    if (grossMargin < 0) lossMonths++;
     remaining = Math.max(0, remaining - toLicense);
     cumulativeLicense += toLicense;
     totalOperator += toOperator;
@@ -3256,7 +3327,8 @@ function TPcalculate(input) {
     months.push({
       month: month, year: yi + 1, monthInYear: monthInYear,
       participants: participants, handle: handle, prizeCost: prizeCost,
-      netRevenue: netRevenue, toLicense: toLicense, cumulativeLicense: cumulativeLicense,
+      grossMargin: grossMargin, netRevenue: netRevenue,
+      toLicense: toLicense, cumulativeLicense: cumulativeLicense,
       toOperator: toOperator, toLucra: toLucra,
       split: licenseGross > 0 && postGross > 0 ? 'Crossover' : licenseGross > 0 ? 'Payoff' : 'Post-payoff',
       detail: detail
@@ -3286,22 +3358,27 @@ function TPcalculate(input) {
     totalOwed: trueUpTotal + Math.max(0, remaining),
     totalOperator: totalOperator, totalLucra: totalLucra,
     totalHandle: totalHandle, totalPrizeCost: totalPrizeCost, totalNet: totalNet,
+    lossMonths: lossMonths,
     free: rates.free
   };
 }
 
 /* Whitelisted customer-facing projection. Built key by key so internal
-   economics cannot leak into the customer export even if state gains fields. */
+   economics cannot leak into the customer export even if state gains fields.
+   A percentage rebuy rate is a planning estimate, so it is described rather
+   than published as a number. */
 function TPcustomerProjection(input) {
   var s = TPstate(input);
   return {
     dealName: String(s.dealName || ''),
     tournaments: s.tournaments.map(function (t) {
-      var rebuys = TPnum(t.rebuys, 0);
+      var rebuys = TPnum(t.rebuys, 0), label;
+      if (t.rebuyMode === 'pct') label = TPnum(t.rebuyPct, 0) > 0 ? 'Rebuys available' : 'Single entry';
+      else label = rebuys > 0 ? 'Up to ' + (rebuys % 1 === 0 ? rebuys : rebuys.toFixed(2)) + ' rebuys' : 'Single entry';
       return {
         name: String(t.name || 'Tournament'),
         entryPrice: TPnum(t.entryPrice, 0),
-        rebuyLabel: rebuys > 0 ? 'Up to ' + (rebuys % 1 === 0 ? rebuys : rebuys.toFixed(2)) + ' rebuys' : 'Single entry',
+        rebuyLabel: label,
         frequencyLabel: TPnum(t.eventsPerMonth, 0) + 'x per month',
         rewardLabel: t.isCash
           ? '$' + Math.round(TPnum(t.cashPrizeAmount, 0)).toLocaleString() + ' cash prize'
@@ -3333,7 +3410,12 @@ function TPset(path, value) {
   for (var i = 0; i < parts.length - 1; i++) target = target[parts[i]];
   var key = parts[parts.length - 1];
   target[key] = typeof target[key] === 'number' ? TPnum(value) : value;
-  TPsave(); TPrender();
+  TPsave();
+  if (['mau', 'participants', 'participantPct', 'rampStart', 'rampPlateau', 'rampStartPct', 'rampPlateauPct', 'rampMonths'].indexOf(key) >= 0) {
+    TPmauNote();
+    TP.tournaments.forEach(function (t, i) { TPtourReadout(i); });
+  }
+  TPrender();
 }
 function TPtoggle(path, checked) {
   var parts = path.split('.'), target = TP;
@@ -3362,12 +3444,45 @@ function TPrenderFees() {
   }).join('');
   TPfeeTotal();
 }
-function TPsetVolume(mode) { TP.volumeMode = mode; TPsave(); TPrenderControls(); TPrender(); }
+function TPsetVolume(mode) { TP.volumeMode = mode; TPsave(); TPrenderControls(); TPrenderTournaments(); TPrender(); }
+function TPsetParticipantBasis(mode) { TP.participantBasis = mode; TPsave(); TPrenderControls(); TPrenderTournaments(); TPrender(); }
+function TPmauNote() {
+  var el = $('tp-mau-note'); if (!el) return;
+  if (TP.participantBasis !== 'mau') { el.textContent = ''; return; }
+  var m1 = TPparticipants(TP, 1), plateau = TPparticipants(TP, 12);
+  el.textContent = TP.volumeMode === 'ramp'
+    ? 'Month 1: ' + Math.round(m1).toLocaleString() + ' participants per event, rising to ' + Math.round(plateau).toLocaleString() + '.'
+    : Math.round(m1).toLocaleString() + ' participants per event.';
+}
+function TPtourParticipation(i, mode) {
+  var t = TP.tournaments[i]; if (!t) return;
+  t.participationMode = mode;
+  if (mode === 'custom') {
+    if (!TPnum(t.participantsCustom, 0)) t.participantsCustom = Math.round(TPparticipants(TP, 12));
+    if (!TPnum(t.participantPctCustom, 0)) t.participantPctCustom = TPnum(TP.participantPct, 0);
+  }
+  TPsave(); TPrenderTournaments(); TPrender();
+}
+function TPtourRebuyMode(i, mode) {
+  var t = TP.tournaments[i]; if (!t) return;
+  t.rebuyMode = mode;
+  TPsave(); TPrenderTournaments(); TPrender();
+}
 
 function TPtour(i, key, value) {
   if (!TP.tournaments[i]) return;
   TP.tournaments[i][key] = key === 'name' ? value : TPnum(value, 0);
-  TPsave(); TPrender();
+  TPsave(); TPtourReadout(i); TPrender();
+}
+function TPtourReadout(i) {
+  var t = TP.tournaments[i], row = document.querySelector('.tp-tour[data-tour="' + i + '"]');
+  if (!t || !row) return;
+  var el = row.querySelector('.tp-tour-readout'); if (!el) return;
+  var entries = TPentriesPerEvent(TP, t, 1),
+    handle = entries * TPnum(t.entryPrice, 0) * TPnum(t.eventsPerMonth, 0),
+    prize = TPnum(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0) * TPnum(t.eventsPerMonth, 0);
+  el.textContent = 'Month 1: ' + Math.round(TPtypeParticipants(TP, t, 1)).toLocaleString() + ' participants, ' +
+    Math.round(entries).toLocaleString() + ' entries per event, ' + TPmoney(handle) + ' handle vs ' + TPmoney(prize) + ' prize cost.';
 }
 function TPtourCash(i, checked) {
   var t = TP.tournaments[i]; if (!t) return;
@@ -3376,7 +3491,7 @@ function TPtourCash(i, checked) {
   TPsave(); TPrenderTournaments(); TPrender();
 }
 function TPaddTournament() {
-  TP.tournaments.push({ id: 't' + Date.now(), name: 'New tournament', entryPrice: 10, eventsPerMonth: 1, rebuys: 0, isCash: false, rewardFaceValue: 250, customerCashCost: 100, cashPrizeAmount: 250 });
+  TP.tournaments.push({ id: 't' + Date.now(), name: 'New tournament', entryPrice: 10, eventsPerMonth: 1, participationMode: 'shared', participantsCustom: 0, participantPctCustom: 0, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, isCash: false, rewardFaceValue: 250, customerCashCost: 100, cashPrizeAmount: 250 });
   TPsave(); TPrenderTournaments(); TPrender();
 }
 function TPremoveTournament(i) {
@@ -3427,7 +3542,7 @@ function TPview(name, btn) {
 /* ---------- rendering ---------- */
 
 function TPrenderControls() {
-  var fields = { 'tp-deal-name': 'dealName', 'tp-participants': 'participants', 'tp-ramp-start': 'rampStart', 'tp-ramp-plateau': 'rampPlateau', 'tp-ramp-months': 'rampMonths' };
+  var fields = { 'tp-deal-name': 'dealName', 'tp-mau': 'mau', 'tp-participants': 'participants', 'tp-participant-pct': 'participantPct', 'tp-ramp-start': 'rampStart', 'tp-ramp-plateau': 'rampPlateau', 'tp-ramp-start-pct': 'rampStartPct', 'tp-ramp-plateau-pct': 'rampPlateauPct', 'tp-ramp-months': 'rampMonths' };
   Object.keys(fields).forEach(function (id) {
     var el = $(id); if (el && document.activeElement !== el) el.value = TP[fields[id]];
   });
@@ -3465,14 +3580,29 @@ function TPrenderControls() {
     var on = b.dataset.volume === TP.volumeMode;
     b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
   });
-  $('tp-flat-fields').hidden = TP.volumeMode !== 'flat';
-  $('tp-ramp-fields').hidden = TP.volumeMode !== 'ramp';
+  document.querySelectorAll('.tp-basis-participants button').forEach(function (b) {
+    var on = b.dataset.pbasis === TP.participantBasis;
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+  });
+  var mau = TP.participantBasis === 'mau';
+  $('tp-mau-block').hidden = !mau;
+  $('tp-flat-count').hidden = TP.volumeMode !== 'flat' || mau;
+  $('tp-flat-pct').hidden = TP.volumeMode !== 'flat' || !mau;
+  $('tp-ramp-count').hidden = TP.volumeMode !== 'ramp' || mau;
+  $('tp-ramp-pct').hidden = TP.volumeMode !== 'ramp' || !mau;
+  $('tp-ramp-months-wrap').hidden = TP.volumeMode !== 'ramp';
+  TPmauNote();
 }
 
 function TPrenderTournaments() {
   var host = $('tp-tournaments-list'); if (!host) return;
+  var mau = TP.participantBasis === 'mau';
   host.innerHTML = TP.tournaments.map(function (t, i) {
-    var cash = !!t.isCash;
+    var cash = !!t.isCash, custom = t.participationMode === 'custom', pct = t.rebuyMode === 'pct',
+      resolved = TPtypeParticipants(TP, t, 1),
+      entries = TPentriesPerEvent(TP, t, 1),
+      handle = entries * TPnum(t.entryPrice, 0) * TPnum(t.eventsPerMonth, 0),
+      prize = TPnum(cash ? t.cashPrizeAmount : t.customerCashCost, 0) * TPnum(t.eventsPerMonth, 0);
     return '<div class="tp-tour" data-tour="' + i + '">' +
       '<div class="tp-tour-head">' +
       '<input class="pf-input tp-tour-name" type="text" value="' + escAttr(t.name) + '" aria-label="Tournament name" oninput="TPtour(' + i + ',\'name\',this.value)">' +
@@ -3481,15 +3611,41 @@ function TPrenderTournaments() {
       '<div class="inputs tp-tour-grid">' +
       '<div class="input-group"><label class="input-label" for="tp-price-' + i + '">Entry price</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-price-' + i + '" type="number" min="0" step="1" value="' + TPnum(t.entryPrice, 0) + '" oninput="TPtour(' + i + ',\'entryPrice\',this.value)"></div><div class="sn">Customer fact</div></div>' +
       '<div class="input-group"><label class="input-label" for="tp-events-' + i + '">Tournaments per month</label><input class="pf-input" id="tp-events-' + i + '" type="number" min="0" step="1" value="' + TPnum(t.eventsPerMonth, 0) + '" oninput="TPtour(' + i + ',\'eventsPerMonth\',this.value)"><div class="sn">Customer fact</div></div>' +
-      '<div class="input-group"><label class="input-label" for="tp-rebuys-' + i + '">Rebuys per participant</label><input class="pf-input" id="tp-rebuys-' + i + '" type="number" min="0" step="0.25" value="' + TPnum(t.rebuys, 0) + '" oninput="TPtour(' + i + ',\'rebuys\',this.value)"><div class="sn">Estimated · additional entries beyond the base entry</div></div>' +
       '</div>' +
+
+      '<div class="tp-row"><span class="input-label">Participation for this tournament</span>' +
+      '<div class="tp-participation-switch" role="group" aria-label="Participation for ' + escAttr(t.name) + '">' +
+      '<button type="button" data-participation="shared" aria-pressed="' + (!custom) + '"' + (!custom ? ' class="on"' : '') + ' onclick="TPtourParticipation(' + i + ',\'shared\')">Shared<span>Use the deal-level number</span></button>' +
+      '<button type="button" data-participation="custom" aria-pressed="' + custom + '"' + (custom ? ' class="on"' : '') + ' onclick="TPtourParticipation(' + i + ',\'custom\')">Custom<span>A $1 open draws a different crowd from a $20 headline</span></button>' +
+      '</div></div>' +
+      (custom
+        ? '<div class="inputs tp-tour-grid">' + (mau
+            ? '<div class="input-group"><label class="input-label" for="tp-pcustom-' + i + '">Participants, % of MAU</label><div class="input-val"><input class="pf-input" id="tp-pcustom-' + i + '" type="number" min="0" step="0.25" value="' + TPnum(t.participantPctCustom, 0) + '" oninput="TPtour(' + i + ',\'participantPctCustom\',this.value)"><span class="vp">%</span></div><div class="sn">Estimated · this tournament only, at full ramp</div></div>'
+            : '<div class="input-group"><label class="input-label" for="tp-pcustom-' + i + '">Participants per event</label><input class="pf-input" id="tp-pcustom-' + i + '" type="number" min="0" step="5" value="' + TPnum(t.participantsCustom, 0) + '" oninput="TPtour(' + i + ',\'participantsCustom\',this.value)"><div class="sn">Estimated · this tournament only, at full ramp</div></div>')
+          + '</div>'
+        : '') +
+
+      '<div class="tp-row"><span class="input-label">Rebuys</span>' +
+      '<div class="tp-rebuy-switch" role="group" aria-label="Rebuy basis for ' + escAttr(t.name) + '">' +
+      '<button type="button" data-rebuy="avg" aria-pressed="' + (!pct) + '"' + (!pct ? ' class="on"' : '') + ' onclick="TPtourRebuyMode(' + i + ',\'avg\')">Average per participant<span>Extra entries each</span></button>' +
+      '<button type="button" data-rebuy="pct" aria-pressed="' + pct + '"' + (pct ? ' class="on"' : '') + ' onclick="TPtourRebuyMode(' + i + ',\'pct\')">% of participants<span>Share taking an extra entry</span></button>' +
+      '</div></div>' +
+      '<div class="inputs tp-tour-grid">' +
+      (pct
+        ? '<div class="input-group"><label class="input-label" for="tp-rebuypct-' + i + '">Rebuy rate</label><div class="input-val"><input class="pf-input" id="tp-rebuypct-' + i + '" type="number" min="0" step="5" value="' + TPnum(t.rebuyPct, 0) + '" oninput="TPtour(' + i + ',\'rebuyPct\',this.value)"><span class="vp">%</span></div><div class="sn">Estimated · extra entries as a share of participants. Over 100% means more than one rebuy each.</div></div>'
+        : '<div class="input-group"><label class="input-label" for="tp-rebuys-' + i + '">Rebuys per participant</label><input class="pf-input" id="tp-rebuys-' + i + '" type="number" min="0" step="0.25" value="' + TPnum(t.rebuys, 0) + '" oninput="TPtour(' + i + ',\'rebuys\',this.value)"><div class="sn">Estimated · additional entries beyond the base entry</div></div>')
+      + '</div>' +
+
       '<label class="tp-check"><input type="checkbox" id="tp-cash-' + i + '"' + (cash ? ' checked' : '') + ' onchange="TPtourCash(' + i + ',this.checked)"><span>Cash tournament</span></label>' +
       '<div class="inputs tp-tour-grid">' +
       (cash
         ? '<div class="input-group"><label class="input-label" for="tp-cashprize-' + i + '">Cash prize amount</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-cashprize-' + i + '" type="number" min="0" step="25" value="' + TPnum(t.cashPrizeAmount, 0) + '" oninput="TPtour(' + i + ',\'cashPrizeAmount\',this.value)"></div><div class="sn">Customer fact · shown to players and deducted from revenue</div></div>'
         : '<div class="input-group"><label class="input-label" for="tp-face-' + i + '">Reward face value</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-face-' + i + '" type="number" min="0" step="25" value="' + TPnum(t.rewardFaceValue, 0) + '" oninput="TPtour(' + i + ',\'rewardFaceValue\',this.value)"></div><div class="sn">Customer fact · advertised to players, not a cost</div></div>' +
           '<div class="input-group"><label class="input-label" for="tp-cost-' + i + '">Customer cash cost</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-cost-' + i + '" type="number" min="0" step="25" value="' + TPnum(t.customerCashCost, 0) + '" oninput="TPtour(' + i + ',\'customerCashCost\',this.value)"></div><div class="sn">Customer fact · COGS per event, deducted from revenue</div></div>')
-      + '</div></div>';
+      + '</div>' +
+      '<div class="sn tp-tour-readout">Month 1: ' + Math.round(resolved).toLocaleString() + ' participants, ' + Math.round(entries).toLocaleString() + ' entries per event, ' + TPmoney(handle) + ' handle vs ' + TPmoney(prize) + ' prize cost.</div>' +
+      (prize > handle ? '<div class="tp-tour-warn" role="status">Prize cost exceeds this tournament\'s handle in month 1. The month floors at zero net revenue, so the loss is not carried into the split.</div>' : '') +
+      '</div>';
   }).join('') || '<div class="sn">No tournament types yet. Add one to model the deal.</div>';
 }
 
