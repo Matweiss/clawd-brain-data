@@ -441,6 +441,127 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 @media(max-width:640px){.dm-hero{padding:18px;flex-direction:column}.dm-hero h2{font-size:29px}.dm-outcome-row{grid-template-columns:1fr 1fr}.dm-outcome-row small{grid-column:1/-1}.dm-ramp{gap:3px;padding-left:8px;padding-right:8px}.dm-ramp-col span{font-size:8px}}
 
 .dm-collapsible[hidden]{display:none!important}
+/* ── Tournament Payoff ── */
+/* The app's .inputs/.grid rules set display, which outranks the UA [hidden] rule.
+   Scoped so hidden panels in this tab actually stay hidden. */
+#tournaments [hidden],#tp-print-root[hidden]{display:none!important}
+.tp-view-switch{display:flex;gap:8px;margin:0 0 20px}
+.tp-view-switch button{background:var(--surface);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);padding:9px 16px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer}
+.tp-view-switch button.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.tp-view-switch button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+.tp-check{display:flex;align-items:center;gap:9px;margin-top:14px;font-size:13px;color:var(--text2);cursor:pointer}
+.tp-check input{width:16px;height:16px;accent-color:var(--green);cursor:pointer}
+.tp-check input:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+.tp-split-switch{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:14px}
+.tp-split-switch button{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:12px 14px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer}
+.tp-split-switch button span{font-size:11px;font-weight:500;color:var(--text3)}
+.tp-split-switch button.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.tp-split-switch button.on span{color:var(--green)}
+.tp-split-switch button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+.tp-volume-switch{display:flex;gap:8px;margin-bottom:14px}
+.tp-volume-switch button{background:var(--surface);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);padding:8px 18px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer}
+.tp-volume-switch button.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.tp-volume-switch button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+.tp-three{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+
+.tp-tour{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin:12px 0;background:var(--surface)}
+.tp-tour-head{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.tp-tour-name{flex:1;min-width:0;font-weight:600}
+.tp-tour-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:0}
+.tp-remove{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:8px;padding:6px 12px;font-family:var(--font);font-size:12px;cursor:pointer}
+.tp-remove:hover{color:var(--red);border-color:var(--red)}
+.tp-remove:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.tp-add{margin-top:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:9px 16px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer}
+.tp-add:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+.tp-validation{border:1px solid var(--red);background:rgba(239,68,68,0.08);color:var(--red);border-radius:var(--radius);padding:12px 14px;margin:16px 0;font-size:13px;display:flex;flex-direction:column;gap:4px}
+
+.tp-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.tp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.tp-card-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px}
+.tp-card-value{font-size:20px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;line-height:1.2}
+.tp-card-note{font-size:11px;color:var(--text3);margin-top:5px}
+
+.tp-progress{margin-bottom:18px}
+.tp-progress-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text2);margin-bottom:8px}
+.tp-bars{display:flex;align-items:flex-end;gap:5px;height:96px;padding:0 2px;border-bottom:1px solid var(--border)}
+.tp-bar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative;background:linear-gradient(var(--surface2),var(--surface2)) no-repeat center/100% 100%;border-radius:4px 4px 0 0;overflow:hidden}
+.tp-bar-fill{width:100%;background:var(--green-border);border-radius:4px 4px 0 0}
+.tp-bar-fill.done{background:var(--green)}
+.tp-bar-label{position:absolute;bottom:-18px;font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums}
+.tp-bars+*{margin-top:24px}
+
+.tp-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);margin-top:26px}
+table.tp-months{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+table.tp-months th,table.tp-months td{padding:8px 11px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--border)}
+table.tp-months th:first-child,table.tp-months td:first-child{text-align:left}
+table.tp-months thead th{background:var(--surface2);color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+table.tp-months tbody tr:last-child td{border-bottom:none}
+table.tp-months tr.crossover td{background:var(--green-bg)}
+
+.tp-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.tp-actions button{border-radius:var(--radius);padding:10px 18px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+.tp-actions button.primary{background:var(--green);border-color:var(--green);color:#0a0a0b}
+.tp-actions button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+.tp-template-save{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:12px 0}
+.tp-template-save .input-label{width:100%;margin-bottom:0}
+.tp-template-save input{flex:1;min-width:180px}
+.tp-template-save button{border-radius:var(--radius);padding:10px 18px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--green);background:var(--green);color:#0a0a0b}
+.tp-template-save button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.tp-template{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;margin-top:10px;background:var(--surface)}
+.tp-template strong{display:block;font-size:14px}
+.tp-template .sn{margin-top:2px}
+.tp-template-actions{display:flex;gap:8px}
+.tp-template-actions button{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 14px;font-family:var(--font);font-size:12px;cursor:pointer}
+.tp-template-actions button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+.tp-cust-deal{font-family:var(--display);font-size:22px;margin:14px 0 12px}
+.tp-cust-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.tp-cust-card{border:1px solid var(--green-border);background:var(--green-bg);border-radius:var(--radius);padding:16px 18px}
+.tp-cust-name{font-size:15px;font-weight:700;margin-bottom:6px}
+.tp-cust-reward{font-size:19px;font-weight:700;color:var(--green);margin-bottom:12px;font-variant-numeric:tabular-nums}
+.tp-cust-meta{margin:0;display:flex;flex-direction:column;gap:5px}
+.tp-cust-meta div{display:flex;justify-content:space-between;gap:12px;font-size:12.5px}
+.tp-cust-meta dt{color:var(--text3)}
+.tp-cust-meta dd{margin:0;color:var(--text);font-variant-numeric:tabular-nums}
+
+#tp-print-root{display:none}
+.tp-print-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid #111;padding-bottom:14px;margin-bottom:20px}
+.tp-print-brand{font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-size:12px}
+.tp-print-head h1{font-size:22px;margin:6px 0 4px}
+.tp-print-deal{font-size:13px;color:#444}
+.tp-print-badge{border:1px solid #111;border-radius:4px;padding:4px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+.tp-print-badge.internal{background:#111;color:#fff}
+.tp-print-foot{margin-top:20px;padding-top:12px;border-top:1px solid #ccc;font-size:11px;color:#555}
+
+@media print{
+  body.tp-printing{background:#fff!important;color:#111!important}
+  body.tp-printing>*{display:none!important}
+  body.tp-printing>#tp-print-root{display:block!important;padding:0;margin:0}
+  body.tp-printing #tp-print-root *{color:#111!important;background:transparent!important;border-color:#bbb!important}
+  body.tp-printing #tp-print-root .tp-print-badge.internal{background:#111!important;color:#fff!important}
+  body.tp-printing #tp-print-root .tp-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  body.tp-printing #tp-print-root .tp-card{border:1px solid #bbb!important}
+  body.tp-printing #tp-print-root .tp-card-value{font-size:16px}
+  body.tp-printing #tp-print-root table.tp-months{width:100%;font-size:9.5px}
+  body.tp-printing #tp-print-root table.tp-months th,body.tp-printing #tp-print-root table.tp-months td{padding:4px 6px;border-bottom:1px solid #ddd!important}
+  body.tp-printing #tp-print-root .tp-bar-fill{background:#666!important}
+  body.tp-printing #tp-print-root .tp-bar-fill.done{background:#111!important}
+  body.tp-printing #tp-print-root .tp-cust-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  body.tp-printing #tp-print-root .tp-cust-card{border:1px solid #999!important}
+  @page{margin:14mm}
+}
+
+@media (max-width:520px){
+  .tp-view-switch,.tp-volume-switch{flex-wrap:wrap}
+  .tp-cards{grid-template-columns:1fr 1fr}
+  .tp-bars{height:76px}
+}
 </style>
 </head>
 <body>
@@ -481,6 +602,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="wagerbreakeven" id="tab-wagerbreakeven" tabindex="-1" onclick="T('wagerbreakeven',this)">Wager Break-even</button>
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="analytics" id="tab-analytics" tabindex="-1" onclick="T('analytics',this)">Investment Plans</button>
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="brandarcade" id="tab-brandarcade" tabindex="-1" onclick="T('brandarcade',this)">Brand Arcade</button>
+<button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="tournaments" id="tab-tournaments" tabindex="-1" onclick="T('tournaments',this)">Tournament Payoff</button>
 </div>
 
 <div class="sticky-summary" id="sticky-summary">
@@ -1367,6 +1489,98 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
   </div>
 </div>
 
+<div id="tournaments" role="tabpanel" aria-labelledby="tab-tournaments" style="display:none">
+<div class="dm-hero"><div><div class="workspace-eyebrow">Venue tournament deals</div><h2>Tournament Payoff</h2><p>Entry fees and rebuys retire the licence fee. Once it is retired the licence share redirects to the operator for the rest of the term.</p></div><span class="badge">Tournaments</span></div>
+
+<div class="tp-view-switch" role="tablist" aria-label="Tournament payoff views">
+  <button type="button" class="on" id="tp-view-calc-btn" role="tab" aria-selected="true" onclick="TPview('calc',this)">Calculator</button>
+  <button type="button" id="tp-view-tournaments-btn" role="tab" aria-selected="false" onclick="TPview('tournaments',this)">Tournaments</button>
+</div>
+
+<div id="tp-calc-view">
+  <div class="pf-section"><div class="pf-section-title">Deal and licence</div>
+    <div class="inputs" style="margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-deal-name">Deal / customer name</label><input class="pf-input" id="tp-deal-name" type="text" placeholder="Venue or group name" oninput="TPset('dealName',this.value)"><div class="sn">Customer fact · labels both exports</div></div>
+      <div class="input-group" id="tp-licence-block"><label class="input-label" for="tp-fee">Licence fee, year 1</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-fee" type="number" min="0" step="1000" oninput="TPset('licenseFee',this.value)"></div><div class="sn">Customer fact · the balance activity retires</div></div>
+    </div>
+    <label class="tp-check"><input type="checkbox" id="tp-free" onchange="TPtoggle('freeLicense',this.checked)"><span>Free licence (waived)</span></label>
+    <div class="sn" id="tp-free-note" hidden>Licence is waived. There is no balance to retire and no licence credit bucket, so revenue splits straight to operator and Lucra.</div>
+  </div>
+
+  <div class="pf-section" id="tp-split-block"><div class="pf-section-title">Revenue split during payoff</div>
+    <div class="tp-split-switch" role="group" aria-label="Revenue split mode">
+      <button type="button" data-split="standard" aria-pressed="true" onclick="TPsetSplit('standard')">Standard recapture<span>50 licence · 40 operator · 10 Lucra</span></button>
+      <button type="button" data-split="sweep" aria-pressed="false" onclick="TPsetSplit('sweep')">Aggressive sweep<span>90 licence · 0 operator · 10 Lucra</span></button>
+      <button type="button" data-split="custom" aria-pressed="false" onclick="TPsetSplit('custom')">Custom<span>Set all three</span></button>
+    </div>
+    <div class="inputs tp-three" id="tp-custom-split" hidden>
+      <div class="input-group"><label class="input-label" for="tp-split-credit">Licence %</label><input class="pf-input" id="tp-split-credit" type="number" min="0" max="100" step="1" oninput="TPset('custom.credit',this.value)"></div>
+      <div class="input-group"><label class="input-label" for="tp-split-operator">Operator %</label><input class="pf-input" id="tp-split-operator" type="number" min="0" max="100" step="1" oninput="TPset('custom.operator',this.value)"></div>
+      <div class="input-group"><label class="input-label" for="tp-split-lucra">Lucra %</label><input class="pf-input" id="tp-split-lucra" type="number" min="0" max="100" step="1" oninput="TPset('custom.lucra',this.value)"></div>
+    </div>
+    <div class="pf-section-title" style="margin-top:18px">After the licence is retired</div>
+    <div class="inputs tp-three">
+      <div class="input-group"><label class="input-label" for="tp-post-operator">Operator %</label><input class="pf-input" id="tp-post-operator" type="number" min="0" max="100" step="1" oninput="TPset('post.operator',this.value)"></div>
+      <div class="input-group"><label class="input-label" for="tp-post-lucra">Lucra %</label><input class="pf-input" id="tp-post-lucra" type="number" min="0" max="100" step="1" oninput="TPset('post.lucra',this.value)"></div>
+    </div>
+    <div class="sn">If the fee retires partway through a month, the rest of that month's revenue pays out at this split rather than being lost.</div>
+  </div>
+
+  <div class="pf-section"><div class="pf-section-title">Participants</div>
+    <div class="tp-volume-switch" role="group" aria-label="Participant volume mode">
+      <button type="button" data-volume="flat" aria-pressed="true" onclick="TPsetVolume('flat')">Flat</button>
+      <button type="button" data-volume="ramp" aria-pressed="false" onclick="TPsetVolume('ramp')">Ramp</button>
+    </div>
+    <div class="inputs" id="tp-flat-fields" style="margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-participants">Average participants per event</label><input class="pf-input" id="tp-participants" type="number" min="0" step="10" oninput="TPset('participants',this.value)"><div class="sn">Estimated · planning placeholder, replace with customer numbers. Applied identically across all 12 months.</div></div>
+    </div>
+    <div class="inputs tp-three" id="tp-ramp-fields" hidden style="margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-ramp-start">Starting participants</label><input class="pf-input" id="tp-ramp-start" type="number" min="0" step="10" oninput="TPset('rampStart',this.value)"><div class="sn">Estimated</div></div>
+      <div class="input-group"><label class="input-label" for="tp-ramp-plateau">Plateau participants</label><input class="pf-input" id="tp-ramp-plateau" type="number" min="0" step="10" oninput="TPset('rampPlateau',this.value)"><div class="sn">Estimated</div></div>
+      <div class="input-group"><label class="input-label" for="tp-ramp-months">Months to plateau</label><input class="pf-input" id="tp-ramp-months" type="number" min="1" max="12" step="1" oninput="TPset('rampMonths',this.value)"><div class="sn">Linear to plateau, then flat</div></div>
+    </div>
+  </div>
+
+  <div class="pf-section"><div class="pf-section-title">Tournament types</div>
+    <div class="sn">Entries per event are participants times one plus rebuys. Cash cost is a fixed cost per event and comes out of the handle before the split, so licence, operator and Lucra all fund prizes.</div>
+    <div id="tp-tournaments-list"></div>
+    <button type="button" class="tp-add" onclick="TPaddTournament()">Add tournament type</button>
+  </div>
+
+  <div class="tp-validation" id="tp-validation" role="alert" hidden></div>
+
+  <section class="card-section" aria-labelledby="tp-results-title">
+    <div class="ct" id="tp-results-title">12-month results</div>
+    <div class="tp-cards" id="tp-summary" aria-live="polite"></div>
+    <div class="tp-progress" id="tp-progress"></div>
+    <div class="tp-table-wrap" id="tp-table"></div>
+    <div class="tp-actions"><button type="button" class="primary" onclick="TPprintInternal()">Export Results (Internal)</button></div>
+    <div class="sn">Internal export includes licence fee, split percentages and prize costs. Do not hand it to a customer.</div>
+  </section>
+</div>
+
+<div id="tp-tournaments-view" hidden>
+  <div class="pf-section"><div class="pf-section-title">Template library</div>
+    <div class="sn">Save the current tournament types under a name and reuse them across deals. Stored in this browser only.</div>
+    <div class="tp-template-save">
+      <label class="input-label" for="tp-template-name">Template name</label>
+      <input class="pf-input" id="tp-template-name" type="text" placeholder="e.g. Standard golf venue">
+      <button type="button" class="primary" onclick="TPsaveTemplate()">Save current setup</button>
+    </div>
+    <div class="sn" id="tp-template-status" role="status"></div>
+    <div id="tp-template-list"></div>
+  </div>
+
+  <section class="card-section" aria-labelledby="tp-customer-title">
+    <div class="ct" id="tp-customer-title">Customer summary</div>
+    <div class="sn">Structure only. This view never shows licence fee, revenue split, sweep structure or cash cost.</div>
+    <div class="tp-cust-deal" id="tp-customer-deal"></div>
+    <div class="tp-cust-grid" id="tp-customer-cards"></div>
+    <div class="tp-actions"><button type="button" class="primary" onclick="TPprintCustomer()">Export Summary (Customer-Safe)</button></div>
+  </section>
+</div>
+</div>
+
 <script>
 var P=[{n:'Puttshack',v:1100,a:45,f:2500,l:16},{n:"Dave & Buster's",v:375,a:45,f:2000,l:220},{n:'Topgolf',v:2500,a:38,f:2500,l:89},{n:'Bowlero',v:300,a:40,f:2000,l:360},{n:'Five Iron Golf',v:120,a:30,f:1500,l:50},{n:'PopStroke',v:400,a:35,f:2000,l:12},{n:'Avg Bowling',v:175,a:25,f:1500,l:1},{n:'Custom',v:200,a:30,f:1500,l:1}];
 var SCNS={cons:{opt:5,lift:10},avg:{opt:20,lift:12.5},case:{opt:40,lift:15}};
@@ -1436,7 +1650,7 @@ function renderObjections(){
 function S(k){V[k]=+$('s-'+k).value;if(k==='fee')V.pfee=V[k];if(k==='pfee')V.fee=V[k];$('i-'+k).value=V[k];if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function I(k){var raw=$('i-'+k).value;if(raw===''||raw==='-')return;var v=parseFloat(raw);if(isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if(k==='pfee')V.fee=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function discI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if($('i-'+k))$('i-'+k).value=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));checkCaps();U();saveState()}
-function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';document.body.classList.toggle('forecast-mode',id==='forecast'||id==='wagerbreakeven'||id==='digitalmedia');['roi','minigame','forecast','digitalmedia','wagerbreakeven','analytics','proposal','trackman','gamification','brandarcade'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');t.setAttribute('aria-selected','false');t.setAttribute('tabindex','-1')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn){btn.classList.add('active');btn.setAttribute('aria-selected','true');btn.setAttribute('tabindex','0')}if(id==='trackman')renderTM();if(id==='wagerbreakeven')WBrender();if(id==='gamification')renderGM();if(id==='brandarcade')BAinit();if(id==='forecast')LFinit();if(id==='digitalmedia')DMinit();U()}
+function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';document.body.classList.toggle('forecast-mode',id==='forecast'||id==='wagerbreakeven'||id==='digitalmedia');['roi','minigame','forecast','digitalmedia','wagerbreakeven','analytics','proposal','trackman','gamification','brandarcade','tournaments'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');t.setAttribute('aria-selected','false');t.setAttribute('tabindex','-1')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn){btn.classList.add('active');btn.setAttribute('aria-selected','true');btn.setAttribute('tabindex','0')}if(id==='trackman')renderTM();if(id==='wagerbreakeven')WBrender();if(id==='gamification')renderGM();if(id==='brandarcade')BAinit();if(id==='forecast')LFinit();if(id==='digitalmedia')DMinit();if(id==='tournaments')TPinit();U()}
 // Keyboard navigation for tabs (arrow keys per WAI-ARIA tablist pattern)
 document.addEventListener('keydown',function(e){var tab=e.target;if(!tab||tab.getAttribute('role')!=='tab')return;var tabs=Array.from(tab.parentElement.querySelectorAll('[role=tab]'));var idx=tabs.indexOf(tab),next=-1;if(e.key==='ArrowRight'||e.key==='ArrowDown'){next=(idx+1)%tabs.length}else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){next=(idx-1+tabs.length)%tabs.length}else if(e.key==='Home'){next=0}else if(e.key==='End'){next=tabs.length-1}if(next>=0){e.preventDefault();tabs[next].click();tabs[next].focus()}})
 
@@ -2795,5 +3009,492 @@ function DMrender(){if(!$('dm-cost-table'))return;DMwriteInputs();var r=DMcalc(D
 function DMtoggleFull(){DM.full=!DM.full;$('dm-full').hidden=!DM.full;$('dm-full-toggle').setAttribute('aria-expanded',String(DM.full));$('dm-full-toggle').textContent=DM.full?'Hide full opportunity':'Model the full opportunity';DMsaveState();DMrender()}
 var DM_READY=false;function DMinit(){if(!DM_READY){DMloadState();DM_READY=true}if(!$('dm-ramp-note')){var rampLabel=document.querySelector('.dm-ramp-wrap .section-label');if(rampLabel)rampLabel.insertAdjacentHTML('afterend','<div class="sn" id="dm-ramp-note">Illustrative activation path only; current cost-per-outcome and break-even figures use the steady-state assumptions above.</div>')}DMwriteInputs();$('dm-full').hidden=!DM.full;$('dm-full-toggle').setAttribute('aria-expanded',String(!!DM.full));DMrender()}
 </script>
+<script>
+/* ════════ TOURNAMENT PAYOFF ════════
+   Venue tournament deals: entry fees and rebuys retire a licence fee,
+   then the licence share redirects to the operator for the rest of the term.
+   Pure calculation functions (TPnum, TPsplitRates, TPparticipants,
+   TPvalidate, TPcalculate, TPcustomerProjection) are mirrored verbatim in
+   tests/calc-functions.js and guarded against drift by tests/tp-drift.spec.js. */
+
+var TP_KEY = 'lucra-tournament-payoff-v1';
+var TP_TPL_KEY = 'lucra-tournament-templates-v1';
+
+/* TP-PURE-START — mirrored verbatim in tests/calc-functions.js, guarded by tests/tp-drift.spec.js */
+var TP_SPLITS = {
+  standard: { credit: 50, operator: 40, lucra: 10 },
+  sweep: { credit: 90, operator: 0, lucra: 10 }
+};
+
+var TP_DEFAULTS = {
+  dealName: '',
+  licenseFee: 60000,
+  freeLicense: false,
+  splitMode: 'standard',
+  custom: { credit: 50, operator: 40, lucra: 10 },
+  post: { operator: 90, lucra: 10 },
+  volumeMode: 'flat',
+  participants: 100,
+  rampStart: 50,
+  rampPlateau: 200,
+  rampMonths: 6,
+  tournaments: [
+    { id: 't1', name: 'Weekly open', entryPrice: 10, eventsPerMonth: 4, rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200, cashPrizeAmount: 500 },
+    { id: 't2', name: 'Monthly headline', entryPrice: 25, eventsPerMonth: 1, rebuys: 1, isCash: true, rewardFaceValue: 1000, customerCashCost: 1000, cashPrizeAmount: 1000 }
+  ]
+};
+
+/* ---------- pure calculation ---------- */
+
+function TPnum(v, lo, hi) {
+  v = Number(v);
+  if (!isFinite(v)) v = 0;
+  if (lo !== undefined) v = Math.max(lo, v);
+  if (hi !== undefined) v = Math.min(hi, v);
+  return v;
+}
+
+function TPstate(s) {
+  var out = JSON.parse(JSON.stringify(TP_DEFAULTS)), src = s || {};
+  Object.keys(src).forEach(function (k) {
+    out[k] = src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])
+      ? Object.assign({}, out[k] || {}, src[k])
+      : src[k];
+  });
+  out.tournaments = (src.tournaments || out.tournaments).map(function (t) {
+    var c = Object.assign({}, t);
+    if (c.isCash) { c.rewardFaceValue = TPnum(c.cashPrizeAmount, 0); c.customerCashCost = TPnum(c.cashPrizeAmount, 0); }
+    return c;
+  });
+  return out;
+}
+
+/* Active split. A free licence collapses to operator / Lucra with no credit bucket. */
+function TPsplitRates(s) {
+  var postOp = TPnum(s.post.operator, 0, 100) / 100, postLu = TPnum(s.post.lucra, 0, 100) / 100;
+  if (s.freeLicense) {
+    return { free: true, credit: 0, operator: postOp, lucra: postLu, postOperator: postOp, postLucra: postLu };
+  }
+  var p = s.splitMode === 'custom'
+    ? { credit: TPnum(s.custom.credit, 0, 100), operator: TPnum(s.custom.operator, 0, 100), lucra: TPnum(s.custom.lucra, 0, 100) }
+    : (TP_SPLITS[s.splitMode] || TP_SPLITS.standard);
+  return {
+    free: false, credit: p.credit / 100, operator: p.operator / 100, lucra: p.lucra / 100,
+    postOperator: postOp, postLucra: postLu
+  };
+}
+
+/* Participants per event for a 1-based month. Flat applies one number to all
+   twelve months; ramp interpolates linearly to plateau then holds. */
+function TPparticipants(s, month) {
+  if (s.volumeMode !== 'ramp') return TPnum(s.participants, 0);
+  var start = TPnum(s.rampStart, 0), plateau = TPnum(s.rampPlateau, 0),
+    M = Math.max(1, Math.round(TPnum(s.rampMonths, 1)));
+  if (M === 1 || month >= M) return plateau;
+  return start + (plateau - start) * (month - 1) / (M - 1);
+}
+
+function TPvalidate(input) {
+  var s = TPstate(input), errors = [];
+  if (!s.freeLicense && s.splitMode === 'custom') {
+    var sum = TPnum(s.custom.credit) + TPnum(s.custom.operator) + TPnum(s.custom.lucra);
+    if (Math.abs(sum - 100) > 0.001) errors.push('Custom split must sum to 100%. It currently sums to ' + Math.round(sum * 10) / 10 + '%.');
+    if (TPnum(s.custom.credit) <= 0) errors.push('Licence share must be above 0%. Use the free licence toggle for a waived licence.');
+  }
+  var post = TPnum(s.post.operator) + TPnum(s.post.lucra);
+  if (Math.abs(post - 100) > 0.001) errors.push('Post-payoff split must sum to 100%.');
+  if (!s.freeLicense && TPnum(s.licenseFee, 0) <= 0) errors.push('Enter a licence fee, or switch the licence to free.');
+  if (!(s.tournaments || []).length) errors.push('Add at least one tournament type.');
+  return errors;
+}
+
+/* Twelve-month model. Prize cost leaves the handle before the split, so the
+   licence, operator and Lucra shares all fund prizes pro rata. When the fee
+   retires mid-month the unused remainder of that month pays out at the
+   post-payoff split rather than being lost. */
+function TPcalculate(input) {
+  var s = TPstate(input), errors = TPvalidate(s);
+  if (errors.length) return { errors: errors, months: [] };
+
+  var rates = TPsplitRates(s),
+    licenseFee = s.freeLicense ? 0 : TPnum(s.licenseFee, 0),
+    remaining = licenseFee,
+    cumulativeLicense = 0, totalOperator = 0, totalLucra = 0,
+    totalHandle = 0, totalPrizeCost = 0, totalNet = 0,
+    payoffMonth = null, months = [];
+
+  for (var month = 1; month <= 12; month++) {
+    var participants = TPparticipants(s, month), handle = 0, prizeCost = 0, detail = [];
+
+    s.tournaments.forEach(function (t) {
+      var events = TPnum(t.eventsPerMonth, 0),
+        entriesPerEvent = participants * (1 + TPnum(t.rebuys, 0)),
+        tHandle = entriesPerEvent * TPnum(t.entryPrice, 0) * events,
+        tPrize = TPnum(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0) * events;
+      handle += tHandle;
+      prizeCost += tPrize;
+      detail.push({ name: t.name, entriesPerEvent: entriesPerEvent, events: events, handle: tHandle, prizeCost: tPrize });
+    });
+
+    var netRevenue = Math.max(0, handle - prizeCost),
+      licenseGross = rates.credit > 0 ? Math.min(netRevenue, remaining / rates.credit) : 0,
+      postGross = netRevenue - licenseGross,
+      toLicense = Math.min(remaining, licenseGross * rates.credit),
+      toOperator = licenseGross * rates.operator + postGross * rates.postOperator,
+      toLucra = licenseGross * rates.lucra + postGross * rates.postLucra;
+
+    remaining = Math.max(0, remaining - toLicense);
+    cumulativeLicense += toLicense;
+    totalOperator += toOperator;
+    totalLucra += toLucra;
+    totalHandle += handle;
+    totalPrizeCost += prizeCost;
+    totalNet += netRevenue;
+
+    if (payoffMonth === null && !rates.free && licenseFee > 0 && remaining <= 1e-9) {
+      payoffMonth = month - 1 + (netRevenue > 0 ? licenseGross / netRevenue : 1);
+    }
+
+    months.push({
+      month: month, participants: participants, handle: handle, prizeCost: prizeCost,
+      netRevenue: netRevenue, toLicense: toLicense, cumulativeLicense: cumulativeLicense,
+      toOperator: toOperator, toLucra: toLucra,
+      split: licenseGross > 0 && postGross > 0 ? 'Crossover' : licenseGross > 0 ? 'Payoff' : 'Post-payoff',
+      detail: detail
+    });
+  }
+
+  return {
+    errors: [], months: months, licenseFee: licenseFee, payoffMonth: payoffMonth,
+    cumulativeLicense: cumulativeLicense,
+    balanceDue: Math.max(0, licenseFee - cumulativeLicense),
+    totalOperator: totalOperator, totalLucra: totalLucra,
+    totalHandle: totalHandle, totalPrizeCost: totalPrizeCost, totalNet: totalNet,
+    free: rates.free
+  };
+}
+
+/* Whitelisted customer-facing projection. Deliberately returns a new object
+   built key by key so internal economics cannot leak into the customer export
+   even if the state object gains fields later. */
+function TPcustomerProjection(input) {
+  var s = TPstate(input);
+  return {
+    dealName: String(s.dealName || ''),
+    tournaments: s.tournaments.map(function (t) {
+      var rebuys = TPnum(t.rebuys, 0);
+      return {
+        name: String(t.name || 'Tournament'),
+        entryPrice: TPnum(t.entryPrice, 0),
+        rebuyLabel: rebuys > 0 ? 'Up to ' + (rebuys % 1 === 0 ? rebuys : rebuys.toFixed(2)) + ' rebuys' : 'Single entry',
+        frequencyLabel: TPnum(t.eventsPerMonth, 0) + 'x per month',
+        rewardLabel: t.isCash
+          ? '$' + Math.round(TPnum(t.cashPrizeAmount, 0)).toLocaleString() + ' cash prize'
+          : '$' + Math.round(TPnum(t.rewardFaceValue, 0)).toLocaleString() + ' value reward'
+      };
+    })
+  };
+}
+
+/* TP-PURE-END */
+
+/* ---------- state, persistence ---------- */
+
+var TP = TPstate(TP_DEFAULTS), TP_TEMPLATES = [], TP_VIEW = 'calc', TP_READY = false;
+
+function TPsave() { try { localStorage.setItem(TP_KEY, JSON.stringify(TP)); } catch (e) {} }
+function TPsaveTemplates() { try { localStorage.setItem(TP_TPL_KEY, JSON.stringify(TP_TEMPLATES)); } catch (e) {} }
+function TPload() {
+  try { var raw = localStorage.getItem(TP_KEY); if (raw) TP = TPstate(JSON.parse(raw)); } catch (e) { TP = TPstate(TP_DEFAULTS); }
+  try { var t = localStorage.getItem(TP_TPL_KEY); TP_TEMPLATES = t ? JSON.parse(t) : []; } catch (e) { TP_TEMPLATES = []; }
+  if (!Array.isArray(TP_TEMPLATES)) TP_TEMPLATES = [];
+}
+
+function TPmoney(n) { return '$' + Math.round(TPnum(n, 0)).toLocaleString(); }
+function TPmonthLabel(m) { return m === null ? 'Not retired in 12 months' : 'Month ' + (Math.round(m * 10) / 10).toFixed(1); }
+function TPesc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function TPset(path, value) {
+  var parts = path.split('.'), target = TP;
+  for (var i = 0; i < parts.length - 1; i++) target = target[parts[i]];
+  var key = parts[parts.length - 1];
+  target[key] = typeof target[key] === 'number' ? TPnum(value) : value;
+  TPsave(); TPrender();
+}
+function TPtoggle(path, checked) {
+  var parts = path.split('.'), target = TP;
+  for (var i = 0; i < parts.length - 1; i++) target = target[parts[i]];
+  target[parts[parts.length - 1]] = !!checked;
+  TPsave(); TPrenderControls(); TPrender();
+}
+function TPsetSplit(mode) { TP.splitMode = mode; TPsave(); TPrenderControls(); TPrender(); }
+function TPsetVolume(mode) { TP.volumeMode = mode; TPsave(); TPrenderControls(); TPrender(); }
+
+function TPtour(i, key, value) {
+  if (!TP.tournaments[i]) return;
+  TP.tournaments[i][key] = key === 'name' ? value : TPnum(value, 0);
+  TPsave(); TPrender();
+}
+function TPtourCash(i, checked) {
+  var t = TP.tournaments[i]; if (!t) return;
+  t.isCash = !!checked;
+  if (t.isCash && !TPnum(t.cashPrizeAmount, 0)) t.cashPrizeAmount = TPnum(t.rewardFaceValue, 0);
+  TPsave(); TPrenderTournaments(); TPrender();
+}
+function TPaddTournament() {
+  TP.tournaments.push({ id: 't' + Date.now(), name: 'New tournament', entryPrice: 10, eventsPerMonth: 1, rebuys: 0, isCash: false, rewardFaceValue: 250, customerCashCost: 100, cashPrizeAmount: 250 });
+  TPsave(); TPrenderTournaments(); TPrender();
+}
+function TPremoveTournament(i) {
+  TP.tournaments.splice(i, 1);
+  TPsave(); TPrenderTournaments(); TPrender();
+}
+
+/* ---------- templates ---------- */
+
+function TPsaveTemplate() {
+  var input = $('tp-template-name'), name = (input && input.value || '').trim();
+  if (!name) { TPtemplateStatus('Name the template before saving it.'); if (input) input.focus(); return; }
+  var payload = { name: name, savedAt: new Date().toISOString(), tournaments: JSON.parse(JSON.stringify(TP.tournaments)) },
+    existing = TP_TEMPLATES.findIndex(function (t) { return t.name.toLowerCase() === name.toLowerCase(); });
+  if (existing >= 0) TP_TEMPLATES[existing] = payload; else TP_TEMPLATES.push(payload);
+  TPsaveTemplates();
+  if (input) input.value = '';
+  TPrenderTemplates();
+  TPtemplateStatus('Saved "' + name + '" with ' + payload.tournaments.length + ' tournament type' + (payload.tournaments.length === 1 ? '' : 's') + '.');
+}
+function TPloadTemplate(i) {
+  var tpl = TP_TEMPLATES[i]; if (!tpl) return;
+  TP.tournaments = JSON.parse(JSON.stringify(tpl.tournaments));
+  TPsave(); TPrenderTournaments(); TPrender();
+  TPtemplateStatus('Loaded "' + tpl.name + '" into the calculator.');
+}
+function TPdeleteTemplate(i) {
+  var tpl = TP_TEMPLATES[i]; if (!tpl) return;
+  TP_TEMPLATES.splice(i, 1); TPsaveTemplates(); TPrenderTemplates();
+  TPtemplateStatus('Deleted "' + tpl.name + '".');
+}
+function TPtemplateStatus(msg) { var el = $('tp-template-status'); if (el) el.textContent = msg; }
+
+/* ---------- views ---------- */
+
+function TPview(name, btn) {
+  TP_VIEW = name;
+  $('tp-calc-view').hidden = name !== 'calc';
+  $('tp-tournaments-view').hidden = name !== 'tournaments';
+  document.querySelectorAll('.tp-view-switch button').forEach(function (b) {
+    b.classList.remove('on'); b.setAttribute('aria-selected', 'false');
+  });
+  var active = btn || $('tp-view-' + name + '-btn');
+  if (active) { active.classList.add('on'); active.setAttribute('aria-selected', 'true'); }
+  TPrender();
+}
+
+/* ---------- rendering ---------- */
+
+function TPrenderControls() {
+  var fields = { 'tp-deal-name': 'dealName', 'tp-fee': 'licenseFee', 'tp-participants': 'participants', 'tp-ramp-start': 'rampStart', 'tp-ramp-plateau': 'rampPlateau', 'tp-ramp-months': 'rampMonths' };
+  Object.keys(fields).forEach(function (id) {
+    var el = $(id); if (el && document.activeElement !== el) el.value = TP[fields[id]];
+  });
+  [['tp-split-credit', 'credit'], ['tp-split-operator', 'operator'], ['tp-split-lucra', 'lucra']].forEach(function (x) {
+    var el = $(x[0]); if (el && document.activeElement !== el) el.value = TP.custom[x[1]];
+  });
+  [['tp-post-operator', 'operator'], ['tp-post-lucra', 'lucra']].forEach(function (x) {
+    var el = $(x[0]); if (el && document.activeElement !== el) el.value = TP.post[x[1]];
+  });
+  var free = $('tp-free'); if (free) free.checked = !!TP.freeLicense;
+
+  $('tp-licence-block').hidden = !!TP.freeLicense;
+  $('tp-split-block').hidden = !!TP.freeLicense;
+  $('tp-free-note').hidden = !TP.freeLicense;
+
+  document.querySelectorAll('.tp-split-switch button').forEach(function (b) {
+    var on = b.dataset.split === TP.splitMode;
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+  });
+  $('tp-custom-split').hidden = TP.splitMode !== 'custom';
+
+  document.querySelectorAll('.tp-volume-switch button').forEach(function (b) {
+    var on = b.dataset.volume === TP.volumeMode;
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+  });
+  $('tp-flat-fields').hidden = TP.volumeMode !== 'flat';
+  $('tp-ramp-fields').hidden = TP.volumeMode !== 'ramp';
+}
+
+function TPrenderTournaments() {
+  var host = $('tp-tournaments-list'); if (!host) return;
+  host.innerHTML = TP.tournaments.map(function (t, i) {
+    var cash = !!t.isCash;
+    return '<div class="tp-tour" data-tour="' + i + '">' +
+      '<div class="tp-tour-head">' +
+      '<input class="pf-input tp-tour-name" type="text" value="' + escAttr(t.name) + '" aria-label="Tournament name" oninput="TPtour(' + i + ',\'name\',this.value)">' +
+      '<button type="button" class="tp-remove" onclick="TPremoveTournament(' + i + ')" aria-label="Remove ' + escAttr(t.name) + '">Remove</button>' +
+      '</div>' +
+      '<div class="inputs tp-tour-grid">' +
+      '<div class="input-group"><label class="input-label" for="tp-price-' + i + '">Entry price</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-price-' + i + '" type="number" min="0" step="1" value="' + TPnum(t.entryPrice, 0) + '" oninput="TPtour(' + i + ',\'entryPrice\',this.value)"></div><div class="sn">Customer fact</div></div>' +
+      '<div class="input-group"><label class="input-label" for="tp-events-' + i + '">Tournaments per month</label><input class="pf-input" id="tp-events-' + i + '" type="number" min="0" step="1" value="' + TPnum(t.eventsPerMonth, 0) + '" oninput="TPtour(' + i + ',\'eventsPerMonth\',this.value)"><div class="sn">Customer fact</div></div>' +
+      '<div class="input-group"><label class="input-label" for="tp-rebuys-' + i + '">Rebuys per participant</label><input class="pf-input" id="tp-rebuys-' + i + '" type="number" min="0" step="0.25" value="' + TPnum(t.rebuys, 0) + '" oninput="TPtour(' + i + ',\'rebuys\',this.value)"><div class="sn">Estimated · additional entries beyond the base entry</div></div>' +
+      '</div>' +
+      '<label class="tp-check"><input type="checkbox" id="tp-cash-' + i + '"' + (cash ? ' checked' : '') + ' onchange="TPtourCash(' + i + ',this.checked)"><span>Cash tournament</span></label>' +
+      '<div class="inputs tp-tour-grid">' +
+      (cash
+        ? '<div class="input-group"><label class="input-label" for="tp-cashprize-' + i + '">Cash prize amount</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-cashprize-' + i + '" type="number" min="0" step="25" value="' + TPnum(t.cashPrizeAmount, 0) + '" oninput="TPtour(' + i + ',\'cashPrizeAmount\',this.value)"></div><div class="sn">Customer fact · shown to players and deducted from revenue</div></div>'
+        : '<div class="input-group"><label class="input-label" for="tp-face-' + i + '">Reward face value</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-face-' + i + '" type="number" min="0" step="25" value="' + TPnum(t.rewardFaceValue, 0) + '" oninput="TPtour(' + i + ',\'rewardFaceValue\',this.value)"></div><div class="sn">Customer fact · advertised to players, not a cost</div></div>' +
+          '<div class="input-group"><label class="input-label" for="tp-cost-' + i + '">Customer cash cost</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-cost-' + i + '" type="number" min="0" step="25" value="' + TPnum(t.customerCashCost, 0) + '" oninput="TPtour(' + i + ',\'customerCashCost\',this.value)"></div><div class="sn">Customer fact · COGS per event, deducted from revenue</div></div>')
+      + '</div></div>';
+  }).join('') || '<div class="sn">No tournament types yet. Add one to model the deal.</div>';
+}
+
+function TPrenderResults(r) {
+  var val = $('tp-validation');
+  if (r.errors.length) {
+    val.hidden = false;
+    val.innerHTML = r.errors.map(function (e) { return '<div>' + TPesc(e) + '</div>'; }).join('');
+    $('tp-summary').innerHTML = '';
+    $('tp-progress').innerHTML = '';
+    $('tp-table').innerHTML = '';
+    return;
+  }
+  val.hidden = true;
+
+  var cards = [];
+  if (r.free) {
+    cards.push({ label: 'Licence', value: 'Free (waived)', note: 'No licence balance to retire' });
+  } else if (r.payoffMonth !== null) {
+    cards.push({ label: 'Licence retired', value: TPmonthLabel(r.payoffMonth), note: TPmoney(r.licenseFee) + ' fee cleared' });
+  } else {
+    cards.push({ label: 'Licence paid down', value: TPmoney(r.cumulativeLicense) + ' of ' + TPmoney(r.licenseFee), note: 'Not retired within 12 months' });
+    cards.push({ label: 'Balance due at year end', value: TPmoney(r.balanceDue), note: 'Outstanding licence balance' });
+  }
+  cards.push({ label: 'Operator earnings, year 1', value: TPmoney(r.totalOperator), note: 'After prize costs' });
+  cards.push({ label: 'Lucra earnings, year 1', value: TPmoney(r.totalLucra), note: 'Revenue share' });
+
+  $('tp-summary').innerHTML = cards.map(function (c) {
+    return '<div class="tp-card"><div class="tp-card-label">' + TPesc(c.label) + '</div><div class="tp-card-value">' + TPesc(c.value) + '</div><div class="tp-card-note">' + TPesc(c.note) + '</div></div>';
+  }).join('');
+
+  if (r.free || r.licenseFee <= 0) {
+    $('tp-progress').innerHTML = '<div class="sn">No licence balance to track.</div>';
+  } else {
+    $('tp-progress').innerHTML =
+      '<div class="tp-progress-head"><span>Cumulative licence payoff</span><span>' + TPmoney(r.cumulativeLicense) + ' of ' + TPmoney(r.licenseFee) + '</span></div>' +
+      '<div class="tp-bars" role="img" aria-label="Cumulative licence payoff by month against the ' + TPmoney(r.licenseFee) + ' fee">' +
+      r.months.map(function (m) {
+        var pct = Math.min(100, r.licenseFee > 0 ? m.cumulativeLicense / r.licenseFee * 100 : 0);
+        return '<div class="tp-bar"><div class="tp-bar-fill' + (pct >= 99.999 ? ' done' : '') + '" style="height:' + pct.toFixed(1) + '%"></div><span class="tp-bar-label">' + m.month + '</span></div>';
+      }).join('') + '</div>';
+  }
+
+  var head = ['Month', 'Participants', 'Handle', 'Prize cost', 'Net revenue', 'To licence', 'Cumulative licence', 'To operator', 'To Lucra'];
+  $('tp-table').innerHTML = '<table class="tp-months"><thead><tr>' +
+    head.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    r.months.map(function (m) {
+      return '<tr' + (m.split === 'Crossover' ? ' class="crossover"' : '') + '>' +
+        '<td>' + m.month + '</td>' +
+        '<td>' + Math.round(m.participants).toLocaleString() + '</td>' +
+        '<td>' + TPmoney(m.handle) + '</td>' +
+        '<td>' + TPmoney(m.prizeCost) + '</td>' +
+        '<td>' + TPmoney(m.netRevenue) + '</td>' +
+        '<td>' + (r.free ? '—' : TPmoney(m.toLicense)) + '</td>' +
+        '<td>' + (r.free ? '—' : TPmoney(m.cumulativeLicense)) + '</td>' +
+        '<td>' + TPmoney(m.toOperator) + '</td>' +
+        '<td>' + TPmoney(m.toLucra) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+
+function TPrenderTemplates() {
+  var host = $('tp-template-list'); if (!host) return;
+  host.innerHTML = TP_TEMPLATES.length
+    ? TP_TEMPLATES.map(function (t, i) {
+        return '<div class="tp-template"><div><strong>' + TPesc(t.name) + '</strong><span class="sn">' + t.tournaments.length + ' tournament type' + (t.tournaments.length === 1 ? '' : 's') + '</span></div>' +
+          '<div class="tp-template-actions"><button type="button" onclick="TPloadTemplate(' + i + ')">Load</button>' +
+          '<button type="button" class="tp-remove" onclick="TPdeleteTemplate(' + i + ')">Delete</button></div></div>';
+      }).join('')
+    : '<div class="sn">No saved templates yet. Configure tournament types on the calculator, then save them here for reuse across deals.</div>';
+}
+
+function TPrenderCustomer() {
+  var host = $('tp-customer-cards'); if (!host) return;
+  var p = TPcustomerProjection(TP);
+  $('tp-customer-deal').textContent = p.dealName || 'Tournament programme';
+  host.innerHTML = p.tournaments.length
+    ? p.tournaments.map(function (t) {
+        return '<div class="tp-cust-card">' +
+          '<div class="tp-cust-name">' + TPesc(t.name) + '</div>' +
+          '<div class="tp-cust-reward">' + TPesc(t.rewardLabel) + '</div>' +
+          '<dl class="tp-cust-meta">' +
+          '<div><dt>Entry</dt><dd>$' + Math.round(t.entryPrice).toLocaleString() + '</dd></div>' +
+          '<div><dt>Format</dt><dd>' + TPesc(t.rebuyLabel) + '</dd></div>' +
+          '<div><dt>Frequency</dt><dd>' + TPesc(t.frequencyLabel) + '</dd></div>' +
+          '</dl></div>';
+      }).join('')
+    : '<div class="sn">Add tournament types on the calculator to build the customer summary.</div>';
+}
+
+function TPrender() {
+  var r = TPcalculate(TP);
+  TPrenderResults(r);
+  TPrenderTemplates();
+  TPrenderCustomer();
+  return r;
+}
+
+/* ---------- print exports ---------- */
+
+function TPprintRoot() {
+  var el = $('tp-print-root');
+  if (!el) { el = document.createElement('div'); el.id = 'tp-print-root'; document.body.appendChild(el); }
+  return el;
+}
+function TPprintHeader(title, badge) {
+  return '<div class="tp-print-head"><div><div class="tp-print-brand">Lucra</div>' +
+    '<h1>' + TPesc(title) + '</h1>' +
+    '<div class="tp-print-deal">' + TPesc(TP.dealName || 'Untitled deal') + ' · ' + new Date().toLocaleDateString() + '</div></div>' +
+    '<div class="tp-print-badge' + (badge === 'Internal only' ? ' internal' : '') + '">' + TPesc(badge) + '</div></div>';
+}
+function TPrunPrint(html) {
+  TPprintRoot().innerHTML = html;
+  document.body.classList.add('tp-printing');
+  var clear = function () { document.body.classList.remove('tp-printing'); window.removeEventListener('afterprint', clear); };
+  window.addEventListener('afterprint', clear);
+  window.print();
+  setTimeout(clear, 1500);
+}
+
+function TPprintInternal() {
+  var r = TPcalculate(TP);
+  if (r.errors.length) { alert('Fix the highlighted inputs before exporting.'); return; }
+  TPrender();
+  TPrunPrint(
+    TPprintHeader('Tournament payoff, 12-month model', 'Internal only') +
+    '<div class="tp-print-cards">' + $('tp-summary').innerHTML + '</div>' +
+    '<div class="tp-print-progress">' + $('tp-progress').innerHTML + '</div>' +
+    '<div class="tp-print-table">' + $('tp-table').innerHTML + '</div>' +
+    '<div class="tp-print-foot">Contains licence fee, revenue split and prize cost detail. Planning estimate only, not a guarantee, offer or contract. Not for customer distribution.</div>'
+  );
+}
+
+function TPprintCustomer() {
+  TPrenderCustomer();
+  TPrunPrint(
+    TPprintHeader('Tournament programme', 'Customer summary') +
+    '<div class="tp-print-cust">' + $('tp-customer-cards').innerHTML + '</div>' +
+    '<div class="tp-print-foot">Tournament structure summary. Final programme details depend on an executed agreement.</div>'
+  );
+}
+
+/* ---------- init ---------- */
+
+function TPinit() {
+  if (!TP_READY) { TPload(); TP_READY = true; }
+  TPrenderControls();
+  TPrenderTournaments();
+  TPview(TP_VIEW);
+}
+
+</script>
+<div id="tp-print-root" aria-hidden="true"></div>
 </body>
 </html>
