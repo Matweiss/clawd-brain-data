@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import calc from './calc-functions.js';
 
-const { TPcalculate, TPparticipants, TPsplitRates, TPvalidate, TPcustomerProjection, TP_DEFAULTS } = calc;
+const { TPcalculate, TPparticipants, TPsplitRates, TPvalidate, TPcustomerProjection, TPstate, TP_DEFAULTS } = calc;
+const TPstateFromLegacy = (o) => TPstate(o);
 
 // One tournament: 100 participants, no rebuys, $10 entry, 4 events, $200 cash
 // cost per event -> handle 4000, prize 800, net 3200.
 const base = (o = {}) => Object.assign(JSON.parse(JSON.stringify(TP_DEFAULTS)), {
-  licenseFee: 60000,
+  termYears: 1,
+  annualFees: [60000],
   participants: 100,
   tournaments: [{ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }],
 }, o);
@@ -72,18 +74,18 @@ describe('Entries, handle and prize cost', () => {
 
 describe('Prize cost is deducted before the split', () => {
   it('net revenue is handle minus prize cost', () => {
-    expect(TPcalculate(base({ licenseFee: 1e6 })).months[0].netRevenue).toBe(3200);
+    expect(TPcalculate(base({ annualFees: [1e6] })).months[0].netRevenue).toBe(3200);
   });
 
   it('all three parties fund prizes pro rata', () => {
-    const m = TPcalculate(base({ licenseFee: 1e6 })).months[0];
+    const m = TPcalculate(base({ annualFees: [1e6] })).months[0];
     expect(m.toLicense).toBe(1600);
     expect(m.toOperator).toBe(1280);
     expect(m.toLucra).toBe(320);
   });
 
   it('a loss-making month floors net at zero but still reports raw handle and cost', () => {
-    const s = base({ licenseFee: 1e6, tournaments: [{ name: 'L', entryPrice: 1, eventsPerMonth: 1, rebuys: 0, customerCashCost: 5000 }] });
+    const s = base({ annualFees: [1e6], tournaments: [{ name: 'L', entryPrice: 1, eventsPerMonth: 1, rebuys: 0, customerCashCost: 5000 }] });
     const m = TPcalculate(s).months[0];
     expect(m.netRevenue).toBe(0);
     expect(m.handle).toBe(100);
@@ -97,14 +99,14 @@ describe('Split modes', () => {
   });
 
   it('aggressive sweep sends 90 to licence and nothing to the operator', () => {
-    const m = TPcalculate(base({ splitMode: 'sweep', licenseFee: 1e6 })).months[0];
+    const m = TPcalculate(base({ splitMode: 'sweep', annualFees: [1e6] })).months[0];
     expect(m.toLicense).toBeCloseTo(2880, 9);
     expect(m.toOperator).toBe(0);
     expect(m.toLucra).toBeCloseTo(320, 9);
   });
 
   it('custom percentages are honoured', () => {
-    const m = TPcalculate(base({ splitMode: 'custom', custom: { credit: 60, operator: 25, lucra: 15 }, licenseFee: 1e6 })).months[0];
+    const m = TPcalculate(base({ splitMode: 'custom', custom: { credit: 60, operator: 25, lucra: 15 }, annualFees: [1e6] })).months[0];
     expect(m.toLicense).toBeCloseTo(1920, 9);
     expect(m.toOperator).toBeCloseTo(800, 9);
     expect(m.toLucra).toBeCloseTo(480, 9);
@@ -124,7 +126,7 @@ describe('Split modes', () => {
 
 describe('Mid-month retirement', () => {
   // 3200 net per month, 50% credit -> 1600 per month. A 4000 fee retires in month 3.
-  const r = () => TPcalculate(base({ licenseFee: 4000 }));
+  const r = () => TPcalculate(base({ annualFees: [4000] }));
 
   it('credits only what is left in the clearing month', () => {
     const months = r().months;
@@ -163,7 +165,7 @@ describe('Mid-month retirement', () => {
 });
 
 describe('A deal that never retires', () => {
-  const r = () => TPcalculate(base({ licenseFee: 500000 }));
+  const r = () => TPcalculate(base({ annualFees: [500000] }));
 
   it('reports no payoff month rather than a false one', () => {
     expect(r().payoffMonth).toBeNull();
@@ -213,7 +215,7 @@ describe('Customer-safe projection', () => {
   });
 
   it('never carries licence fee, split or cash cost through, even when set', () => {
-    const json = JSON.stringify(TPcustomerProjection(base({ licenseFee: 987654, splitMode: 'sweep' })));
+    const json = JSON.stringify(TPcustomerProjection(base({ annualFees: [987654], splitMode: 'sweep' })));
     expect(json).not.toContain('987654');
     expect(json).not.toContain('licenseFee');
     expect(json).not.toContain('customerCashCost');
@@ -235,7 +237,7 @@ describe('Model shape and guards', () => {
   });
 
   it('requires a fee or the free toggle', () => {
-    expect(TPvalidate(base({ licenseFee: 0 })).join(' ')).toMatch(/licence fee/i);
+    expect(TPvalidate(base({ annualFees: [0] })).join(' ')).toMatch(/licence fee/i);
   });
 
   it('requires at least one tournament type', () => {
@@ -244,5 +246,137 @@ describe('Model shape and guards', () => {
 
   it('rejects a post-payoff split that does not sum to 100', () => {
     expect(TPvalidate(base({ post: { operator: 80, lucra: 10 } })).join(' ')).toMatch(/Post-payoff split/);
+  });
+});
+
+describe('Multi-year terms with custom fees per year', () => {
+  // 3200 net per month, standard 50% credit -> 1600 of licence credit per month.
+  const multi = (o = {}) => base(Object.assign({ termYears: 3, annualFees: [12000, 48000, 48000] }, o));
+
+  it('runs twelve months per contract year', () => {
+    expect(TPcalculate(multi()).months).toHaveLength(36);
+    expect(TPcalculate(base({ termYears: 2, annualFees: [1000, 2000] })).months).toHaveLength(24);
+  });
+
+  it('numbers months within their year and tags the year', () => {
+    const m = TPcalculate(multi()).months;
+    expect(m[12]).toMatchObject({ month: 13, year: 2, monthInYear: 1 });
+    expect(m[35]).toMatchObject({ month: 36, year: 3, monthInYear: 12 });
+  });
+
+  it('accepts a different custom amount for every year', () => {
+    const r = TPcalculate(multi());
+    expect(r.years.map((y) => y.fee)).toEqual([12000, 48000, 48000]);
+    expect(r.totalContract).toBe(108000);
+  });
+
+  it('only uses as many fees as the term has years', () => {
+    const r = TPcalculate(base({ termYears: 2, annualFees: [10000, 20000, 999999] }));
+    expect(r.totalContract).toBe(30000);
+    expect(r.years).toHaveLength(2);
+  });
+
+  describe('whole-term basis', () => {
+    const r = () => TPcalculate(multi({ payoffBasis: 'term', annualFees: [12000, 12000, 12000] }));
+
+    it('treats every year as one cumulative balance', () => {
+      // 36000 total at 1600 of credit per month clears halfway through month 23.
+      expect(r().payoffMonth).toBeCloseTo(22.5, 6);
+      expect(r().balanceDue).toBe(0);
+    });
+
+    it('redirects to the operator for the rest of the term once cleared', () => {
+      const months = r().months;
+      expect(months[35].split).toBe('Post-payoff');
+      expect(months[35].toOperator).toBeCloseTo(3200 * 0.9, 6);
+      expect(months[35].toLicense).toBe(0);
+    });
+
+    it('charges no cash true-up', () => {
+      expect(r().trueUpTotal).toBe(0);
+    });
+
+    it('lets a strong year one pay down later years', () => {
+      const r2 = TPcalculate(multi({ payoffBasis: 'term', annualFees: [1000, 1000, 34000] }));
+      // Year one activity credits against the whole contract, not just year one's fee.
+      expect(r2.years[0].credited).toBeCloseTo(1600 * 12, 6);
+    });
+  });
+
+  describe('per-year basis', () => {
+    it('opens a fresh balance at each step-up', () => {
+      const r = TPcalculate(multi({ payoffBasis: 'annual', annualFees: [12000, 12000, 12000] }));
+      expect(r.years[0].opening).toBe(12000);
+      expect(r.years[1].opening).toBe(12000);
+      // 12000 at 1600/mo clears part-way through month 8 of each year.
+      expect(r.years[0].clearMonth).toBeGreaterThan(7);
+      expect(r.years[0].clearMonth).toBeLessThan(8);
+      expect(r.years[1].clearMonth).toBeGreaterThan(19);
+      expect(r.years[1].clearMonth).toBeLessThan(20);
+    });
+
+    it('drops back to the payoff split when the next year opens', () => {
+      const m = TPcalculate(multi({ payoffBasis: 'annual', annualFees: [12000, 12000, 12000] })).months;
+      expect(m[11].split).toBe('Post-payoff');   // month 12, year one already cleared
+      expect(m[12].split).toBe('Payoff');        // month 13, year two balance opens
+      expect(m[12].toLicense).toBeCloseTo(1600, 6);
+    });
+
+    it('rolls an unretired balance into the next year when set to roll', () => {
+      const r = TPcalculate(multi({ payoffBasis: 'annual', shortfall: 'roll', annualFees: [30000, 10000, 10000] }));
+      // Year one credits 19200 of 30000, leaving 10800 to carry.
+      expect(r.years[0].credited).toBeCloseTo(19200, 6);
+      expect(r.years[0].closing).toBeCloseTo(10800, 6);
+      expect(r.years[0].trueUp).toBe(0);
+      expect(r.years[1].opening).toBeCloseTo(10800 + 10000, 6);
+      expect(r.trueUpTotal).toBe(0);
+    });
+
+    it('charges a cash true-up at year end when set to cash', () => {
+      const r = TPcalculate(multi({ payoffBasis: 'annual', shortfall: 'cash', annualFees: [30000, 10000, 10000] }));
+      expect(r.years[0].trueUp).toBeCloseTo(10800, 6);
+      expect(r.years[1].opening).toBe(10000);
+      expect(r.trueUpTotal).toBeCloseTo(10800, 6);
+    });
+
+    it('reports a per-year clear month or none', () => {
+      const r = TPcalculate(multi({ payoffBasis: 'annual', shortfall: 'cash', annualFees: [30000, 10000, 10000] }));
+      expect(r.years[0].clearMonth).toBeNull();
+      expect(r.years[1].clearMonth).not.toBeNull();
+    });
+  });
+
+  it('reconciles every month across the whole term in both bases', () => {
+    ['term', 'annual'].forEach((payoffBasis) => {
+      TPcalculate(multi({ payoffBasis })).months.forEach((m) => {
+        expect(m.toLicense + m.toOperator + m.toLucra).toBeCloseTo(m.netRevenue, 6);
+      });
+    });
+  });
+
+  it('never credits more than the contract is worth', () => {
+    const r = TPcalculate(multi({ payoffBasis: 'term', annualFees: [1000, 1000, 1000] }));
+    expect(r.cumulativeLicense).toBeCloseTo(3000, 6);
+  });
+
+  it('a free licence ignores the fee schedule entirely', () => {
+    const r = TPcalculate(multi({ freeLicense: true }));
+    expect(r.totalContract).toBe(0);
+    expect(r.months).toHaveLength(36);
+    r.months.forEach((m) => expect(m.toLicense).toBe(0));
+  });
+
+  it('migrates single-fee state saved by the first release', () => {
+    const legacy = TPstateFromLegacy({ licenseFee: 25000, participants: 100 });
+    expect(legacy.annualFees[0]).toBe(25000);
+    expect(legacy.termYears).toBe(1);
+  });
+
+  it('rejects a fee schedule that is entirely zero', () => {
+    expect(TPvalidate(base({ termYears: 2, annualFees: [0, 0] })).join(' ')).toMatch(/licence fee for at least one year/i);
+  });
+
+  it('caps the term at five years', () => {
+    expect(TPcalculate(base({ termYears: 9, annualFees: [1, 1, 1, 1, 1] })).months).toHaveLength(60);
   });
 });

@@ -178,9 +178,14 @@ var TP_SPLITS = {
   sweep: { credit: 90, operator: 0, lucra: 10 }
 };
 
+var TP_MAX_YEARS = 5;
+
 var TP_DEFAULTS = {
   dealName: '',
-  licenseFee: 60000,
+  termYears: 1,
+  annualFees: [60000, 60000, 60000, 60000, 60000],
+  payoffBasis: 'term',
+  shortfall: 'roll',
   freeLicense: false,
   splitMode: 'standard',
   custom: { credit: 50, operator: 40, lucra: 10 },
@@ -196,14 +201,21 @@ var TP_DEFAULTS = {
   ]
 };
 
-/* ---------- pure calculation ---------- */
-
 function TPnum(v, lo, hi) {
   v = Number(v);
   if (!isFinite(v)) v = 0;
   if (lo !== undefined) v = Math.max(lo, v);
   if (hi !== undefined) v = Math.min(hi, v);
   return v;
+}
+
+function TPterm(s) { return Math.max(1, Math.min(TP_MAX_YEARS, Math.round(TPnum(s.termYears, 1, TP_MAX_YEARS)))); }
+
+/* Fee for each year of the term, custom per year. */
+function TPfees(s) {
+  var n = TPterm(s), src = s.annualFees || [], out = [];
+  for (var i = 0; i < n; i++) out.push(TPnum(src[i], 0));
+  return out;
 }
 
 function TPstate(s) {
@@ -213,6 +225,16 @@ function TPstate(s) {
       ? Object.assign({}, out[k] || {}, src[k])
       : src[k];
   });
+  // Single-fee state from the first release migrates to a one-year term.
+  if (src.licenseFee !== undefined && !Array.isArray(src.annualFees)) {
+    out.annualFees = [TPnum(src.licenseFee, 0)];
+    out.termYears = 1;
+  }
+  if (!Array.isArray(out.annualFees)) out.annualFees = [];
+  out.annualFees = out.annualFees.slice(0, TP_MAX_YEARS).map(function (f) { return TPnum(f, 0); });
+  while (out.annualFees.length < TP_MAX_YEARS) {
+    out.annualFees.push(out.annualFees.length ? out.annualFees[out.annualFees.length - 1] : 0);
+  }
   out.tournaments = (src.tournaments || out.tournaments).map(function (t) {
     var c = Object.assign({}, t);
     if (c.isCash) { c.rewardFaceValue = TPnum(c.cashPrizeAmount, 0); c.customerCashCost = TPnum(c.cashPrizeAmount, 0); }
@@ -236,8 +258,8 @@ function TPsplitRates(s) {
   };
 }
 
-/* Participants per event for a 1-based month. Flat applies one number to all
-   twelve months; ramp interpolates linearly to plateau then holds. */
+/* Participants per event for a 1-based month. Flat applies one number to every
+   month; ramp interpolates linearly to plateau then holds. */
 function TPparticipants(s, month) {
   if (s.volumeMode !== 'ramp') return TPnum(s.participants, 0);
   var start = TPnum(s.rampStart, 0), plateau = TPnum(s.rampPlateau, 0),
@@ -255,29 +277,65 @@ function TPvalidate(input) {
   }
   var post = TPnum(s.post.operator) + TPnum(s.post.lucra);
   if (Math.abs(post - 100) > 0.001) errors.push('Post-payoff split must sum to 100%.');
-  if (!s.freeLicense && TPnum(s.licenseFee, 0) <= 0) errors.push('Enter a licence fee, or switch the licence to free.');
+  if (!s.freeLicense) {
+    var fees = TPfees(s);
+    if (fees.reduce(function (a, b) { return a + b; }, 0) <= 0) errors.push('Enter a licence fee for at least one year, or switch the licence to free.');
+    fees.forEach(function (f, i) { if (f < 0) errors.push('Year ' + (i + 1) + ' fee cannot be negative.'); });
+  }
   if (!(s.tournaments || []).length) errors.push('Add at least one tournament type.');
   return errors;
 }
 
-/* Twelve-month model. Prize cost leaves the handle before the split, so the
-   licence, operator and Lucra shares all fund prizes pro rata. When the fee
-   retires mid-month the unused remainder of that month pays out at the
-   post-payoff split rather than being lost. */
+/* Month-by-month model across the whole term.
+
+   Prize cost leaves the handle before the split, so the licence, operator and
+   Lucra shares all fund prizes pro rata. When a balance retires mid-month the
+   unused remainder of that month pays out at the post-payoff split rather than
+   being lost.
+
+   payoffBasis 'term'   — every year's fee is one cumulative balance. Once it
+                          clears, the licence share redirects to the operator
+                          for the rest of the term.
+   payoffBasis 'annual' — each year's fee opens its own balance at that year's
+                          first month. An unretired balance at year end either
+                          rolls into the next year (shortfall 'roll') or is
+                          charged as a cash true-up (shortfall 'cash'). */
 function TPcalculate(input) {
   var s = TPstate(input), errors = TPvalidate(s);
-  if (errors.length) return { errors: errors, months: [] };
+  if (errors.length) return { errors: errors, months: [], years: [] };
 
   var rates = TPsplitRates(s),
-    licenseFee = s.freeLicense ? 0 : TPnum(s.licenseFee, 0),
-    remaining = licenseFee,
-    cumulativeLicense = 0, totalOperator = 0, totalLucra = 0,
-    totalHandle = 0, totalPrizeCost = 0, totalNet = 0,
+    termYears = TPterm(s),
+    totalMonths = termYears * 12,
+    fees = s.freeLicense ? [] : TPfees(s),
+    totalContract = fees.reduce(function (a, b) { return a + b; }, 0),
+    annual = !s.freeLicense && s.payoffBasis === 'annual',
+    remaining = s.freeLicense ? 0 : (annual ? fees[0] : totalContract),
+    years = [], cumulativeLicense = 0, trueUpTotal = 0,
+    totalOperator = 0, totalLucra = 0, totalHandle = 0, totalPrizeCost = 0, totalNet = 0,
     payoffMonth = null, months = [];
 
-  for (var month = 1; month <= 12; month++) {
-    var participants = TPparticipants(s, month), handle = 0, prizeCost = 0, detail = [];
+  for (var y = 0; y < (s.freeLicense ? termYears : fees.length); y++) {
+    years.push({ year: y + 1, fee: s.freeLicense ? 0 : fees[y], opening: 0, credited: 0, trueUp: 0, clearMonth: null, closing: 0 });
+  }
+  if (years[0]) years[0].opening = remaining;
 
+  for (var month = 1; month <= totalMonths; month++) {
+    var yi = Math.floor((month - 1) / 12), monthInYear = ((month - 1) % 12) + 1;
+
+    if (annual && monthInYear === 1 && month > 1) {
+      var prev = years[yi - 1];
+      prev.closing = remaining;
+      if (remaining > 1e-9 && s.shortfall === 'cash') {
+        prev.trueUp = remaining;
+        trueUpTotal += remaining;
+        remaining = 0;
+      }
+      remaining += fees[yi];
+      years[yi].opening = remaining;
+    }
+
+    var participants = TPparticipants(s, month), handle = 0, prizeCost = 0, detail = [];
     s.tournaments.forEach(function (t) {
       var events = TPnum(t.eventsPerMonth, 0),
         entriesPerEvent = participants * (1 + TPnum(t.rebuys, 0)),
@@ -293,7 +351,8 @@ function TPcalculate(input) {
       postGross = netRevenue - licenseGross,
       toLicense = Math.min(remaining, licenseGross * rates.credit),
       toOperator = licenseGross * rates.operator + postGross * rates.postOperator,
-      toLucra = licenseGross * rates.lucra + postGross * rates.postLucra;
+      toLucra = licenseGross * rates.lucra + postGross * rates.postLucra,
+      openingRemaining = remaining;
 
     remaining = Math.max(0, remaining - toLicense);
     cumulativeLicense += toLicense;
@@ -302,13 +361,21 @@ function TPcalculate(input) {
     totalHandle += handle;
     totalPrizeCost += prizeCost;
     totalNet += netRevenue;
+    if (years[yi]) years[yi].credited += toLicense;
 
-    if (payoffMonth === null && !rates.free && licenseFee > 0 && remaining <= 1e-9) {
-      payoffMonth = month - 1 + (netRevenue > 0 ? licenseGross / netRevenue : 1);
+    var fraction = netRevenue > 0 ? licenseGross / netRevenue : 1;
+    if (years[yi] && years[yi].clearMonth === null && openingRemaining > 1e-9 && remaining <= 1e-9) {
+      years[yi].clearMonth = month - 1 + fraction;
+    }
+    // Whole-term basis has a single balance, so payoff is the month it clears.
+    // Per-year basis is resolved after the loop, since a later year re-opens one.
+    if (!annual && payoffMonth === null && !rates.free && totalContract > 0 && openingRemaining > 1e-9 && remaining <= 1e-9) {
+      payoffMonth = month - 1 + fraction;
     }
 
     months.push({
-      month: month, participants: participants, handle: handle, prizeCost: prizeCost,
+      month: month, year: yi + 1, monthInYear: monthInYear,
+      participants: participants, handle: handle, prizeCost: prizeCost,
       netRevenue: netRevenue, toLicense: toLicense, cumulativeLicense: cumulativeLicense,
       toOperator: toOperator, toLucra: toLucra,
       split: licenseGross > 0 && postGross > 0 ? 'Crossover' : licenseGross > 0 ? 'Payoff' : 'Post-payoff',
@@ -316,19 +383,35 @@ function TPcalculate(input) {
     });
   }
 
+  if (years.length) years[years.length - 1].closing = remaining;
+  if (annual && remaining > 1e-9 && s.shortfall === 'cash') {
+    years[years.length - 1].trueUp = remaining;
+    trueUpTotal += remaining;
+    remaining = 0;
+  }
+  if (annual) {
+    // The contract is only fully paid off when the final year clears on activity
+    // alone, with nothing rolled past the end and no cash true-up charged.
+    var lastYear = years[years.length - 1];
+    payoffMonth = (trueUpTotal <= 1e-9 && lastYear && lastYear.closing <= 1e-9 && lastYear.clearMonth !== null)
+      ? lastYear.clearMonth : null;
+  }
+
   return {
-    errors: [], months: months, licenseFee: licenseFee, payoffMonth: payoffMonth,
-    cumulativeLicense: cumulativeLicense,
-    balanceDue: Math.max(0, licenseFee - cumulativeLicense),
+    errors: [], months: months, years: years,
+    termYears: termYears, annualBasis: annual, shortfallMode: s.shortfall,
+    licenseFee: totalContract, totalContract: totalContract,
+    payoffMonth: payoffMonth, cumulativeLicense: cumulativeLicense,
+    trueUpTotal: trueUpTotal, balanceDue: Math.max(0, remaining),
+    totalOwed: trueUpTotal + Math.max(0, remaining),
     totalOperator: totalOperator, totalLucra: totalLucra,
     totalHandle: totalHandle, totalPrizeCost: totalPrizeCost, totalNet: totalNet,
     free: rates.free
   };
 }
 
-/* Whitelisted customer-facing projection. Deliberately returns a new object
-   built key by key so internal economics cannot leak into the customer export
-   even if the state object gains fields later. */
+/* Whitelisted customer-facing projection. Built key by key so internal
+   economics cannot leak into the customer export even if state gains fields. */
 function TPcustomerProjection(input) {
   var s = TPstate(input);
   return {
@@ -351,5 +434,5 @@ function TPcustomerProjection(input) {
 
 module.exports = { C, MGcalc, tmCompute, gmCompute, DMcalc, DM_DEFAULTS,
   TPnum, TPstate, TPsplitRates, TPparticipants, TPvalidate, TPcalculate, TPcustomerProjection,
-  TP_DEFAULTS, TP_SPLITS };
+  TPterm, TPfees, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS };
 

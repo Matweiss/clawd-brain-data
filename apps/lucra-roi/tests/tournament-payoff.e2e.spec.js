@@ -13,11 +13,14 @@ async function openTab(page) {
 
 // Deterministic deal: 100 participants, $10 entry, 4 events, $200 cash cost
 // per event -> handle 4000, prize 800, net 3200 per month.
-async function setBaseDeal(page, { fee = 4000 } = {}) {
-  await page.evaluate((f) => {
+async function setBaseDeal(page, { fee = 4000, termYears = 1, fees = null, payoffBasis = 'term', shortfall = 'roll' } = {}) {
+  await page.evaluate(({ f, termYears, fees, payoffBasis, shortfall }) => {
     TP = TPstate(Object.assign({}, TP_DEFAULTS, {
       dealName: 'Fairway Social',
-      licenseFee: f,
+      termYears: termYears,
+      annualFees: fees || [f, f, f, f, f],
+      payoffBasis: payoffBasis,
+      shortfall: shortfall,
       freeLicense: false,
       splitMode: 'standard',
       volumeMode: 'flat',
@@ -25,7 +28,7 @@ async function setBaseDeal(page, { fee = 4000 } = {}) {
       tournaments: [{ id: 't', name: 'Weekly open', entryPrice: 10, eventsPerMonth: 4, rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }],
     }));
     TPsave(); TPrenderControls(); TPrenderTournaments(); TPrender();
-  }, fee);
+  }, { f: fee, termYears, fees, payoffBasis, shortfall });
 }
 
 async function stubPrint(page) {
@@ -39,7 +42,7 @@ test('the tab renders its controls without console errors', async ({ page }) => 
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await openTab(page);
-  await expect(page.locator('#tp-fee')).toBeVisible();
+  await expect(page.locator('#tp-fee-0')).toBeVisible();
   await expect(page.locator('#tp-participants')).toBeVisible();
   await expect(page.locator('.tp-split-switch button[data-split="standard"]')).toBeVisible();
   await expect(page.locator('#tp-tournaments-list .tp-tour')).toHaveCount(2);
@@ -120,7 +123,8 @@ test('a deal that never retires shows the balance due instead of a payoff month'
   expect(r.balanceDue).toBeCloseTo(500000 - 1600 * 12, 6);
 
   await expect(page.locator('#tp-summary')).toContainText('Not retired within 12 months');
-  await expect(page.locator('#tp-summary')).toContainText('Balance due at year end');
+  // Label generalised from 'year end' to 'term end' when multi-year support landed.
+  await expect(page.locator('#tp-summary')).toContainText('Balance due at term end');
   await expect(page.locator('table.tp-months tr.crossover')).toHaveCount(0);
 });
 
@@ -240,7 +244,7 @@ test('state persists across a reload', async ({ page }) => {
   await setBaseDeal(page, { fee: 12345 });
   await page.reload();
   await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
-  await expect(page.locator('#tp-fee')).toHaveValue('12345');
+  await expect(page.locator('#tp-fee-0')).toHaveValue('12345');
   await expect(page.locator('#tp-deal-name')).toHaveValue('Fairway Social');
 });
 
@@ -285,4 +289,83 @@ test('the view switch is keyboard reachable and marks selection', async ({ page 
   await expect(page.locator('#tp-tournaments-view')).toBeVisible();
   await expect(tournamentsBtn).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#tp-view-calc-btn')).toHaveAttribute('aria-selected', 'false');
+});
+
+test('multi-year term exposes a custom fee input per year', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await expect(page.locator('#tp-fees .input-group')).toHaveCount(1);
+  await expect(page.locator('#tp-basis-row')).toBeHidden();
+
+  await page.locator('#tp-term').selectOption('3');
+  await expect(page.locator('#tp-fees .input-group')).toHaveCount(3);
+  await expect(page.locator('#tp-basis-row')).toBeVisible();
+
+  await page.locator('#tp-fee-0').fill('12000');
+  await page.locator('#tp-fee-1').fill('48000');
+  await page.locator('#tp-fee-2').fill('60000');
+  await expect(page.locator('#tp-fee-total')).toContainText('$120,000');
+
+  const r = await page.evaluate(() => TPcalculate(TP));
+  expect(r.months).toHaveLength(36);
+  expect(r.years.map((y) => y.fee)).toEqual([12000, 48000, 60000]);
+  expect(r.totalContract).toBe(120000);
+});
+
+test('payoff basis switches between one balance and a balance per year', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [12000, 12000, 12000], payoffBasis: 'term' });
+
+  const term = await page.evaluate(() => TPcalculate(TP));
+  expect(term.payoffMonth).toBeCloseTo(22.5, 4);
+  expect(term.months[35].split).toBe('Post-payoff');
+
+  await page.locator('.tp-basis-switch button[data-basis="annual"]').click();
+  await expect(page.locator('.tp-basis-switch button[data-basis="annual"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#tp-shortfall-row')).toBeVisible();
+
+  const annual = await page.evaluate(() => TPcalculate(TP));
+  expect(annual.years[0].clearMonth).toBeGreaterThan(7);
+  expect(annual.years[1].opening).toBe(12000);
+  expect(annual.months[12].split).toBe('Payoff');
+});
+
+test('year-end shortfall rolls forward or is charged as cash', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [30000, 10000, 10000], payoffBasis: 'annual', shortfall: 'roll' });
+
+  const rolled = await page.evaluate(() => TPcalculate(TP));
+  expect(rolled.trueUpTotal).toBe(0);
+  expect(rolled.years[1].opening).toBeCloseTo(20800, 4);
+
+  await page.locator('.tp-shortfall-switch button[data-shortfall="cash"]').click();
+  const cash = await page.evaluate(() => TPcalculate(TP));
+  expect(cash.years[0].trueUp).toBeCloseTo(10800, 4);
+  expect(cash.years[1].opening).toBe(10000);
+  await expect(page.locator('#tp-summary')).toContainText('Cash true-ups');
+});
+
+test('a multi-year term adds a per-year table and a year column', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 2, fees: [12000, 12000] });
+  await expect(page.locator('#tp-years')).toBeVisible();
+  await expect(page.locator('#tp-years tbody tr')).toHaveCount(2);
+  await expect(page.locator('table.tp-months').first().locator('thead th').first()).toHaveText('Year');
+  await expect(page.locator('#tp-table tbody tr')).toHaveCount(24);
+
+  await page.locator('#tp-term').selectOption('1');
+  await expect(page.locator('#tp-years')).toBeHidden();
+  await expect(page.locator('#tp-table tbody tr')).toHaveCount(12);
+});
+
+test('the customer export stays clean on a multi-year deal', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [12000, 48000, 60000], payoffBasis: 'annual', shortfall: 'cash' });
+  await stubPrint(page);
+  await page.locator('#tp-view-tournaments-btn').click();
+  await page.locator('#tp-tournaments-view button', { hasText: 'Export Summary (Customer-Safe)' }).click();
+  const customer = await page.evaluate(() => window.__printHTML);
+  for (const forbidden of ['12,000', '48,000', '60,000', 'true-up', 'True-up', 'Opening balance', 'Year 2', 'Internal only']) {
+    expect(customer).not.toContain(forbidden);
+  }
 });
