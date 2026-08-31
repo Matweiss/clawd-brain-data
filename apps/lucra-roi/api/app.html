@@ -1544,19 +1544,15 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <label class="tp-check"><input type="checkbox" id="tp-inc-h2h" onchange="TPtoggle('includeH2H',this.checked)"><span>Head-to-head</span></label>
     </div>
     <div class="inputs" style="margin-top:14px;margin-bottom:0">
-      <div class="input-group"><label class="input-label" for="tp-mau">Monthly active base</label><input class="pf-input" id="tp-mau" type="number" min="0" step="1000" placeholder="Enter the customer's MAU" oninput="TPCsetMau(this.value)"><div class="sn">Customer system · shared by both products</div></div>
+      <div class="input-group"><label class="input-label" for="tp-mau">Total addressable users</label><input class="pf-input" id="tp-mau" type="number" min="0" step="1000" placeholder="Enter the customer's MAU" oninput="TPCsetMau(this.value)"><input type="range" id="tp-maus" min="10000" max="50000000" step="10000" oninput="TPCsetMau(this.value)" aria-label="Total addressable users slider"><div class="sn">Customer system · monthly active base, shared by both products</div></div>
     </div>
     <div class="sn" id="tp-product-note" role="status"></div>
   </div>
 
   <div class="pf-section" id="tp-h2h-block" hidden><div class="pf-section-title">Head-to-head</div>
-    <div class="inputs tp-three" style="margin-bottom:0">
-      <div class="input-group"><label class="input-label" for="tp-h2h-eng">Engagement rate</label><div class="input-val"><input class="pf-input" id="tp-h2h-eng" type="number" min="0" max="100" step="0.5" oninput="TPsetH2H('eng',this.value)"><span class="vp">%</span></div><div class="sn">Estimated · share of the base playing head-to-head</div></div>
-      <div class="input-group"><label class="input-label" for="tp-h2h-plays">Paid plays / user / month</label><input class="pf-input" id="tp-h2h-plays" type="number" min="0" step="1" oninput="TPsetH2H('plays',this.value)"><div class="sn">Estimated</div></div>
-      <div class="input-group"><label class="input-label" for="tp-h2h-spend">Average entry / play</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-h2h-spend" type="number" min="0" step="0.25" oninput="TPsetH2H('wager',this.value)"></div><div class="sn">Customer fact</div></div>
-      <div class="input-group"><label class="input-label" for="tp-h2h-fee">Platform fee rate</label><div class="input-val"><input class="pf-input" id="tp-h2h-fee" type="number" min="0" max="50" step="0.5" oninput="TPsetH2H('rake',this.value)"><span class="vp">%</span></div><div class="sn">Customer fact · share of paid-game volume</div></div>
-    </div>
-    <div class="sn">The same inputs as the Mini Game ROI tab. Editing either keeps both in step.</div>
+    <div class="inputs" id="tp-h2h-fields" style="margin-bottom:0"></div>
+    <div class="sn">The same inputs as the Mini Game ROI tab, on the same values. Editing either keeps both in step.</div>
+    <div class="sn" id="tp-h2h-readout" role="status"></div>
   </div>
 
   <div class="pf-section" id="tp-deal-block"><div class="pf-section-title">Deal and licence</div>
@@ -3526,7 +3522,16 @@ function TPCcase(cfg, factor) {
     engaged = mau * Math.min(100, engagement) / 100,
     paidPlays = engaged * TPnum(cfg.playsPerUser, 0),
     paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
-    p2pFee = paidVolume * TPnum(cfg.feeRate, 0, 100) / 100;
+    p2pFee = paidVolume * TPnum(cfg.feeRate, 0, 100) / 100,
+    // Reward games are free to play. They create venue value through redeemed
+    // visits, not platform fee revenue, so they are reported beside the revenue
+    // figure rather than inside it.
+    rewardPlays = engaged * TPnum(cfg.rewardGames, 0),
+    rewardWins = rewardPlays * TPnum(cfg.winRate, 0, 100) / 100,
+    rewardRedemptions = rewardWins * TPnum(cfg.redeemRate, 0, 100) / 100,
+    rewardValue = rewardRedemptions * TPnum(cfg.valuePerRedemption, 0),
+    // A revenue share is a split of the fee, not extra revenue.
+    lucraShare = p2pFee * TPnum(cfg.lucraShare, 0, 100) / 100 + (onH2H ? TPnum(cfg.h2hLicense, 0) : 0);
 
   var tState = TPscaled(Object.assign(tState0, { mau: mau }), f, 1),
     tResult = TPcalculate(tState),
@@ -3546,6 +3551,9 @@ function TPCcase(cfg, factor) {
     engaged: engaged,
     paidVolume: paidVolume,
     p2pFee: p2pFee,
+    rewardRedemptions: rewardRedemptions,
+    rewardValue: rewardValue,
+    lucraShare: lucraShare,
     tournamentParticipants: tournamentParticipants,
     tournamentShare: tournamentShare,
     tournamentNet: tournamentMonthly,
@@ -3602,14 +3610,56 @@ function TPtoggle(path, checked) {
   target[parts[parts.length - 1]] = !!checked;
   TPsave(); TPrenderControls(); TPrender();
 }
+/* The full Mini Game input set, mirrored here so a head-to-head deal can be
+   modelled without leaving this tab. Ranges match the Mini Game sliders. */
+var TP_H2H_FIELDS = [
+  { k: 'eng', label: 'Engagement rate', unit: '%', min: 1, max: 60, step: 1, inStep: 0.5, note: 'Estimated · share of the base playing head-to-head' },
+  { k: 'plays', label: 'Plays / user / month', min: 1, max: 200, step: 1, note: 'Estimated · frequency among engaged players' },
+  { k: 'wager', label: 'Average entry / play', prefix: '$', min: 0.25, max: 20, step: 0.25, note: 'Customer fact · real-money entry per play' },
+  { k: 'rake', label: 'Platform fee rate', unit: '%', min: 2, max: 30, step: 0.5, note: 'Customer fact · share of paid-game volume' },
+  { k: 'rs', label: 'Lucra revenue share', unit: '%', min: 0, max: 50, step: 1, note: 'Internal · share of the platform fee to Lucra. A split, so it does not change revenue generated.' },
+  { k: 'license', label: 'Monthly licence fee', prefix: '$', min: 0, max: 30000, step: 500, note: 'Customer fact · head-to-head platform cost' },
+  { k: 'rewardGames', label: 'Reward games / user / month', min: 0, max: 50, step: 1, note: 'Estimated · free-to-play reward games' },
+  { k: 'win', label: 'Reward win rate', unit: '%', min: 0, max: 100, step: 1, note: 'Estimated · reward games creating an opportunity' },
+  { k: 'redeem', label: 'Reward redemption rate', unit: '%', min: 0, max: 100, step: 1, note: 'Estimated · wins redeemed into visits' },
+  { k: 'rewardValue', label: 'Value per redemption', prefix: '$', min: 0, max: 50, step: 0.5, note: 'Estimated · venue value per redeemed visit' }
+];
+
+function TPrenderH2Hfields() {
+  var host = $('tp-h2h-fields'); if (!host || host.dataset.built) return;
+  host.innerHTML = TP_H2H_FIELDS.map(function (f) {
+    var box = '<input class="pf-input" id="tph-' + f.k + '" type="number" min="' + f.min + '" step="' + (f.inStep || f.step) +
+      '" oninput="TPsetH2H(\'' + f.k + '\',this.value)" aria-label="' + f.label + '">';
+    var wrapped = f.prefix ? '<div class="input-val"><span class="vp">' + f.prefix + '</span>' + box + '</div>'
+      : f.unit ? '<div class="input-val">' + box + '<span class="vp">' + f.unit + '</span></div>' : box;
+    return '<div class="input-group"><label class="input-label" for="tph-' + f.k + '">' + f.label + '</label>' + wrapped +
+      '<input type="range" id="tphs-' + f.k + '" min="' + f.min + '" max="' + f.max + '" step="' + f.step +
+      '" oninput="TPsetH2H(\'' + f.k + '\',this.value)" aria-label="' + f.label + ' slider">' +
+      '<div class="sn">' + f.note + '</div></div>';
+  }).join('');
+  host.dataset.built = '1';
+}
+
 function TPsetH2H(key, value) {
   MG[key] = TPnum(value, 0);
-  var box = $('mgi-' + key); if (box && document.activeElement !== box) box.value = MG[key];
-  var slider = $('mgs-' + key);
-  if (slider) slider.value = Math.max(+slider.min, Math.min(+slider.max, MG[key]));
+  TPsyncH2H();
+  if (typeof MGsync === 'function') MGsync();
   if (typeof MGu === 'function') MGu();
   TPrender();
 }
+
+/* Push MG values into this tab's inputs and sliders without stealing focus. */
+function TPsyncH2H() {
+  TP_H2H_FIELDS.forEach(function (f) {
+    var box = $('tph-' + f.k), slider = $('tphs-' + f.k), v = TPnum(MG[f.k], 0);
+    if (box && document.activeElement !== box) box.value = v;
+    if (slider && document.activeElement !== slider) {
+      slider.value = Math.max(+slider.min, Math.min(+slider.max, v));
+      if (typeof paintRange === 'function') paintRange(slider);
+    }
+  });
+}
+function TPsetSplitPlaceholder() {}
 function TPsetSplit(mode) { TP.splitMode = mode; TPsave(); TPrenderControls(); TPrender(); }
 function TPsetBasis(mode) { TP.payoffBasis = mode; TPsave(); TPrenderControls(); TPrender(); }
 function TPsetShortfall(mode) { TP.shortfall = mode; TPsave(); TPrenderControls(); TPrender(); }
@@ -3742,9 +3792,18 @@ function TPrenderControls() {
   var free = $('tp-free'); if (free) free.checked = !!TP.freeLicense;
   var incT = $('tp-inc-tournaments'); if (incT) incT.checked = !!TP.includeTournaments;
   var incH = $('tp-inc-h2h'); if (incH) incH.checked = !!TP.includeH2H;
-  [['tp-h2h-eng', 'eng'], ['tp-h2h-plays', 'plays'], ['tp-h2h-spend', 'wager'], ['tp-h2h-fee', 'rake']].forEach(function (x) {
-    var el = $(x[0]); if (el && document.activeElement !== el) el.value = MG[x[1]];
-  });
+  TPrenderH2Hfields();
+  TPsyncH2H();
+  var ro = $('tp-h2h-readout');
+  if (ro) {
+    if (!TP.includeH2H) ro.textContent = '';
+    else {
+      var h = TPCcase(TPCconfig(), 1);
+      ro.textContent = Math.round(h.engaged).toLocaleString() + ' engaged players · ' + TPmoney(h.paidVolume) +
+        ' paid-game volume / mo · ' + TPmoney(h.p2pFee) + ' platform fee / mo, of which ' + TPmoney(h.lucraShare) +
+        ' to Lucra. Rewards add ' + TPmoney(h.rewardValue) + ' / mo of venue value, counted separately.';
+    }
+  }
   $('tp-h2h-block').hidden = !TP.includeH2H;
   ['tp-deal-block', 'tp-split-block', 'tp-participants-block', 'tp-tournaments-block', 'tp-results-section']
     .forEach(function (id) { if ($(id)) $(id).hidden = !TP.includeTournaments; });
@@ -4061,6 +4120,12 @@ function TPCconfig() {
     playsPerUser: MG.plays,
     spendPerPlay: MG.wager,
     feeRate: MG.rake,
+    lucraShare: MG.rs,
+    h2hLicense: MG.license,
+    rewardGames: MG.rewardGames,
+    winRate: MG.win,
+    redeemRate: MG.redeem,
+    valuePerRedemption: MG.rewardValue,
     tournament: TP
   };
 }
@@ -4084,8 +4149,13 @@ function TPCsyncMauInputs(v) {
     var el = $(id);
     if (el && document.activeElement !== el) el.value = v;
   });
-  var slider = $('mgs-tau');
-  if (slider) slider.value = Math.max(+slider.min, Math.min(+slider.max, v));
+  ['mgs-tau', 'tp-maus'].forEach(function (id) {
+    var slider = $(id);
+    if (slider && document.activeElement !== slider) {
+      slider.value = Math.max(+slider.min, Math.min(+slider.max, v));
+      if (typeof paintRange === 'function') paintRange(slider);
+    }
+  });
 }
 
 function TPCrender() {
@@ -4132,6 +4202,7 @@ function TPCrender() {
   var mid = cases[1].result, both = mid.includeH2H && mid.includeTournaments, tiles = [];
   tiles.push('<div class="stat"><div class="label">Monthly active base</div><div class="val cyan">' + Math.round(mid.mau).toLocaleString() + '</div><div class="sub">' + (both ? 'Shared by both products' : 'Drives this model') + '</div></div>');
   if (mid.includeH2H) tiles.push('<div class="stat"><div class="label">Paid-game volume / mo</div><div class="val">' + TPmoney(mid.paidVolume) + '</div><div class="sub">' + Math.round(mid.engaged).toLocaleString() + ' engaged at ' + (Math.round(mid.engagement * 100) / 100) + '%</div></div>');
+  if (mid.includeH2H && mid.rewardValue > 0) tiles.push('<div class="stat"><div class="label">Reward value / mo</div><div class="val">' + TPmoney(mid.rewardValue) + '</div><div class="sub">' + Math.round(mid.rewardRedemptions).toLocaleString() + ' redemptions · excluded from revenue</div></div>');
   if (mid.includeTournaments) tiles.push('<div class="stat"><div class="label">Tournament participants</div><div class="val">' + Math.round(mid.tournamentParticipants).toLocaleString() + '</div><div class="sub">' + (Math.round(mid.tournamentShare * 1000) / 1000) + '% of the base per event</div></div>');
 
   $('tpc-detail').innerHTML =
@@ -4139,6 +4210,9 @@ function TPCrender() {
     (mid.includeH2H ? 'Head-to-head is paid-game volume times the platform fee rate. ' : '') +
     (mid.includeTournaments ? 'Tournaments are entry value less the operator\'s prize cost, the pool the licence and revenue share are taken from. ' : '') +
     'The operator and Lucra shares are not shown here.</div>' +
+    (mid.includeH2H && mid.rewardValue > 0
+      ? '<div class="sn">Reward games are free to play, so the value they create reaches the venue through redeemed visits rather than a fee. It is reported separately and is not part of revenue generated.</div>'
+      : '') +
     '<div class="grid grid' + tiles.length + '" style="margin-top:12px">' + tiles.join('') + '</div>' +
     (both
       ? '<div class="sn" style="margin-top:10px">A player can take part in both, so the two audiences are not netted against each other. ' +

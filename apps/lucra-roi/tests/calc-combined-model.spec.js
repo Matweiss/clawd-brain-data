@@ -12,6 +12,8 @@ const tournament = (o = {}) => Object.assign(JSON.parse(JSON.stringify(TP_DEFAUL
 
 const cfg = (o = {}) => Object.assign({
   mau: 1000000, engagement: 10, playsPerUser: 20, spendPerPlay: 2, feeRate: 10,
+  lucraShare: 25, h2hLicense: 0,
+  rewardGames: 8, winRate: 50, redeemRate: 25, valuePerRedemption: 8,
   tournament: tournament(),
 }, o);
 
@@ -177,5 +179,49 @@ describe('Product selection', () => {
     const tOnly = TPCcase(cfg({ tournament: only({ includeH2H: false, participantBasis: 'mau', participantPct: 2 }) }));
     expect(tOnly.engagement).toBe(0);
     expect(tOnly.combinedShare).toBeCloseTo(tOnly.tournamentShare, 6);
+  });
+});
+
+describe('The full head-to-head input set', () => {
+  it('runs the reward funnel through to redeemed value', () => {
+    const r = TPCcase(cfg());
+    // 100,000 engaged x 8 reward games = 800,000 plays; 50% win = 400,000;
+    // 25% redeem = 100,000 redemptions x $8 = $800,000 of venue value.
+    expect(r.rewardRedemptions).toBe(100000);
+    expect(r.rewardValue).toBe(800000);
+  });
+
+  it('keeps reward value out of revenue generated', () => {
+    const withRewards = TPCcase(cfg());
+    const without = TPCcase(cfg({ rewardGames: 0 }));
+    expect(withRewards.rewardValue).toBeGreaterThan(0);
+    expect(without.rewardValue).toBe(0);
+    expect(withRewards.revenueGenerated).toBe(without.revenueGenerated);
+  });
+
+  it('treats the Lucra revenue share as a split, not extra revenue', () => {
+    const a = TPCcase(cfg({ lucraShare: 25 }));
+    const b = TPCcase(cfg({ lucraShare: 50 }));
+    expect(a.lucraShare).toBe(100000);
+    expect(b.lucraShare).toBe(200000);
+    expect(a.revenueGenerated).toBe(b.revenueGenerated);
+  });
+
+  it('adds the head-to-head licence fee to the Lucra side', () => {
+    expect(TPCcase(cfg({ lucraShare: 0, h2hLicense: 5000 })).lucraShare).toBe(5000);
+    // and drops it when head-to-head is not selected
+    expect(TPCcase(cfg({ lucraShare: 0, h2hLicense: 5000, tournament: tournament({ includeH2H: false }) })).lucraShare).toBe(0);
+  });
+
+  it('scales the reward funnel with the case multiplier through engagement', () => {
+    const cases = TPCcases(cfg());
+    expect(cases[0].result.rewardValue).toBeCloseTo(cases[1].result.rewardValue * 0.5, 6);
+    expect(cases[2].result.rewardValue).toBeCloseTo(cases[1].result.rewardValue * 1.5, 6);
+  });
+
+  it('leaves rewards and the split at zero when head-to-head is off', () => {
+    const r = TPCcase(cfg({ tournament: tournament({ includeH2H: false }) }));
+    expect(r.rewardValue).toBe(0);
+    expect(r.lucraShare).toBe(0);
   });
 });

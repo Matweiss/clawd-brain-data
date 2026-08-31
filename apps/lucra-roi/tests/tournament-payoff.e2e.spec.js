@@ -583,10 +583,11 @@ test('head-to-head inputs stay in step with the Mini Game tab', async ({ page })
   await setBaseDeal(page);
   await page.locator('#tp-inc-h2h').check();
 
-  await page.locator('#tp-h2h-eng').fill('12');
-  await page.locator('#tp-h2h-plays').fill('30');
-  await page.locator('#tp-h2h-spend').fill('3');
-  await page.locator('#tp-h2h-fee').fill('12');
+  // Ids changed when the full Mini Game input set landed: tph-<key>.
+  await page.locator('#tph-eng').fill('12');
+  await page.locator('#tph-plays').fill('30');
+  await page.locator('#tph-wager').fill('3');
+  await page.locator('#tph-rake').fill('12');
   expect(await page.evaluate(() => [MG.eng, MG.plays, MG.wager, MG.rake])).toEqual([12, 30, 3, 12]);
 
   await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
@@ -597,7 +598,7 @@ test('head-to-head inputs stay in step with the Mini Game tab', async ({ page })
   await page.locator('#mgi-eng').fill('20');
   await page.locator('#mgi-eng').dispatchEvent('input');
   await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
-  await expect(page.locator('#tp-h2h-eng')).toHaveValue('20');
+  await expect(page.locator('#tph-eng')).toHaveValue('20');
 });
 
 test('the Mini Game tab keeps its own generator and no combined section', async ({ page }) => {
@@ -628,4 +629,63 @@ test('the one-pager drops the column for a product that is not selected', async 
   expect(html).not.toContain('Tournament net revenue');
   expect(html).not.toContain('The tournament programme');
   expect(html).not.toMatch(/cash|wager|betting|\bbet\b|gambl|casino|prize money|stakes|buy-in|payout|\brake\b|\bhandle\b/i);
+});
+
+test('head-to-head carries the full Mini Game input set with sliders', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await page.locator('#tp-inc-h2h').check();
+
+  const keys = ['eng', 'plays', 'wager', 'rake', 'rs', 'license', 'rewardGames', 'win', 'redeem', 'rewardValue'];
+  for (const k of keys) {
+    await expect(page.locator('#tph-' + k)).toBeVisible();
+    await expect(page.locator('#tphs-' + k)).toBeVisible();
+  }
+  // The shared base has a slider too.
+  await expect(page.locator('#tp-maus')).toBeVisible();
+  await expect(page.locator('#tp-h2h-fields .input-group')).toHaveCount(10);
+});
+
+test('the head-to-head sliders drive the model and the Mini Game tab', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await page.locator('#tp-inc-h2h').check();
+
+  await page.locator('#tphs-eng').fill('20');
+  await page.locator('#tphs-rewardGames').fill('10');
+  await page.locator('#tph-rs').fill('40');
+  await page.locator('#tph-license').fill('2500');
+
+  expect(await page.evaluate(() => [MG.eng, MG.rewardGames, MG.rs, MG.license])).toEqual([20, 10, 40, 2500]);
+
+  // The number box and the slider stay in step with each other.
+  await expect(page.locator('#tph-eng')).toHaveValue('20');
+  await expect(page.locator('#tphs-rs')).toHaveValue('40');
+
+  // And the Mini Game tab shows the same values.
+  await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
+  await expect(page.locator('#mgi-eng')).toHaveValue('20');
+  await expect(page.locator('#mgi-rewardGames')).toHaveValue('10');
+  await expect(page.locator('#mgi-rs')).toHaveValue('40');
+});
+
+test('rewards are reported beside revenue, never inside it', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await page.locator('#tp-inc-h2h').check();
+  await page.locator('#tp-mau').fill('1000000');
+  await page.evaluate(() => { MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MG.rewardGames = 8; MG.win = 50; MG.redeem = 25; MG.rewardValue = 8; MGsync(); MGu(); TPrenderControls(); TPrender(); });
+
+  await expect(page.locator('#tpc-detail')).toContainText('Reward value / mo');
+  await expect(page.locator('#tpc-detail')).toContainText('excluded from revenue');
+  await expect(page.locator('#tp-h2h-readout')).toContainText('counted separately');
+
+  const r = await page.evaluate(() => {
+    const withR = TPCcase(TPCconfig(), 1);
+    MG.rewardGames = 0;
+    const without = TPCcase(TPCconfig(), 1);
+    return [withR.revenueGenerated, without.revenueGenerated, withR.rewardValue];
+  });
+  expect(r[0]).toBe(r[1]);
+  expect(r[2]).toBeGreaterThan(0);
 });

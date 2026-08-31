@@ -567,7 +567,16 @@ function TPCcase(cfg, factor) {
     engaged = mau * Math.min(100, engagement) / 100,
     paidPlays = engaged * TPnum(cfg.playsPerUser, 0),
     paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
-    p2pFee = paidVolume * TPnum(cfg.feeRate, 0, 100) / 100;
+    p2pFee = paidVolume * TPnum(cfg.feeRate, 0, 100) / 100,
+    // Reward games are free to play. They create venue value through redeemed
+    // visits, not platform fee revenue, so they are reported beside the revenue
+    // figure rather than inside it.
+    rewardPlays = engaged * TPnum(cfg.rewardGames, 0),
+    rewardWins = rewardPlays * TPnum(cfg.winRate, 0, 100) / 100,
+    rewardRedemptions = rewardWins * TPnum(cfg.redeemRate, 0, 100) / 100,
+    rewardValue = rewardRedemptions * TPnum(cfg.valuePerRedemption, 0),
+    // A revenue share is a split of the fee, not extra revenue.
+    lucraShare = p2pFee * TPnum(cfg.lucraShare, 0, 100) / 100 + (onH2H ? TPnum(cfg.h2hLicense, 0) : 0);
 
   var tState = TPscaled(Object.assign(tState0, { mau: mau }), f, 1),
     tResult = TPcalculate(tState),
@@ -587,6 +596,9 @@ function TPCcase(cfg, factor) {
     engaged: engaged,
     paidVolume: paidVolume,
     p2pFee: p2pFee,
+    rewardRedemptions: rewardRedemptions,
+    rewardValue: rewardValue,
+    lucraShare: lucraShare,
     tournamentParticipants: tournamentParticipants,
     tournamentShare: tournamentShare,
     tournamentNet: tournamentMonthly,
