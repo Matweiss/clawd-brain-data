@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import calc from './calc-functions.js';
 
-const { TPCcase, TPCcases, TPheatMap, TPscaled, TPcalculate, TP_DEFAULTS } = calc;
+const { TPCcase, TPCcases, TPheatMap, TPscaled, TPcalculate, TPvalidate, TP_DEFAULTS } = calc;
 
+// Head-to-head is off by default, so the combined fixtures opt in explicitly.
 const tournament = (o = {}) => Object.assign(JSON.parse(JSON.stringify(TP_DEFAULTS)), {
   annualFees: [60000], termYears: 1, participants: 100,
+  includeTournaments: true, includeH2H: true,
   tournaments: [{ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, participationMode: 'shared', rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }],
 }, o);
 
@@ -128,5 +130,52 @@ describe('TPscaled', () => {
     expect(scaled.annualFees[0]).toBe(60000);
     expect(scaled.splitMode).toBe('standard');
     expect(scaled.tournaments[0].customerCashCost).toBe(200);
+  });
+});
+
+describe('Product selection', () => {
+  const only = (flags) => tournament(flags);
+
+  it('tournaments only drops head-to-head from the total', () => {
+    const r = TPCcase(cfg({ tournament: only({ includeH2H: false }) }));
+    expect(r.includeH2H).toBe(false);
+    expect(r.p2pFee).toBe(0);
+    expect(r.tournamentNet).toBeCloseTo(3200, 6);
+    expect(r.revenueGenerated).toBeCloseTo(3200, 6);
+    expect(r.engagement).toBe(0);
+  });
+
+  it('head-to-head only drops tournaments from the total', () => {
+    const r = TPCcase(cfg({ tournament: only({ includeTournaments: false }) }));
+    expect(r.includeTournaments).toBe(false);
+    expect(r.tournamentNet).toBe(0);
+    expect(r.tournamentParticipants).toBe(0);
+    expect(r.p2pFee).toBe(400000);
+    expect(r.revenueGenerated).toBe(400000);
+  });
+
+  it('both selected is the sum of the two', () => {
+    const both = TPCcase(cfg());
+    const t = TPCcase(cfg({ tournament: only({ includeH2H: false }) }));
+    const h = TPCcase(cfg({ tournament: only({ includeTournaments: false }) }));
+    expect(both.revenueGenerated).toBeCloseTo(t.revenueGenerated + h.revenueGenerated, 6);
+  });
+
+  it('head-to-head only skips the tournament validation entirely', () => {
+    // No tournament types and no licence fee, which would otherwise error.
+    const s = only({ includeTournaments: false, tournaments: [], annualFees: [0] });
+    expect(TPvalidate(s)).toEqual([]);
+    expect(TPCcase(cfg({ tournament: s })).revenueGenerated).toBe(400000);
+  });
+
+  it('selecting nothing is an error rather than a silent zero', () => {
+    const s = only({ includeTournaments: false, includeH2H: false });
+    expect(TPvalidate(s).join(' ')).toMatch(/at least one product/i);
+  });
+
+  it('the engaged share reflects only the selected products', () => {
+    const tOnly = TPCcase(cfg({ tournament: only({ includeH2H: false, participantBasis: 'mau', participantPct: 2 }) }));
+    expect(tOnly.engagement).toBe(0);
+    expect(tOnly.combinedShare).toBeCloseTo(tOnly.tournamentShare, 6);
   });
 });

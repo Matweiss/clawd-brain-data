@@ -455,6 +455,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 .tp-basis-switch button:focus-visible,.tp-shortfall-switch button:focus-visible,.tp-basis-participants button:focus-visible,.tp-rebuy-switch button:focus-visible,.tp-participation-switch button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .tp-tour .tp-row{margin-top:12px}
 .tp-tour-warn{margin-top:10px;border:1px solid var(--amber);background:var(--amber-bg);color:var(--amber);border-radius:8px;padding:8px 11px;font-size:12px}
+.tp-products{display:flex;flex-wrap:wrap;gap:10px 26px}
+.tp-products .tp-check{margin-top:0}
 #tp-fee-total{margin-top:8px}
 .tp-heat-wrap{margin-top:8px}
 table.tp-heat{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
@@ -639,7 +641,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="wagerbreakeven" id="tab-wagerbreakeven" tabindex="-1" onclick="T('wagerbreakeven',this)">Wager Break-even</button>
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="analytics" id="tab-analytics" tabindex="-1" onclick="T('analytics',this)">Investment Plans</button>
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="brandarcade" id="tab-brandarcade" tabindex="-1" onclick="T('brandarcade',this)">Brand Arcade</button>
-<button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="tournaments" id="tab-tournaments" tabindex="-1" onclick="T('tournaments',this)">Tournament Payoff</button>
+<button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="tournaments" id="tab-tournaments" tabindex="-1" onclick="T('tournaments',this)">Revenue Model</button>
 </div>
 
 <div class="sticky-summary" id="sticky-summary">
@@ -888,18 +890,6 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 </div>
 <div class="card-wrap" id="mg-w-roi"><div class="card-actions"><button class="dl-btn" onclick="DL('roi')">Download image</button></div><div id="mg-o-roi"></div></div>
 
-<section class="card-section" id="tpc-section" aria-labelledby="tpc-title" style="margin-top:26px">
-  <div class="ct" id="tpc-title">Combined revenue model &mdash; head-to-head + tournaments</div>
-  <div class="sn">One monthly active base feeds both products. Head-to-head takes an engagement share of it; tournaments take their own share, or an entered participant count, on the Tournament Payoff tab.</div>
-  <div class="inputs tp-three" style="margin-top:12px;margin-bottom:0">
-    <div class="input-group"><label class="input-label" for="tpc-mau">Monthly active base</label><input class="pf-input" id="tpc-mau" type="number" min="0" step="1000" oninput="TPCsetMau(this.value)"><div class="sn">Customer system &middot; shared by both products</div></div>
-    <div class="input-group"><label class="input-label" for="tpc-name">Partner name for the export</label><input class="pf-input" id="tpc-name" type="text" placeholder="Partner name" oninput="TPCrender()"><div class="sn">Labels the one-pager</div></div>
-  </div>
-  <div class="tpc-grid" id="tpc-cases" aria-live="polite" style="margin-top:16px"></div>
-  <div id="tpc-detail"></div>
-  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button></div>
-  <div class="sn">Shows revenue generated before any split, per the Lucra default. Operator and Lucra shares stay on the Tournament Payoff tab.</div>
-</section>
 
 </div>
 
@@ -1540,7 +1530,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 </div>
 
 <div id="tournaments" role="tabpanel" aria-labelledby="tab-tournaments" style="display:none">
-<div class="dm-hero"><div><div class="workspace-eyebrow">Venue tournament deals</div><h2>Tournament Payoff</h2><p>Entry fees and rebuys retire the licence fee. Once it is retired the licence share redirects to the operator for the rest of the term.</p></div><span class="badge">Tournaments</span></div>
+<div class="dm-hero"><div><div class="workspace-eyebrow">Venue and app revenue</div><h2>Revenue Model</h2><p>Pick the products the customer is taking. Tournament entries retire the licence fee, and head-to-head play adds platform fee revenue on the same active base.</p></div><span class="badge">Tournaments</span></div>
 
 <div class="tp-view-switch" role="tablist" aria-label="Tournament payoff views">
   <button type="button" class="on" id="tp-view-calc-btn" role="tab" aria-selected="true" onclick="TPview('calc',this)">Calculator</button>
@@ -1548,7 +1538,28 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 </div>
 
 <div id="tp-calc-view">
-  <div class="pf-section"><div class="pf-section-title">Deal and licence</div>
+  <div class="pf-section"><div class="pf-section-title">What the customer is taking</div>
+    <div class="tp-products">
+      <label class="tp-check"><input type="checkbox" id="tp-inc-tournaments" onchange="TPtoggle('includeTournaments',this.checked)"><span>Tournaments</span></label>
+      <label class="tp-check"><input type="checkbox" id="tp-inc-h2h" onchange="TPtoggle('includeH2H',this.checked)"><span>Head-to-head</span></label>
+    </div>
+    <div class="inputs" style="margin-top:14px;margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-mau">Monthly active base</label><input class="pf-input" id="tp-mau" type="number" min="0" step="1000" placeholder="Enter the customer's MAU" oninput="TPCsetMau(this.value)"><div class="sn">Customer system · shared by both products</div></div>
+    </div>
+    <div class="sn" id="tp-product-note" role="status"></div>
+  </div>
+
+  <div class="pf-section" id="tp-h2h-block" hidden><div class="pf-section-title">Head-to-head</div>
+    <div class="inputs tp-three" style="margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-h2h-eng">Engagement rate</label><div class="input-val"><input class="pf-input" id="tp-h2h-eng" type="number" min="0" max="100" step="0.5" oninput="TPsetH2H('eng',this.value)"><span class="vp">%</span></div><div class="sn">Estimated · share of the base playing head-to-head</div></div>
+      <div class="input-group"><label class="input-label" for="tp-h2h-plays">Paid plays / user / month</label><input class="pf-input" id="tp-h2h-plays" type="number" min="0" step="1" oninput="TPsetH2H('plays',this.value)"><div class="sn">Estimated</div></div>
+      <div class="input-group"><label class="input-label" for="tp-h2h-spend">Average entry / play</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-h2h-spend" type="number" min="0" step="0.25" oninput="TPsetH2H('wager',this.value)"></div><div class="sn">Customer fact</div></div>
+      <div class="input-group"><label class="input-label" for="tp-h2h-fee">Platform fee rate</label><div class="input-val"><input class="pf-input" id="tp-h2h-fee" type="number" min="0" max="50" step="0.5" oninput="TPsetH2H('rake',this.value)"><span class="vp">%</span></div><div class="sn">Customer fact · share of paid-game volume</div></div>
+    </div>
+    <div class="sn">The same inputs as the Mini Game ROI tab. Editing either keeps both in step.</div>
+  </div>
+
+  <div class="pf-section" id="tp-deal-block"><div class="pf-section-title">Deal and licence</div>
     <div class="inputs" style="margin-bottom:0">
       <div class="input-group"><label class="input-label" for="tp-deal-name">Deal / customer name</label><input class="pf-input" id="tp-deal-name" type="text" placeholder="Venue or group name" oninput="TPset('dealName',this.value)"><div class="sn">Customer fact · labels both exports</div></div>
       <div class="input-group" id="tp-term-block"><label class="input-label" for="tp-term">Contract term</label><select class="pf-input" id="tp-term" onchange="TPsetTerm(this.value)"><option value="1">1 year</option><option value="2">2 years</option><option value="3">3 years</option><option value="4">4 years</option><option value="5">5 years</option></select><div class="sn">Customer fact</div></div>
@@ -1594,7 +1605,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="sn">If the fee retires partway through a month, the rest of that month's revenue pays out at this split rather than being lost.</div>
   </div>
 
-  <div class="pf-section"><div class="pf-section-title">Participants</div>
+  <div class="pf-section" id="tp-participants-block"><div class="pf-section-title">Participants</div>
     <div class="tp-volume-switch" role="group" aria-label="Participant volume mode">
       <button type="button" data-volume="flat" aria-pressed="true" onclick="TPsetVolume('flat')">Flat</button>
       <button type="button" data-volume="ramp" aria-pressed="false" onclick="TPsetVolume('ramp')">Ramp</button>
@@ -1605,9 +1616,6 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
         <button type="button" data-pbasis="count" aria-pressed="true" onclick="TPsetParticipantBasis('count')">A headcount<span>Participants per event</span></button>
         <button type="button" data-pbasis="mau" aria-pressed="false" onclick="TPsetParticipantBasis('mau')">% of MAU<span>Share of monthly active users</span></button>
       </div>
-    </div>
-    <div class="inputs" id="tp-mau-block" hidden style="margin-bottom:0">
-      <div class="input-group"><label class="input-label" for="tp-mau">Monthly active users</label><input class="pf-input" id="tp-mau" type="number" min="0" step="1000" placeholder="Enter the customer's MAU" oninput="TPCsetMau(this.value)"><div class="sn">Customer system · required when participation is a share of MAU</div></div>
     </div>
     <div class="inputs" id="tp-flat-count" style="margin-bottom:0">
       <div class="input-group"><label class="input-label" for="tp-participants">Average participants per event</label><input class="pf-input" id="tp-participants" type="number" min="0" step="10" oninput="TPset('participants',this.value)"><div class="sn">Estimated · planning placeholder, replace with customer numbers. Applied identically across every month.</div></div>
@@ -1629,15 +1637,27 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="sn" id="tp-mau-note" role="status"></div>
   </div>
 
-  <div class="pf-section"><div class="pf-section-title">Tournament types</div>
+  <div class="pf-section" id="tp-tournaments-block"><div class="pf-section-title">Tournament types</div>
     <div class="sn">Entries per event are participants times one plus rebuys. Cash cost is a fixed cost per event and comes out of the handle before the split, so licence, operator and Lucra all fund prizes.</div>
     <div id="tp-tournaments-list"></div>
     <button type="button" class="tp-add" onclick="TPaddTournament()">Add tournament type</button>
   </div>
 
   <div class="tp-validation" id="tp-validation" role="alert" hidden></div>
+<section class="card-section" id="tpc-section" aria-labelledby="tpc-title" style="margin-top:26px">
+  <div class="ct" id="tpc-title">Combined revenue model &mdash; head-to-head + tournaments</div>
+  <div class="sn">One monthly active base feeds both products. Head-to-head takes an engagement share of it; tournaments take their own share of it, or an entered participant count.</div>
+  <div class="inputs tp-three" style="margin-top:12px;margin-bottom:0">
+    <div class="input-group"><label class="input-label" for="tpc-mau">Monthly active base</label><input class="pf-input" id="tpc-mau" type="number" min="0" step="1000" oninput="TPCsetMau(this.value)"><div class="sn">Customer system &middot; shared by both products</div></div>
+    <div class="input-group"><label class="input-label" for="tpc-name">Partner name for the export</label><input class="pf-input" id="tpc-name" type="text" placeholder="Partner name" oninput="TPCrender()"><div class="sn">Labels the one-pager</div></div>
+  </div>
+  <div class="tpc-grid" id="tpc-cases" aria-live="polite" style="margin-top:16px"></div>
+  <div id="tpc-detail"></div>
+  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button></div>
+  <div class="sn">Shows revenue generated before any split, per the Lucra default. The operator and Lucra shares stay in the 12-month results below and never reach this export.</div>
+</section>
 
-  <section class="card-section" aria-labelledby="tp-results-title">
+  <section class="card-section" id="tp-results-section" aria-labelledby="tp-results-title">
     <div class="ct" id="tp-results-title">12-month results</div>
     <div class="tp-cards" id="tp-summary" aria-live="polite"></div>
     <div class="tp-progress" id="tp-progress"></div>
@@ -3125,6 +3145,8 @@ var TP_DEFAULTS = {
   annualFees: [60000, 60000, 60000, 60000, 60000],
   payoffBasis: 'term',
   shortfall: 'roll',
+  includeTournaments: true,
+  includeH2H: false,
   freeLicense: false,
   splitMode: 'standard',
   custom: { credit: 50, operator: 40, lucra: 10 },
@@ -3250,6 +3272,8 @@ function TPentriesPerEvent(s, t, month) {
 
 function TPvalidate(input) {
   var s = TPstate(input), errors = [];
+  if (!s.includeTournaments && !s.includeH2H) errors.push('Select at least one product: tournaments, head-to-head, or both.');
+  if (!s.includeTournaments) return errors;
   if (!s.freeLicense && s.splitMode === 'custom') {
     var sum = TPnum(s.custom.credit) + TPnum(s.custom.operator) + TPnum(s.custom.lucra);
     if (Math.abs(sum - 100) > 0.001) errors.push('Custom split must sum to 100%. It currently sums to ' + Math.round(sum * 10) / 10 + '%.');
@@ -3494,23 +3518,29 @@ function TPscaled(input, participationFactor, priceFactor) {
    an implausible total is visible rather than buried. */
 function TPCcase(cfg, factor) {
   var f = factor === undefined ? 1 : TPnum(factor, 0),
+    tState0 = TPstate(cfg.tournament),
+    onH2H = !!tState0.includeH2H,
+    onTournaments = !!tState0.includeTournaments,
     mau = TPnum(cfg.mau, 0),
-    engagement = TPnum(cfg.engagement, 0, 100) * f,
+    engagement = onH2H ? TPnum(cfg.engagement, 0, 100) * f : 0,
     engaged = mau * Math.min(100, engagement) / 100,
     paidPlays = engaged * TPnum(cfg.playsPerUser, 0),
     paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
     p2pFee = paidVolume * TPnum(cfg.feeRate, 0, 100) / 100;
 
-  var tState = TPscaled(Object.assign(TPstate(cfg.tournament), { mau: mau }), f, 1),
+  var tState = TPscaled(Object.assign(tState0, { mau: mau }), f, 1),
     tResult = TPcalculate(tState),
     months = tResult.months.length || 12,
-    tournamentMonthly = tResult.errors.length ? 0 : tResult.totalNet / months,
-    tournamentParticipants = tResult.errors.length ? 0 : (tResult.months[months - 1] || {}).participants || 0;
+    usable = onTournaments && !tResult.errors.length,
+    tournamentMonthly = usable ? tResult.totalNet / months : 0,
+    tournamentParticipants = usable ? (tResult.months[months - 1] || {}).participants || 0 : 0;
 
   var tournamentShare = mau > 0 ? tournamentParticipants / mau * 100 : 0;
 
   return {
     factor: f,
+    includeH2H: onH2H,
+    includeTournaments: onTournaments,
     mau: mau,
     engagement: Math.min(100, engagement),
     engaged: engaged,
@@ -3571,6 +3601,14 @@ function TPtoggle(path, checked) {
   for (var i = 0; i < parts.length - 1; i++) target = target[parts[i]];
   target[parts[parts.length - 1]] = !!checked;
   TPsave(); TPrenderControls(); TPrender();
+}
+function TPsetH2H(key, value) {
+  MG[key] = TPnum(value, 0);
+  var box = $('mgi-' + key); if (box && document.activeElement !== box) box.value = MG[key];
+  var slider = $('mgs-' + key);
+  if (slider) slider.value = Math.max(+slider.min, Math.min(+slider.max, MG[key]));
+  if (typeof MGu === 'function') MGu();
+  TPrender();
 }
 function TPsetSplit(mode) { TP.splitMode = mode; TPsave(); TPrenderControls(); TPrender(); }
 function TPsetBasis(mode) { TP.payoffBasis = mode; TPsave(); TPrenderControls(); TPrender(); }
@@ -3702,6 +3740,21 @@ function TPrenderControls() {
     var el = $(x[0]); if (el && document.activeElement !== el) el.value = TP.post[x[1]];
   });
   var free = $('tp-free'); if (free) free.checked = !!TP.freeLicense;
+  var incT = $('tp-inc-tournaments'); if (incT) incT.checked = !!TP.includeTournaments;
+  var incH = $('tp-inc-h2h'); if (incH) incH.checked = !!TP.includeH2H;
+  [['tp-h2h-eng', 'eng'], ['tp-h2h-plays', 'plays'], ['tp-h2h-spend', 'wager'], ['tp-h2h-fee', 'rake']].forEach(function (x) {
+    var el = $(x[0]); if (el && document.activeElement !== el) el.value = MG[x[1]];
+  });
+  $('tp-h2h-block').hidden = !TP.includeH2H;
+  ['tp-deal-block', 'tp-split-block', 'tp-participants-block', 'tp-tournaments-block', 'tp-results-section']
+    .forEach(function (id) { if ($(id)) $(id).hidden = !TP.includeTournaments; });
+  $('tp-product-note').textContent = !TP.includeTournaments && !TP.includeH2H
+    ? 'Select at least one product to model.'
+    : TP.includeTournaments && TP.includeH2H
+      ? 'Both products draw on the same active base. Tournament entries retire the licence; head-to-head adds platform fee revenue on top.'
+      : TP.includeTournaments
+        ? 'Tournaments only. Entry value less prize cost retires the licence.'
+        : 'Head-to-head only. There is no licence payoff to model, so the tournament sections are hidden.';
   var term = $('tp-term'); if (term) term.value = String(TPterm(TP));
   TPrenderFees();
   document.querySelectorAll('.tp-basis-switch button').forEach(function (b) {
@@ -3716,7 +3769,7 @@ function TPrenderControls() {
   $('tp-shortfall-row').hidden = TPterm(TP) < 2 || TP.payoffBasis !== 'annual';
 
   $('tp-licence-block').hidden = !!TP.freeLicense;
-  $('tp-split-block').hidden = !!TP.freeLicense;
+  $('tp-split-block').hidden = !!TP.freeLicense || !TP.includeTournaments;
   $('tp-free-note').hidden = !TP.freeLicense;
 
   document.querySelectorAll('.tp-split-switch button').forEach(function (b) {
@@ -3734,7 +3787,6 @@ function TPrenderControls() {
     b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
   });
   var mau = TP.participantBasis === 'mau';
-  $('tp-mau-block').hidden = !mau;
   $('tp-flat-count').hidden = TP.volumeMode !== 'flat' || mau;
   $('tp-flat-pct').hidden = TP.volumeMode !== 'flat' || !mau;
   $('tp-ramp-count').hidden = TP.volumeMode !== 'ramp' || mau;
@@ -4050,6 +4102,12 @@ function TPCrender() {
   TPCsyncMauInputs(MG.tau);
 
   var cases = TPCcases(TPCconfig()), errors = TPvalidate(TP);
+  var titleEl = $('tpc-title');
+  if (titleEl) {
+    titleEl.textContent = TP.includeTournaments && TP.includeH2H
+      ? 'Combined revenue model \u2014 head-to-head + tournaments'
+      : TP.includeTournaments ? 'Revenue model \u2014 tournaments' : 'Revenue model \u2014 head-to-head';
+  }
 
   if (errors.length) {
     host.innerHTML = '<div class="tp-validation">Tournament inputs need attention before the combined model runs:' +
@@ -4065,25 +4123,29 @@ function TPCrender() {
       '<div class="tp-card-value">' + TPmoney(r.annualRevenueGenerated) + '</div>' +
       '<div class="tp-card-note">' + TPesc(c.note) + '</div>' +
       '<dl class="tpc-lines">' +
-      '<div><dt>Head-to-head platform fee</dt><dd>' + TPmoney(r.p2pFee * 12) + '</dd></div>' +
-      '<div><dt>Tournament net revenue</dt><dd>' + TPmoney(r.tournamentNet * 12) + '</dd></div>' +
+      (r.includeH2H ? '<div><dt>Head-to-head platform fee</dt><dd>' + TPmoney(r.p2pFee * 12) + '</dd></div>' : '') +
+      (r.includeTournaments ? '<div><dt>Tournament net revenue</dt><dd>' + TPmoney(r.tournamentNet * 12) + '</dd></div>' : '') +
       '<div><dt>Engaged share of base</dt><dd>' + (Math.round(r.combinedShare * 100) / 100) + '%</dd></div>' +
       '</dl></div>';
   }).join('');
 
-  var mid = cases[1].result;
+  var mid = cases[1].result, both = mid.includeH2H && mid.includeTournaments, tiles = [];
+  tiles.push('<div class="stat"><div class="label">Monthly active base</div><div class="val cyan">' + Math.round(mid.mau).toLocaleString() + '</div><div class="sub">' + (both ? 'Shared by both products' : 'Drives this model') + '</div></div>');
+  if (mid.includeH2H) tiles.push('<div class="stat"><div class="label">Paid-game volume / mo</div><div class="val">' + TPmoney(mid.paidVolume) + '</div><div class="sub">' + Math.round(mid.engaged).toLocaleString() + ' engaged at ' + (Math.round(mid.engagement * 100) / 100) + '%</div></div>');
+  if (mid.includeTournaments) tiles.push('<div class="stat"><div class="label">Tournament participants</div><div class="val">' + Math.round(mid.tournamentParticipants).toLocaleString() + '</div><div class="sub">' + (Math.round(mid.tournamentShare * 1000) / 1000) + '% of the base per event</div></div>');
+
   $('tpc-detail').innerHTML =
-    '<div class="sn"><strong>Revenue generated, before any split.</strong> Head-to-head is paid-game volume times the platform fee rate. ' +
-    'Tournaments are entry value less the operator\'s prize cost, the pool the licence and revenue share are taken from. ' +
-    'The operator and Lucra shares stay on the Tournament Payoff tab and are not shown here.</div>' +
-    '<div class="grid grid3" style="margin-top:12px">' +
-    '<div class="stat"><div class="label">Monthly active base</div><div class="val cyan">' + Math.round(mid.mau).toLocaleString() + '</div><div class="sub">Shared by both products</div></div>' +
-    '<div class="stat"><div class="label">Paid-game volume / mo</div><div class="val">' + TPmoney(mid.paidVolume) + '</div><div class="sub">' + Math.round(mid.engaged).toLocaleString() + ' engaged at ' + (Math.round(mid.engagement * 100) / 100) + '%</div></div>' +
-    '<div class="stat"><div class="label">Tournament participants</div><div class="val">' + Math.round(mid.tournamentParticipants).toLocaleString() + '</div><div class="sub">' + (Math.round(mid.tournamentShare * 1000) / 1000) + '% of the base per event</div></div>' +
-    '</div>' +
-    '<div class="sn" style="margin-top:10px">A player can take part in both, so the two audiences are not netted against each other. ' +
-    'The combined engaged share above makes the total assumption visible: at the expected case this model assumes ' +
-    (Math.round(mid.combinedShare * 100) / 100) + '% of the base is active across both products.</div>';
+    '<div class="sn"><strong>Revenue generated, before any split.</strong> ' +
+    (mid.includeH2H ? 'Head-to-head is paid-game volume times the platform fee rate. ' : '') +
+    (mid.includeTournaments ? 'Tournaments are entry value less the operator\'s prize cost, the pool the licence and revenue share are taken from. ' : '') +
+    'The operator and Lucra shares are not shown here.</div>' +
+    '<div class="grid grid' + tiles.length + '" style="margin-top:12px">' + tiles.join('') + '</div>' +
+    (both
+      ? '<div class="sn" style="margin-top:10px">A player can take part in both, so the two audiences are not netted against each other. ' +
+        'The combined engaged share above makes the total assumption visible: at the expected case this model assumes ' +
+        (Math.round(mid.combinedShare * 100) / 100) + '% of the base is active across both products.</div>'
+      : '<div class="sn" style="margin-top:10px">Only one product is selected, so nothing is being combined. ' +
+        'Tick the other to model them together on the same base.</div>');
 }
 
 function TPCprint() {
@@ -4091,18 +4153,22 @@ function TPCprint() {
   if (errors.length) { alert('Fix the tournament inputs before exporting.'); return; }
   TPCrender();
   var cases = TPCcases(TPCconfig()), mid = cases[1].result,
-    name = ($('tpc-name') && $('tpc-name').value.trim()) || TP.dealName || 'Partner';
+    name = TP.dealName || 'Partner';
 
+  var showH2H = !!TP.includeH2H, showT = !!TP.includeTournaments;
   var band = '<table class="tp-months"><thead><tr><th>Case</th><th>Participation</th>' +
-    '<th>Head-to-head platform fee</th><th>Tournament net revenue</th><th>Revenue generated / yr</th></tr></thead><tbody>' +
+    (showH2H ? '<th>Head-to-head platform fee</th>' : '') +
+    (showT ? '<th>Tournament net revenue</th>' : '') +
+    '<th>Revenue generated / yr</th></tr></thead><tbody>' +
     cases.map(function (c) {
       var r = c.result;
-      return '<tr' + (c.key === 'best' ? ' class="crossover"' : '') + '><td>' + TPesc(c.label) + '</td><td>' + TPesc(c.note) +
-        '</td><td>' + TPmoney(r.p2pFee * 12) + '</td><td>' + TPmoney(r.tournamentNet * 12) + '</td><td>' +
-        TPmoney(r.annualRevenueGenerated) + '</td></tr>';
+      return '<tr' + (c.key === 'best' ? ' class="crossover"' : '') + '><td>' + TPesc(c.label) + '</td><td>' + TPesc(c.note) + '</td>' +
+        (showH2H ? '<td>' + TPmoney(r.p2pFee * 12) + '</td>' : '') +
+        (showT ? '<td>' + TPmoney(r.tournamentNet * 12) + '</td>' : '') +
+        '<td>' + TPmoney(r.annualRevenueGenerated) + '</td></tr>';
     }).join('') + '</tbody></table>';
 
-  var structure = TPcustomerProjection(TP).tournaments.map(function (t) {
+  var structure = !TP.includeTournaments ? '' : TPcustomerProjection(TP).tournaments.map(function (t) {
     return '<div class="tp-cust-card"><div class="tp-cust-name">' + TPesc(t.name) + '</div>' +
       '<div class="tp-cust-reward">' + TPesc(t.rewardLabel) + '</div>' +
       '<dl class="tp-cust-meta">' +
@@ -4117,12 +4183,11 @@ function TPCprint() {
     '<div class="tp-print-badge">Revenue generated</div></div>' +
     '<div class="tp-print-cards"><div class="tp-card"><div class="tp-card-label">Monthly active base</div><div class="tp-card-value">' +
     Math.round(mid.mau).toLocaleString() + '</div></div>' +
-    '<div class="tp-card"><div class="tp-card-label">Paid-game volume / yr</div><div class="tp-card-value">' + TPmoney(mid.paidVolume * 12) + '</div></div>' +
+    (TP.includeH2H ? '<div class="tp-card"><div class="tp-card-label">Paid-game volume / yr</div><div class="tp-card-value">' + TPmoney(mid.paidVolume * 12) + '</div></div>' : '') +
     '<div class="tp-card"><div class="tp-card-label">Revenue generated / yr</div><div class="tp-card-value">' + TPmoney(mid.annualRevenueGenerated) + '</div></div>' +
-    '<div class="tp-card"><div class="tp-card-label">Tournament programme</div><div class="tp-card-value">' + TP.tournaments.length + ' formats</div></div></div>' +
+    (TP.includeTournaments ? '<div class="tp-card"><div class="tp-card-label">Tournament programme</div><div class="tp-card-value">' + TP.tournaments.length + ' formats</div></div>' : '') + '</div>' +
     '<h2 style="font-size:15px;margin:20px 0 8px">Sensitivity</h2>' + band +
-    '<h2 style="font-size:15px;margin:20px 0 8px">The tournament programme</h2>' +
-    '<div class="tp-print-cust">' + structure + '</div>' +
+    (structure ? '<h2 style="font-size:15px;margin:20px 0 8px">The tournament programme</h2><div class="tp-print-cust">' + structure + '</div>' : '') +
     '<div class="tp-print-foot">Revenue generated is the pool each product produces before any revenue share, structured with the partner. ' +
     'Head-to-head is paid-game volume times the platform fee rate; tournaments are entry value less the operator\'s prize cost. ' +
     'Excludes sponsorship, reward redemption returning to margin, and any other Lucra product. ' +

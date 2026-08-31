@@ -186,6 +186,8 @@ var TP_DEFAULTS = {
   annualFees: [60000, 60000, 60000, 60000, 60000],
   payoffBasis: 'term',
   shortfall: 'roll',
+  includeTournaments: true,
+  includeH2H: false,
   freeLicense: false,
   splitMode: 'standard',
   custom: { credit: 50, operator: 40, lucra: 10 },
@@ -311,6 +313,8 @@ function TPentriesPerEvent(s, t, month) {
 
 function TPvalidate(input) {
   var s = TPstate(input), errors = [];
+  if (!s.includeTournaments && !s.includeH2H) errors.push('Select at least one product: tournaments, head-to-head, or both.');
+  if (!s.includeTournaments) return errors;
   if (!s.freeLicense && s.splitMode === 'custom') {
     var sum = TPnum(s.custom.credit) + TPnum(s.custom.operator) + TPnum(s.custom.lucra);
     if (Math.abs(sum - 100) > 0.001) errors.push('Custom split must sum to 100%. It currently sums to ' + Math.round(sum * 10) / 10 + '%.');
@@ -555,23 +559,29 @@ function TPscaled(input, participationFactor, priceFactor) {
    an implausible total is visible rather than buried. */
 function TPCcase(cfg, factor) {
   var f = factor === undefined ? 1 : TPnum(factor, 0),
+    tState0 = TPstate(cfg.tournament),
+    onH2H = !!tState0.includeH2H,
+    onTournaments = !!tState0.includeTournaments,
     mau = TPnum(cfg.mau, 0),
-    engagement = TPnum(cfg.engagement, 0, 100) * f,
+    engagement = onH2H ? TPnum(cfg.engagement, 0, 100) * f : 0,
     engaged = mau * Math.min(100, engagement) / 100,
     paidPlays = engaged * TPnum(cfg.playsPerUser, 0),
     paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
     p2pFee = paidVolume * TPnum(cfg.feeRate, 0, 100) / 100;
 
-  var tState = TPscaled(Object.assign(TPstate(cfg.tournament), { mau: mau }), f, 1),
+  var tState = TPscaled(Object.assign(tState0, { mau: mau }), f, 1),
     tResult = TPcalculate(tState),
     months = tResult.months.length || 12,
-    tournamentMonthly = tResult.errors.length ? 0 : tResult.totalNet / months,
-    tournamentParticipants = tResult.errors.length ? 0 : (tResult.months[months - 1] || {}).participants || 0;
+    usable = onTournaments && !tResult.errors.length,
+    tournamentMonthly = usable ? tResult.totalNet / months : 0,
+    tournamentParticipants = usable ? (tResult.months[months - 1] || {}).participants || 0 : 0;
 
   var tournamentShare = mau > 0 ? tournamentParticipants / mau * 100 : 0;
 
   return {
     factor: f,
+    includeH2H: onH2H,
+    includeTournaments: onTournaments,
     mau: mau,
     engagement: Math.min(100, engagement),
     engaged: engaged,

@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 async function openTab(page) {
   await page.goto('/');
   await page.addInitScript(() => {});
-  await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
+  await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
   await expect(page.locator('#tournaments')).toBeVisible();
 }
 
@@ -172,7 +172,7 @@ test('templates save, load and delete and survive a reload', async ({ page }) =>
   expect(await page.evaluate(() => TP.tournaments.length)).toBe(1);
 
   await page.reload();
-  await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
+  await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
   await page.locator('#tp-view-tournaments-btn').click();
   await expect(page.locator('#tp-template-list .tp-template')).toHaveCount(1);
 
@@ -243,7 +243,7 @@ test('state persists across a reload', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page, { fee: 12345 });
   await page.reload();
-  await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
+  await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
   await expect(page.locator('#tp-fee-0')).toHaveValue('12345');
   await expect(page.locator('#tp-deal-name')).toHaveValue('Fairway Social');
 });
@@ -375,11 +375,11 @@ test('the customer export stays clean on a multi-year deal', async ({ page }) =>
 test('participation can be expressed as a share of MAU', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page);
-  await expect(page.locator('#tp-mau-block')).toBeHidden();
+  // The shared base moved to the top of the tab and is always visible now.
+  await expect(page.locator('#tp-mau')).toBeVisible();
   await expect(page.locator('#tp-flat-count')).toBeVisible();
 
   await page.locator('.tp-basis-participants button[data-pbasis="mau"]').click();
-  await expect(page.locator('#tp-mau-block')).toBeVisible();
   await expect(page.locator('#tp-flat-pct')).toBeVisible();
   await expect(page.locator('#tp-flat-count')).toBeHidden();
 
@@ -394,7 +394,7 @@ test('participation can be expressed as a share of MAU', async ({ page }) => {
   expect(await page.evaluate(() => TPparticipants(TP, 1))).toBe(200);
 
   await page.locator('.tp-basis-participants button[data-pbasis="count"]').click();
-  await expect(page.locator('#tp-mau-block')).toBeHidden();
+  await expect(page.locator('#tp-flat-count')).toBeVisible();
   expect(await page.evaluate(() => TPparticipants(TP, 1))).toBe(100);
 });
 
@@ -462,7 +462,7 @@ test('MAU and per-type settings survive a reload', async ({ page }) => {
   await page.locator('#tp-rebuypct-0').fill('60');
 
   await page.reload();
-  await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
+  await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
   await expect(page.locator('#tp-mau')).toHaveValue('35000');
   await expect(page.locator('#tp-participant-pct')).toHaveValue('2');
   await expect(page.locator('#tp-rebuypct-0')).toHaveValue('60');
@@ -491,16 +491,14 @@ test('the break-even map hides itself when the licence is free', async ({ page }
   await expect(page.locator('#tp-heat table.tp-heat')).toHaveCount(0);
 });
 
-test('the combined model sits at the bottom of the Mini Game tab and shares one base', async ({ page }) => {
-  await page.goto('/');
-  await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
+test('the combined model sits on the Revenue Model tab and shares one base', async ({ page }) => {
+  await openTab(page);
   await setBaseDeal(page, { fee: 60000 });
-
-  await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
+  await page.evaluate(() => { TP.includeH2H = true; TPsave(); TPrenderControls(); TPrender(); });
   await expect(page.locator('#tpc-section')).toBeVisible();
   await expect(page.locator('#tpc-cases .tpc-case')).toHaveCount(3);
 
-  await page.locator('#tpc-mau').fill('1000000');
+  await page.locator('#tp-mau').fill('1000000');
   await page.evaluate(() => { MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGu(); TPCrender(); });
 
   // Editing the shared base drives the Mini Games input too.
@@ -515,14 +513,11 @@ test('the combined model sits at the bottom of the Mini Game tab and shares one 
 });
 
 test('the combined one-pager shows revenue generated and no split or blocked wording', async ({ page }) => {
-  await page.goto('/');
-  await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
+  await openTab(page);
   await setBaseDeal(page, { fee: 60000 });
-  await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
+  await page.evaluate(() => { TP.includeH2H = true; TPsave(); TPrenderControls(); TPrender(); });
   await stubPrint(page);
-
-  await page.locator('#tpc-mau').fill('1000000');
-  await page.locator('#tpc-name').fill('Fairway Social');
+  await page.locator('#tp-mau').fill('1000000');
   await page.locator('#tpc-section button', { hasText: 'Generate combined one-pager' }).click();
 
   const html = await page.evaluate(() => window.__printHTML);
@@ -542,12 +537,95 @@ test('the combined one-pager shows revenue generated and no split or blocked wor
 
 test('the combined section stays usable at 390px', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
+  await openTab(page);
   await expect(page.locator('#tpc-cases .tpc-case').first()).toBeVisible();
   const sizes = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
   }));
   expect(sizes.scrollWidth).toBeLessThanOrEqual(sizes.clientWidth + 1);
+});
+
+test('product checkboxes show and hide the two halves of the model', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+
+  // Tournaments on, head-to-head off by default.
+  await expect(page.locator('#tp-inc-tournaments')).toBeChecked();
+  await expect(page.locator('#tp-inc-h2h')).not.toBeChecked();
+  await expect(page.locator('#tp-h2h-block')).toBeHidden();
+  await expect(page.locator('#tp-tournaments-block')).toBeVisible();
+  await expect(page.locator('#tp-results-section')).toBeVisible();
+  await expect(page.locator('#tpc-title')).toContainText('tournaments');
+
+  // Add head-to-head.
+  await page.locator('#tp-inc-h2h').check();
+  await expect(page.locator('#tp-h2h-block')).toBeVisible();
+  await expect(page.locator('#tpc-title')).toContainText('head-to-head + tournaments');
+  await expect(page.locator('#tp-product-note')).toContainText('same active base');
+
+  // Head-to-head only.
+  await page.locator('#tp-inc-tournaments').uncheck();
+  await expect(page.locator('#tp-tournaments-block')).toBeHidden();
+  await expect(page.locator('#tp-deal-block')).toBeHidden();
+  await expect(page.locator('#tp-results-section')).toBeHidden();
+  await expect(page.locator('#tp-h2h-block')).toBeVisible();
+  await expect(page.locator('#tpc-title')).toContainText('head-to-head');
+  await expect(page.locator('#tp-validation')).toBeHidden();
+
+  // Neither is an error, not a silent zero.
+  await page.locator('#tp-inc-h2h').uncheck();
+  await expect(page.locator('#tp-product-note')).toContainText('at least one product');
+});
+
+test('head-to-head inputs stay in step with the Mini Game tab', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await page.locator('#tp-inc-h2h').check();
+
+  await page.locator('#tp-h2h-eng').fill('12');
+  await page.locator('#tp-h2h-plays').fill('30');
+  await page.locator('#tp-h2h-spend').fill('3');
+  await page.locator('#tp-h2h-fee').fill('12');
+  expect(await page.evaluate(() => [MG.eng, MG.plays, MG.wager, MG.rake])).toEqual([12, 30, 3, 12]);
+
+  await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
+  await expect(page.locator('#mgi-eng')).toHaveValue('12');
+  await expect(page.locator('#mgi-plays')).toHaveValue('30');
+
+  // And back the other way.
+  await page.locator('#mgi-eng').fill('20');
+  await page.locator('#mgi-eng').dispatchEvent('input');
+  await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
+  await expect(page.locator('#tp-h2h-eng')).toHaveValue('20');
+});
+
+test('the Mini Game tab keeps its own generator and no combined section', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
+  await expect(page.locator('#minigame')).toBeVisible();
+  await expect(page.locator('#minigame #tpc-section')).toHaveCount(0);
+  await expect(page.locator('#minigame button', { hasText: 'Generate one-pager' })).toBeVisible();
+});
+
+test('the one-pager drops the column for a product that is not selected', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000 });
+  await stubPrint(page);
+
+  // Tournaments only.
+  await page.locator('#tpc-section button', { hasText: 'Generate combined one-pager' }).click();
+  let html = await page.evaluate(() => window.__printHTML);
+  expect(html).toContain('Tournament net revenue');
+  expect(html).not.toContain('Head-to-head platform fee');
+
+  // Head-to-head only.
+  await page.locator('#tp-inc-h2h').check();
+  await page.locator('#tp-inc-tournaments').uncheck();
+  await page.locator('#tpc-section button', { hasText: 'Generate combined one-pager' }).click();
+  html = await page.evaluate(() => window.__printHTML);
+  expect(html).toContain('Head-to-head platform fee');
+  expect(html).not.toContain('Tournament net revenue');
+  expect(html).not.toContain('The tournament programme');
+  expect(html).not.toMatch(/cash|wager|betting|\bbet\b|gambl|casino|prize money|stakes|buy-in|payout|\brake\b|\bhandle\b/i);
 });

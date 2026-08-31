@@ -17,7 +17,7 @@ const TAB_NAMES = [
   'Wager Break-even',
   'Investment Plans',
   'Brand Arcade',
-  'Tournament Payoff',
+  'Revenue Model',
 ];
 
 const TAB_PANEL_IDS = [
