@@ -198,6 +198,7 @@ var TP_DEFAULTS = {
   custom: { credit: 50, operator: 40, lucra: 10 },
   post: { operator: 90, lucra: 10 },
   // Launch ramp, applied to both products
+  showLucra: true,
   rampOn: false,
   rampStartPct: 25,
   rampMonths: 6,
@@ -547,7 +548,7 @@ function TPscaled(input, participationFactor, priceFactor) {
   return s;
 }
 
-function TPheatMap(input) {
+function TPheatMap(input, h2hCfg) {
   var s = TPstate(input), factors = [0.5, 0.75, 1, 1.25, 1.5],
     first = (s.tournaments && s.tournaments[0]) || {},
     basisMau = first.basis === 'mau',
@@ -561,19 +562,34 @@ function TPheatMap(input) {
   var cells = rows.map(function (participation, ri) {
     return prices.map(function (price, ci) {
       var c = TPscaled(s, factors[ri], factors[ci]), r = TPcalculate(c);
-      if (r.errors.length) return { status: 'error', month: null, retired: 0, share: null };
+      if (r.errors.length) return { status: 'error', month: null, retired: 0, share: null, lucra: 0 };
       var retired = r.totalContract > 0 ? r.cumulativeLicense / r.totalContract : 1;
       return {
         status: r.payoffMonth === null ? 'miss' : 'clear',
         month: r.payoffMonth, retired: retired,
-        share: r.payoffMonth === null ? null : r.payoffMonth / totalMonths
+        share: r.payoffMonth === null ? null : r.payoffMonth / totalMonths,
+        lucra: r.totalLucra / (r.months.length || 1)
       };
     });
   });
 
+  /* Volume behind each row, at the entered entry price, so the money driving a
+     cell is visible rather than implied. Both products scale with the row
+     factor, the same way the three cases do. */
+  var volumes = rows.map(function (participation, ri) {
+    var c = TPscaled(s, factors[ri], 1), r = TPcalculate(c),
+      h = h2hCfg ? TPh2h(s, h2hCfg, factors[ri]) : null;
+    return {
+      entriesValue: r.errors.length ? 0 : (r.totalHandle / (r.months.length || 1)),
+      paidGameVolume: h ? h.paidVolume : 0,
+      h2hFee: h ? h.platformFee : 0
+    };
+  });
+
   return {
-    basisMau: basisMau, prices: prices, participation: rows, cells: cells,
-    totalMonths: totalMonths, baseParticipation: baseParticipation, primaryPrice: primaryPrice
+    basisMau: basisMau, prices: prices, participation: rows, cells: cells, volumes: volumes,
+    totalMonths: totalMonths, baseParticipation: baseParticipation, primaryPrice: primaryPrice,
+    showLucra: !!s.showLucra, includeH2H: !!s.includeH2H
   };
 }
 
@@ -651,7 +667,9 @@ function TPpitchTournaments(input) {
     out += ' That retires ' + TPmoney0(r.cumulativeLicense) + ' of the ' + TPmoney0(r.totalContract) +
       ' licence, leaving ' + TPmoney0(r.balanceDue) + ' outstanding at the end of the term.';
   }
-  out += ' The operator earns ' + TPmoney0(r.totalOperator) + ' across the term and Lucra ' + TPmoney0(r.totalLucra) + '.';
+  out += s.showLucra
+    ? ' The operator earns ' + TPmoney0(r.totalOperator) + ' across the term and Lucra ' + TPmoney0(r.totalLucra) + '.'
+    : ' The operator earns ' + TPmoney0(r.totalOperator) + ' across the term.';
   return out;
 }
 /* TP-PURE-END */

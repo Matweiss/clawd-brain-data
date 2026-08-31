@@ -215,7 +215,8 @@ test('the break-even map renders a grid and hides on a free licence', async ({ p
   await openTab(page);
   await setBaseDeal(page, { fee: 40000 });
   await expect(page.locator('#tp-heat table.tp-heat')).toBeVisible();
-  await expect(page.locator('#tp-heat tbody td')).toHaveCount(25);
+  // Volume columns lead each row now, so count only the shaded cells.
+  await expect(page.locator('#tp-heat tbody td:not(.vol)')).toHaveCount(25);
   await page.locator('#tp-free').check();
   await expect(page.locator('#tp-heat')).toContainText('hidden while the licence is free');
 });
@@ -433,4 +434,97 @@ test('the view switch is keyboard reachable and marks selection', async ({ page 
   await page.keyboard.press('Enter');
   await expect(page.locator('#tp-tournaments-view')).toBeVisible();
   await expect(btn).toHaveAttribute('aria-selected', 'true');
+});
+
+test('the break-even map shows the volume behind each row', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 40000, includeH2H: true, mau: 1000000 });
+  await page.evaluate(() => { MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrender(); });
+
+  const heads = await page.locator('#tp-heat thead th').allTextContents();
+  expect(heads[0]).toContain('Participants');
+  expect(heads[1]).toContain('Entries value');
+  expect(heads[2]).toContain('Paid-game volume');
+  expect(heads[3]).toContain('To Lucra');
+  // Five price columns after the lead columns.
+  await expect(page.locator('#tp-heat thead th')).toHaveCount(9);
+  await expect(page.locator('#tp-heat tbody tr').first().locator('td.vol')).toHaveCount(3);
+
+  // Volume rises with participation.
+  const firstRow = await page.locator('#tp-heat tbody tr').nth(0).locator('td.vol').first().textContent();
+  const lastRow = await page.locator('#tp-heat tbody tr').nth(4).locator('td.vol').first().textContent();
+  expect(firstRow).not.toBe(lastRow);
+});
+
+test('the map drops the paid-game column when head-to-head is off', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 40000 });
+  const heads = await page.locator('#tp-heat thead th').allTextContents();
+  expect(heads.join(' ')).not.toContain('Paid-game volume');
+  await expect(page.locator('#tp-heat tbody tr').first().locator('td.vol')).toHaveCount(2);
+});
+
+test('the Lucra toggle hides Lucra economics across the tab', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 4000, includeH2H: true, mau: 1000000 });
+
+  await expect(page.locator('#tp-show-lucra')).toBeChecked();
+  await expect(page.locator('#tp-summary')).toContainText('Lucra earnings');
+  await expect(page.locator('#tp-table thead')).toContainText('To Lucra');
+  await expect(page.locator('#tp-heat thead')).toContainText('To Lucra');
+  await expect(page.locator('#tp-h2h-readout')).toContainText('Lucra takes');
+  await expect(page.locator('#tpc-cases')).toContainText('To Lucra');
+
+  await page.locator('#tp-show-lucra').uncheck();
+  await expect(page.locator('#tp-lucra-note')).toContainText('hidden');
+  await expect(page.locator('#tp-summary')).not.toContainText('Lucra earnings');
+  await expect(page.locator('#tp-table thead')).not.toContainText('To Lucra');
+  await expect(page.locator('#tp-heat thead')).not.toContainText('To Lucra');
+  await expect(page.locator('#tp-h2h-readout')).not.toContainText('Lucra takes');
+  await expect(page.locator('#tpc-cases')).not.toContainText('To Lucra');
+  await expect(page.locator('#tp-tour-pitch')).not.toContainText('and Lucra $');
+
+  // The customer summary never showed it either way.
+  await page.locator('#tp-view-tournaments-btn').click();
+  const html = await page.locator('#tp-customer-cards').innerHTML();
+  expect(html).not.toContain('Lucra');
+});
+
+test('the one-pager brief carries both products, provenance and the vocabulary rules', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
+  await page.evaluate(() => { MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrender(); });
+
+  const brief = await page.evaluate(() => TPbrief());
+  expect(brief).toContain('Fairway Social');
+  expect(brief).toContain('Products in scope: head-to-head + tournaments');
+  expect(brief).toContain('Show revenue generated, not the split');
+  expect(brief).toContain('AUDIENCE');
+  expect(brief).toContain('HEAD-TO-HEAD');
+  expect(brief).toContain('TOURNAMENTS');
+  expect(brief).toContain('SENSITIVITY');
+  expect(brief).toContain('EXCLUSIONS');
+  expect(brief).toContain('[customer fact]');
+  expect(brief).toContain('[estimate]');
+  expect(brief).toContain('Conservative');
+  // It tells the generator the vocabulary rules rather than assuming them.
+  expect(brief).toContain('Never: cash, wager');
+
+  await page.locator('#tpc-section button', { hasText: 'Copy one-pager brief' }).click();
+  await expect(page.locator('#tp-brief-out')).toBeVisible();
+  await expect(page.locator('#tp-brief-out')).toContainText('SENSITIVITY');
+});
+
+test('the brief drops the product that is not selected', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000 });
+  let brief = await page.evaluate(() => TPbrief());
+  expect(brief).toContain('Products in scope: tournaments');
+  expect(brief).not.toContain('HEAD-TO-HEAD');
+
+  await page.locator('#tp-inc-h2h').check();
+  await page.locator('#tp-inc-tournaments').uncheck();
+  brief = await page.evaluate(() => TPbrief());
+  expect(brief).toContain('Products in scope: head-to-head');
+  expect(brief).not.toContain('TOURNAMENTS');
 });
