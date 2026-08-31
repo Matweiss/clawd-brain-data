@@ -182,6 +182,10 @@ var TP_MAX_YEARS = 5;
 
 var TP_DEFAULTS = {
   dealName: '',
+  partnerSite: '',
+  presenter: '',
+  presenterEmail: '',
+  confidential: true,
   // What the customer is taking
   includeTournaments: true,
   includeH2H: false,
@@ -361,7 +365,8 @@ function TPcalculate(input) {
     annual = !s.freeLicense && s.payoffBasis === 'annual',
     remaining = s.freeLicense ? 0 : (annual ? fees[0] : totalContract),
     years = [], cumulativeLicense = 0, trueUpTotal = 0,
-    totalOperator = 0, totalLucra = 0, totalHandle = 0, totalPrizeCost = 0, totalNet = 0,
+    totalOperator = 0, totalOperatorGross = 0, totalLucra = 0,
+    totalHandle = 0, totalPrizeCost = 0, totalSplitBase = 0,
     lossMonths = 0, payoffMonth = null, months = [];
 
   for (var y = 0; y < (s.freeLicense ? termYears : fees.length); y++) {
@@ -398,23 +403,28 @@ function TPcalculate(input) {
       });
     });
 
-    var grossMargin = handle - prizeCost,
-      netRevenue = Math.max(0, grossMargin),
-      licenseGross = rates.credit > 0 ? Math.min(netRevenue, remaining / rates.credit) : 0,
-      postGross = netRevenue - licenseGross,
+    // The commercial splits gross entries. The partner funds the prize pool out of
+    // their own share afterwards, so prize cost never reduces the pool being split:
+    // $10,000 raised -> partner $9,000 -> their $1,000 prize cost -> partner nets $8,000.
+    var splitBase = handle,
+      licenseGross = rates.credit > 0 ? Math.min(splitBase, remaining / rates.credit) : 0,
+      postGross = splitBase - licenseGross,
       toLicense = Math.min(remaining, licenseGross * rates.credit),
-      toOperator = licenseGross * rates.operator + postGross * rates.postOperator,
+      operatorGross = licenseGross * rates.operator + postGross * rates.postOperator,
       toLucra = licenseGross * rates.lucra + postGross * rates.postLucra,
+      toOperator = operatorGross - prizeCost,
+      grossMargin = handle - prizeCost,
       openingRemaining = remaining;
 
-    if (grossMargin < 0) lossMonths++;
+    // A month is a loss when the partner's share does not cover the prizes they fund.
+    if (toOperator < 0) lossMonths++;
     remaining = Math.max(0, remaining - toLicense);
     cumulativeLicense += toLicense;
-    totalOperator += toOperator; totalLucra += toLucra;
-    totalHandle += handle; totalPrizeCost += prizeCost; totalNet += netRevenue;
+    totalOperator += toOperator; totalOperatorGross += operatorGross; totalLucra += toLucra;
+    totalHandle += handle; totalPrizeCost += prizeCost; totalSplitBase += splitBase;
     if (years[yi]) years[yi].credited += toLicense;
 
-    var fraction = netRevenue > 0 ? licenseGross / netRevenue : 1;
+    var fraction = splitBase > 0 ? licenseGross / splitBase : 1;
     if (years[yi] && years[yi].clearMonth === null && openingRemaining > 1e-9 && remaining <= 1e-9) {
       years[yi].clearMonth = month - 1 + fraction;
     }
@@ -425,9 +435,9 @@ function TPcalculate(input) {
     months.push({
       month: month, year: yi + 1, monthInYear: monthInYear,
       participants: participants, handle: handle, prizeCost: prizeCost,
-      grossMargin: grossMargin, netRevenue: netRevenue,
+      grossMargin: grossMargin, splitBase: splitBase,
       toLicense: toLicense, cumulativeLicense: cumulativeLicense,
-      toOperator: toOperator, toLucra: toLucra,
+      operatorGross: operatorGross, toOperator: toOperator, toLucra: toLucra,
       split: licenseGross > 0 && postGross > 0 ? 'Crossover' : licenseGross > 0 ? 'Payoff' : 'Post-payoff',
       detail: detail
     });
@@ -451,8 +461,8 @@ function TPcalculate(input) {
     payoffMonth: payoffMonth, cumulativeLicense: cumulativeLicense,
     trueUpTotal: trueUpTotal, balanceDue: Math.max(0, remaining),
     totalOwed: trueUpTotal + Math.max(0, remaining),
-    totalOperator: totalOperator, totalLucra: totalLucra,
-    totalHandle: totalHandle, totalPrizeCost: totalPrizeCost, totalNet: totalNet,
+    totalOperator: totalOperator, totalOperatorGross: totalOperatorGross, totalLucra: totalLucra,
+    totalHandle: totalHandle, totalPrizeCost: totalPrizeCost, totalSplitBase: totalSplitBase,
     lossMonths: lossMonths, free: rates.free
   };
 }
@@ -504,7 +514,12 @@ function TPCcase(cfg, factor) {
     tResult = TPcalculate(tState),
     months = tResult.months.length || 12,
     usable = onTournaments && !tResult.errors.length,
-    tournamentMonthly = usable ? tResult.totalNet / months : 0,
+    // Both products contribute the pool their split is taken from: the head-to-head
+    // platform fee, and gross tournament entries. Prize funding is the partner's own
+    // cost out of their share, so it is reported separately, never netted off here.
+    tournamentMonthly = usable ? tResult.totalSplitBase / months : 0,
+    prizeFundingMonthly = usable ? tResult.totalPrizeCost / months : 0,
+    operatorNetMonthly = usable ? tResult.totalOperator / months : 0,
     tournamentParticipants = usable ? (tResult.months[months - 1] || {}).participants || 0 : 0,
     mau = TPnum(s.mau, 0),
     tournamentShare = mau > 0 ? tournamentParticipants / mau * 100 : 0;
@@ -519,7 +534,9 @@ function TPCcase(cfg, factor) {
     lucraShare: h.lucraShare + (h.on ? h.licenseMonthly : 0),
     tournamentParticipants: tournamentParticipants,
     tournamentShare: tournamentShare,
-    tournamentNet: tournamentMonthly,
+    tournamentEntries: tournamentMonthly,
+    prizeFunding: prizeFundingMonthly,
+    operatorNet: operatorNetMonthly,
     tournamentResult: tResult,
     revenueGenerated: h.platformFee + tournamentMonthly,
     annualRevenueGenerated: (h.platformFee + tournamentMonthly) * 12,
@@ -648,13 +665,13 @@ function TPpitchTournaments(input) {
   var s = TPstate(input), r = TPcalculate(s);
   if (!s.includeTournaments) return '';
   if (r.errors.length) return 'Complete the tournament inputs to build the pitch.';
-  var m1 = r.months[0] || {}, perYear = r.totalNet / TPterm(s),
+  var m1 = r.months[0] || {}, perYear = r.totalSplitBase / TPterm(s),
     types = s.tournaments.length,
     events = s.tournaments.reduce(function (a, t) { return a + TPnum(t.eventsPerMonth, 0); }, 0);
   var out = types + ' tournament format' + (types === 1 ? '' : 's') + ' running ' + Math.round(events) +
     ' event' + (Math.round(events) === 1 ? '' : 's') + ' a month draws ' + Math.round(m1.participants || 0).toLocaleString() +
-    ' participants in month one, worth ' + TPmoney0(m1.handle || 0) + ' of entries against ' +
-    TPmoney0(m1.prizeCost || 0) + ' of prize cost, so ' + TPmoney0(m1.netRevenue || 0) + ' is available to split.';
+    ' participants in month one, generating ' + TPmoney0(m1.splitBase || 0) + ' of entries to split. ' +
+    'The operator funds ' + TPmoney0(m1.prizeCost || 0) + ' of prizes out of their own share.';
   out += ' Over the term that is ' + TPmoney0(perYear) + ' a year.';
   if (r.free) {
     out += ' The licence is waived, so the operator and Lucra split it from month one.';

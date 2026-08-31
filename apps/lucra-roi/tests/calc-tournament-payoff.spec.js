@@ -7,7 +7,8 @@ const {
 } = calc;
 
 // One tournament: 100 participants, no rebuys, $10 entry, 4 events, $200 cash
-// cost per event -> entries value 4000, prize 800, net 3200.
+// cost per event -> entries value 4000, prize funding 800. The split is taken on the
+// full 4000; the operator funds the 800 out of their own share afterwards.
 const base = (o = {}) => Object.assign(JSON.parse(JSON.stringify(TP_DEFAULTS)), {
   termYears: 1,
   annualFees: [60000],
@@ -122,24 +123,41 @@ describe('Entries, value and prize cost', () => {
     expect(TPcustomerProjection(s).tournaments[0].rewardLabel).toBe('$300 prize pool');
   });
 
-  it('a loss-making month floors net at zero but keeps the raw figures visible', () => {
+  it('a loss-making month still splits the entries and leaves the operator negative', () => {
     const s = base({ tournaments: [{ id: 'l', name: 'L', entryPrice: 1, eventsPerMonth: 1, basis: 'count', participants: 100, customerCashCost: 5000 }] });
     const m = TPcalculate(s).months[0];
-    expect(m.netRevenue).toBe(0);
+    // The pool is the entries. Prize funding does not shrink it, so the loss lands
+    // entirely on the operator and is preserved rather than floored away.
+    expect(m.splitBase).toBe(100);
     expect(m.grossMargin).toBe(-4900);
     expect(m.handle).toBe(100);
     expect(m.prizeCost).toBe(5000);
+    expect(m.operatorGross).toBe(40);
+    expect(m.toOperator).toBe(-4960);
     expect(TPcalculate(s).lossMonths).toBe(12);
   });
 });
 
-describe('Prize cost is deducted before the split', () => {
-  it('all three parties fund prizes pro rata', () => {
+describe('The split is taken on gross entries', () => {
+  it('the operator funds the prize out of their own share, not out of the pool', () => {
     const m = TPcalculate(base({ annualFees: [1e6] })).months[0];
-    expect(m.netRevenue).toBe(3200);
-    expect(m.toLicense).toBe(1600);
-    expect(m.toOperator).toBe(1280);
-    expect(m.toLucra).toBe(320);
+    expect(m.splitBase).toBe(4000);
+    expect(m.toLicense).toBe(2000);
+    expect(m.operatorGross).toBe(1600);
+    expect(m.toOperator).toBe(800);
+    expect(m.toLucra).toBe(400);
+    // Nothing is created or lost: the pool is fully accounted for.
+    expect(m.toLicense + m.operatorGross + m.toLucra).toBe(m.splitBase);
+    expect(m.toLicense + m.toOperator + m.toLucra + m.prizeCost).toBe(m.splitBase);
+  });
+
+  it('prize funding never reduces what the licence is credited', () => {
+    const cheap = TPcalculate(base({ annualFees: [1e6] })).months[0];
+    const dear = TPcalculate(base({ annualFees: [1e6], tournaments: [{ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, rebuyMode: 'avg', rebuys: 0, customerCashCost: 700 }] })).months[0];
+    expect(dear.prizeCost).toBe(2800);
+    expect(dear.toLicense).toBe(cheap.toLicense);
+    expect(dear.toLucra).toBe(cheap.toLucra);
+    expect(dear.toOperator).toBe(cheap.toOperator - 2000);
   });
 });
 
@@ -160,7 +178,7 @@ describe('Recapture toggle', () => {
     expect(r.cumulativeLicense).toBe(0);
     expect(r.balanceDue).toBe(60000);
     expect(r.payoffMonth).toBeNull();
-    expect(r.months[0].toOperator).toBeCloseTo(3200 * 0.9, 6);
+    expect(r.months[0].toOperator).toBeCloseTo(4000 * 0.9 - 800, 6);
   });
 
   it('a free licence waives the fee entirely, which recapture off does not', () => {
@@ -172,9 +190,11 @@ describe('Recapture toggle', () => {
 
   it('sweep sends 90 to the licence and nothing to the operator', () => {
     const m = TPcalculate(base({ splitMode: 'sweep', annualFees: [1e6] })).months[0];
-    expect(m.toLicense).toBeCloseTo(2880, 6);
-    expect(m.toOperator).toBe(0);
-    expect(m.toLucra).toBeCloseTo(320, 6);
+    expect(m.toLicense).toBeCloseTo(3600, 6);
+    expect(m.operatorGross).toBe(0);
+    expect(m.toLucra).toBeCloseTo(400, 6);
+    // Sweep leaves the operator carrying the prize funding with no share to cover it.
+    expect(m.toOperator).toBeCloseTo(-800, 6);
   });
 
   it('a custom split that does not sum to 100 is rejected', () => {
@@ -193,23 +213,23 @@ describe('Recapture toggle', () => {
 });
 
 describe('Mid-month retirement', () => {
-  const r = () => TPcalculate(base({ annualFees: [4000] }));
+  const r = () => TPcalculate(base({ annualFees: [5000] }));
 
   it('credits only what is left in the clearing month', () => {
     const m = r().months;
-    expect(m[0].toLicense).toBe(1600);
-    expect(m[2].toLicense).toBe(800);
+    expect(m[0].toLicense).toBe(2000);
+    expect(m[2].toLicense).toBe(1000);
     expect(m[2].split).toBe('Crossover');
   });
 
   it('redirects the rest of that month to the operator', () => {
-    expect(r().months[2].toOperator).toBeCloseTo(1600 * 0.4 + 1600 * 0.9, 6);
-    expect(r().months[3].toOperator).toBeCloseTo(3200 * 0.9, 6);
+    expect(r().months[2].toOperator).toBeCloseTo(2000 * 0.4 + 2000 * 0.9 - 800, 6);
+    expect(r().months[3].toOperator).toBeCloseTo(4000 * 0.9 - 800, 6);
   });
 
   it('reports a fractional payoff month and reconciles every month', () => {
     expect(r().payoffMonth).toBeCloseTo(2.5, 9);
-    r().months.forEach((m) => expect(m.toLicense + m.toOperator + m.toLucra).toBeCloseTo(m.netRevenue, 6));
+    r().months.forEach((m) => expect(m.toLicense + m.toOperator + m.toLucra + m.prizeCost).toBeCloseTo(m.splitBase, 6));
   });
 });
 
@@ -217,7 +237,7 @@ describe('A deal that never retires', () => {
   it('reports the balance due rather than a false payoff', () => {
     const r = TPcalculate(base({ annualFees: [500000] }));
     expect(r.payoffMonth).toBeNull();
-    expect(r.balanceDue).toBeCloseTo(500000 - 1600 * 12, 6);
+    expect(r.balanceDue).toBeCloseTo(500000 - 2000 * 12, 6);
   });
 });
 
@@ -232,7 +252,7 @@ describe('Multi-year terms', () => {
 
   it('whole-term basis treats the fees as one balance', () => {
     const r = TPcalculate(multi({ payoffBasis: 'term' }));
-    expect(r.payoffMonth).toBeCloseTo(22.5, 6);
+    expect(r.payoffMonth).toBeCloseTo(18, 6);
     expect(r.months[35].split).toBe('Post-payoff');
   });
 
@@ -244,17 +264,17 @@ describe('Multi-year terms', () => {
 
   it('rolls a shortfall forward or charges it as cash', () => {
     const roll = TPcalculate(multi({ payoffBasis: 'annual', shortfall: 'roll', annualFees: [30000, 10000, 10000] }));
-    expect(roll.years[0].closing).toBeCloseTo(10800, 6);
+    expect(roll.years[0].closing).toBeCloseTo(6000, 6);
     expect(roll.trueUpTotal).toBe(0);
     const cash = TPcalculate(multi({ payoffBasis: 'annual', shortfall: 'cash', annualFees: [30000, 10000, 10000] }));
-    expect(cash.years[0].trueUp).toBeCloseTo(10800, 6);
+    expect(cash.years[0].trueUp).toBeCloseTo(6000, 6);
     expect(cash.years[1].opening).toBe(10000);
   });
 
   it('reconciles every month in both bases', () => {
     ['term', 'annual'].forEach((payoffBasis) => {
       TPcalculate(multi({ payoffBasis })).months.forEach((m) => {
-        expect(m.toLicense + m.toOperator + m.toLucra).toBeCloseTo(m.netRevenue, 6);
+        expect(m.toLicense + m.toOperator + m.toLucra + m.prizeCost).toBeCloseTo(m.splitBase, 6);
       });
     });
   });

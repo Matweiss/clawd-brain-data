@@ -4,7 +4,8 @@ import calc from './calc-functions.js';
 const { TPh2h, TPCcase, TPCcases, TPheatMap, TPscaled, TPcalculate, TPvalidate, TPstate, TPpitchH2H, TPpitchTournaments, TP_DEFAULTS } = calc;
 
 // Tournaments: 100 participants, $10 entry, 4 events, $200 cost per event
-// -> 4,000 entries value less 800 prize cost = 3,200 net a month.
+// -> 4,000 of entries a month, which is the pool that is split. The 800 of prize
+// funding is the operator's own cost out of their share, never netted off the pool.
 const deal = (o = {}) => Object.assign(JSON.parse(JSON.stringify(TP_DEFAULTS)), {
   termYears: 1, annualFees: [60000], mau: 1000000,
   includeTournaments: true, includeH2H: true,
@@ -88,20 +89,25 @@ describe('Combined revenue model', () => {
   it('adds the two products without touching either', () => {
     const r = TPCcase(cfg());
     expect(r.p2pFee).toBe(400000);
-    expect(r.tournamentNet).toBeCloseTo(3200, 6);
-    expect(r.revenueGenerated).toBeCloseTo(403200, 6);
-    expect(r.annualRevenueGenerated).toBeCloseTo(403200 * 12, 6);
+    expect(r.tournamentEntries).toBeCloseTo(4000, 6);
+    expect(r.prizeFunding).toBeCloseTo(800, 6);
+    expect(r.revenueGenerated).toBeCloseTo(404000, 6);
+    expect(r.annualRevenueGenerated).toBeCloseTo(404000 * 12, 6);
+    // Both halves of the total are the same kind of thing: the pool each product's
+    // split is taken from. Prize funding sits outside it, on its own line.
+    expect(r.revenueGenerated).toBeCloseTo(r.p2pFee + r.tournamentEntries, 6);
   });
 
   it('tournaments only drops head-to-head from the total', () => {
     const r = TPCcase(cfg({ tournament: deal({ includeH2H: false }) }));
     expect(r.p2pFee).toBe(0);
-    expect(r.revenueGenerated).toBeCloseTo(3200, 6);
+    expect(r.revenueGenerated).toBeCloseTo(4000, 6);
   });
 
   it('head-to-head only drops tournaments from the total', () => {
     const r = TPCcase(cfg({ tournament: deal({ includeTournaments: false }) }));
-    expect(r.tournamentNet).toBe(0);
+    expect(r.tournamentEntries).toBe(0);
+    expect(r.prizeFunding).toBe(0);
     expect(r.revenueGenerated).toBe(400000);
   });
 
@@ -152,13 +158,16 @@ describe('Combined revenue model', () => {
     // Head-to-head is linear in engagement, so the fee scales exactly.
     expect(cases[0].result.p2pFee).toBeCloseTo(cases[1].result.p2pFee * 0.5, 6);
     expect(cases[2].result.p2pFee).toBeCloseTo(cases[1].result.p2pFee * 1.5, 6);
-    // Tournaments are not linear: prize cost is fixed per event, so halving
+    // Entries scale with participation directly, because prize funding is fixed per
+    // event and no longer sits inside the pool. Contrast the operator's net, which
     // participation more than halves net revenue. 100 participants gives
     // 4,000 less 800 = 3,200; 50 gives 2,000 less the same 800 = 1,200.
-    expect(cases[0].result.tournamentNet).toBeCloseTo(1200, 6);
-    expect(cases[1].result.tournamentNet).toBeCloseTo(3200, 6);
-    expect(cases[2].result.tournamentNet).toBeCloseTo(5200, 6);
-    expect(cases[0].result.tournamentNet).toBeLessThan(cases[1].result.tournamentNet * 0.5);
+    expect(cases[0].result.tournamentEntries).toBeCloseTo(2000, 6);
+    expect(cases[1].result.tournamentEntries).toBeCloseTo(4000, 6);
+    expect(cases[2].result.tournamentEntries).toBeCloseTo(6000, 6);
+    // is not linear, because the fixed prize funding bites harder at low volume.
+    expect(cases[0].result.prizeFunding).toBeCloseTo(cases[1].result.prizeFunding, 6);
+    expect(cases[0].result.operatorNet).toBeLessThan(cases[1].result.operatorNet * 0.5);
   });
 
   it('scales off the entered assumption, not a fixed benchmark', () => {
@@ -168,7 +177,7 @@ describe('Combined revenue model', () => {
 
   it('reports zero tournament revenue rather than throwing on invalid tournaments', () => {
     const r = TPCcase(cfg({ tournament: deal({ tournaments: [] }) }));
-    expect(r.tournamentNet).toBe(0);
+    expect(r.tournamentEntries).toBe(0);
     expect(r.p2pFee).toBe(400000);
   });
 });
@@ -242,7 +251,7 @@ describe('Pitches', () => {
   it('the tournament pitch covers volume, prize cost and the licence outcome', () => {
     const p = TPpitchTournaments(deal({ annualFees: [4000] }));
     expect(p).toContain('tournament format');
-    expect(p).toContain('prize cost');
+    expect(p).toContain('prize');
     expect(p).toMatch(/retired by month/);
   });
 

@@ -11,7 +11,8 @@ async function openTab(page) {
 }
 
 // Deterministic deal: 100 participants, $10 entry, 4 events, $200 cost per
-// event -> 4,000 entries value less 800 prize cost = 3,200 net a month.
+// event -> 4,000 of entries a month, the pool that is split. The 800 of prize
+// funding is the operator's own cost, taken out of their share afterwards.
 async function setBaseDeal(page, o = {}) {
   await page.evaluate((opts) => {
     TP = TPstate(Object.assign({}, TP_DEFAULTS, {
@@ -110,19 +111,21 @@ test('recapture and sweep set the split, and editing a percentage makes it custo
 
   await expect(page.locator('#tp-split-credit')).toHaveValue('50');
   let m = await page.evaluate(() => TPcalculate(TP).months[0]);
-  expect(m.toLicense).toBeCloseTo(1600, 6);
+  expect(m.toLicense).toBeCloseTo(2000, 6);
 
   await page.locator('.tp-split-switch button[data-split="sweep"]').click();
   await expect(page.locator('#tp-split-credit')).toHaveValue('90');
   m = await page.evaluate(() => TPcalculate(TP).months[0]);
-  expect(m.toOperator).toBe(0);
+  // Sweep leaves the operator no share, so their prize funding shows as a loss.
+  expect(m.operatorGross).toBe(0);
+  expect(m.toOperator).toBe(-800);
 
   await page.locator('#tp-split-credit').fill('60');
   await page.locator('#tp-split-operator').fill('25');
   await page.locator('#tp-split-lucra').fill('15');
   expect(await page.evaluate(() => TP.splitMode)).toBe('custom');
   m = await page.evaluate(() => TPcalculate(TP).months[0]);
-  expect(m.toLicense).toBeCloseTo(1920, 6);
+  expect(m.toLicense).toBeCloseTo(2400, 6);
 
   await page.locator('#tp-split-lucra').fill('30');
   await expect(page.locator('#tp-validation')).toContainText('sum to 100');
@@ -186,7 +189,8 @@ test('a cash tournament collapses to a single prize field', async ({ page }) => 
 
 test('a fee that retires mid-month redirects the remainder to the operator', async ({ page }) => {
   await openTab(page);
-  await setBaseDeal(page, { fee: 4000 });
+  // 5,000 against 4,000 of entries a month clears part-way through month three.
+  await setBaseDeal(page, { fee: 5000 });
   const r = await page.evaluate(() => TPcalculate(TP));
   expect(r.payoffMonth).toBeCloseTo(2.5, 6);
   expect(r.months[2].split).toBe('Crossover');
@@ -333,7 +337,8 @@ test('the one-pager breaks out each product and the combination', async ({ page 
   expect(await page.evaluate(() => window.__printCalls)).toBe(1);
   expect(html).toContain('Fairway Social');
   expect(html).toContain('Head-to-head / yr');
-  expect(html).toContain('Tournaments / yr');
+  expect(html).toContain('Tournament entries / yr');
+  expect(html).toContain('Your prize funding / yr');
   expect(html).toContain('Combined / yr');
   // Input detail for both products.
   expect(html).toContain('Plays per player per month');
@@ -353,7 +358,7 @@ test('the one-pager drops the product that is not selected', async ({ page }) =>
 
   await page.locator('#tpc-section button', { hasText: 'Generate combined one-pager' }).click();
   let html = await page.evaluate(() => window.__printHTML);
-  expect(html).toContain('Tournaments / yr');
+  expect(html).toContain('Tournament entries / yr');
   expect(html).not.toContain('Head-to-head / yr');
 
   await page.locator('#tp-inc-h2h').check();
@@ -490,48 +495,90 @@ test('the Lucra toggle hides Lucra economics across the tab', async ({ page }) =
   expect(html).not.toContain('Lucra');
 });
 
-test('the one-pager brief carries both products, provenance and the vocabulary rules', async ({ page }) => {
+test('the one-pager brief emits every block the generator expects, in order', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
   await page.evaluate(() => { MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrender(); });
 
   const brief = await page.evaluate(() => TPbrief());
+  const blocks = ['PARTNER', 'CONTACT', 'PRODUCTS IN SCOPE', 'DISCLOSURE', 'HERO',
+    'STAT BAND — HEAD-TO-HEAD', 'STAT BAND — TOURNAMENTS', 'HOW IT RUNS', 'ONE PLAYER',
+    'ACROSS A YEAR', 'SENSITIVITY', 'EXCLUSIONS', 'FOOTNOTE', 'VOCABULARY', 'PROVENANCE',
+    'INTERNAL — DO NOT PRINT'];
+  let cursor = -1;
+  for (const b of blocks) {
+    const at = brief.indexOf(b);
+    expect(at, `${b} missing from the brief`).toBeGreaterThan(-1);
+    expect(at, `${b} out of order`).toBeGreaterThan(cursor);
+    cursor = at;
+  }
   expect(brief).toContain('Fairway Social');
-  expect(brief).toContain('Products in scope: head-to-head + tournaments');
-  expect(brief).toContain('Show revenue generated, not the split');
-  expect(brief).toContain('AUDIENCE');
-  expect(brief).toContain('HEAD-TO-HEAD');
-  expect(brief).toContain('TOURNAMENTS');
-  expect(brief).toContain('SENSITIVITY');
-  expect(brief).toContain('EXCLUSIONS');
-  expect(brief).toContain('[customer fact]');
-  expect(brief).toContain('[estimate]');
-  expect(brief).toContain('Conservative');
-  // It tells the generator the vocabulary rules rather than assuming them.
   expect(brief).toContain('Never: cash, wager');
-
-  // The monthly and yearly figures the generator will print side by side must
-  // agree, so the tournament monthly is a term average rather than month one.
-  const split = brief.match(/Available to split: \$([\d,]+) \/ mo average, \$([\d,]+) \/ yr/);
-  expect(split).not.toBeNull();
-  const perMonth = Number(split[1].replace(/,/g, '')), perYear = Number(split[2].replace(/,/g, ''));
-  expect(Math.abs(perMonth * 12 - perYear)).toBeLessThanOrEqual(12);
+  // Exactly two highlighted tiles per stat band.
+  const bandH = brief.slice(brief.indexOf('STAT BAND — HEAD-TO-HEAD'), brief.indexOf('STAT BAND — TOURNAMENTS'));
+  const bandT = brief.slice(brief.indexOf('STAT BAND — TOURNAMENTS'), brief.indexOf('HOW IT RUNS'));
+  expect(bandH.match(/\[highlight\]/g)).toHaveLength(2);
+  expect(bandT.match(/\[highlight\]/g)).toHaveLength(2);
 
   await page.locator('#tpc-section button', { hasText: 'Copy one-pager brief' }).click();
   await expect(page.locator('#tp-brief-out')).toBeVisible();
   await expect(page.locator('#tp-brief-out')).toContainText('SENSITIVITY');
 });
 
+test('the brief totals two pools of the same kind and keeps prize funding out of them', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
+  await page.evaluate(() => { MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrender(); });
+
+  const brief = await page.evaluate(() => TPbrief());
+  const num = (label) => {
+    const m = brief.match(new RegExp(label + ':?\\s+([\\d.]+) \\('));
+    expect(m, `${label} not found`).not.toBeNull();
+    return Number(m[1]);
+  };
+  const fee = num('X  platform fee generated');
+  const entries = num('Y  tournament entries generated');
+  const total = num('TOTAL REVENUE GENERATED');
+  expect(total).toBeCloseTo(fee + entries, 2);
+  // Prize funding is printed, but never inside the total.
+  const prize = num('Your prize funding');
+  expect(prize).toBeGreaterThan(0);
+  expect(total).not.toBeCloseTo(fee + entries - prize, 2);
+});
+
+test('the brief keeps the split internal and prints no net beside a pool', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
+  const brief = await page.evaluate(() => TPbrief());
+  const internalAt = brief.indexOf('INTERNAL — DO NOT PRINT');
+  const printable = brief.slice(0, internalAt);
+  // The rate lives only in the internal block, so it cannot be recovered by division.
+  expect(brief.slice(internalAt)).toMatch(/Rev share: \d+ \/ \d+/);
+  expect(printable).not.toMatch(/Rev share/);
+  expect(printable).not.toMatch(/To Lucra|Lucra share|operator share/i);
+});
+
+test('the brief refuses to build on invalid inputs rather than emitting a broken page', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000 });
+  await page.evaluate(() => { TP.splitMode = 'custom'; TP.custom = { credit: 60, operator: 30, lucra: 15 }; TPsave(); TPrender(); });
+  const brief = await page.evaluate(() => TPbrief());
+  expect(brief).toContain('cannot be built yet');
+  expect(brief).not.toContain('TOTAL REVENUE GENERATED');
+});
+
 test('the brief drops the product that is not selected', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page, { fee: 60000 });
   let brief = await page.evaluate(() => TPbrief());
-  expect(brief).toContain('Products in scope: tournaments');
-  expect(brief).not.toContain('HEAD-TO-HEAD');
+  expect(brief).toContain('tournaments');
+  expect(brief).not.toContain('STAT BAND — HEAD-TO-HEAD');
+  expect(brief).not.toContain('ONE PLAYER');
 
   await page.locator('#tp-inc-h2h').check();
   await page.locator('#tp-inc-tournaments').uncheck();
   brief = await page.evaluate(() => TPbrief());
-  expect(brief).toContain('Products in scope: head-to-head');
-  expect(brief).not.toContain('TOURNAMENTS');
+  expect(brief).toContain('head-to-head');
+  expect(brief).not.toContain('STAT BAND — TOURNAMENTS');
+  expect(brief).not.toContain('prize funding');
 });
