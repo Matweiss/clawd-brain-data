@@ -6,6 +6,8 @@ export default defineConfig({
       '**/brand-arcade.spec.js',
       '**/smoke.spec.js',
       '**/forecast-v2.spec.js',
+      '**/license-payoff.e2e.spec.js',
+      '**/free-to-play.e2e.spec.js',
       '**/node_modules/**',
     ],
   },

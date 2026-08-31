@@ -202,7 +202,7 @@ describe('/api/generate contract tests', () => {
     expect(res.statusCode).not.toBe(400);
   });
 
-  it('shares generated agreements as editable by anyone with the link', async () => {
+  it('shares generated agreements as read-only for anyone with the link', async () => {
     const originalFetch = globalThis.fetch;
     const permissionBodies = [];
 
@@ -248,7 +248,7 @@ describe('/api/generate contract tests', () => {
 
       expect(res.statusCode).toBe(200);
       expect(permissionBodies).toEqual([
-        { type: 'anyone', role: 'writer', allowFileDiscovery: false },
+        { type: 'anyone', role: 'reader', allowFileDiscovery: false },
       ]);
     } finally {
       globalThis.fetch = originalFetch;

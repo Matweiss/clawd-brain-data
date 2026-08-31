@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 
 async function openServedApp(page) {
   await page.goto('/api/app.html');
-  await page.getByRole('tab', { name: 'Launch Forecast' }).click();
+  const tab = page.getByRole('tab', { name: 'Launch Forecast' });
+  if (await tab.isVisible()) await tab.click();
+  else await page.locator('#mobile-workflow').selectOption('forecast');
   await expect(page.locator('#forecast')).toBeVisible();
 }
 
@@ -129,7 +131,7 @@ test('new planning tools remain usable on mobile', async ({ page }) => {
   await openServedApp(page);
   await expect(page.getByRole('button', { name: 'Download customer plan PDF' })).toBeVisible();
   expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(375);
-  await page.getByRole('tab', { name: 'Wager Break-even' }).click();
+  await page.locator('#mobile-workflow').selectOption('wagerbreakeven');
   await expect(page.locator('#wb-results')).toBeVisible();
   expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(375);
 });

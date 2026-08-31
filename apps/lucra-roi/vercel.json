@@ -23,6 +23,8 @@
     }
   ],
   "routes": [
+    { "src": "/public", "dest": "/api/public.js" },
+    { "src": "/api/scenario", "dest": "/api/scenario.js" },
     { "src": "/api/generate", "dest": "/api/generate.js" },
     { "src": "/api/logo", "dest": "/api/logo.js" },
     { "src": "/(.*)", "dest": "/api/index.js" }

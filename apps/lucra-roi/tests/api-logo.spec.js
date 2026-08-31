@@ -22,6 +22,19 @@ function mockRes() {
 }
 
 describe('/api/logo contract tests', () => {
+  it('rejects private, loopback, link-local, and metadata destinations', () => {
+    const { isPrivateIp, isBlockedHostname } = handler._test;
+    expect(isPrivateIp('10.0.0.1')).toBe(true);
+    expect(isPrivateIp('172.16.0.1')).toBe(true);
+    expect(isPrivateIp('192.168.1.1')).toBe(true);
+    expect(isPrivateIp('169.254.169.254')).toBe(true);
+    expect(isPrivateIp('::1')).toBe(true);
+    expect(isPrivateIp('::ffff:172.16.0.1')).toBe(true);
+    expect(isPrivateIp('8.8.8.8')).toBe(false);
+    expect(isBlockedHostname('metadata.google.internal')).toBe(true);
+    expect(isBlockedHostname('service.local')).toBe(true);
+  });
+
   it('rejects POST requests with 405', async () => {
     const req = mockReq({}, 'POST');
     const res = mockRes();

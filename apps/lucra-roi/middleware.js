@@ -26,6 +26,11 @@ function safeEqual(a, b) {
 }
 
 export default function middleware(req) {
+  const url = new URL(req.url);
+  // Customer scenario pages are a separate, read-only public surface. The
+  // authenticated calculator, agreement generator, logo proxy, and scenario
+  // creation endpoint remain behind this gate.
+  if (req.method === 'GET' && url.pathname === '/public') return;
   const expectedPass = process.env.SITE_PASSWORD;
   const expectedUser = process.env.SITE_USER || 'lucra';
 
