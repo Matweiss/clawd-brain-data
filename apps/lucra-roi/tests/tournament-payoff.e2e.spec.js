@@ -510,6 +510,13 @@ test('the one-pager brief carries both products, provenance and the vocabulary r
   // It tells the generator the vocabulary rules rather than assuming them.
   expect(brief).toContain('Never: cash, wager');
 
+  // The monthly and yearly figures the generator will print side by side must
+  // agree, so the tournament monthly is a term average rather than month one.
+  const split = brief.match(/Available to split: \$([\d,]+) \/ mo average, \$([\d,]+) \/ yr/);
+  expect(split).not.toBeNull();
+  const perMonth = Number(split[1].replace(/,/g, '')), perYear = Number(split[2].replace(/,/g, ''));
+  expect(Math.abs(perMonth * 12 - perYear)).toBeLessThanOrEqual(12);
+
   await page.locator('#tpc-section button', { hasText: 'Copy one-pager brief' }).click();
   await expect(page.locator('#tp-brief-out')).toBeVisible();
   await expect(page.locator('#tp-brief-out')).toContainText('SENSITIVITY');

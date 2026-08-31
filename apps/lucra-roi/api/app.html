@@ -4162,10 +4162,11 @@ function TPbrief() {
         ', ' + t.rebuyLabel + ', ' + t.rewardLabel +
         '  [participation ' + (src.basis === 'mau' ? TPnum(src.participantPct, 0) + '% of users' : Math.round(TPnum(src.participants, 0)) + ' per event') + ']');
     });
-    var m1 = r.months[0] || {};
-    lines.push('  Entries value: ' + money(m1.handle || 0) + ' / mo  [derived]');
-    lines.push('  Operator prize cost: ' + money(m1.prizeCost || 0) + ' / mo  [customer fact]');
-    lines.push('  Available to split: ' + money(m1.netRevenue || 0) + ' / mo, ' + money(r.totalNet / TPterm(st)) + ' / yr  [derived]');
+    var mCount = r.months.length || 12;
+    lines.push('  Entries value: ' + money(r.totalHandle / mCount) + ' / mo average, ' + money(r.totalHandle / TPterm(st)) + ' / yr  [derived]');
+    lines.push('  Operator prize cost: ' + money(r.totalPrizeCost / mCount) + ' / mo average  [customer fact]');
+    lines.push('  Available to split: ' + money(r.totalNet / mCount) + ' / mo average, ' + money(r.totalNet / TPterm(st)) + ' / yr  [derived]');
+    lines.push('  Monthly figures are term averages including the ramp, so the monthly and yearly numbers agree.');
     lines.push('');
     lines.push('LICENCE  (do not print the split percentages)');
     lines.push('  Term: ' + TPterm(st) + ' year' + (TPterm(st) === 1 ? '' : 's') + ', total ' + money(r.totalContract));
