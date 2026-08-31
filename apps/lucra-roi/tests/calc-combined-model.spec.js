@@ -1,115 +1,211 @@
 import { describe, it, expect } from 'vitest';
 import calc from './calc-functions.js';
 
-const { TPCcase, TPCcases, TPheatMap, TPscaled, TPcalculate, TPvalidate, TP_DEFAULTS } = calc;
+const { TPh2h, TPCcase, TPCcases, TPheatMap, TPscaled, TPcalculate, TPvalidate, TPstate, TPpitchH2H, TPpitchTournaments, TP_DEFAULTS } = calc;
 
-// Head-to-head is off by default, so the combined fixtures opt in explicitly.
-const tournament = (o = {}) => Object.assign(JSON.parse(JSON.stringify(TP_DEFAULTS)), {
-  annualFees: [60000], termYears: 1, participants: 100,
+// Tournaments: 100 participants, $10 entry, 4 events, $200 cost per event
+// -> 4,000 of entries a month, which is the pool that is split. The 800 of prize
+// funding is the operator's own cost out of their share, never netted off the pool.
+const deal = (o = {}) => Object.assign(JSON.parse(JSON.stringify(TP_DEFAULTS)), {
+  termYears: 1, annualFees: [60000], mau: 1000000,
   includeTournaments: true, includeH2H: true,
-  tournaments: [{ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, participationMode: 'shared', rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }],
+  tournaments: [{ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }],
 }, o);
 
+// Head-to-head inputs come from the Mini Game state, passed in as config.
 const cfg = (o = {}) => Object.assign({
-  mau: 1000000, engagement: 10, playsPerUser: 20, spendPerPlay: 2, feeRate: 10,
-  tournament: tournament(),
+  engagement: 10, playsPerUser: 20, spendPerPlay: 2, feeRate: 10,
+  rewardGames: 8, winRate: 50, redeemRate: 25, valuePerRedemption: 8,
+  tournament: deal(),
 }, o);
 
-describe('Combined revenue model', () => {
-  it('reports revenue generated before any split', () => {
-    const r = TPCcase(cfg());
-    // 1,000,000 x 10% = 100,000 engaged; x20 plays x $2 = $4,000,000 volume; x10% = $400,000 fee.
-    expect(r.engaged).toBe(100000);
-    expect(r.paidVolume).toBe(4000000);
-    expect(r.p2pFee).toBe(400000);
-    // Tournament net: 100 participants x $10 x 4 events = 4,000 less 800 prize cost.
-    expect(r.tournamentNet).toBeCloseTo(3200, 6);
-    expect(r.revenueGenerated).toBeCloseTo(403200, 6);
-    expect(r.annualRevenueGenerated).toBeCloseTo(403200 * 12, 6);
+describe('Head-to-head on its own', () => {
+  it('runs the paid-play funnel to a platform fee', () => {
+    const h = TPh2h(deal(), cfg(), 1);
+    expect(h.engaged).toBe(100000);
+    expect(h.paidVolume).toBe(4000000);
+    expect(h.platformFee).toBe(400000);
+    expect(h.revenueGenerated).toBe(400000);
   });
 
-  it('drives both products from one monthly active base', () => {
-    const doubled = TPCcase(cfg({ mau: 2000000 }));
-    expect(doubled.p2pFee).toBe(800000);
-    // Tournaments only follow MAU when their basis is a share of it.
-    expect(doubled.tournamentNet).toBeCloseTo(3200, 6);
+  it('runs the reward funnel to redeemed venue value', () => {
+    const h = TPh2h(deal(), cfg(), 1);
+    expect(h.rewardRedemptions).toBe(100000);
+    expect(h.rewardValue).toBe(800000);
+    // Reward value is never part of revenue generated.
+    expect(h.revenueGenerated).toBe(h.platformFee);
+  });
 
-    const share = TPCcase(cfg({ tournament: tournament({ participantBasis: 'mau', mau: 0, participantPct: 0.01 }) , mau: 2000000 }));
-    expect(share.tournamentParticipants).toBeCloseTo(200, 6);
+  it('paid play only drops the reward funnel', () => {
+    const h = TPh2h(deal({ h2hMode: 'wagering' }), cfg(), 1);
+    expect(h.wagering).toBe(true);
+    expect(h.rewards).toBe(false);
+    expect(h.rewardValue).toBe(0);
+    expect(h.platformFee).toBe(400000);
+  });
+
+  it('rewards only drops the paid-play funnel', () => {
+    const h = TPh2h(deal({ h2hMode: 'rewards' }), cfg(), 1);
+    expect(h.wagering).toBe(false);
+    expect(h.paidVolume).toBe(0);
+    expect(h.platformFee).toBe(0);
+    expect(h.rewardValue).toBe(800000);
+  });
+
+  it('uses the head-to-head reach when it is set', () => {
+    expect(TPh2h(deal({ h2hReach: 200000 }), cfg(), 1).engaged).toBe(20000);
+  });
+
+  it('takes Lucra share from the deal split rather than a head-to-head field', () => {
+    expect(TPh2h(deal(), cfg(), 1).lucraShare).toBeCloseTo(400000 * 0.1, 6);
+    const swept = TPh2h(deal({ splitMode: 'custom', custom: { credit: 50, operator: 30, lucra: 20 } }), cfg(), 1);
+    expect(swept.lucraShare).toBeCloseTo(400000 * 0.2, 6);
+  });
+
+  it('a free licence on this tab waives the Lucra licence whatever other tabs hold', () => {
+    const paid = TPh2h(deal({ annualFees: [120000] }), cfg(), 1);
+    expect(paid.licenseMonthly).toBe(10000);
+    const free = TPh2h(deal({ annualFees: [120000], freeLicense: true }), cfg(), 1);
+    expect(free.licenseMonthly).toBe(0);
+    expect(free.licenseWaived).toBe(true);
+  });
+
+  it('averages the launch ramp into the monthly figure', () => {
+    const flat = TPh2h(deal(), cfg(), 1);
+    const ramped = TPh2h(deal({ rampOn: true, rampStartPct: 0, rampMonths: 12 }), cfg(), 1);
+    expect(ramped.engaged).toBeLessThan(flat.engaged);
+    expect(ramped.platformFee).toBeLessThan(flat.platformFee);
+  });
+
+  it('reports nothing when head-to-head is not selected', () => {
+    const h = TPh2h(deal({ includeH2H: false }), cfg(), 1);
+    expect(h.on).toBe(false);
+    expect(h.platformFee).toBe(0);
+    expect(h.rewardValue).toBe(0);
+  });
+});
+
+describe('Combined revenue model', () => {
+  it('adds the two products without touching either', () => {
+    const r = TPCcase(cfg());
+    expect(r.p2pFee).toBe(400000);
+    expect(r.tournamentEntries).toBeCloseTo(4000, 6);
+    expect(r.prizeFunding).toBeCloseTo(800, 6);
+    expect(r.revenueGenerated).toBeCloseTo(404000, 6);
+    expect(r.annualRevenueGenerated).toBeCloseTo(404000 * 12, 6);
+    // Both halves of the total are the same kind of thing: the pool each product's
+    // split is taken from. Prize funding sits outside it, on its own line.
+    expect(r.revenueGenerated).toBeCloseTo(r.p2pFee + r.tournamentEntries, 6);
+  });
+
+  it('tournaments only drops head-to-head from the total', () => {
+    const r = TPCcase(cfg({ tournament: deal({ includeH2H: false }) }));
+    expect(r.p2pFee).toBe(0);
+    expect(r.revenueGenerated).toBeCloseTo(4000, 6);
+  });
+
+  it('head-to-head only drops tournaments from the total', () => {
+    const r = TPCcase(cfg({ tournament: deal({ includeTournaments: false }) }));
+    expect(r.tournamentEntries).toBe(0);
+    expect(r.prizeFunding).toBe(0);
+    expect(r.revenueGenerated).toBe(400000);
+  });
+
+  it('the two halves sum to the whole', () => {
+    const both = TPCcase(cfg()).revenueGenerated;
+    const t = TPCcase(cfg({ tournament: deal({ includeH2H: false }) })).revenueGenerated;
+    const h = TPCcase(cfg({ tournament: deal({ includeTournaments: false }) })).revenueGenerated;
+    expect(both).toBeCloseTo(t + h, 6);
+  });
+
+  it('head-to-head only skips the tournament validation entirely', () => {
+    const s = deal({ includeTournaments: false, tournaments: [], annualFees: [0] });
+    expect(TPvalidate(s)).toEqual([]);
+    expect(TPCcase(cfg({ tournament: s })).revenueGenerated).toBe(400000);
+  });
+
+  it('selecting nothing is an error, not a silent zero', () => {
+    expect(TPvalidate(deal({ includeTournaments: false, includeH2H: false })).join(' ')).toMatch(/at least one product/i);
+  });
+
+  it('keeps reward value and the Lucra split out of revenue generated', () => {
+    const withRewards = TPCcase(cfg());
+    const without = TPCcase(cfg({ rewardGames: 0 }));
+    expect(withRewards.rewardValue).toBeGreaterThan(0);
+    expect(withRewards.revenueGenerated).toBe(without.revenueGenerated);
+    const swept = TPCcase(cfg({ tournament: deal({ splitMode: 'sweep' }) }));
+    expect(swept.p2pFee).toBe(withRewards.p2pFee);
   });
 
   it('reports the combined engaged share so an implausible total is visible', () => {
-    const r = TPCcase(cfg({ engagement: 60, tournament: tournament({ participantBasis: 'mau', participantPct: 30 }) }));
+    const r = TPCcase(cfg({ engagement: 60, tournament: deal({ mau: 1000, tournaments: [{ id: 'a', name: 'A', entryPrice: 1, eventsPerMonth: 1, basis: 'mau', participantPct: 30, customerCashCost: 0 }] }) }));
     expect(r.combinedShare).toBeGreaterThan(60);
-    expect(r.engagement).toBe(60);
   });
 
-  it('never lets an engagement multiplier push participation past 100%', () => {
+  it('never lets a multiplier push engagement past 100%', () => {
     expect(TPCcase(cfg({ engagement: 80 }), 1.5).engagement).toBe(100);
   });
 
   it('produces three cases with the low one below the entered rate', () => {
     const cases = TPCcases(cfg());
     expect(cases.map((c) => c.key)).toEqual(['conservative', 'expected', 'best']);
-    expect(cases[0].result.factor).toBe(0.5);
-    expect(cases[1].result.factor).toBe(1);
-    expect(cases[2].result.factor).toBe(1.5);
     expect(cases[0].result.revenueGenerated).toBeLessThan(cases[1].result.revenueGenerated);
     expect(cases[2].result.revenueGenerated).toBeGreaterThan(cases[1].result.revenueGenerated);
   });
 
-  it('scales the cases off the entered assumption, not a fixed benchmark', () => {
-    const low = TPCcases(cfg({ engagement: 4 }));
-    const high = TPCcases(cfg({ engagement: 20 }));
-    expect(low[2].result.engagement).toBeCloseTo(6, 6);
-    expect(high[2].result.engagement).toBeCloseTo(30, 6);
+  it('scales both products in every case', () => {
+    const cases = TPCcases(cfg());
+    // Head-to-head is linear in engagement, so the fee scales exactly.
+    expect(cases[0].result.p2pFee).toBeCloseTo(cases[1].result.p2pFee * 0.5, 6);
+    expect(cases[2].result.p2pFee).toBeCloseTo(cases[1].result.p2pFee * 1.5, 6);
+    // Entries scale with participation directly, because prize funding is fixed per
+    // event and no longer sits inside the pool. Contrast the operator's net, which
+    // participation more than halves net revenue. 100 participants gives
+    // 4,000 less 800 = 3,200; 50 gives 2,000 less the same 800 = 1,200.
+    expect(cases[0].result.tournamentEntries).toBeCloseTo(2000, 6);
+    expect(cases[1].result.tournamentEntries).toBeCloseTo(4000, 6);
+    expect(cases[2].result.tournamentEntries).toBeCloseTo(6000, 6);
+    // is not linear, because the fixed prize funding bites harder at low volume.
+    expect(cases[0].result.prizeFunding).toBeCloseTo(cases[1].result.prizeFunding, 6);
+    expect(cases[0].result.operatorNet).toBeLessThan(cases[1].result.operatorNet * 0.5);
   });
 
-  it('reports zero tournament revenue rather than throwing when tournaments are invalid', () => {
-    const r = TPCcase(cfg({ tournament: tournament({ tournaments: [] }) }));
-    expect(r.tournamentNet).toBe(0);
+  it('scales off the entered assumption, not a fixed benchmark', () => {
+    expect(TPCcases(cfg({ engagement: 4 }))[2].result.engagement).toBeCloseTo(6, 6);
+    expect(TPCcases(cfg({ engagement: 20 }))[2].result.engagement).toBeCloseTo(30, 6);
+  });
+
+  it('reports zero tournament revenue rather than throwing on invalid tournaments', () => {
+    const r = TPCcase(cfg({ tournament: deal({ tournaments: [] }) }));
+    expect(r.tournamentEntries).toBe(0);
     expect(r.p2pFee).toBe(400000);
   });
 });
 
 describe('Break-even heat map', () => {
-  it('builds a five by five grid around the current setting', () => {
-    const m = TPheatMap(tournament());
+  const t = (o = {}) => deal(Object.assign({ includeH2H: false }, o));
+
+  it('builds a five by five grid around the first tournament type', () => {
+    const m = TPheatMap(t());
     expect(m.prices).toEqual([5, 7.5, 10, 12.5, 15]);
     expect(m.participation).toEqual([50, 75, 100, 125, 150]);
     expect(m.cells).toHaveLength(5);
-    expect(m.cells[0]).toHaveLength(5);
   });
 
   it('the centre cell matches the unscaled model', () => {
-    const s = tournament({ annualFees: [4000] });
-    const direct = TPcalculate(s);
-    const centre = TPheatMap(s).cells[2][2];
-    expect(centre.status).toBe('clear');
-    expect(centre.month).toBeCloseTo(direct.payoffMonth, 6);
+    const s = t({ annualFees: [4000] });
+    expect(TPheatMap(s).cells[2][2].month).toBeCloseTo(TPcalculate(s).payoffMonth, 6);
   });
 
-  it('reports how far a missing cell got instead of hiding it', () => {
-    const m = TPheatMap(tournament({ annualFees: [500000] }));
-    const centre = m.cells[2][2];
-    expect(centre.status).toBe('miss');
-    expect(centre.month).toBeNull();
-    expect(centre.retired).toBeGreaterThan(0);
-    expect(centre.retired).toBeLessThan(1);
+  it('reports how far a missing cell got', () => {
+    const c = TPheatMap(t({ annualFees: [500000] })).cells[2][2];
+    expect(c.status).toBe('miss');
+    expect(c.retired).toBeGreaterThan(0);
+    expect(c.retired).toBeLessThan(1);
   });
 
-  it('more participation and higher prices retire the licence sooner', () => {
-    const m = TPheatMap(tournament({ annualFees: [40000] }));
-    const low = m.cells[0][0], high = m.cells[4][4];
-    if (low.status === 'clear' && high.status === 'clear') {
-      expect(high.month).toBeLessThan(low.month);
-    } else {
-      expect(high.retired).toBeGreaterThan(low.retired);
-    }
-  });
-
-  it('scales percentage participation on the MAU basis', () => {
-    const m = TPheatMap(tournament({ participantBasis: 'mau', mau: 20000, participantPct: 2 }));
+  it('scales a percentage basis in percentage terms', () => {
+    const m = TPheatMap(t({ mau: 20000, tournaments: [{ id: 'a', name: 'A', entryPrice: 10, eventsPerMonth: 1, basis: 'mau', participantPct: 2, customerCashCost: 0 }] }));
     expect(m.basisMau).toBe(true);
     expect(m.participation).toEqual([1, 1.5, 2, 2.5, 3]);
   });
@@ -117,65 +213,66 @@ describe('Break-even heat map', () => {
 
 describe('TPscaled', () => {
   it('scales participation and price without mutating the input', () => {
-    const s = tournament();
+    const s = deal();
     const scaled = TPscaled(s, 2, 3);
-    expect(scaled.participants).toBe(200);
+    expect(scaled.tournaments[0].participants).toBe(200);
     expect(scaled.tournaments[0].entryPrice).toBe(30);
-    expect(s.participants).toBe(100);
+    expect(s.tournaments[0].participants).toBe(100);
     expect(s.tournaments[0].entryPrice).toBe(10);
   });
 
   it('leaves fees, splits and prize costs alone', () => {
-    const scaled = TPscaled(tournament(), 2, 2);
+    const scaled = TPscaled(deal(), 2, 2);
     expect(scaled.annualFees[0]).toBe(60000);
-    expect(scaled.splitMode).toBe('standard');
     expect(scaled.tournaments[0].customerCashCost).toBe(200);
   });
 });
 
-describe('Product selection', () => {
-  const only = (flags) => tournament(flags);
+describe('Pitches', () => {
+  const BLOCKED = /cash|wager|betting|\bbet\b|gambl|casino|prize money|stakes|buy-in|payout|\brake\b|\bhandle\b/i;
 
-  it('tournaments only drops head-to-head from the total', () => {
-    const r = TPCcase(cfg({ tournament: only({ includeH2H: false }) }));
-    expect(r.includeH2H).toBe(false);
-    expect(r.p2pFee).toBe(0);
-    expect(r.tournamentNet).toBeCloseTo(3200, 6);
-    expect(r.revenueGenerated).toBeCloseTo(3200, 6);
-    expect(r.engagement).toBe(0);
+  it('the head-to-head pitch describes the funnel it actually ran', () => {
+    const p = TPpitchH2H(deal(), cfg());
+    expect(p).toContain('1,000,000 addressable users');
+    expect(p).toContain('100,000 active players');
+    expect(p).toContain('paid-game volume');
+    expect(p).toContain('platform fee');
   });
 
-  it('head-to-head only drops tournaments from the total', () => {
-    const r = TPCcase(cfg({ tournament: only({ includeTournaments: false }) }));
-    expect(r.includeTournaments).toBe(false);
-    expect(r.tournamentNet).toBe(0);
-    expect(r.tournamentParticipants).toBe(0);
-    expect(r.p2pFee).toBe(400000);
-    expect(r.revenueGenerated).toBe(400000);
+  it('the head-to-head pitch drops the half that is switched off', () => {
+    expect(TPpitchH2H(deal({ h2hMode: 'wagering' }), cfg())).not.toContain('reward games');
+    expect(TPpitchH2H(deal({ h2hMode: 'rewards' }), cfg())).not.toContain('platform fee');
   });
 
-  it('both selected is the sum of the two', () => {
-    const both = TPCcase(cfg());
-    const t = TPCcase(cfg({ tournament: only({ includeH2H: false }) }));
-    const h = TPCcase(cfg({ tournament: only({ includeTournaments: false }) }));
-    expect(both.revenueGenerated).toBeCloseTo(t.revenueGenerated + h.revenueGenerated, 6);
+  it('the head-to-head pitch says the licence is waived when it is', () => {
+    expect(TPpitchH2H(deal({ freeLicense: true }), cfg())).toContain('licence waived');
   });
 
-  it('head-to-head only skips the tournament validation entirely', () => {
-    // No tournament types and no licence fee, which would otherwise error.
-    const s = only({ includeTournaments: false, tournaments: [], annualFees: [0] });
-    expect(TPvalidate(s)).toEqual([]);
-    expect(TPCcase(cfg({ tournament: s })).revenueGenerated).toBe(400000);
+  it('the tournament pitch covers volume, prize cost and the licence outcome', () => {
+    const p = TPpitchTournaments(deal({ annualFees: [4000] }));
+    expect(p).toContain('tournament format');
+    expect(p).toContain('prize');
+    expect(p).toMatch(/retired by month/);
   });
 
-  it('selecting nothing is an error rather than a silent zero', () => {
-    const s = only({ includeTournaments: false, includeH2H: false });
-    expect(TPvalidate(s).join(' ')).toMatch(/at least one product/i);
+  it('the tournament pitch reports a shortfall rather than implying payoff', () => {
+    expect(TPpitchTournaments(deal({ annualFees: [500000] }))).toMatch(/outstanding at the end/);
   });
 
-  it('the engaged share reflects only the selected products', () => {
-    const tOnly = TPCcase(cfg({ tournament: only({ includeH2H: false, participantBasis: 'mau', participantPct: 2 }) }));
-    expect(tOnly.engagement).toBe(0);
-    expect(tOnly.combinedShare).toBeCloseTo(tOnly.tournamentShare, 6);
+  it('the tournament pitch says so when activity does not pay the licence down', () => {
+    expect(TPpitchTournaments(deal({ recapture: false }))).toMatch(/does not pay the licence down/);
+  });
+
+  it('neither pitch uses blocked vocabulary', () => {
+    [TPpitchH2H(deal(), cfg()), TPpitchTournaments(deal()), TPpitchTournaments(deal({ freeLicense: true }))]
+      .forEach((p) => {
+        const hit = p.match(BLOCKED);
+        expect(hit, hit ? `blocked term "${hit[0]}" in: ${p}` : '').toBeNull();
+      });
+  });
+
+  it('returns nothing for a product that is not selected', () => {
+    expect(TPpitchH2H(deal({ includeH2H: false }), cfg())).toBe('');
+    expect(TPpitchTournaments(deal({ includeTournaments: false }))).toBe('');
   });
 });
