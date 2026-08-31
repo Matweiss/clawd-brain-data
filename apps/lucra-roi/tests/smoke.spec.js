@@ -11,25 +11,25 @@ import { test, expect } from '@playwright/test';
 const TAB_NAMES = [
   'Core ROI',
   'Gamification',
+  'Revenue Model',
   'Mini Game ROI',
   'Launch Forecast',
   'Digital Media ROI',
   'Wager Break-even',
   'Investment Plans',
   'Brand Arcade',
-  'Revenue Model',
 ];
 
 const TAB_PANEL_IDS = [
   'roi',
   'gamification',
+  'tournaments',
   'minigame',
   'forecast',
   'digitalmedia',
   'wagerbreakeven',
   'analytics',
   'brandarcade',
-  'tournaments',
 ];
 
 function tabButton(page, name) {
