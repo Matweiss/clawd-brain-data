@@ -62,7 +62,8 @@ describe('Entries, handle and prize cost', () => {
   it('a cash tournament uses the single cash prize amount for both roles', () => {
     const s = base({ tournaments: [{ name: 'C', entryPrice: 10, eventsPerMonth: 3, rebuys: 0, isCash: true, cashPrizeAmount: 300, customerCashCost: 999, rewardFaceValue: 111 }] });
     expect(TPcalculate(s).months[0].prizeCost).toBe(900);
-    expect(TPcustomerProjection(s).tournaments[0].rewardLabel).toBe('$300 cash prize');
+    // Wording changed to satisfy the lucra-model-onepager blocked-vocabulary rule.
+    expect(TPcustomerProjection(s).tournaments[0].rewardLabel).toBe('$300 prize pool');
   });
 
   it('a non-cash tournament advertises face value but charges cash cost', () => {

@@ -456,6 +456,28 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 .tp-tour .tp-row{margin-top:12px}
 .tp-tour-warn{margin-top:10px;border:1px solid var(--amber);background:var(--amber-bg);color:var(--amber);border-radius:8px;padding:8px 11px;font-size:12px}
 #tp-fee-total{margin-top:8px}
+.tp-heat-wrap{margin-top:8px}
+table.tp-heat{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+table.tp-heat th,table.tp-heat td{padding:8px 10px;text-align:center;border:1px solid var(--border);white-space:nowrap}
+table.tp-heat thead th{background:var(--surface2);color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+table.tp-heat thead th small{display:block;font-size:9px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text3);opacity:.8}
+table.tp-heat tbody th{background:var(--surface2);color:var(--text2);font-weight:600;text-align:right}
+table.tp-heat td span{display:block;font-size:9px;color:inherit;opacity:.7;text-transform:uppercase;letter-spacing:.4px}
+table.tp-heat td.clear{color:var(--green)}
+table.tp-heat td.clear.fast{background:rgba(138,233,26,0.26)}
+table.tp-heat td.clear.mid{background:rgba(138,233,26,0.15)}
+table.tp-heat td.clear.slow{background:rgba(138,233,26,0.07)}
+table.tp-heat td.miss{background:var(--amber-bg);color:var(--amber)}
+.tpc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.tpc-case{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.tpc-case.best{border-color:var(--green-border);background:var(--green-bg)}
+.tpc-lines{margin:12px 0 0;display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--border);padding-top:10px}
+.tpc-lines div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;font-size:12px}
+.tpc-lines dt{min-width:0;overflow-wrap:anywhere}
+.tpc-case{min-width:0;overflow-wrap:anywhere}
+.tpc-grid{min-width:0}
+.tpc-lines dt{color:var(--text3)}
+.tpc-lines dd{margin:0;color:var(--text);font-variant-numeric:tabular-nums}
 #tp-years{margin-top:26px}
 .tp-bars.dense{gap:2px}
 .tp-bars.dense .tp-bar-label{font-size:9px}
@@ -865,6 +887,19 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 </div>
 </div>
 <div class="card-wrap" id="mg-w-roi"><div class="card-actions"><button class="dl-btn" onclick="DL('roi')">Download image</button></div><div id="mg-o-roi"></div></div>
+
+<section class="card-section" id="tpc-section" aria-labelledby="tpc-title" style="margin-top:26px">
+  <div class="ct" id="tpc-title">Combined revenue model &mdash; head-to-head + tournaments</div>
+  <div class="sn">One monthly active base feeds both products. Head-to-head takes an engagement share of it; tournaments take their own share, or an entered participant count, on the Tournament Payoff tab.</div>
+  <div class="inputs tp-three" style="margin-top:12px;margin-bottom:0">
+    <div class="input-group"><label class="input-label" for="tpc-mau">Monthly active base</label><input class="pf-input" id="tpc-mau" type="number" min="0" step="1000" oninput="TPCsetMau(this.value)"><div class="sn">Customer system &middot; shared by both products</div></div>
+    <div class="input-group"><label class="input-label" for="tpc-name">Partner name for the export</label><input class="pf-input" id="tpc-name" type="text" placeholder="Partner name" oninput="TPCrender()"><div class="sn">Labels the one-pager</div></div>
+  </div>
+  <div class="tpc-grid" id="tpc-cases" aria-live="polite" style="margin-top:16px"></div>
+  <div id="tpc-detail"></div>
+  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button></div>
+  <div class="sn">Shows revenue generated before any split, per the Lucra default. Operator and Lucra shares stay on the Tournament Payoff tab.</div>
+</section>
 
 </div>
 
@@ -1572,7 +1607,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       </div>
     </div>
     <div class="inputs" id="tp-mau-block" hidden style="margin-bottom:0">
-      <div class="input-group"><label class="input-label" for="tp-mau">Monthly active users</label><input class="pf-input" id="tp-mau" type="number" min="0" step="1000" placeholder="Enter the customer's MAU" oninput="TPset('mau',this.value)"><div class="sn">Customer system · required when participation is a share of MAU</div></div>
+      <div class="input-group"><label class="input-label" for="tp-mau">Monthly active users</label><input class="pf-input" id="tp-mau" type="number" min="0" step="1000" placeholder="Enter the customer's MAU" oninput="TPCsetMau(this.value)"><div class="sn">Customer system · required when participation is a share of MAU</div></div>
     </div>
     <div class="inputs" id="tp-flat-count" style="margin-bottom:0">
       <div class="input-group"><label class="input-label" for="tp-participants">Average participants per event</label><input class="pf-input" id="tp-participants" type="number" min="0" step="10" oninput="TPset('participants',this.value)"><div class="sn">Estimated · planning placeholder, replace with customer numbers. Applied identically across every month.</div></div>
@@ -1607,6 +1642,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="tp-cards" id="tp-summary" aria-live="polite"></div>
     <div class="tp-progress" id="tp-progress"></div>
     <div class="tp-table-wrap" id="tp-years" hidden></div>
+    <div class="tp-heat-wrap"><div class="pf-section-title" style="margin-top:26px">Break-even map</div><div id="tp-heat"></div></div>
     <div class="tp-table-wrap" id="tp-table"></div>
     <div class="tp-actions"><button type="button" class="primary" onclick="TPprintInternal()">Export Results (Internal)</button></div>
     <div class="sn">Internal export includes licence fee, split percentages and prize costs. Do not hand it to a customer.</div>
@@ -1704,7 +1740,7 @@ function renderObjections(){
 function S(k){V[k]=+$('s-'+k).value;if(k==='fee')V.pfee=V[k];if(k==='pfee')V.fee=V[k];$('i-'+k).value=V[k];if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function I(k){var raw=$('i-'+k).value;if(raw===''||raw==='-')return;var v=parseFloat(raw);if(isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if(k==='pfee')V.fee=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));if(k==='opt'||k==='lift'){curScn='';document.querySelectorAll('.scn').forEach(function(b){b.classList.remove('on')})}checkCaps();U();saveState()}
 function discI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;V[k]=v;if(k==='fee')V.pfee=v;if($('i-'+k))$('i-'+k).value=v;var sr=$('s-'+k);if(sr)sr.value=Math.max(+sr.min,Math.min(+sr.max,Math.round(v)));checkCaps();U();saveState()}
-function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';document.body.classList.toggle('forecast-mode',id==='forecast'||id==='wagerbreakeven'||id==='digitalmedia');['roi','minigame','forecast','digitalmedia','wagerbreakeven','analytics','proposal','trackman','gamification','brandarcade','tournaments'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');t.setAttribute('aria-selected','false');t.setAttribute('tabindex','-1')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn){btn.classList.add('active');btn.setAttribute('aria-selected','true');btn.setAttribute('tabindex','0')}if(id==='trackman')renderTM();if(id==='wagerbreakeven')WBrender();if(id==='gamification')renderGM();if(id==='brandarcade')BAinit();if(id==='forecast')LFinit();if(id==='digitalmedia')DMinit();if(id==='tournaments')TPinit();U()}
+function T(id,b){if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';document.body.classList.toggle('forecast-mode',id==='forecast'||id==='wagerbreakeven'||id==='digitalmedia');['roi','minigame','forecast','digitalmedia','wagerbreakeven','analytics','proposal','trackman','gamification','brandarcade','tournaments'].forEach(function(t){if($(t))$(t).style.display=t===id?'block':'none'});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');t.setAttribute('aria-selected','false');t.setAttribute('tabindex','-1')});var btn=b||document.querySelector('.tab[onclick*="'+id+'"]');if(btn){btn.classList.add('active');btn.setAttribute('aria-selected','true');btn.setAttribute('tabindex','0')}if(id==='trackman')renderTM();if(id==='wagerbreakeven')WBrender();if(id==='gamification')renderGM();if(id==='brandarcade')BAinit();if(id==='forecast')LFinit();if(id==='digitalmedia')DMinit();if(id==='tournaments')TPinit();if(id==='minigame'&&typeof TPCrender==='function')TPCrender();U()}
 // Keyboard navigation for tabs (arrow keys per WAI-ARIA tablist pattern)
 document.addEventListener('keydown',function(e){var tab=e.target;if(!tab||tab.getAttribute('role')!=='tab')return;var tabs=Array.from(tab.parentElement.querySelectorAll('[role=tab]'));var idx=tabs.indexOf(tab),next=-1;if(e.key==='ArrowRight'||e.key==='ArrowDown'){next=(idx+1)%tabs.length}else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){next=(idx-1+tabs.length)%tabs.length}else if(e.key==='Home'){next=0}else if(e.key==='End'){next=tabs.length-1}if(next>=0){e.preventDefault();tabs[next].click();tabs[next].focus()}})
 
@@ -2317,6 +2353,7 @@ function MGcalc(tau,eng,plays,wager,rake,rs,license){
 }
 
 function MGu(){
+  if(typeof TPCrender==='function')setTimeout(TPCrender,0);
   var r=MGcalc(MG.tau,MG.eng,MG.plays,MG.wager,MG.rake,MG.rs,MG.license);
   var costLabel=(r.lucraMo>0?F(r.lucraMo)+'/mo Lucra cost':'no Lucra cost modeled');
   $('mg-funnel').innerHTML=
@@ -3381,11 +3418,123 @@ function TPcustomerProjection(input) {
         rebuyLabel: label,
         frequencyLabel: TPnum(t.eventsPerMonth, 0) + 'x per month',
         rewardLabel: t.isCash
-          ? '$' + Math.round(TPnum(t.cashPrizeAmount, 0)).toLocaleString() + ' cash prize'
+          ? '$' + Math.round(TPnum(t.cashPrizeAmount, 0)).toLocaleString() + ' prize pool'
           : '$' + Math.round(TPnum(t.rewardFaceValue, 0)).toLocaleString() + ' value reward'
       };
     })
   };
+}
+
+/* ---------- break-even heat map ----------
+   Entry price across the top, participation down the side. Each cell re-runs
+   the whole model at that pair and reports the month the licence retires, or
+   how far it got if it never does. Shading encodes the month, not a judgement,
+   so no comfort threshold is invented. */
+function TPheatMap(input) {
+  var s = TPstate(input), basisMau = s.participantBasis === 'mau',
+    factors = [0.5, 0.75, 1, 1.25, 1.5],
+    baseParticipation = basisMau
+      ? (s.volumeMode === 'ramp' ? TPnum(s.rampPlateauPct, 0) : TPnum(s.participantPct, 0))
+      : (s.volumeMode === 'ramp' ? TPnum(s.rampPlateau, 0) : TPnum(s.participants, 0)),
+    primaryPrice = (s.tournaments && s.tournaments[0]) ? TPnum(s.tournaments[0].entryPrice, 0) : 0,
+    totalMonths = TPterm(s) * 12;
+
+  var prices = factors.map(function (f) { return Math.round(primaryPrice * f * 100) / 100; }),
+    rows = factors.map(function (f) { return Math.round(baseParticipation * f * 1000) / 1000; });
+
+  var cells = rows.map(function (participation, ri) {
+    return prices.map(function (price, ci) {
+      var c = TPscaled(s, factors[ri], factors[ci]), r = TPcalculate(c);
+      if (r.errors.length) return { status: 'error', month: null, retired: 0 };
+      var retired = r.totalContract > 0 ? r.cumulativeLicense / r.totalContract : 1;
+      return {
+        status: r.payoffMonth === null ? 'miss' : 'clear',
+        month: r.payoffMonth,
+        retired: retired,
+        share: r.payoffMonth === null ? null : r.payoffMonth / totalMonths
+      };
+    });
+  });
+
+  return {
+    basisMau: basisMau, prices: prices, participation: rows, cells: cells,
+    totalMonths: totalMonths, baseParticipation: baseParticipation, primaryPrice: primaryPrice
+  };
+}
+
+/* A copy of the state with participation and entry prices scaled. Used by the
+   heat map and by the combined three-case band, so both scale identically. */
+function TPscaled(input, participationFactor, priceFactor) {
+  var s = TPstate(input), p = TPnum(participationFactor, 0), q = priceFactor === undefined ? 1 : TPnum(priceFactor, 0);
+  s.participants = TPnum(s.participants, 0) * p;
+  s.participantPct = TPnum(s.participantPct, 0) * p;
+  s.rampStart = TPnum(s.rampStart, 0) * p;
+  s.rampPlateau = TPnum(s.rampPlateau, 0) * p;
+  s.rampStartPct = TPnum(s.rampStartPct, 0) * p;
+  s.rampPlateauPct = TPnum(s.rampPlateauPct, 0) * p;
+  s.tournaments = s.tournaments.map(function (t) {
+    var c = Object.assign({}, t);
+    c.participantsCustom = TPnum(c.participantsCustom, 0) * p;
+    c.participantPctCustom = TPnum(c.participantPctCustom, 0) * p;
+    c.entryPrice = TPnum(c.entryPrice, 0) * q;
+    return c;
+  });
+  return s;
+}
+
+/* ---------- combined revenue model ----------
+   One monthly active user base feeds both products. Head-to-head takes an
+   engagement share of it; tournaments take either their own share of it or an
+   entered participant count. Revenue generated is reported as the pool each
+   product produces before any split, which is what a partner-facing page shows.
+
+   The two audiences are not netted against each other, because a player taking
+   part in both generates two separate transactions rather than one counted
+   twice. What is reported instead is the combined engaged share of the base, so
+   an implausible total is visible rather than buried. */
+function TPCcase(cfg, factor) {
+  var f = factor === undefined ? 1 : TPnum(factor, 0),
+    mau = TPnum(cfg.mau, 0),
+    engagement = TPnum(cfg.engagement, 0, 100) * f,
+    engaged = mau * Math.min(100, engagement) / 100,
+    paidPlays = engaged * TPnum(cfg.playsPerUser, 0),
+    paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
+    p2pFee = paidVolume * TPnum(cfg.feeRate, 0, 100) / 100;
+
+  var tState = TPscaled(Object.assign(TPstate(cfg.tournament), { mau: mau }), f, 1),
+    tResult = TPcalculate(tState),
+    months = tResult.months.length || 12,
+    tournamentMonthly = tResult.errors.length ? 0 : tResult.totalNet / months,
+    tournamentParticipants = tResult.errors.length ? 0 : (tResult.months[months - 1] || {}).participants || 0;
+
+  var tournamentShare = mau > 0 ? tournamentParticipants / mau * 100 : 0;
+
+  return {
+    factor: f,
+    mau: mau,
+    engagement: Math.min(100, engagement),
+    engaged: engaged,
+    paidVolume: paidVolume,
+    p2pFee: p2pFee,
+    tournamentParticipants: tournamentParticipants,
+    tournamentShare: tournamentShare,
+    tournamentNet: tournamentMonthly,
+    revenueGenerated: p2pFee + tournamentMonthly,
+    annualRevenueGenerated: (p2pFee + tournamentMonthly) * 12,
+    combinedShare: Math.min(100, engagement) + tournamentShare,
+    tournamentResult: tResult
+  };
+}
+
+/* Three cases at half, as entered, and one and a half times the entered
+   participation. The multipliers scale the user's own assumptions rather than
+   any Lucra benchmark, and the low case is always present. */
+function TPCcases(cfg) {
+  return [
+    { key: 'conservative', label: 'Conservative', note: 'Half the entered participation', result: TPCcase(cfg, 0.5) },
+    { key: 'expected', label: 'Expected', note: 'Participation as entered', result: TPCcase(cfg, 1) },
+    { key: 'best', label: 'Best case', note: '1.5x the entered participation', result: TPCcase(cfg, 1.5) }
+  ];
 }
 /* TP-PURE-END */
 
@@ -3758,8 +3907,10 @@ function TPrenderCustomer() {
 function TPrender() {
   var r = TPcalculate(TP);
   TPrenderResults(r);
+  TPrenderHeat(r);
   TPrenderTemplates();
   TPrenderCustomer();
+  if (typeof TPCrender === 'function') TPCrender();
   return r;
 }
 
@@ -3805,6 +3956,177 @@ function TPprintCustomer() {
     TPprintHeader('Tournament programme', 'Customer summary') +
     '<div class="tp-print-cust">' + $('tp-customer-cards').innerHTML + '</div>' +
     '<div class="tp-print-foot">Tournament structure summary. Final programme details depend on an executed agreement.</div>'
+  );
+}
+
+/* ---------- break-even heat map rendering ---------- */
+
+function TPheatLabel(map, v) {
+  return map.basisMau ? (Math.round(v * 100) / 100) + '%' : Math.round(v).toLocaleString();
+}
+
+function TPrenderHeat(r) {
+  var host = $('tp-heat'); if (!host) return;
+  if (r.errors.length || r.free || r.totalContract <= 0) {
+    host.innerHTML = '<div class="sn">The break-even map needs a licence fee to retire. It is hidden while the licence is free.</div>';
+    return;
+  }
+  var map = TPheatMap(TP);
+  if (!map.primaryPrice || !map.baseParticipation) {
+    host.innerHTML = '<div class="sn">Enter an entry price and a participation level to build the break-even map.</div>';
+    return;
+  }
+  var head = '<tr><th>' + (map.basisMau ? 'Participation' : 'Participants') + '</th>' +
+    map.prices.map(function (p) { return '<th>' + TPmoney(p) + '<small>entry</small></th>'; }).join('') + '</tr>';
+
+  var body = map.participation.map(function (part, ri) {
+    return '<tr><th>' + TPheatLabel(map, part) + '</th>' + map.cells[ri].map(function (c) {
+      if (c.status === 'error') return '<td class="miss">n/a</td>';
+      if (c.status === 'miss') {
+        return '<td class="miss" title="Does not retire within the term">' +
+          Math.round(c.retired * 100) + '%<span>retired</span></td>';
+      }
+      var band = c.share <= 0.34 ? 'fast' : c.share <= 0.67 ? 'mid' : 'slow';
+      return '<td class="clear ' + band + '" title="Licence retired">' +
+        TPmonthLabel(c.month).replace('Month ', 'M') + '<span>retired</span></td>';
+    }).join('') + '</tr>';
+  }).join('');
+
+  host.innerHTML =
+    '<div class="sn">Each cell re-runs the whole model at that entry price and participation level. Shading shows how early in the ' +
+    map.totalMonths + '-month term the licence retires. Amber cells never retire and show how far they got. ' +
+    'Your current setting is the centre cell.</div>' +
+    '<div class="tp-table-wrap"><table class="tp-heat">' +
+    '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+}
+
+/* ---------- combined revenue model, rendered on the Mini Game tab ---------- */
+
+function TPCconfig() {
+  return {
+    mau: MG.tau,
+    engagement: MG.eng,
+    playsPerUser: MG.plays,
+    spendPerPlay: MG.wager,
+    feeRate: MG.rake,
+    tournament: TP
+  };
+}
+
+var TPC_SEEDED = false;
+
+/* One shared base. The Tournament Payoff tab persists it, the Mini Game tab
+   holds the working copy MGcalc reads, and this keeps the two equal. */
+function TPCsetMau(value) {
+  var v = TPnum(value, 0);
+  TP.mau = v;
+  MG.tau = v;
+  TPC_SEEDED = true;
+  TPCsyncMauInputs(v);
+  TPsave();
+  if (typeof MGu === 'function') MGu();
+  TPrender();
+}
+function TPCsyncMauInputs(v) {
+  ['mgi-tau', 'tp-mau', 'tpc-mau'].forEach(function (id) {
+    var el = $(id);
+    if (el && document.activeElement !== el) el.value = v;
+  });
+  var slider = $('mgs-tau');
+  if (slider) slider.value = Math.max(+slider.min, Math.min(+slider.max, v));
+}
+
+function TPCrender() {
+  var host = $('tpc-cases'); if (!host) return;
+  if (!TP_READY) { TPload(); TP_READY = true; }
+  if (!TPC_SEEDED) {
+    // A persisted base wins on first render so a reload does not reset it to the
+    // Mini Game default. After that the two stay in step whichever tab edits it.
+    if (TPnum(TP.mau, 0) > 0) MG.tau = TPnum(TP.mau, 0); else TP.mau = MG.tau;
+    TPC_SEEDED = true;
+  } else {
+    TP.mau = MG.tau;
+  }
+  TPCsyncMauInputs(MG.tau);
+
+  var cases = TPCcases(TPCconfig()), errors = TPvalidate(TP);
+
+  if (errors.length) {
+    host.innerHTML = '<div class="tp-validation">Tournament inputs need attention before the combined model runs:' +
+      errors.map(function (e) { return '<div>' + TPesc(e) + '</div>'; }).join('') + '</div>';
+    $('tpc-detail').innerHTML = '';
+    return;
+  }
+
+  host.innerHTML = cases.map(function (c) {
+    var r = c.result;
+    return '<div class="tpc-case' + (c.key === 'best' ? ' best' : '') + '">' +
+      '<div class="tp-card-label">' + TPesc(c.label) + '</div>' +
+      '<div class="tp-card-value">' + TPmoney(r.annualRevenueGenerated) + '</div>' +
+      '<div class="tp-card-note">' + TPesc(c.note) + '</div>' +
+      '<dl class="tpc-lines">' +
+      '<div><dt>Head-to-head platform fee</dt><dd>' + TPmoney(r.p2pFee * 12) + '</dd></div>' +
+      '<div><dt>Tournament net revenue</dt><dd>' + TPmoney(r.tournamentNet * 12) + '</dd></div>' +
+      '<div><dt>Engaged share of base</dt><dd>' + (Math.round(r.combinedShare * 100) / 100) + '%</dd></div>' +
+      '</dl></div>';
+  }).join('');
+
+  var mid = cases[1].result;
+  $('tpc-detail').innerHTML =
+    '<div class="sn"><strong>Revenue generated, before any split.</strong> Head-to-head is paid-game volume times the platform fee rate. ' +
+    'Tournaments are entry value less the operator\'s prize cost, the pool the licence and revenue share are taken from. ' +
+    'The operator and Lucra shares stay on the Tournament Payoff tab and are not shown here.</div>' +
+    '<div class="grid grid3" style="margin-top:12px">' +
+    '<div class="stat"><div class="label">Monthly active base</div><div class="val cyan">' + Math.round(mid.mau).toLocaleString() + '</div><div class="sub">Shared by both products</div></div>' +
+    '<div class="stat"><div class="label">Paid-game volume / mo</div><div class="val">' + TPmoney(mid.paidVolume) + '</div><div class="sub">' + Math.round(mid.engaged).toLocaleString() + ' engaged at ' + (Math.round(mid.engagement * 100) / 100) + '%</div></div>' +
+    '<div class="stat"><div class="label">Tournament participants</div><div class="val">' + Math.round(mid.tournamentParticipants).toLocaleString() + '</div><div class="sub">' + (Math.round(mid.tournamentShare * 1000) / 1000) + '% of the base per event</div></div>' +
+    '</div>' +
+    '<div class="sn" style="margin-top:10px">A player can take part in both, so the two audiences are not netted against each other. ' +
+    'The combined engaged share above makes the total assumption visible: at the expected case this model assumes ' +
+    (Math.round(mid.combinedShare * 100) / 100) + '% of the base is active across both products.</div>';
+}
+
+function TPCprint() {
+  var errors = TPvalidate(TP);
+  if (errors.length) { alert('Fix the tournament inputs before exporting.'); return; }
+  TPCrender();
+  var cases = TPCcases(TPCconfig()), mid = cases[1].result,
+    name = ($('tpc-name') && $('tpc-name').value.trim()) || TP.dealName || 'Partner';
+
+  var band = '<table class="tp-months"><thead><tr><th>Case</th><th>Participation</th>' +
+    '<th>Head-to-head platform fee</th><th>Tournament net revenue</th><th>Revenue generated / yr</th></tr></thead><tbody>' +
+    cases.map(function (c) {
+      var r = c.result;
+      return '<tr' + (c.key === 'best' ? ' class="crossover"' : '') + '><td>' + TPesc(c.label) + '</td><td>' + TPesc(c.note) +
+        '</td><td>' + TPmoney(r.p2pFee * 12) + '</td><td>' + TPmoney(r.tournamentNet * 12) + '</td><td>' +
+        TPmoney(r.annualRevenueGenerated) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+
+  var structure = TPcustomerProjection(TP).tournaments.map(function (t) {
+    return '<div class="tp-cust-card"><div class="tp-cust-name">' + TPesc(t.name) + '</div>' +
+      '<div class="tp-cust-reward">' + TPesc(t.rewardLabel) + '</div>' +
+      '<dl class="tp-cust-meta">' +
+      '<div><dt>Entry</dt><dd>$' + Math.round(t.entryPrice).toLocaleString() + '</dd></div>' +
+      '<div><dt>Format</dt><dd>' + TPesc(t.rebuyLabel) + '</dd></div>' +
+      '<div><dt>Frequency</dt><dd>' + TPesc(t.frequencyLabel) + '</dd></div></dl></div>';
+  }).join('');
+
+  TPrunPrint(
+    '<div class="tp-print-head"><div><div class="tp-print-brand">Lucra</div><h1>Combined revenue model</h1>' +
+    '<div class="tp-print-deal">' + TPesc(name) + ' &middot; ' + new Date().toLocaleDateString() + '</div></div>' +
+    '<div class="tp-print-badge">Revenue generated</div></div>' +
+    '<div class="tp-print-cards"><div class="tp-card"><div class="tp-card-label">Monthly active base</div><div class="tp-card-value">' +
+    Math.round(mid.mau).toLocaleString() + '</div></div>' +
+    '<div class="tp-card"><div class="tp-card-label">Paid-game volume / yr</div><div class="tp-card-value">' + TPmoney(mid.paidVolume * 12) + '</div></div>' +
+    '<div class="tp-card"><div class="tp-card-label">Revenue generated / yr</div><div class="tp-card-value">' + TPmoney(mid.annualRevenueGenerated) + '</div></div>' +
+    '<div class="tp-card"><div class="tp-card-label">Tournament programme</div><div class="tp-card-value">' + TP.tournaments.length + ' formats</div></div></div>' +
+    '<h2 style="font-size:15px;margin:20px 0 8px">Sensitivity</h2>' + band +
+    '<h2 style="font-size:15px;margin:20px 0 8px">The tournament programme</h2>' +
+    '<div class="tp-print-cust">' + structure + '</div>' +
+    '<div class="tp-print-foot">Revenue generated is the pool each product produces before any revenue share, structured with the partner. ' +
+    'Head-to-head is paid-game volume times the platform fee rate; tournaments are entry value less the operator\'s prize cost. ' +
+    'Excludes sponsorship, reward redemption returning to margin, and any other Lucra product. ' +
+    'Illustrative planning estimate built on the assumptions above, not a guarantee, offer or contract.</div>'
   );
 }
 

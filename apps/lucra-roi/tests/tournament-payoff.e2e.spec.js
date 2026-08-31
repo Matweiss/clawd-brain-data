@@ -198,7 +198,7 @@ test('the customer summary shows structure and never internal economics', async 
   await expect(page.locator('.tp-cust-card').first()).toContainText('$500 value reward');
   await expect(page.locator('.tp-cust-card').first()).toContainText('Up to 3 rebuys');
   await expect(page.locator('.tp-cust-card').first()).toContainText('4x per month');
-  await expect(page.locator('.tp-cust-card').nth(1)).toContainText('$1,000 cash prize');
+  await expect(page.locator('.tp-cust-card').nth(1)).toContainText('$1,000 prize pool');
   await expect(page.locator('.tp-cust-card').nth(1)).toContainText('Single entry');
 
   const html = await page.locator('#tp-customer-cards').innerHTML();
@@ -467,4 +467,87 @@ test('MAU and per-type settings survive a reload', async ({ page }) => {
   await expect(page.locator('#tp-participant-pct')).toHaveValue('2');
   await expect(page.locator('#tp-rebuypct-0')).toHaveValue('60');
   expect(await page.evaluate(() => TPparticipants(TP, 1))).toBe(700);
+});
+
+test('the break-even map renders a grid around the current setting', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 40000 });
+  await expect(page.locator('#tp-heat table.tp-heat')).toBeVisible();
+  await expect(page.locator('#tp-heat thead th')).toHaveCount(6);
+  await expect(page.locator('#tp-heat tbody tr')).toHaveCount(5);
+  await expect(page.locator('#tp-heat tbody td')).toHaveCount(25);
+  // Centre column is the entered entry price.
+  await expect(page.locator('#tp-heat thead th').nth(3)).toContainText('$10');
+  // Cells are either a retirement month or an amber miss showing progress.
+  const classes = await page.locator('#tp-heat tbody td').evaluateAll((tds) => tds.map((t) => t.className));
+  expect(classes.every((c) => /clear|miss/.test(c))).toBe(true);
+});
+
+test('the break-even map hides itself when the licence is free', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await page.locator('#tp-free').check();
+  await expect(page.locator('#tp-heat')).toContainText('hidden while the licence is free');
+  await expect(page.locator('#tp-heat table.tp-heat')).toHaveCount(0);
+});
+
+test('the combined model sits at the bottom of the Mini Game tab and shares one base', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
+  await setBaseDeal(page, { fee: 60000 });
+
+  await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
+  await expect(page.locator('#tpc-section')).toBeVisible();
+  await expect(page.locator('#tpc-cases .tpc-case')).toHaveCount(3);
+
+  await page.locator('#tpc-mau').fill('1000000');
+  await page.evaluate(() => { MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGu(); TPCrender(); });
+
+  // Editing the shared base drives the Mini Games input too.
+  expect(await page.evaluate(() => MG.tau)).toBe(1000000);
+  expect(await page.evaluate(() => TP.mau)).toBe(1000000);
+  await expect(page.locator('#mgi-tau')).toHaveValue('1000000');
+
+  const cases = await page.evaluate(() => TPCcases(TPCconfig()).map((c) => c.result.annualRevenueGenerated));
+  expect(cases[0]).toBeLessThan(cases[1]);
+  expect(cases[2]).toBeGreaterThan(cases[1]);
+  await expect(page.locator('.tpc-case.best')).toContainText('Best case');
+});
+
+test('the combined one-pager shows revenue generated and no split or blocked wording', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.tabs button', { hasText: 'Tournament Payoff' }).click();
+  await setBaseDeal(page, { fee: 60000 });
+  await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
+  await stubPrint(page);
+
+  await page.locator('#tpc-mau').fill('1000000');
+  await page.locator('#tpc-name').fill('Fairway Social');
+  await page.locator('#tpc-section button', { hasText: 'Generate combined one-pager' }).click();
+
+  const html = await page.evaluate(() => window.__printHTML);
+  expect(await page.evaluate(() => window.__printCalls)).toBe(1);
+  expect(html).toContain('Combined revenue model');
+  expect(html).toContain('Fairway Social');
+  expect(html).toContain('Revenue generated');
+  expect(html).toContain('Conservative');
+
+  // Blocked vocabulary from the lucra-model-onepager skill.
+  expect(html).not.toMatch(/cash|wager|betting|\bbet\b|gambl|casino|prize money|stakes|buy-in|payout|\brake\b|\bhandle\b/i);
+  // The split stays internal.
+  expect(html).not.toContain('To licence');
+  expect(html).not.toContain('To operator');
+  expect(html).not.toContain('Lucra earnings');
+});
+
+test('the combined section stays usable at 390px', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
+  await expect(page.locator('#tpc-cases .tpc-case').first()).toBeVisible();
+  const sizes = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(sizes.scrollWidth).toBeLessThanOrEqual(sizes.clientWidth + 1);
 });

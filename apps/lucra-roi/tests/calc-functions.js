@@ -479,16 +479,129 @@ function TPcustomerProjection(input) {
         rebuyLabel: label,
         frequencyLabel: TPnum(t.eventsPerMonth, 0) + 'x per month',
         rewardLabel: t.isCash
-          ? '$' + Math.round(TPnum(t.cashPrizeAmount, 0)).toLocaleString() + ' cash prize'
+          ? '$' + Math.round(TPnum(t.cashPrizeAmount, 0)).toLocaleString() + ' prize pool'
           : '$' + Math.round(TPnum(t.rewardFaceValue, 0)).toLocaleString() + ' value reward'
       };
     })
   };
+}
+
+/* ---------- break-even heat map ----------
+   Entry price across the top, participation down the side. Each cell re-runs
+   the whole model at that pair and reports the month the licence retires, or
+   how far it got if it never does. Shading encodes the month, not a judgement,
+   so no comfort threshold is invented. */
+function TPheatMap(input) {
+  var s = TPstate(input), basisMau = s.participantBasis === 'mau',
+    factors = [0.5, 0.75, 1, 1.25, 1.5],
+    baseParticipation = basisMau
+      ? (s.volumeMode === 'ramp' ? TPnum(s.rampPlateauPct, 0) : TPnum(s.participantPct, 0))
+      : (s.volumeMode === 'ramp' ? TPnum(s.rampPlateau, 0) : TPnum(s.participants, 0)),
+    primaryPrice = (s.tournaments && s.tournaments[0]) ? TPnum(s.tournaments[0].entryPrice, 0) : 0,
+    totalMonths = TPterm(s) * 12;
+
+  var prices = factors.map(function (f) { return Math.round(primaryPrice * f * 100) / 100; }),
+    rows = factors.map(function (f) { return Math.round(baseParticipation * f * 1000) / 1000; });
+
+  var cells = rows.map(function (participation, ri) {
+    return prices.map(function (price, ci) {
+      var c = TPscaled(s, factors[ri], factors[ci]), r = TPcalculate(c);
+      if (r.errors.length) return { status: 'error', month: null, retired: 0 };
+      var retired = r.totalContract > 0 ? r.cumulativeLicense / r.totalContract : 1;
+      return {
+        status: r.payoffMonth === null ? 'miss' : 'clear',
+        month: r.payoffMonth,
+        retired: retired,
+        share: r.payoffMonth === null ? null : r.payoffMonth / totalMonths
+      };
+    });
+  });
+
+  return {
+    basisMau: basisMau, prices: prices, participation: rows, cells: cells,
+    totalMonths: totalMonths, baseParticipation: baseParticipation, primaryPrice: primaryPrice
+  };
+}
+
+/* A copy of the state with participation and entry prices scaled. Used by the
+   heat map and by the combined three-case band, so both scale identically. */
+function TPscaled(input, participationFactor, priceFactor) {
+  var s = TPstate(input), p = TPnum(participationFactor, 0), q = priceFactor === undefined ? 1 : TPnum(priceFactor, 0);
+  s.participants = TPnum(s.participants, 0) * p;
+  s.participantPct = TPnum(s.participantPct, 0) * p;
+  s.rampStart = TPnum(s.rampStart, 0) * p;
+  s.rampPlateau = TPnum(s.rampPlateau, 0) * p;
+  s.rampStartPct = TPnum(s.rampStartPct, 0) * p;
+  s.rampPlateauPct = TPnum(s.rampPlateauPct, 0) * p;
+  s.tournaments = s.tournaments.map(function (t) {
+    var c = Object.assign({}, t);
+    c.participantsCustom = TPnum(c.participantsCustom, 0) * p;
+    c.participantPctCustom = TPnum(c.participantPctCustom, 0) * p;
+    c.entryPrice = TPnum(c.entryPrice, 0) * q;
+    return c;
+  });
+  return s;
+}
+
+/* ---------- combined revenue model ----------
+   One monthly active user base feeds both products. Head-to-head takes an
+   engagement share of it; tournaments take either their own share of it or an
+   entered participant count. Revenue generated is reported as the pool each
+   product produces before any split, which is what a partner-facing page shows.
+
+   The two audiences are not netted against each other, because a player taking
+   part in both generates two separate transactions rather than one counted
+   twice. What is reported instead is the combined engaged share of the base, so
+   an implausible total is visible rather than buried. */
+function TPCcase(cfg, factor) {
+  var f = factor === undefined ? 1 : TPnum(factor, 0),
+    mau = TPnum(cfg.mau, 0),
+    engagement = TPnum(cfg.engagement, 0, 100) * f,
+    engaged = mau * Math.min(100, engagement) / 100,
+    paidPlays = engaged * TPnum(cfg.playsPerUser, 0),
+    paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
+    p2pFee = paidVolume * TPnum(cfg.feeRate, 0, 100) / 100;
+
+  var tState = TPscaled(Object.assign(TPstate(cfg.tournament), { mau: mau }), f, 1),
+    tResult = TPcalculate(tState),
+    months = tResult.months.length || 12,
+    tournamentMonthly = tResult.errors.length ? 0 : tResult.totalNet / months,
+    tournamentParticipants = tResult.errors.length ? 0 : (tResult.months[months - 1] || {}).participants || 0;
+
+  var tournamentShare = mau > 0 ? tournamentParticipants / mau * 100 : 0;
+
+  return {
+    factor: f,
+    mau: mau,
+    engagement: Math.min(100, engagement),
+    engaged: engaged,
+    paidVolume: paidVolume,
+    p2pFee: p2pFee,
+    tournamentParticipants: tournamentParticipants,
+    tournamentShare: tournamentShare,
+    tournamentNet: tournamentMonthly,
+    revenueGenerated: p2pFee + tournamentMonthly,
+    annualRevenueGenerated: (p2pFee + tournamentMonthly) * 12,
+    combinedShare: Math.min(100, engagement) + tournamentShare,
+    tournamentResult: tResult
+  };
+}
+
+/* Three cases at half, as entered, and one and a half times the entered
+   participation. The multipliers scale the user's own assumptions rather than
+   any Lucra benchmark, and the low case is always present. */
+function TPCcases(cfg) {
+  return [
+    { key: 'conservative', label: 'Conservative', note: 'Half the entered participation', result: TPCcase(cfg, 0.5) },
+    { key: 'expected', label: 'Expected', note: 'Participation as entered', result: TPCcase(cfg, 1) },
+    { key: 'best', label: 'Best case', note: '1.5x the entered participation', result: TPCcase(cfg, 1.5) }
+  ];
 }
 /* TP-PURE-END */
 
 module.exports = { C, MGcalc, tmCompute, gmCompute, DMcalc, DM_DEFAULTS,
   TPnum, TPstate, TPsplitRates, TPparticipants, TPvalidate, TPcalculate, TPcustomerProjection,
   TPterm, TPfees, TPrampValue, TPrampFactor, TPtypeParticipants, TPentriesPerEvent,
+  TPheatMap, TPscaled, TPCcase, TPCcases,
   TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS };
 
