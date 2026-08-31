@@ -11,6 +11,7 @@ import { test, expect } from '@playwright/test';
 const TAB_NAMES = [
   'Core ROI',
   'Gamification',
+  'Revenue Model',
   'Mini Game ROI',
   'Launch Forecast',
   'Free-to-Play Value',
@@ -23,6 +24,7 @@ const TAB_NAMES = [
 const TAB_PANEL_IDS = [
   'roi',
   'gamification',
+  'tournaments',
   'minigame',
   'forecast',
   'freetoplay',

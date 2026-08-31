@@ -207,4 +207,442 @@ function LPtournamentMonthly(input){var s=LPstate(input),result=LPcalculate(s),m
 function LPyearlySummary(input){var s=LPstate(input),r=LPcalculate(s),postC=LPnum(s.post.customer,0,100)/100,years=[];for(var year=1;year<=Math.round(LPnum(s.termYears,1,3));year++){var rows=r.months.filter(function(x){return x.year===year}),trueUp=(r.trueUps[year-1]||{}).amount||0,customerNet=rows.reduce(function(a,x){return a+LPnum(x.customerNet,0)},0),clearRow=s.postMode==='year'?rows.find(function(x){return x.payoffBalanceRemaining<=.01&&x.trueUp<.01}):null;years.push({year:year,fee:LPnum(s.annualFees[year-1],0),activityCredit:rows.reduce(function(a,x){return a+LPnum(x.licenceCredit,0)},0),customerNet:customerNet,customerNetAfterTrueUp:customerNet-trueUp,customerShare:rows.reduce(function(a,x){return a+LPnum(x.customerShare,0)},0),postPayoffCustomer:rows.reduce(function(a,x){return a+LPnum(x.postGross,0)*postC},0),prizeCost:rows.reduce(function(a,x){return a+LPnum(x.prizeCost,0)},0),lucraRevenue:rows.reduce(function(a,x){return a+LPnum(x.lucraShare,0)},0),trueUp:trueUp,clearMonth:clearRow?clearRow.month:null,monthsAtHigherSplit:rows.filter(function(x){return LPnum(x.postGross,0)>0}).length})}return{mode:s.postMode,years:years,result:r}}
 
 function LPrecommendPlan(input){var s=LPstate(input),supported=LPnum(s.audience,0)*LPnum(s.engagement,0,100)/100*LPnum(s.rebuy,0),maxEntries=Math.max(0,Math.floor(supported)),tournaments=s.tournaments||[],prices=[5,10,15,20,25,50];if(!s.tournamentsOn||!tournaments.length)return{error:'Add at least one tournament before generating a plan.'};if(maxEntries<1)return{error:'Audience, engagement, and entries per player must support at least one entry per event.'};function candidate(price,entries){var c=LPstate(s);c.tournamentMode='audience';c.tournaments=tournaments.map(function(t){return Object.assign({},t,{entryPrice:price,entriesPerEvent:entries})});var r=LPcalculate(c);return{valid:r.fullClearMonth!==null&&r.totalTrueUp<.01&&r.totalMonthlyShortfall<.01,result:r}}var best=null;for(var p=0;p<prices.length&&!best;p++){var top=candidate(prices[p],maxEntries);if(!top.valid)continue;var lo=1,hi=maxEntries;while(lo<hi){var mid=Math.floor((lo+hi)/2);if(candidate(prices[p],mid).valid)hi=mid;else lo=mid+1}best={price:prices[p],entriesPerEvent:lo,result:candidate(prices[p],lo).result}}if(!best&&candidate(500,maxEntries).valid){var lowPrice=50,highPrice=500;for(var i=0;i<18;i++){var midPrice=(lowPrice+highPrice)/2;if(candidate(midPrice,maxEntries).valid)highPrice=midPrice;else lowPrice=midPrice}var roundedPrice=Math.ceil(highPrice*2)/2;best={price:roundedPrice,entriesPerEvent:maxEntries,result:candidate(roundedPrice,maxEntries).result}}if(!best)return{error:'No cash-safe plan clears within the supported audience at entry prices up to $500. Increase audience, cadence, or customer payoff share; lower prize boards or fees; or add sponsor credit.',supportedEntriesPerEvent:maxEntries};return{error:null,price:best.price,entriesPerEvent:best.entriesPerEvent,supportedEntriesPerEvent:maxEntries,eventCount:tournaments.reduce(function(a,t){return a+LPnum(t.eventsPerMonth,0)},0),result:best.result}}
-module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS };
+
+/* TP-PURE-START — mirrored verbatim from api/app.html, guarded by tests/tp-drift.spec.js */
+var TP_SPLITS = {
+  standard: { credit: 50, operator: 40, lucra: 10 },
+  sweep: { credit: 90, operator: 0, lucra: 10 }
+};
+
+var TP_MAX_YEARS = 5;
+
+var TP_DEFAULTS = {
+  dealName: '',
+  termYears: 1,
+  annualFees: [60000, 60000, 60000, 60000, 60000],
+  payoffBasis: 'term',
+  shortfall: 'roll',
+  includeTournaments: true,
+  includeH2H: false,
+  freeLicense: false,
+  splitMode: 'standard',
+  custom: { credit: 50, operator: 40, lucra: 10 },
+  post: { operator: 90, lucra: 10 },
+  volumeMode: 'flat',
+  participantBasis: 'count',
+  mau: 0,
+  participants: 100,
+  participantPct: 5,
+  rampStart: 50,
+  rampPlateau: 200,
+  rampStartPct: 2,
+  rampPlateauPct: 8,
+  rampMonths: 6,
+  tournaments: [
+    { id: 't1', name: 'Weekly open', entryPrice: 10, eventsPerMonth: 4, participationMode: 'shared', participantsCustom: 100, participantPctCustom: 5, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200, cashPrizeAmount: 500 },
+    { id: 't2', name: 'Monthly headline', entryPrice: 25, eventsPerMonth: 1, participationMode: 'shared', participantsCustom: 50, participantPctCustom: 2, rebuyMode: 'avg', rebuys: 1, rebuyPct: 0, isCash: true, rewardFaceValue: 1000, customerCashCost: 1000, cashPrizeAmount: 1000 }
+  ]
+};
+
+function TPnum(v, lo, hi) {
+  v = Number(v);
+  if (!isFinite(v)) v = 0;
+  if (lo !== undefined) v = Math.max(lo, v);
+  if (hi !== undefined) v = Math.min(hi, v);
+  return v;
+}
+
+function TPterm(s) { return Math.max(1, Math.min(TP_MAX_YEARS, Math.round(TPnum(s.termYears, 1, TP_MAX_YEARS)))); }
+
+/* Fee for each year of the term, custom per year. */
+function TPfees(s) {
+  var n = TPterm(s), src = s.annualFees || [], out = [];
+  for (var i = 0; i < n; i++) out.push(TPnum(src[i], 0));
+  return out;
+}
+
+function TPstate(s) {
+  var out = JSON.parse(JSON.stringify(TP_DEFAULTS)), src = s || {};
+  Object.keys(src).forEach(function (k) {
+    out[k] = src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])
+      ? Object.assign({}, out[k] || {}, src[k])
+      : src[k];
+  });
+  // Single-fee state from the first release migrates to a one-year term.
+  if (src.licenseFee !== undefined && !Array.isArray(src.annualFees)) {
+    out.annualFees = [TPnum(src.licenseFee, 0)];
+    out.termYears = 1;
+  }
+  if (!Array.isArray(out.annualFees)) out.annualFees = [];
+  out.annualFees = out.annualFees.slice(0, TP_MAX_YEARS).map(function (f) { return TPnum(f, 0); });
+  while (out.annualFees.length < TP_MAX_YEARS) {
+    out.annualFees.push(out.annualFees.length ? out.annualFees[out.annualFees.length - 1] : 0);
+  }
+  out.tournaments = (src.tournaments || out.tournaments).map(function (t) {
+    var c = Object.assign({ participationMode: 'shared', rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, participantsCustom: 0, participantPctCustom: 0 }, t);
+    if (c.isCash) { c.rewardFaceValue = TPnum(c.cashPrizeAmount, 0); c.customerCashCost = TPnum(c.cashPrizeAmount, 0); }
+    return c;
+  });
+  return out;
+}
+
+/* Active split. A free licence collapses to operator / Lucra with no credit bucket. */
+function TPsplitRates(s) {
+  var postOp = TPnum(s.post.operator, 0, 100) / 100, postLu = TPnum(s.post.lucra, 0, 100) / 100;
+  if (s.freeLicense) {
+    return { free: true, credit: 0, operator: postOp, lucra: postLu, postOperator: postOp, postLucra: postLu };
+  }
+  var p = s.splitMode === 'custom'
+    ? { credit: TPnum(s.custom.credit, 0, 100), operator: TPnum(s.custom.operator, 0, 100), lucra: TPnum(s.custom.lucra, 0, 100) }
+    : (TP_SPLITS[s.splitMode] || TP_SPLITS.standard);
+  return {
+    free: false, credit: p.credit / 100, operator: p.operator / 100, lucra: p.lucra / 100,
+    postOperator: postOp, postLucra: postLu
+  };
+}
+
+/* The month's value on the ramp, expressed in whatever unit the participant
+   basis uses: a headcount, or a percentage of MAU. */
+function TPrampValue(s, month) {
+  var mau = s.participantBasis === 'mau',
+    flat = mau ? TPnum(s.participantPct, 0) : TPnum(s.participants, 0);
+  if (s.volumeMode !== 'ramp') return flat;
+  var start = mau ? TPnum(s.rampStartPct, 0) : TPnum(s.rampStart, 0),
+    plateau = mau ? TPnum(s.rampPlateauPct, 0) : TPnum(s.rampPlateau, 0),
+    M = Math.max(1, Math.round(TPnum(s.rampMonths, 1)));
+  if (M === 1 || month >= M) return plateau;
+  return start + (plateau - start) * (month - 1) / (M - 1);
+}
+
+/* Where the ramp sits this month relative to its plateau, 0..1. Used to ramp a
+   tournament type's own participation alongside the shared curve, so a custom
+   entry count is read as the number at full ramp rather than from month one. */
+function TPrampFactor(s, month) {
+  if (s.volumeMode !== 'ramp') return 1;
+  var plateau = s.participantBasis === 'mau' ? TPnum(s.rampPlateauPct, 0) : TPnum(s.rampPlateau, 0);
+  return plateau > 0 ? TPrampValue(s, month) / plateau : 1;
+}
+
+/* Participants per event for a 1-based month, before any per-type override. */
+function TPparticipants(s, month) {
+  var v = TPrampValue(s, month);
+  return s.participantBasis === 'mau' ? TPnum(s.mau, 0) * v / 100 : v;
+}
+
+/* Participants for one tournament type. A $1 open draws a different crowd from
+   a $20 headline, so a type can carry its own number instead of the shared one. */
+function TPtypeParticipants(s, t, month) {
+  if (!t || t.participationMode !== 'custom') return TPparticipants(s, month);
+  var full = s.participantBasis === 'mau'
+    ? TPnum(s.mau, 0) * TPnum(t.participantPctCustom, 0) / 100
+    : TPnum(t.participantsCustom, 0);
+  return full * TPrampFactor(s, month);
+}
+
+/* Entries for one running of a tournament type. Rebuys are either an average
+   number of extra entries per participant, or extra entries as a percentage of
+   participants (over 100% is allowed, meaning more than one rebuy each). */
+function TPentriesPerEvent(s, t, month) {
+  var p = TPtypeParticipants(s, t, month);
+  return p + (t.rebuyMode === 'pct' ? p * TPnum(t.rebuyPct, 0) / 100 : p * TPnum(t.rebuys, 0));
+}
+
+function TPvalidate(input) {
+  var s = TPstate(input), errors = [];
+  if (!s.includeTournaments && !s.includeH2H) errors.push('Select at least one product: tournaments, head-to-head, or both.');
+  if (!s.includeTournaments) return errors;
+  if (!s.freeLicense && s.splitMode === 'custom') {
+    var sum = TPnum(s.custom.credit) + TPnum(s.custom.operator) + TPnum(s.custom.lucra);
+    if (Math.abs(sum - 100) > 0.001) errors.push('Custom split must sum to 100%. It currently sums to ' + Math.round(sum * 10) / 10 + '%.');
+    if (TPnum(s.custom.credit) <= 0) errors.push('Licence share must be above 0%. Use the free licence toggle for a waived licence.');
+  }
+  var post = TPnum(s.post.operator) + TPnum(s.post.lucra);
+  if (Math.abs(post - 100) > 0.001) errors.push('Post-payoff split must sum to 100%.');
+  if (!s.freeLicense) {
+    var fees = TPfees(s);
+    if (fees.reduce(function (a, b) { return a + b; }, 0) <= 0) errors.push('Enter a licence fee for at least one year, or switch the licence to free.');
+    fees.forEach(function (f, i) { if (f < 0) errors.push('Year ' + (i + 1) + ' fee cannot be negative.'); });
+  }
+  if (s.participantBasis === 'mau' && TPnum(s.mau, 0) <= 0) errors.push('Enter monthly active users, or switch participants back to a headcount.');
+  if (!(s.tournaments || []).length) errors.push('Add at least one tournament type.');
+  return errors;
+}
+
+/* Month-by-month model across the whole term.
+
+   Prize cost leaves the handle before the split, so the licence, operator and
+   Lucra shares all fund prizes pro rata. When a balance retires mid-month the
+   unused remainder of that month pays out at the post-payoff split rather than
+   being lost.
+
+   payoffBasis 'term'   — every year's fee is one cumulative balance. Once it
+                          clears, the licence share redirects to the operator
+                          for the rest of the term.
+   payoffBasis 'annual' — each year's fee opens its own balance at that year's
+                          first month. An unretired balance at year end either
+                          rolls into the next year (shortfall 'roll') or is
+                          charged as a cash true-up (shortfall 'cash'). */
+function TPcalculate(input) {
+  var s = TPstate(input), errors = TPvalidate(s);
+  if (errors.length) return { errors: errors, months: [], years: [] };
+
+  var rates = TPsplitRates(s),
+    termYears = TPterm(s),
+    totalMonths = termYears * 12,
+    fees = s.freeLicense ? [] : TPfees(s),
+    totalContract = fees.reduce(function (a, b) { return a + b; }, 0),
+    annual = !s.freeLicense && s.payoffBasis === 'annual',
+    remaining = s.freeLicense ? 0 : (annual ? fees[0] : totalContract),
+    years = [], cumulativeLicense = 0, trueUpTotal = 0,
+    totalOperator = 0, totalLucra = 0, totalHandle = 0, totalPrizeCost = 0, totalNet = 0,
+    lossMonths = 0, payoffMonth = null, months = [];
+
+  for (var y = 0; y < (s.freeLicense ? termYears : fees.length); y++) {
+    years.push({ year: y + 1, fee: s.freeLicense ? 0 : fees[y], opening: 0, credited: 0, trueUp: 0, clearMonth: null, closing: 0 });
+  }
+  if (years[0]) years[0].opening = remaining;
+
+  for (var month = 1; month <= totalMonths; month++) {
+    var yi = Math.floor((month - 1) / 12), monthInYear = ((month - 1) % 12) + 1;
+
+    if (annual && monthInYear === 1 && month > 1) {
+      var prev = years[yi - 1];
+      prev.closing = remaining;
+      if (remaining > 1e-9 && s.shortfall === 'cash') {
+        prev.trueUp = remaining;
+        trueUpTotal += remaining;
+        remaining = 0;
+      }
+      remaining += fees[yi];
+      years[yi].opening = remaining;
+    }
+
+    var participants = TPparticipants(s, month), handle = 0, prizeCost = 0, detail = [];
+    s.tournaments.forEach(function (t) {
+      var events = TPnum(t.eventsPerMonth, 0),
+        typeParticipants = TPtypeParticipants(s, t, month),
+        entriesPerEvent = TPentriesPerEvent(s, t, month),
+        tHandle = entriesPerEvent * TPnum(t.entryPrice, 0) * events,
+        tPrize = TPnum(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0) * events;
+      handle += tHandle;
+      prizeCost += tPrize;
+      detail.push({
+        name: t.name, participants: typeParticipants, entriesPerEvent: entriesPerEvent,
+        events: events, handle: tHandle, prizeCost: tPrize,
+        loss: tPrize > tHandle
+      });
+    });
+
+    var grossMargin = handle - prizeCost,
+      netRevenue = Math.max(0, grossMargin),
+      licenseGross = rates.credit > 0 ? Math.min(netRevenue, remaining / rates.credit) : 0,
+      postGross = netRevenue - licenseGross,
+      toLicense = Math.min(remaining, licenseGross * rates.credit),
+      toOperator = licenseGross * rates.operator + postGross * rates.postOperator,
+      toLucra = licenseGross * rates.lucra + postGross * rates.postLucra,
+      openingRemaining = remaining;
+
+    if (grossMargin < 0) lossMonths++;
+    remaining = Math.max(0, remaining - toLicense);
+    cumulativeLicense += toLicense;
+    totalOperator += toOperator;
+    totalLucra += toLucra;
+    totalHandle += handle;
+    totalPrizeCost += prizeCost;
+    totalNet += netRevenue;
+    if (years[yi]) years[yi].credited += toLicense;
+
+    var fraction = netRevenue > 0 ? licenseGross / netRevenue : 1;
+    if (years[yi] && years[yi].clearMonth === null && openingRemaining > 1e-9 && remaining <= 1e-9) {
+      years[yi].clearMonth = month - 1 + fraction;
+    }
+    // Whole-term basis has a single balance, so payoff is the month it clears.
+    // Per-year basis is resolved after the loop, since a later year re-opens one.
+    if (!annual && payoffMonth === null && !rates.free && totalContract > 0 && openingRemaining > 1e-9 && remaining <= 1e-9) {
+      payoffMonth = month - 1 + fraction;
+    }
+
+    months.push({
+      month: month, year: yi + 1, monthInYear: monthInYear,
+      participants: participants, handle: handle, prizeCost: prizeCost,
+      grossMargin: grossMargin, netRevenue: netRevenue,
+      toLicense: toLicense, cumulativeLicense: cumulativeLicense,
+      toOperator: toOperator, toLucra: toLucra,
+      split: licenseGross > 0 && postGross > 0 ? 'Crossover' : licenseGross > 0 ? 'Payoff' : 'Post-payoff',
+      detail: detail
+    });
+  }
+
+  if (years.length) years[years.length - 1].closing = remaining;
+  if (annual && remaining > 1e-9 && s.shortfall === 'cash') {
+    years[years.length - 1].trueUp = remaining;
+    trueUpTotal += remaining;
+    remaining = 0;
+  }
+  if (annual) {
+    // The contract is only fully paid off when the final year clears on activity
+    // alone, with nothing rolled past the end and no cash true-up charged.
+    var lastYear = years[years.length - 1];
+    payoffMonth = (trueUpTotal <= 1e-9 && lastYear && lastYear.closing <= 1e-9 && lastYear.clearMonth !== null)
+      ? lastYear.clearMonth : null;
+  }
+
+  return {
+    errors: [], months: months, years: years,
+    termYears: termYears, annualBasis: annual, shortfallMode: s.shortfall,
+    licenseFee: totalContract, totalContract: totalContract,
+    payoffMonth: payoffMonth, cumulativeLicense: cumulativeLicense,
+    trueUpTotal: trueUpTotal, balanceDue: Math.max(0, remaining),
+    totalOwed: trueUpTotal + Math.max(0, remaining),
+    totalOperator: totalOperator, totalLucra: totalLucra,
+    totalHandle: totalHandle, totalPrizeCost: totalPrizeCost, totalNet: totalNet,
+    lossMonths: lossMonths,
+    free: rates.free
+  };
+}
+
+/* Whitelisted customer-facing projection. Built key by key so internal
+   economics cannot leak into the customer export even if state gains fields.
+   A percentage rebuy rate is a planning estimate, so it is described rather
+   than published as a number. */
+function TPcustomerProjection(input) {
+  var s = TPstate(input);
+  return {
+    dealName: String(s.dealName || ''),
+    tournaments: s.tournaments.map(function (t) {
+      var rebuys = TPnum(t.rebuys, 0), label;
+      if (t.rebuyMode === 'pct') label = TPnum(t.rebuyPct, 0) > 0 ? 'Rebuys available' : 'Single entry';
+      else label = rebuys > 0 ? 'Up to ' + (rebuys % 1 === 0 ? rebuys : rebuys.toFixed(2)) + ' rebuys' : 'Single entry';
+      return {
+        name: String(t.name || 'Tournament'),
+        entryPrice: TPnum(t.entryPrice, 0),
+        rebuyLabel: label,
+        frequencyLabel: TPnum(t.eventsPerMonth, 0) + 'x per month',
+        rewardLabel: t.isCash
+          ? '$' + Math.round(TPnum(t.cashPrizeAmount, 0)).toLocaleString() + ' prize pool'
+          : '$' + Math.round(TPnum(t.rewardFaceValue, 0)).toLocaleString() + ' value reward'
+      };
+    })
+  };
+}
+
+/* ---------- break-even heat map ----------
+   Entry price across the top, participation down the side. Each cell re-runs
+   the whole model at that pair and reports the month the licence retires, or
+   how far it got if it never does. Shading encodes the month, not a judgement,
+   so no comfort threshold is invented. */
+function TPheatMap(input) {
+  var s = TPstate(input), basisMau = s.participantBasis === 'mau',
+    factors = [0.5, 0.75, 1, 1.25, 1.5],
+    baseParticipation = basisMau
+      ? (s.volumeMode === 'ramp' ? TPnum(s.rampPlateauPct, 0) : TPnum(s.participantPct, 0))
+      : (s.volumeMode === 'ramp' ? TPnum(s.rampPlateau, 0) : TPnum(s.participants, 0)),
+    primaryPrice = (s.tournaments && s.tournaments[0]) ? TPnum(s.tournaments[0].entryPrice, 0) : 0,
+    totalMonths = TPterm(s) * 12;
+
+  var prices = factors.map(function (f) { return Math.round(primaryPrice * f * 100) / 100; }),
+    rows = factors.map(function (f) { return Math.round(baseParticipation * f * 1000) / 1000; });
+
+  var cells = rows.map(function (participation, ri) {
+    return prices.map(function (price, ci) {
+      var c = TPscaled(s, factors[ri], factors[ci]), r = TPcalculate(c);
+      if (r.errors.length) return { status: 'error', month: null, retired: 0 };
+      var retired = r.totalContract > 0 ? r.cumulativeLicense / r.totalContract : 1;
+      return {
+        status: r.payoffMonth === null ? 'miss' : 'clear',
+        month: r.payoffMonth,
+        retired: retired,
+        share: r.payoffMonth === null ? null : r.payoffMonth / totalMonths
+      };
+    });
+  });
+
+  return {
+    basisMau: basisMau, prices: prices, participation: rows, cells: cells,
+    totalMonths: totalMonths, baseParticipation: baseParticipation, primaryPrice: primaryPrice
+  };
+}
+
+/* A copy of the state with participation and entry prices scaled. Used by the
+   heat map and by the combined three-case band, so both scale identically. */
+function TPscaled(input, participationFactor, priceFactor) {
+  var s = TPstate(input), p = TPnum(participationFactor, 0), q = priceFactor === undefined ? 1 : TPnum(priceFactor, 0);
+  s.participants = TPnum(s.participants, 0) * p;
+  s.participantPct = TPnum(s.participantPct, 0) * p;
+  s.rampStart = TPnum(s.rampStart, 0) * p;
+  s.rampPlateau = TPnum(s.rampPlateau, 0) * p;
+  s.rampStartPct = TPnum(s.rampStartPct, 0) * p;
+  s.rampPlateauPct = TPnum(s.rampPlateauPct, 0) * p;
+  s.tournaments = s.tournaments.map(function (t) {
+    var c = Object.assign({}, t);
+    c.participantsCustom = TPnum(c.participantsCustom, 0) * p;
+    c.participantPctCustom = TPnum(c.participantPctCustom, 0) * p;
+    c.entryPrice = TPnum(c.entryPrice, 0) * q;
+    return c;
+  });
+  return s;
+}
+
+/* ---------- combined revenue model ----------
+   One monthly active user base feeds both products. Head-to-head takes an
+   engagement share of it; tournaments take either their own share of it or an
+   entered participant count. Revenue generated is reported as the pool each
+   product produces before any split, which is what a partner-facing page shows.
+
+   The two audiences are not netted against each other, because a player taking
+   part in both generates two separate transactions rather than one counted
+   twice. What is reported instead is the combined engaged share of the base, so
+   an implausible total is visible rather than buried. */
+function TPCcase(cfg, factor) {
+  var f = factor === undefined ? 1 : TPnum(factor, 0),
+    tState0 = TPstate(cfg.tournament),
+    onH2H = !!tState0.includeH2H,
+    onTournaments = !!tState0.includeTournaments,
+    mau = TPnum(cfg.mau, 0),
+    engagement = onH2H ? TPnum(cfg.engagement, 0, 100) * f : 0,
+    engaged = mau * Math.min(100, engagement) / 100,
+    paidPlays = engaged * TPnum(cfg.playsPerUser, 0),
+    paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
+    p2pFee = paidVolume * TPnum(cfg.feeRate, 0, 100) / 100;
+
+  var tState = TPscaled(Object.assign(tState0, { mau: mau }), f, 1),
+    tResult = TPcalculate(tState),
+    months = tResult.months.length || 12,
+    usable = onTournaments && !tResult.errors.length,
+    tournamentMonthly = usable ? tResult.totalNet / months : 0,
+    tournamentParticipants = usable ? (tResult.months[months - 1] || {}).participants || 0 : 0;
+
+  var tournamentShare = mau > 0 ? tournamentParticipants / mau * 100 : 0;
+
+  return {
+    factor: f,
+    includeH2H: onH2H,
+    includeTournaments: onTournaments,
+    mau: mau,
+    engagement: Math.min(100, engagement),
+    engaged: engaged,
+    paidVolume: paidVolume,
+    p2pFee: p2pFee,
+    tournamentParticipants: tournamentParticipants,
+    tournamentShare: tournamentShare,
+    tournamentNet: tournamentMonthly,
+    revenueGenerated: p2pFee + tournamentMonthly,
+    annualRevenueGenerated: (p2pFee + tournamentMonthly) * 12,
+    combinedShare: Math.min(100, engagement) + tournamentShare,
+    tournamentResult: tResult
+  };
+}
+
+/* Three cases at half, as entered, and one and a half times the entered
+   participation. The multipliers scale the user's own assumptions rather than
+   any Lucra benchmark, and the low case is always present. */
+function TPCcases(cfg) {
+  return [
+    { key: 'conservative', label: 'Conservative', note: 'Half the entered participation', result: TPCcase(cfg, 0.5) },
+    { key: 'expected', label: 'Expected', note: 'Participation as entered', result: TPCcase(cfg, 1) },
+    { key: 'best', label: 'Best case', note: '1.5x the entered participation', result: TPCcase(cfg, 1.5) }
+  ];
+}
+/* TP-PURE-END */
+
+module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS, TPnum, TPstate, TPsplitRates, TPparticipants, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampValue, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS };
