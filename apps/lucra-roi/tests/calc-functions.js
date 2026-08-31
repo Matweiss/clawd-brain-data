@@ -182,6 +182,7 @@ var TP_MAX_YEARS = 5;
 
 var TP_DEFAULTS = {
   dealName: '',
+  heatH2H: true,
   partnerSite: '',
   presenter: '',
   presenterEmail: '',
@@ -606,7 +607,7 @@ function TPheatMap(input, h2hCfg) {
   return {
     basisMau: basisMau, prices: prices, participation: rows, cells: cells, volumes: volumes,
     totalMonths: totalMonths, baseParticipation: baseParticipation, primaryPrice: primaryPrice,
-    showLucra: !!s.showLucra, includeH2H: !!s.includeH2H
+    showLucra: !!s.showLucra, includeH2H: !!s.includeH2H && s.heatH2H !== false
   };
 }
 

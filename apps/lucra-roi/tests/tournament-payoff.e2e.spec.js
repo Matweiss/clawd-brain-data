@@ -582,3 +582,48 @@ test('the brief drops the product that is not selected', async ({ page }) => {
   expect(brief).not.toContain('STAT BAND — TOURNAMENTS');
   expect(brief).not.toContain('prize funding');
 });
+
+test('the break-even map carries its own head-to-head and Lucra switches', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
+  await page.evaluate(() => { MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrender(); });
+
+  // The header is uppercased by CSS, and innerText reflects that, so compare folded.
+  const headers = async () => (await page.locator('#tp-heat thead th').allInnerTexts()).join('|').toLowerCase();
+  expect(await headers()).toContain('paid-game volume');
+  await expect(page.locator('#tp-heat-h2h')).toBeChecked();
+  await expect(page.locator('#tp-heat-lucra')).toBeChecked();
+
+  // Turning the map switch off drops the column without touching product selection.
+  await page.locator('#tp-heat-h2h').uncheck();
+  expect(await headers()).not.toContain('paid-game volume');
+  expect(await page.evaluate(() => TP.includeH2H)).toBe(true);
+
+  await page.locator('#tp-heat-h2h').check();
+  expect(await headers()).toContain('paid-game volume');
+
+  // The Lucra switch in the map is the same state the rest of the tab uses.
+  await page.locator('#tp-heat-lucra').uncheck();
+  expect(await headers()).not.toContain('to lucra');
+  expect(await page.evaluate(() => TP.showLucra)).toBe(false);
+  await expect(page.locator('#tp-show-lucra')).not.toBeChecked();
+});
+
+test('the map explains a missing head-to-head column rather than hiding it silently', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000 });
+  await expect(page.locator('#tp-heat-h2h')).toBeDisabled();
+  await expect(page.locator('#tp-heat-controls-note')).toContainText('not selected at the top');
+  expect((await page.locator('#tp-heat thead th').allInnerTexts()).join('|').toLowerCase()).not.toContain('paid-game volume');
+});
+
+test('the brief has its own block and previews without the clipboard', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
+  await expect(page.locator('#tp-brief-block .pf-section-title')).toContainText('One-pager brief');
+  await expect(page.locator('#tp-brief-out')).toBeHidden();
+  await page.locator('#tp-brief-block button', { hasText: 'Preview it' }).click();
+  await expect(page.locator('#tp-brief-out')).toBeVisible();
+  await expect(page.locator('#tp-brief-out')).toContainText('STAT BAND');
+  await expect(page.locator('#tp-brief-out')).toContainText('INTERNAL — DO NOT PRINT');
+});

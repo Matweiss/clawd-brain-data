@@ -464,6 +464,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 table.tp-heat td.vol{background:var(--surface);color:var(--text2);font-variant-numeric:tabular-nums}
 .tp-pitch{margin-top:14px;padding:13px 15px;border:1px solid var(--green-border);background:var(--green-bg);border-radius:var(--radius);font-size:13px;line-height:1.65;color:var(--text)}
 .tp-pitch:empty{display:none}
+.tp-heat-controls{display:flex;flex-wrap:wrap;gap:18px;margin:10px 0 4px}
+.tp-heat-controls .tp-check{margin:0}
 .tp-heat-wrap{margin-top:8px}
 table.tp-heat{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
 table.tp-heat th,table.tp-heat td{padding:8px 10px;text-align:center;border:1px solid var(--border);white-space:nowrap}
@@ -1652,9 +1654,15 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   </div>
   <div class="tpc-grid" id="tpc-cases" aria-live="polite" style="margin-top:16px"></div>
   <div id="tpc-detail"></div>
-  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button><button type="button" onclick="TPcopyBrief(this)">Copy one-pager brief</button></div>
-  <pre class="tp-brief" id="tp-brief-out" hidden></pre>
+  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button></div>
   <div class="sn">Shows revenue generated before any split, per the Lucra default. The operator and Lucra shares stay in the 12-month results below and never reach this export.</div>
+
+  <div class="tp-subsection" id="tp-brief-block" style="margin-top:22px">
+    <div class="pf-section-title">One-pager brief, for your own generator</div>
+    <div class="sn">Everything your one-pager tool needs, in its own section names: the stat bands, the numbers with the formula behind each one, the sensitivity rows, the vocabulary rules, and an internal block it must not print. Paste it straight in.</div>
+    <div class="tp-actions"><button type="button" class="primary" onclick="TPcopyBrief(this)">Copy one-pager brief</button><button type="button" onclick="TPshowBrief()">Preview it</button></div>
+    <pre class="tp-brief" id="tp-brief-out" hidden></pre>
+  </div>
 </section>
 
   <section class="card-section" id="tp-results-section" aria-labelledby="tp-results-title">
@@ -1662,7 +1670,13 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="tp-cards" id="tp-summary" aria-live="polite"></div>
     <div class="tp-progress" id="tp-progress"></div>
     <div class="tp-table-wrap" id="tp-years" hidden></div>
-    <div class="tp-heat-wrap"><div class="pf-section-title" style="margin-top:26px">Break-even map</div><div id="tp-heat"></div></div>
+    <div class="tp-heat-wrap"><div class="pf-section-title" style="margin-top:26px">Break-even map</div>
+      <div class="tp-heat-controls">
+        <label class="tp-check"><input type="checkbox" id="tp-heat-h2h" onchange="TPtoggle('heatH2H',this.checked)"><span>Show head-to-head volume</span></label>
+        <label class="tp-check"><input type="checkbox" id="tp-heat-lucra" onchange="TPtoggle('showLucra',this.checked)"><span>Show what Lucra makes</span></label>
+      </div>
+      <div class="sn" id="tp-heat-controls-note"></div>
+      <div id="tp-heat"></div></div>
     <div class="tp-table-wrap" id="tp-table"></div>
     <div class="tp-actions"><button type="button" class="primary" onclick="TPprintInternal()">Export Results (Internal)</button></div>
     <div class="sn">Internal export includes licence fee, split percentages and prize costs. Do not hand it to a customer.</div>
@@ -3141,6 +3155,7 @@ var TP_MAX_YEARS = 5;
 
 var TP_DEFAULTS = {
   dealName: '',
+  heatH2H: true,
   partnerSite: '',
   presenter: '',
   presenterEmail: '',
@@ -3565,7 +3580,7 @@ function TPheatMap(input, h2hCfg) {
   return {
     basisMau: basisMau, prices: prices, participation: rows, cells: cells, volumes: volumes,
     totalMonths: totalMonths, baseParticipation: baseParticipation, primaryPrice: primaryPrice,
-    showLucra: !!s.showLucra, includeH2H: !!s.includeH2H
+    showLucra: !!s.showLucra, includeH2H: !!s.includeH2H && s.heatH2H !== false
   };
 }
 
@@ -3876,6 +3891,14 @@ function TPrenderControls() {
   });
   var free = $('tp-free'); if (free) free.checked = !!TP.freeLicense;
   var conf = $('tp-confidential'); if (conf) conf.checked = !!TP.confidential;
+  var heatH = $('tp-heat-h2h'), heatL = $('tp-heat-lucra'), heatNote = $('tp-heat-controls-note');
+  if (heatH) { heatH.checked = TP.heatH2H !== false && !!TP.includeH2H; heatH.disabled = !TP.includeH2H; }
+  if (heatL) heatL.checked = !!TP.showLucra;
+  if (heatNote) {
+    heatNote.textContent = !TP.includeH2H
+      ? 'Head-to-head is not selected at the top, so the map has no head-to-head volume to show.'
+      : 'What Lucra makes applies across the whole tab, not only this map.';
+  }
   var incT = $('tp-inc-tournaments'); if (incT) incT.checked = !!TP.includeTournaments;
   var incH = $('tp-inc-h2h'); if (incH) incH.checked = !!TP.includeH2H;
   TPrenderH2Hfields();
@@ -4317,6 +4340,13 @@ function TPbrief() {
   if (showH2H && showT) push('  Head-to-head fee does not credit the licence in this model. Payback is tournament-driven only.  [internal]');
   if (r.lossMonths > 0) push('  ' + r.lossMonths + ' month(s) where the operator share does not cover their prize funding.  [internal]');
   return lines.join('\n');
+}
+
+function TPshowBrief() {
+  var box = $('tp-brief-out');
+  if (!box) return;
+  box.textContent = TPbrief();
+  box.hidden = false;
 }
 
 function TPcopyBrief(btn) {
