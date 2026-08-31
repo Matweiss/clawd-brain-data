@@ -456,6 +456,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 .tp-tour .tp-row{margin-top:12px}
 .tp-tour-warn{margin-top:10px;border:1px solid var(--amber);background:var(--amber-bg);color:var(--amber);border-radius:8px;padding:8px 11px;font-size:12px}
 .tp-products{display:flex;flex-wrap:wrap;gap:10px 26px}
+.tp-subsection{margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+.tp-subsection>.pf-section-title{margin-bottom:12px}
 .tp-products .tp-check{margin-top:0}
 #tp-fee-total{margin-top:8px}
 .tp-heat-wrap{margin-top:8px}
@@ -1547,15 +1549,8 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <div class="input-group"><label class="input-label" for="tp-mau">Total addressable users</label><input class="pf-input" id="tp-mau" type="number" min="0" step="1000" placeholder="Enter the customer's MAU" oninput="TPCsetMau(this.value)"><input type="range" id="tp-maus" min="10000" max="50000000" step="10000" oninput="TPCsetMau(this.value)" aria-label="Total addressable users slider"><div class="sn">Customer system · monthly active base, shared by both products</div></div>
     </div>
     <div class="sn" id="tp-product-note" role="status"></div>
-  </div>
 
-  <div class="pf-section" id="tp-h2h-block" hidden><div class="pf-section-title">Head-to-head</div>
-    <div class="inputs" id="tp-h2h-fields" style="margin-bottom:0"></div>
-    <div class="sn">The same inputs as the Mini Game ROI tab, on the same values. Editing either keeps both in step.</div>
-    <div class="sn" id="tp-h2h-readout" role="status"></div>
-  </div>
-
-  <div class="pf-section" id="tp-deal-block"><div class="pf-section-title">Deal and licence</div>
+<div class="tp-subsection" id="tp-deal-block"><div class="pf-section-title">Deal and licence</div>
     <div class="inputs" style="margin-bottom:0">
       <div class="input-group"><label class="input-label" for="tp-deal-name">Deal / customer name</label><input class="pf-input" id="tp-deal-name" type="text" placeholder="Venue or group name" oninput="TPset('dealName',this.value)"><div class="sn">Customer fact · labels both exports</div></div>
       <div class="input-group" id="tp-term-block"><label class="input-label" for="tp-term">Contract term</label><select class="pf-input" id="tp-term" onchange="TPsetTerm(this.value)"><option value="1">1 year</option><option value="2">2 years</option><option value="3">3 years</option><option value="4">4 years</option><option value="5">5 years</option></select><div class="sn">Customer fact</div></div>
@@ -1582,7 +1577,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="sn" id="tp-free-note" hidden>Licence is waived. There is no balance to retire and no licence credit bucket, so revenue splits straight to operator and Lucra.</div>
   </div>
 
-  <div class="pf-section" id="tp-split-block"><div class="pf-section-title">Revenue split during payoff</div>
+<div class="tp-subsection" id="tp-split-block"><div class="pf-section-title">Revenue split during payoff</div>
     <div class="tp-split-switch" role="group" aria-label="Revenue split mode">
       <button type="button" data-split="standard" aria-pressed="true" onclick="TPsetSplit('standard')">Standard recapture<span>50 licence · 40 operator · 10 Lucra</span></button>
       <button type="button" data-split="sweep" aria-pressed="false" onclick="TPsetSplit('sweep')">Aggressive sweep<span>90 licence · 0 operator · 10 Lucra</span></button>
@@ -1601,7 +1596,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="sn">If the fee retires partway through a month, the rest of that month's revenue pays out at this split rather than being lost.</div>
   </div>
 
-  <div class="pf-section" id="tp-participants-block"><div class="pf-section-title">Participants</div>
+<div class="tp-subsection" id="tp-participants-block"><div class="pf-section-title">Participants</div>
     <div class="tp-volume-switch" role="group" aria-label="Participant volume mode">
       <button type="button" data-volume="flat" aria-pressed="true" onclick="TPsetVolume('flat')">Flat</button>
       <button type="button" data-volume="ramp" aria-pressed="false" onclick="TPsetVolume('ramp')">Ramp</button>
@@ -1631,6 +1626,13 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <div class="input-group"><label class="input-label" for="tp-ramp-months">Months to plateau</label><input class="pf-input" id="tp-ramp-months" type="number" min="1" max="12" step="1" oninput="TPset('rampMonths',this.value)"><div class="sn">Linear to plateau, then flat</div></div>
     </div>
     <div class="sn" id="tp-mau-note" role="status"></div>
+  </div>
+  </div>
+
+<div class="pf-section" id="tp-h2h-block" hidden><div class="pf-section-title">Head-to-head</div>
+    <div class="inputs" id="tp-h2h-fields" style="margin-bottom:0"></div>
+    <div class="sn">The same inputs as the Mini Game ROI tab, on the same values. Editing either keeps both in step. Lucra's share and the licence fee come from the revenue split and fee schedule above, so they are not repeated here.</div>
+    <div class="sn" id="tp-h2h-readout" role="status"></div>
   </div>
 
   <div class="pf-section" id="tp-tournaments-block"><div class="pf-section-title">Tournament types</div>
@@ -3617,8 +3619,6 @@ var TP_H2H_FIELDS = [
   { k: 'plays', label: 'Plays / user / month', min: 1, max: 200, step: 1, note: 'Estimated · frequency among engaged players' },
   { k: 'wager', label: 'Average entry / play', prefix: '$', min: 0.25, max: 20, step: 0.25, note: 'Customer fact · real-money entry per play' },
   { k: 'rake', label: 'Platform fee rate', unit: '%', min: 2, max: 30, step: 0.5, note: 'Customer fact · share of paid-game volume' },
-  { k: 'rs', label: 'Lucra revenue share', unit: '%', min: 0, max: 50, step: 1, note: 'Internal · share of the platform fee to Lucra. A split, so it does not change revenue generated.' },
-  { k: 'license', label: 'Monthly licence fee', prefix: '$', min: 0, max: 30000, step: 500, note: 'Customer fact · head-to-head platform cost' },
   { k: 'rewardGames', label: 'Reward games / user / month', min: 0, max: 50, step: 1, note: 'Estimated · free-to-play reward games' },
   { k: 'win', label: 'Reward win rate', unit: '%', min: 0, max: 100, step: 1, note: 'Estimated · reward games creating an opportunity' },
   { k: 'redeem', label: 'Reward redemption rate', unit: '%', min: 0, max: 100, step: 1, note: 'Estimated · wins redeemed into visits' },
@@ -3799,9 +3799,12 @@ function TPrenderControls() {
     if (!TP.includeH2H) ro.textContent = '';
     else {
       var h = TPCcase(TPCconfig(), 1);
+      var rates = TPsplitRates(TPstate(TP));
       ro.textContent = Math.round(h.engaged).toLocaleString() + ' engaged players · ' + TPmoney(h.paidVolume) +
-        ' paid-game volume / mo · ' + TPmoney(h.p2pFee) + ' platform fee / mo, of which ' + TPmoney(h.lucraShare) +
-        ' to Lucra. Rewards add ' + TPmoney(h.rewardValue) + ' / mo of venue value, counted separately.';
+        ' paid-game volume / mo · ' + TPmoney(h.p2pFee) + ' platform fee / mo. Lucra takes ' +
+        (Math.round(rates.lucra * 1000) / 10) + '% of that from the revenue split, ' + TPmoney(h.lucraShare) +
+        ' / mo including the licence. Rewards add ' + TPmoney(h.rewardValue) +
+        ' / mo of venue value, counted separately.';
     }
   }
   $('tp-h2h-block').hidden = !TP.includeH2H;
@@ -4120,8 +4123,11 @@ function TPCconfig() {
     playsPerUser: MG.plays,
     spendPerPlay: MG.wager,
     feeRate: MG.rake,
-    lucraShare: MG.rs,
-    h2hLicense: MG.license,
+    // Taken from the deal rather than a second head-to-head copy: the Lucra
+    // percentage comes from the revenue split, the licence from the fee
+    // schedule. A free licence contributes nothing.
+    lucraShare: TPsplitRates(TPstate(TP)).lucra * 100,
+    h2hLicense: TP.freeLicense ? 0 : TPfees(TPstate(TP))[0] / 12,
     rewardGames: MG.rewardGames,
     winRate: MG.win,
     redeemRate: MG.redeem,

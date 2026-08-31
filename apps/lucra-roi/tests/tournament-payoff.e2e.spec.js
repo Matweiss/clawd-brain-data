@@ -636,14 +636,17 @@ test('head-to-head carries the full Mini Game input set with sliders', async ({ 
   await setBaseDeal(page);
   await page.locator('#tp-inc-h2h').check();
 
-  const keys = ['eng', 'plays', 'wager', 'rake', 'rs', 'license', 'rewardGames', 'win', 'redeem', 'rewardValue'];
+  // rs and license were removed: they now come from the revenue split and fee schedule.
+  const keys = ['eng', 'plays', 'wager', 'rake', 'rewardGames', 'win', 'redeem', 'rewardValue'];
   for (const k of keys) {
     await expect(page.locator('#tph-' + k)).toBeVisible();
     await expect(page.locator('#tphs-' + k)).toBeVisible();
   }
   // The shared base has a slider too.
   await expect(page.locator('#tp-maus')).toBeVisible();
-  await expect(page.locator('#tp-h2h-fields .input-group')).toHaveCount(10);
+  await expect(page.locator('#tp-h2h-fields .input-group')).toHaveCount(8);
+  await expect(page.locator('#tph-rs')).toHaveCount(0);
+  await expect(page.locator('#tph-license')).toHaveCount(0);
 });
 
 test('the head-to-head sliders drive the model and the Mini Game tab', async ({ page }) => {
@@ -653,20 +656,19 @@ test('the head-to-head sliders drive the model and the Mini Game tab', async ({ 
 
   await page.locator('#tphs-eng').fill('20');
   await page.locator('#tphs-rewardGames').fill('10');
-  await page.locator('#tph-rs').fill('40');
-  await page.locator('#tph-license').fill('2500');
+  await page.locator('#tph-wager').fill('3');
 
-  expect(await page.evaluate(() => [MG.eng, MG.rewardGames, MG.rs, MG.license])).toEqual([20, 10, 40, 2500]);
+  expect(await page.evaluate(() => [MG.eng, MG.rewardGames, MG.wager])).toEqual([20, 10, 3]);
 
   // The number box and the slider stay in step with each other.
   await expect(page.locator('#tph-eng')).toHaveValue('20');
-  await expect(page.locator('#tphs-rs')).toHaveValue('40');
+  await expect(page.locator('#tphs-wager')).toHaveValue('3');
 
   // And the Mini Game tab shows the same values.
   await page.locator('.tabs button', { hasText: 'Mini Game ROI' }).click();
   await expect(page.locator('#mgi-eng')).toHaveValue('20');
   await expect(page.locator('#mgi-rewardGames')).toHaveValue('10');
-  await expect(page.locator('#mgi-rs')).toHaveValue('40');
+  await expect(page.locator('#mgi-wager')).toHaveValue('3');
 });
 
 test('rewards are reported beside revenue, never inside it', async ({ page }) => {
@@ -688,4 +690,54 @@ test('rewards are reported beside revenue, never inside it', async ({ page }) =>
   });
   expect(r[0]).toBe(r[1]);
   expect(r[2]).toBeGreaterThan(0);
+});
+
+test('setup sections are merged into one top box', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+
+  // One box holds the product choice, the deal, the split and participants.
+  const box = page.locator('#tp-calc-view .pf-section').first();
+  await expect(box).toContainText('What the customer is taking');
+  await expect(box.locator('#tp-deal-block')).toBeVisible();
+  await expect(box.locator('#tp-split-block')).toBeVisible();
+  await expect(box.locator('#tp-participants-block')).toBeVisible();
+
+  // Head-to-head and tournament types stay as their own boxes below.
+  await expect(page.locator('#tp-h2h-block')).toHaveClass(/pf-section/);
+  await expect(page.locator('#tp-tournaments-block')).toHaveClass(/pf-section/);
+
+  // Unticking tournaments still collapses the three subsections.
+  await page.locator('#tp-inc-h2h').check();
+  await page.locator('#tp-inc-tournaments').uncheck();
+  await expect(page.locator('#tp-deal-block')).toBeHidden();
+  await expect(page.locator('#tp-split-block')).toBeHidden();
+  await expect(page.locator('#tp-participants-block')).toBeHidden();
+  await expect(page.locator('#tp-inc-h2h')).toBeVisible();
+});
+
+test('head-to-head takes the Lucra share and licence from the deal', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 120000 });
+  await page.locator('#tp-inc-h2h').check();
+  await page.locator('#tp-mau').fill('1000000');
+  await page.evaluate(() => { MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrenderControls(); TPrender(); });
+
+  // Standard split is 10% to Lucra; licence is 120,000 a year, so 10,000 a month.
+  let h = await page.evaluate(() => TPCcase(TPCconfig(), 1));
+  expect(h.p2pFee).toBe(400000);
+  expect(h.lucraShare).toBeCloseTo(400000 * 0.1 + 10000, 6);
+
+  // Switching the deal's split moves the head-to-head Lucra figure with it.
+  await page.locator('.tp-split-switch button[data-split="custom"]').click();
+  await page.locator('#tp-split-credit').fill('50');
+  await page.locator('#tp-split-operator').fill('30');
+  await page.locator('#tp-split-lucra').fill('20');
+  h = await page.evaluate(() => TPCcase(TPCconfig(), 1));
+  expect(h.lucraShare).toBeCloseTo(400000 * 0.2 + 10000, 6);
+
+  // A free licence drops the licence component.
+  await page.locator('#tp-free').check();
+  h = await page.evaluate(() => TPCcase(TPCconfig(), 1));
+  expect(h.lucraShare).toBeCloseTo(400000 * (await page.evaluate(() => TPsplitRates(TPstate(TP)).lucra)), 6);
 });
