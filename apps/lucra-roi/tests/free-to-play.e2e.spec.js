@@ -1,11 +1,15 @@
 import { test, expect } from '@playwright/test';
 
+// Free-to-Play Value lives inside Beyond Revenue behind a product picker.
 async function openFTP(page) {
   await page.goto('/');
-  const tab = page.locator('.tabs button', { hasText: 'Free-to-Play Value' });
+  const tab = page.locator('.tabs button', { hasText: 'Beyond Revenue' });
   if (await tab.isVisible()) await tab.click();
-  else await page.locator('#mobile-workflow').selectOption('freetoplay');
+  else await page.locator('#mobile-workflow').selectOption('beyond');
+  await expect(page.locator('#beyond')).toBeVisible();
+  await page.locator('#by-pick-freetoplay').click();
   await expect(page.locator('#freetoplay')).toBeVisible();
+  await expect(page.locator('#digitalmedia')).toBeHidden();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -57,23 +61,37 @@ test('paid quick estimate distinguishes tournament pool from P2P rake', async ({
   await expect(page.locator('#bq-frequency-field')).toBeHidden();
 });
 
-test('routes the multi-tournament plan into Licence Payoff', async ({ page }) => {
+test('routes the paid quick estimate into the Revenue Model as the deal', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Paid Play', exact: true }).click();
+  await page.locator('#bq-customer').fill('Acme Golf');
   await page.locator('#bq-audience').fill('50000');
   await page.locator('#bq-participants').fill('300');
   await page.locator('#bq-price').fill('10');
   await page.locator('#bq-frequency').fill('4');
   await page.locator('#bq-prize').fill('500');
+  await page.locator('#bq-advanced').evaluate((el) => { el.open = true; });
+  await page.locator('#bq-license').fill('2000');
+  await page.locator('#bq-implementation').fill('6000');
   await page.getByRole('button', { name: 'Build live scenario' }).click();
-  const tournament = page.locator('#lp-tournaments .lp-repeat').first();
-  await expect(tournament).toContainText('Planned pool $12,000 / month');
-  await expect(tournament.locator('input').nth(1)).toHaveValue('10');
-  await expect(tournament.locator('input').nth(2)).toHaveValue('300');
-  await expect(tournament.locator('input').nth(3)).toHaveValue('4');
-  await expect(tournament.locator('input').nth(4)).toHaveValue('500');
-  await expect(tournament.locator('input').nth(5)).toHaveValue('500');
-  await expect(tournament.locator('input').nth(6)).toHaveValue('0');
+  await expect(page.locator('#tournaments')).toBeVisible();
+  await expect(page.locator('#tp-deal-name')).toHaveValue('Acme Golf');
+  const deal = await page.evaluate(() => ({
+    mau: TP.mau, term: TP.termYears, fees: TP.annualFees.slice(0, 3), free: TP.freeLicense,
+    tournaments: TP.includeTournaments, h2h: TP.includeH2H,
+    t: TP.tournaments.map((t) => [t.name, t.entryPrice, t.participants, t.eventsPerMonth, t.customerCashCost, t.isCash]),
+  }));
+  expect(deal.mau).toBe(50000);
+  expect(deal.term).toBe(3);
+  expect(deal.fees).toEqual([30000, 24000, 24000]);
+  expect(deal.free).toBe(false);
+  expect(deal.tournaments).toBe(true);
+  expect(deal.h2h).toBe(false);
+  expect(deal.t).toEqual([['BDR quick estimate', 10, 300, 4, 500, false]]);
+  // Gross entries: 300 × $10 × 4 = $12,000 a month, printed by the model.
+  const month = await page.evaluate(() => TPcalculate(TP, TPCconfig()).months[0].handle);
+  expect(month).toBe(12000);
+  await expect(page.locator('.deal-setup')).toHaveClass(/bq-collapsed/);
 });
 
 test('routes free-to-play discovery answers into the proof-first tab', async ({ page }) => {

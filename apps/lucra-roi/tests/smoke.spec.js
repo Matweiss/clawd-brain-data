@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// All-nine-tabs smoke test.
+// All-seven-tabs smoke test.
 // Verifies every tab renders without JS errors, all panels become visible,
 // console-error capture, and keyboard tab navigation.
 //
@@ -13,10 +13,7 @@ const TAB_NAMES = [
   'Gamification',
   'Revenue Model',
   'Mini Game ROI',
-  'Launch Forecast',
-  'Free-to-Play Value',
-  'Digital Media ROI',
-  'Wager Break-even',
+  'Beyond Revenue',
   'Investment Plans',
   'Brand Arcade',
 ];
@@ -26,10 +23,7 @@ const TAB_PANEL_IDS = [
   'gamification',
   'tournaments',
   'minigame',
-  'forecast',
-  'freetoplay',
-  'digitalmedia',
-  'wagerbreakeven',
+  'beyond',
   'analytics',
   'brandarcade',
 ];
@@ -38,7 +32,14 @@ function tabButton(page, name) {
   return page.locator('.tabs button', { hasText: name });
 }
 
-test('all nine tabs load without console errors', async ({ page }) => {
+// Digital Media ROI now lives inside Beyond Revenue behind a product picker.
+async function openDigitalMedia(page) {
+  await tabButton(page, 'Beyond Revenue').click();
+  await page.locator('#by-pick-digitalmedia').click();
+  await expect(page.locator('#digitalmedia')).toBeVisible();
+}
+
+test('every tab loads without console errors', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
 
@@ -178,12 +179,13 @@ test('Gamification tab renders deal configuration', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('Wager Break-even tab renders economics controls', async ({ page }) => {
+test('the wager break-even fold inside the Revenue Model renders its controls', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
 
   await page.goto('/');
-  await tabButton(page, 'Wager Break-even').click();
+  await tabButton(page, 'Revenue Model').click();
+  await page.locator('#tp-wb-fold summary').click();
 
   // The required economics and footprint inputs should be visible.
   await expect(page.locator('#wb-license')).toBeVisible();
@@ -216,8 +218,7 @@ test('Digital Media ROI tab calculates, toggles, and persists', async ({ page })
   page.on('pageerror', err => errors.push(err.message));
 
   await page.goto('/');
-  await tabButton(page, 'Digital Media ROI').click();
-  await expect(page.locator('#digitalmedia')).toBeVisible();
+  await openDigitalMedia(page);
   await expect(page.locator('#dm-cost-table')).toBeVisible();
   await expect(page.locator('#dm-funding .stat')).toHaveCount(3);
   await expect(page.locator('#dm-traffic-fields')).toBeHidden();
@@ -244,7 +245,10 @@ test('Digital Media ROI tab calculates, toggles, and persists', async ({ page })
   await expect(page.locator('#dm-pitch .cp-btn')).toHaveText('Copied!');
 
   await page.reload();
-  await tabButton(page, 'Digital Media ROI').click();
+  // The picker remembers the last product.
+  await tabButton(page, 'Beyond Revenue').click();
+  await expect(page.locator('#digitalmedia')).toBeVisible();
+  await expect(page.locator('#freetoplay')).toBeHidden();
   await expect(page.locator('#dm-equivalence')).toHaveValue('50');
   await expect(page.locator('#dm-traffic-on')).toBeChecked();
   await expect(page.locator('#dm-rpm')).toHaveValue('12');
@@ -256,7 +260,7 @@ test('Digital Media ROI tab calculates, toggles, and persists', async ({ page })
 
 test('Digital Media scenarios rebaseline safely and break-even strings render', async ({ page }) => {
   await page.goto('/');
-  await tabButton(page, 'Digital Media ROI').click();
+  await openDigitalMedia(page);
   await page.locator('#dm-mu').fill('100000');
   await page.locator('#dm-aov').fill('55');
   await page.locator('#dm-margin').fill('40');

@@ -1154,3 +1154,28 @@ test('a deal link is created through the API and restores the deal on open', asy
   expect(await page.evaluate(() => MG.rake)).toBe(11);
   expect(page.url()).not.toContain('deal=');
 });
+
+test('a payment at signing is entered on the deal and printed in the brief', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000 });
+  await expect(page.locator('#tp-upfront-mode')).toHaveValue('none');
+  await expect(page.locator('#tp-upfront-value-group')).toBeHidden();
+  await page.locator('#tp-upfront-mode').selectOption('pct');
+  await expect(page.locator('#tp-upfront-value-group')).toBeVisible();
+  await expect(page.locator('#tp-upfront-suffix')).toBeVisible();
+  await page.locator('#tp-upfront-value').fill('25');
+  await expect(page.locator('#tp-upfront-note')).toContainText('$15,000 of the year-1 fee');
+  const r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  expect(r.totalUpfrontCredited).toBe(15000);
+  expect(r.months[0].upfrontCredit).toBe(15000);
+  const brief = await page.evaluate(() => TPbrief());
+  expect(brief).toMatch(/Year 1: licence fee 60000 \(\$60,000\) · retired by activity [\d.]+ \(\$[\d,]+\) \(of which paid at signing 15000 \(\$15,000\)\)/);
+  expect(brief).toContain('$15,000 paid at signing is credited against the licence in month 1 and is not revenue.  [customer fact]');
+  // Switching to a dollar amount keeps the value and swaps the unit.
+  await page.locator('#tp-upfront-mode').selectOption('amount');
+  await expect(page.locator('#tp-upfront-prefix')).toBeVisible();
+  await expect(page.locator('#tp-upfront-suffix')).toBeHidden();
+  expect(await page.evaluate(() => TPcalculate(TP, TPCconfig()).totalUpfrontCredited)).toBe(25);
+  await page.locator('#tp-upfront-mode').selectOption('none');
+  expect(await page.evaluate(() => TPcalculate(TP, TPCconfig()).totalUpfrontCredited)).toBe(0);
+});

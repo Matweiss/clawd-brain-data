@@ -594,6 +594,42 @@ describe('Sponsors credit the licence directly', () => {
   });
 });
 
+describe('A payment at signing credits the licence first', () => {
+  const { TPupfront } = calc;
+  it('is a dollar amount or a share of the year-1 fee, and nothing on a waived licence', () => {
+    expect(TPupfront(TPstate(base()))).toBe(0);
+    expect(TPupfront(TPstate(base({ upfrontMode: 'amount', upfrontValue: 12000 })))).toBe(12000);
+    expect(TPupfront(TPstate(base({ upfrontMode: 'pct', upfrontValue: 25 })))).toBe(15000);
+    expect(TPupfront(TPstate(base({ upfrontMode: 'pct', upfrontValue: 250 })))).toBe(60000);
+    expect(TPupfront(TPstate(base({ upfrontMode: 'amount', upfrontValue: 12000, freeLicense: true })))).toBe(0);
+  });
+
+  it('comes off the balance in month 1 before activity or sponsors, and never enters the pool', () => {
+    const r = TPcalculate(base({ upfrontMode: 'amount', upfrontValue: 12000, sponsors: [{ id: 'a', name: 'S', amount: 5000, month: 1 }] }));
+    expect(r.months[0].upfrontCredit).toBe(12000);
+    expect(r.months[0].sponsorCredit).toBe(5000);
+    expect(r.months[1].upfrontCredit).toBe(0);
+    expect(r.months[0].cumulativeLicense).toBe(12000 + 5000 + 2000);
+    expect(r.totalUpfrontCredited).toBe(12000);
+    expect(r.years[0].credited).toBe(12000 + 5000 + 2000 * 12);
+    // Activity still splits exactly as before: the signing payment is not revenue.
+    expect(r.months[0].toLucra).toBe(400);
+    expect(r.months[0].splitBase).toBe(4000);
+    const plain = TPcalculate(base());
+    expect(r.balanceDue).toBe(Math.max(0, plain.balanceDue - 17000));
+  });
+
+  it('can retire the licence at signing, and is capped at the balance', () => {
+    const r = TPcalculate(base({ annualFees: [10000], upfrontMode: 'amount', upfrontValue: 25000 }));
+    expect(r.months[0].upfrontCredit).toBe(10000);
+    expect(r.totalUpfrontCredited).toBe(10000);
+    expect(r.payoffMonth).toBe(0);
+    expect(r.balanceDue).toBe(0);
+    // Everything after signing is post-payoff split.
+    expect(r.months[0].split).toBe('Post-payoff');
+  });
+});
+
 describe('Engagement decay', () => {
   const { TPdecayFactor, TPaudienceFactor } = calc;
   it('is off by default and leaves every year at full engagement', () => {

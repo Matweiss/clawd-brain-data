@@ -183,31 +183,6 @@ function DMcalc(s){
  return{mu:mu,EP:EP,TC:TC,issued:issued,claimed:claimed,redeemed:redeemed,redeemOrders:redeemOrders,liftOrders:liftOrders,orders:orders,aovEffective:aovEffective,commerceRevenue:commerceRevenue,commerceContribution:commerceContribution,rewardCost:rewardCost,fulfillment:fulfillment,netCommerce:netCommerce,newProfiles:newProfiles,optIns:optIns,audienceValue:audienceValue,deltaPV:deltaPV,deltaSessions:deltaSessions,adRevenue:adRevenue,sponsorContribution:sponsorContribution,grossBenefit:gross,netBenefit:net,roi:roi,multiple:multiple,payback:payback,valuePerOrder:valuePerOrder,basePV:basePV,bePV:bePV,bePVpct:bePVpct,beOrders:beOrders,beProfiles:beProfiles,beEngaged:beEngaged,costEngaged:DMdiv(TC,EP),costProfile:DMdiv(TC,newProfiles),costOrder:DMdiv(TC,orders),costViews:DMdiv(TC,deltaPV/1000)}
 }
 
-var LP_DEFAULTS={customerName:'',termYears:2,annualFees:[12000,48000,48000],upfrontMode:'amount',upfrontValue:0,carryForward:true,payoff:{customer:40,lucra:10,credit:50},post:{customer:90,lucra:10},postMode:'term',audience:5000,engagement:10,rebuy:1.15,growthRate:0,growthMonths:6,tournamentMode:'audience',planCount:2,planCadence:4,tournamentsOn:true,tournaments:[{id:'open',name:'Open play',entryPrice:5,entriesPerEvent:200,eventsPerMonth:4,prizeFaceValue:500,prizeCost:500,sponsorFunding:0},{id:'headline',name:'Headline event',entryPrice:20,entriesPerEvent:50,eventsPerMonth:1,prizeFaceValue:750,prizeCost:750,sponsorFunding:0}],h2hOn:false,h2h:{players:500,monthlyWager:20,rake:20},miniOn:false,mini:{audience:10000,engagement:10,monthlySpend:5,rake:20},sponsorOn:false,sponsors:[{id:'launch',name:'Launch sponsor',amount:0,month:1}]};
-function LPnum(v,lo,hi){v=Number(v);if(!isFinite(v))v=0;if(lo!==undefined)v=Math.max(lo,v);if(hi!==undefined)v=Math.min(hi,v);return v}
-function LPclone(s){return JSON.parse(JSON.stringify(s))}
-function LPstate(s){var out=LPclone(LP_DEFAULTS),src=s||{};Object.keys(src).forEach(function(k){out[k]=src[k]&&typeof src[k]==='object'&&!Array.isArray(src[k])?Object.assign({},out[k]||{},src[k]):src[k]});out.annualFees=(src.annualFees||out.annualFees).slice(0,3);out.tournaments=(src.tournaments||out.tournaments).map(function(x){return Object.assign({},x)});out.sponsors=(src.sponsors||out.sponsors).map(function(x){return Object.assign({},x)});return out}
-function LPvalidate(s){s=LPstate(s);var errors=[],pay=LPnum(s.payoff.customer)+LPnum(s.payoff.lucra)+LPnum(s.payoff.credit),post=LPnum(s.post.customer)+LPnum(s.post.lucra);if(Math.abs(pay-100)>.001)errors.push('Payoff split must sum to 100%');if(Math.abs(post-100)>.001)errors.push('Post-payoff split must sum to 100%');if(LPnum(s.payoff.credit)<=0)errors.push('Licence credit must be above 0%');if(LPnum(s.termYears,1,3)<1)errors.push('Term must be at least one year');return errors}
-function LPcalculate(input,overrides){var s=LPstate(input),errors=LPvalidate(s),term=Math.round(LPnum(s.termYears,1,3)),months=term*12,fees=s.annualFees.slice(0,term).map(function(x){return LPnum(x,0)}),totalContract=fees.reduce(function(a,b){return a+b},0),upfrontRaw=s.upfrontMode==='percent'?fees[0]*LPnum(s.upfrontValue,0,100)/100:LPnum(s.upfrontValue,0),upfront=Math.min(fees[0]||0,upfrontRaw),payC=LPnum(s.payoff.customer,0,100)/100,payL=LPnum(s.payoff.lucra,0,100)/100,creditRate=LPnum(s.payoff.credit,0,100)/100,postC=LPnum(s.post.customer,0,100)/100,postL=LPnum(s.post.lucra,0,100)/100,growthRate=LPnum(s.growthRate,0,30)/100,growthMonths=Math.round(LPnum(s.growthMonths,0,months)),baseEngagement=overrides&&overrides.engagement!==undefined?LPnum(overrides.engagement,0,100):LPnum(s.engagement,0,100),priceMultiplier=overrides&&overrides.priceMultiplier!==undefined?LPnum(overrides.priceMultiplier,0):1,useAnnualBucket=s.postMode==='year',contractRemaining=Math.max(0,totalContract-upfront),yearRemaining=Math.max(0,(fees[0]||0)-upfront),carryBank=0,creditApplied=0,creditCapacity=0,totalCustomer=0,totalLucra=0,customerDuring=0,customerAfter=0,totalPrize=0,totalTrueUp=0,totalGross=0,totalMonthlyShortfall=0,largestShortfall=0,manualPlan=s.tournamentMode==='manual',requiredEngagementForPlan=null,planFeasible=true,yearOneClearMonth=null,fullClearMonth=null,cumulativeActivity=upfront,rows=[],trueUps=[],warnings=[],sponsorUnused=0;
- if(manualPlan&&s.tournamentsOn){var audiencePerEngagementPoint=LPnum(s.audience,0)*LPnum(s.rebuy,0)/100,maxEntriesPerEvent=(s.tournaments||[]).reduce(function(m,t){return Math.max(m,LPnum(t.entriesPerEvent,0))},0);requiredEngagementForPlan=audiencePerEngagementPoint>0?maxEntriesPerEvent/audiencePerEngagementPoint:(maxEntriesPerEvent>0?Infinity:0);planFeasible=requiredEngagementForPlan<=baseEngagement+1e-6}
- if(errors.length)return{errors:errors,months:[],trueUps:[],totalContract:totalContract};
- for(var month=1;month<=months;month++){var year=Math.ceil(month/12),monthInYear=((month-1)%12)+1;if(monthInYear===1&&month>1){yearRemaining=Math.max(0,(fees[year-1]||0)-carryBank);carryBank=Math.max(0,carryBank-(fees[year-1]||0))}
-  var growth=Math.pow(1+growthRate,Math.min(month-1,growthMonths)),engaged=LPnum(s.audience,0)*growth*baseEngagement/100,eventEntryDemand=engaged*LPnum(s.rebuy,0),tournaments=s.tournaments||[],capacity=tournaments.reduce(function(a,t){return a+LPnum(t.entriesPerEvent,0)*LPnum(t.eventsPerMonth,0)},0),usedEntries=0,tournamentGross=0,prizeCost=0,tournamentDetail=[];
-  if(s.tournamentsOn&&capacity>0)tournaments.forEach(function(t){var events=LPnum(t.eventsPerMonth,0),eventCapacity=LPnum(t.entriesPerEvent,0),entriesPerEvent=manualPlan?eventCapacity:Math.min(eventEntryDemand,eventCapacity),entries=entriesPerEvent*events,price=LPnum(t.entryPrice,0)*priceMultiplier,gross=entries*price,face=LPnum(t.prizeFaceValue===undefined?t.prizeCost:t.prizeFaceValue,0)*events,prize=LPnum(t.prizeCost,0)*events,sponsor=LPnum(t.sponsorFunding,0)*events;usedEntries+=entries;tournamentGross+=gross;prizeCost+=prize;tournamentDetail.push({name:t.name||'Tournament',entries:entries,entriesPerEvent:entriesPerEvent,events:events,entryPrice:price,gross:gross,prizeFaceValue:face,prizeCost:prize,sponsorFunding:sponsor,prizePct:gross>0?prize/gross:null})});
-  var h2hPlayers=s.h2hOn?LPnum(s.h2h.players,0)*growth:0,h2hHandle=h2hPlayers*LPnum(s.h2h.monthlyWager,0),h2hGross=h2hHandle*LPnum(s.h2h.rake,0,100)/100,miniAudience=s.miniOn?LPnum(s.mini.audience,0)*growth:0,miniEngaged=miniAudience*LPnum(s.mini.engagement,0,100)/100,miniHandle=miniEngaged*LPnum(s.mini.monthlySpend,0),miniGross=miniHandle*LPnum(s.mini.rake,0,100)/100,gross=tournamentGross+h2hGross+miniGross,sponsorAmount=s.sponsorOn?(s.sponsors||[]).reduce(function(a,x){return a+(Math.round(LPnum(x.month,1,months))===month?LPnum(x.amount,0):0)},0):0,eligible=useAnnualBucket?yearRemaining:contractRemaining,sponsorApplied=Math.min(eligible,sponsorAmount),sponsorExtra=Math.max(0,sponsorAmount-sponsorApplied);if(s.carryForward&&useAnnualBucket)carryBank+=sponsorExtra;else sponsorUnused+=sponsorExtra;eligible-=sponsorApplied;contractRemaining=Math.max(0,contractRemaining-sponsorApplied);if(useAnnualBucket)yearRemaining=Math.max(0,yearRemaining-sponsorApplied);
-  var payoffGross=creditRate>0?Math.min(gross,eligible/creditRate):0,postGross=Math.max(0,gross-payoffGross),grossCredit=Math.min(eligible,payoffGross*creditRate),customerShare=payoffGross*payC+postGross*postC,lucraShare=payoffGross*payL+postGross*postL,payoffFraction=gross>0?payoffGross/gross:0,payoffTournamentGross=tournamentGross*payoffFraction,payoffPrizeCost=prizeCost*payoffFraction,payoffTournamentCustomer=payoffTournamentGross*payC,customerNet=customerShare-prizeCost,shortfall=Math.max(0,-customerNet),split=payoffGross>0&&postGross>0?'Crossover':payoffGross>0?'Payoff':'Post-payoff';contractRemaining=Math.max(0,contractRemaining-grossCredit);if(useAnnualBucket)yearRemaining=Math.max(0,yearRemaining-grossCredit);creditApplied+=sponsorApplied+grossCredit;cumulativeActivity+=sponsorApplied+grossCredit;creditCapacity+=sponsorAmount+gross*creditRate;totalGross+=gross;totalCustomer+=customerShare;totalLucra+=lucraShare;customerDuring+=payoffGross*payC;customerAfter+=postGross*postC;totalPrize+=prizeCost;totalMonthlyShortfall+=shortfall;largestShortfall=Math.max(largestShortfall,shortfall);
-  if(yearOneClearMonth===null&&month<=12&&cumulativeActivity+1e-6>=(fees[0]||0))yearOneClearMonth=month;if(fullClearMonth===null&&cumulativeActivity+1e-6>=totalContract)fullClearMonth=month;
-  var trueUp=0;if(monthInYear===12){if(useAnnualBucket)trueUp=yearRemaining;else{var dueToDate=fees.slice(0,year).reduce(function(a,b){return a+b},0),paidToDate=totalContract-contractRemaining;trueUp=Math.max(0,dueToDate-paidToDate)}if(trueUp>0){contractRemaining=Math.max(0,contractRemaining-trueUp);if(useAnnualBucket)yearRemaining=0;totalTrueUp+=trueUp}trueUps.push({year:year,amount:trueUp})}
-  var cashNegative=payoffGross>0&&payoffPrizeCost>payoffTournamentCustomer+0.01;if(cashNegative)warnings.push('Month '+month+': payoff-phase prize board cost exceeds the customer payoff-phase tournament share.');rows.push({month:month,year:year,monthInYear:monthInYear,growth:growth,engaged:engaged,tournamentEntries:usedEntries,tournamentGross:tournamentGross,h2hHandle:h2hHandle,h2hGross:h2hGross,miniHandle:miniHandle,miniGross:miniGross,gross:gross,payoffGross:payoffGross,postGross:postGross,licenceCredit:sponsorApplied+grossCredit,cumulativeCredit:creditApplied,balanceRemaining:contractRemaining,payoffBalanceRemaining:useAnnualBucket?yearRemaining:contractRemaining,customerShare:customerShare,prizeCost:prizeCost,prizePct:tournamentGross>0?prizeCost/tournamentGross:null,customerNet:customerNet,lucraShare:lucraShare,trueUp:trueUp,split:split,cashNegative:cashNegative,tournaments:tournamentDetail})}
- var structureNet=totalCustomer-totalPrize-upfront-totalTrueUp,cashUpfrontNet=rows.reduce(function(a,r){return a+r.gross*postC-r.prizeCost},0)-totalContract,toggledOff=[];if(!s.tournamentsOn)toggledOff.push('tournaments');if(!s.h2hOn)toggledOff.push('head-to-head');if(!s.miniOn)toggledOff.push('mini games');if(!s.sponsorOn)toggledOff.push('sponsorship');if(LPnum(s.growthRate,0)===0)toggledOff.push('growth');return{errors:[],state:s,totalContract:totalContract,upfront:upfront,months:rows,trueUps:trueUps,totalTrueUp:totalTrueUp,creditApplied:creditApplied,creditCapacity:creditCapacity,coverage:totalContract>0?creditCapacity/totalContract:null,balanceRemaining:contractRemaining,yearOneClearMonth:yearOneClearMonth,fullClearMonth:fullClearMonth,totalGross:totalGross,totalCustomer:totalCustomer,customerDuring:customerDuring,customerAfter:customerAfter,totalLucra:totalLucra,totalPrize:totalPrize,largestMonthlyShortfall:largestShortfall,totalMonthlyShortfall:totalMonthlyShortfall,cashOutOfPocket:upfront+totalTrueUp+totalPrize,planFeasible:planFeasible,requiredEngagementForPlan:requiredEngagementForPlan,structureNet:structureNet,cashUpfrontNet:cashUpfrontNet,comparisonDelta:structureNet-cashUpfrontNet,toggledOff:toggledOff,warnings:warnings,sponsorUnused:sponsorUnused,growthRateApplied:growthRate};}
-function LPbreakEvenMap(input){var s=LPstate(input),baseline=LPcalculate(s),monthOne=baseline.months[0]||{},monthlyCapacity=(s.tournaments||[]).reduce(function(a,t){return a+LPnum(t.entriesPerEvent,0)*LPnum(t.eventsPerMonth,0)},0),eventCount=(s.tournaments||[]).reduce(function(a,t){return a+LPnum(t.eventsPerMonth,0)},0),primary=(s.tournaments&&s.tournaments[0])?LPnum(s.tournaments[0].entryPrice,0):10,prices=[.5,.75,1,1.25,1.5].map(function(f){return Math.max(1,Math.round(primary*f*100)/100)}),engagements=[5,10,15,20,25],columns=prices.map(function(price){var multiplier=primary>0?price/primary:1,lo=0,hi=100,reachable=false;for(var i=0;i<20;i++){var mid=(lo+hi)/2,r=LPcalculate(s,{engagement:mid,priceMultiplier:multiplier}),clears=r.fullClearMonth!==null&&r.totalTrueUp<.01&&r.planFeasible;if(clears){reachable=true;hi=mid}else lo=mid}return{price:price,required:reachable?Math.ceil((hi-0.0002)*10)/10:null,cells:engagements.map(function(e){var r=LPcalculate(s,{engagement:e,priceMultiplier:multiplier}),economicsClear=r.fullClearMonth!==null&&r.totalTrueUp<.01,feasible=r.planFeasible,comfortable=economicsClear&&feasible&&r.coverage!==null&&r.coverage>=1.2,status=economicsClear?(feasible?(comfortable?'comfortable':'tight'):'capacity'):'miss';return{engagement:e,status:status,economicsClear:economicsClear,feasible:feasible,coverage:r.coverage,fullClearMonth:r.fullClearMonth,trueUp:r.totalTrueUp}})}}),recommendation=LPrecommendPlan(s);return{prices:prices,engagements:engagements,columns:columns,monthlyCapacity:monthlyCapacity,eventCount:eventCount,modeledEntries:LPnum(monthOne.tournamentEntries,0),mode:s.tournamentMode,recommendation:recommendation}}
-
-function LPtournamentMonthly(input){var s=LPstate(input),result=LPcalculate(s),month=result.months[0]||{},payC=LPnum(s.payoff.customer,0,100)/100,payL=LPnum(s.payoff.lucra,0,100)/100,payCredit=LPnum(s.payoff.credit,0,100)/100,rows=(month.tournaments||[]).map(function(t){var gross=LPnum(t.gross,0),prize=LPnum(t.prizeCost,0),customerGross=gross*payC;return{name:t.name,entries:LPnum(t.entries,0),entriesPerEvent:LPnum(t.entriesPerEvent,0),events:LPnum(t.events,0),entryPrice:LPnum(t.entryPrice,0),gross:gross,licenceCredit:gross*payCredit,lucraRevenue:gross*payL,customerGross:customerGross,prizeFaceValue:LPnum(t.prizeFaceValue,0),prizeCost:prize,sponsorFunding:LPnum(t.sponsorFunding,0),customerNet:customerGross-prize}}),totals=rows.reduce(function(a,r){a.gross+=r.gross;a.licenceCredit+=r.licenceCredit;a.lucraRevenue+=r.lucraRevenue;a.customerGross+=r.customerGross;a.prizeFaceValue+=r.prizeFaceValue;a.prizeCost+=r.prizeCost;a.sponsorFunding+=r.sponsorFunding;a.customerNet+=r.customerNet;return a},{gross:0,licenceCredit:0,lucraRevenue:0,customerGross:0,prizeFaceValue:0,prizeCost:0,sponsorFunding:0,customerNet:0}),annualObligations=s.annualFees.slice(0,Math.round(LPnum(s.termYears,1,3))).map(function(fee,i){var monthlyLicence=LPnum(fee,0)/12,licenceGap=Math.max(0,monthlyLicence-totals.licenceCredit),customerShareNeeded=Math.min(Math.max(0,totals.customerNet),licenceGap),remainingGap=Math.max(0,licenceGap-Math.max(0,totals.customerNet));return{year:i+1,fee:LPnum(fee,0),monthlyLicence:monthlyLicence,licenceCreditCovers:totals.licenceCredit+0.01>=monthlyLicence,licenceGap:licenceGap,customerShareNeeded:customerShareNeeded,remainingGap:remainingGap,customerNetAfterGap:totals.customerNet-licenceGap,customerNetVsFullLicence:totals.customerNet-monthlyLicence}}),first=annualObligations[0]||{monthlyLicence:0,licenceCreditCovers:true,licenceGap:0,customerShareNeeded:0,remainingGap:0,customerNetAfterGap:totals.customerNet,customerNetVsFullLicence:totals.customerNet};return{rows:rows,totals:totals,annualObligations:annualObligations,monthlyLicence:first.monthlyLicence,licenceCreditCovers:first.licenceCreditCovers,licenceGap:first.licenceGap,customerShareNeeded:first.customerShareNeeded,remainingGap:first.remainingGap,customerNetAfterGap:first.customerNetAfterGap,customerNetVsFullLicence:first.customerNetVsFullLicence}}
-
-function LPyearlySummary(input){var s=LPstate(input),r=LPcalculate(s),postC=LPnum(s.post.customer,0,100)/100,years=[];for(var year=1;year<=Math.round(LPnum(s.termYears,1,3));year++){var rows=r.months.filter(function(x){return x.year===year}),trueUp=(r.trueUps[year-1]||{}).amount||0,customerNet=rows.reduce(function(a,x){return a+LPnum(x.customerNet,0)},0),clearRow=s.postMode==='year'?rows.find(function(x){return x.payoffBalanceRemaining<=.01&&x.trueUp<.01}):null;years.push({year:year,fee:LPnum(s.annualFees[year-1],0),activityCredit:rows.reduce(function(a,x){return a+LPnum(x.licenceCredit,0)},0),customerNet:customerNet,customerNetAfterTrueUp:customerNet-trueUp,customerShare:rows.reduce(function(a,x){return a+LPnum(x.customerShare,0)},0),postPayoffCustomer:rows.reduce(function(a,x){return a+LPnum(x.postGross,0)*postC},0),prizeCost:rows.reduce(function(a,x){return a+LPnum(x.prizeCost,0)},0),lucraRevenue:rows.reduce(function(a,x){return a+LPnum(x.lucraShare,0)},0),trueUp:trueUp,clearMonth:clearRow?clearRow.month:null,monthsAtHigherSplit:rows.filter(function(x){return LPnum(x.postGross,0)>0}).length})}return{mode:s.postMode,years:years,result:r}}
-
-function LPrecommendPlan(input){var s=LPstate(input),supported=LPnum(s.audience,0)*LPnum(s.engagement,0,100)/100*LPnum(s.rebuy,0),maxEntries=Math.max(0,Math.floor(supported)),tournaments=s.tournaments||[],prices=[5,10,15,20,25,50];if(!s.tournamentsOn||!tournaments.length)return{error:'Add at least one tournament before generating a plan.'};if(maxEntries<1)return{error:'Audience, engagement, and entries per player must support at least one entry per event.'};function candidate(price,entries){var c=LPstate(s);c.tournamentMode='audience';c.tournaments=tournaments.map(function(t){return Object.assign({},t,{entryPrice:price,entriesPerEvent:entries})});var r=LPcalculate(c);return{valid:r.fullClearMonth!==null&&r.totalTrueUp<.01&&r.totalMonthlyShortfall<.01,result:r}}var best=null;for(var p=0;p<prices.length&&!best;p++){var top=candidate(prices[p],maxEntries);if(!top.valid)continue;var lo=1,hi=maxEntries;while(lo<hi){var mid=Math.floor((lo+hi)/2);if(candidate(prices[p],mid).valid)hi=mid;else lo=mid+1}best={price:prices[p],entriesPerEvent:lo,result:candidate(prices[p],lo).result}}if(!best&&candidate(500,maxEntries).valid){var lowPrice=50,highPrice=500;for(var i=0;i<18;i++){var midPrice=(lowPrice+highPrice)/2;if(candidate(midPrice,maxEntries).valid)highPrice=midPrice;else lowPrice=midPrice}var roundedPrice=Math.ceil(highPrice*2)/2;best={price:roundedPrice,entriesPerEvent:maxEntries,result:candidate(roundedPrice,maxEntries).result}}if(!best)return{error:'No cash-safe plan clears within the supported audience at entry prices up to $500. Increase audience, cadence, or customer payoff share; lower prize boards or fees; or add sponsor credit.',supportedEntriesPerEvent:maxEntries};return{error:null,price:best.price,entriesPerEvent:best.entriesPerEvent,supportedEntriesPerEvent:maxEntries,eventCount:tournaments.reduce(function(a,t){return a+LPnum(t.eventsPerMonth,0)},0),result:best.result}}
-
 /* TP-PURE-START — mirrored verbatim from api/app.html, guarded by tests/tp-drift.spec.js */
 var TP_SPLITS = {
   recapture: { credit: 50, operator: 40, lucra: 10 },
@@ -270,6 +245,11 @@ var TP_DEFAULTS = {
   seasonStart: 1,
   // Sponsors credit the licence directly in the month paid, before any split.
   sponsors: [],
+  // A payment at signing, credited against the licence in month 1 before any
+  // activity. 'amount' is dollars; 'pct' is a share of the year-1 fee. Ported
+  // from the retired Licence Payoff engine.
+  upfrontMode: 'none',
+  upfrontValue: 0,
   // Head-to-head
   h2hReach: 0,
   h2hMode: 'both',
@@ -473,6 +453,16 @@ function TPsponsorsInMonth(s, month) {
   }, 0);
 }
 
+/* The upfront payment, in dollars, credited at signing. Nothing on a waived
+   licence, and never more than the year-1 fee on a percentage basis. */
+function TPupfront(s) {
+  if (s.freeLicense) return 0;
+  var v = TPnum(s.upfrontValue, 0);
+  if (s.upfrontMode === 'amount') return v;
+  if (s.upfrontMode === 'pct') return TPnum(v, 0, 100) / 100 * (TPfees(s)[0] || 0);
+  return 0;
+}
+
 /* Participants for one tournament type: its own headcount, or its own share of
    the addressable base, per location, scaled by the locations open and their
    ramps that month. */
@@ -537,6 +527,7 @@ function TPcalculate(input, cfg, factor) {
     totalHandle = 0, totalPrizeCost = 0, totalSplitBase = 0,
     totalH2HFee = 0, totalH2HVolume = 0, totalRewardValue = 0,
     totalSponsorCredited = 0, totalSponsorUnapplied = 0,
+    upfront = TPupfront(s), totalUpfrontCredited = 0,
     useH2H = !!s.includeH2H && !!cfg,
     tournamentsOn = s.includeTournaments ? s.tournaments : [],
     lossMonths = 0, payoffMonth = null, months = [];
@@ -559,10 +550,16 @@ function TPcalculate(input, cfg, factor) {
       years[yi].opening = remaining;
     }
 
-    // Sponsors land first and go straight against the licence.
+    // The upfront payment lands at signing, then sponsors; both go straight
+    // against the licence before any activity.
+    var openingRemaining = remaining,
+      upfrontCredit = month === 1 ? Math.min(remaining, upfront) : 0;
+    remaining = Math.max(0, remaining - upfrontCredit);
+    cumulativeLicense += upfrontCredit;
+    totalUpfrontCredited += upfrontCredit;
+    if (years[yi]) years[yi].credited += upfrontCredit;
     var sponsorPaid = TPsponsorsInMonth(s, month),
-      sponsorCredit = Math.min(remaining, sponsorPaid),
-      openingRemaining = remaining;
+      sponsorCredit = Math.min(remaining, sponsorPaid);
     remaining = Math.max(0, remaining - sponsorCredit);
     cumulativeLicense += sponsorCredit;
     totalSponsorCredited += sponsorCredit;
@@ -608,8 +605,9 @@ function TPcalculate(input, cfg, factor) {
     totalHandle += handle; totalPrizeCost += prizeCost; totalSplitBase += splitBase;
     if (years[yi]) years[yi].credited += toLicense;
 
-    // If a sponsor cleared it before any activity, the month is done at its start.
-    var fraction = splitBase > 0 ? licenseGross / splitBase : (sponsorCredit > 0 && remaining <= 1e-9 ? 0 : 1);
+    // If the signing payment or a sponsor cleared it before any activity, the
+    // month is done at its start.
+    var fraction = splitBase > 0 ? licenseGross / splitBase : (sponsorCredit + upfrontCredit > 0 && remaining <= 1e-9 ? 0 : 1);
     if (years[yi] && years[yi].clearMonth === null && openingRemaining > 1e-9 && remaining <= 1e-9) {
       years[yi].clearMonth = month - 1 + fraction;
     }
@@ -622,7 +620,7 @@ function TPcalculate(input, cfg, factor) {
       participants: participants, handle: handle, prizeCost: prizeCost,
       h2hFee: h2hFee, h2hVolume: hm ? hm.paidVolume : 0, h2hEngaged: hm ? hm.engaged : 0,
       rewardValue: hm ? hm.rewardValue : 0,
-      sponsorPaid: sponsorPaid, sponsorCredit: sponsorCredit,
+      sponsorPaid: sponsorPaid, sponsorCredit: sponsorCredit, upfrontCredit: upfrontCredit,
       grossMargin: grossMargin, splitBase: splitBase,
       toLicense: toLicense, cumulativeLicense: cumulativeLicense,
       operatorGross: operatorGross, toOperator: toOperator, toLucra: toLucra,
@@ -653,6 +651,7 @@ function TPcalculate(input, cfg, factor) {
     totalHandle: totalHandle, totalPrizeCost: totalPrizeCost, totalSplitBase: totalSplitBase,
     totalH2HFee: totalH2HFee, totalH2HVolume: totalH2HVolume, totalRewardValue: totalRewardValue,
     totalSponsorCredited: totalSponsorCredited, totalSponsorUnapplied: totalSponsorUnapplied,
+    upfront: upfront, totalUpfrontCredited: totalUpfrontCredited,
     includesH2H: useH2H,
     lossMonths: lossMonths, free: rates.free
   };
@@ -885,6 +884,7 @@ function TPpitchTournaments(input, cfg) {
     'The operator funds ' + TPmoney0(m1.prizeCost || 0) + ' of prizes out of their own share.';
   out += ' Over the term that is ' + TPmoney0(r.totalHandle / TPterm(s)) + ' a year' +
     (r.includesH2H && r.totalH2HFee > 0 ? ', and with the head-to-head fee alongside it the pool is ' + TPmoney0(perYear) + ' a year' : '') + '.';
+  if (r.totalUpfrontCredited > 0) out += ' ' + TPmoney0(r.totalUpfrontCredited) + ' paid at signing came off the licence first.';
   if (r.totalSponsorCredited > 0) out += ' Sponsors put ' + TPmoney0(r.totalSponsorCredited) + ' straight against the licence.';
   if (r.free) {
     out += ' The licence is waived, so the operator and Lucra split it from month one.';
@@ -1209,5 +1209,5 @@ function TPrecLevers(input, mau, step, opts) {
 }
 
 /* TP-PURE-END */
-module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments,
+module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPupfront, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments,
   TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear };

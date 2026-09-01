@@ -1,11 +1,22 @@
 import { test, expect } from '@playwright/test';
 
+// The launch forecast lives inside the Revenue Model as a fold.
 async function openServedApp(page) {
   await page.goto('/api/app.html');
-  const tab = page.getByRole('tab', { name: 'Launch Forecast' });
+  const tab = page.getByRole('tab', { name: 'Revenue Model' });
   if (await tab.isVisible()) await tab.click();
-  else await page.locator('#mobile-workflow').selectOption('forecast');
+  else await page.locator('#mobile-workflow').selectOption('tournaments');
+  await expect(page.locator('#tournaments')).toBeVisible();
+  const fold = page.locator('#tp-forecast-fold');
+  if (!(await fold.evaluate((el) => el.open))) await fold.locator('summary').click();
   await expect(page.locator('#forecast')).toBeVisible();
+}
+
+async function openWagerBreakEven(page) {
+  await page.goto('/api/app.html');
+  await page.getByRole('tab', { name: 'Revenue Model' }).click();
+  await page.locator('#tp-wb-fold summary').click();
+  await expect(page.locator('#wagerbreakeven')).toBeVisible();
 }
 
 test('remaining-term forecast starts at the selected contract month', async ({ page }) => {
@@ -55,11 +66,11 @@ test('customer plan exports as a named PDF', async ({ page }) => {
   expect(download.suggestedFilename()).toBe('onefootball-implementation-growth-plan.pdf');
 });
 
-test('wager break-even replaces TrackMan and matches the approved example', async ({ page }) => {
-  await page.goto('/api/app.html');
+test('wager break-even lives inside the Revenue Model and matches the approved example', async ({ page }) => {
+  await openWagerBreakEven(page);
   await expect(page.getByRole('tab', { name: 'Trackman Partner' })).toHaveCount(0);
-  await page.getByRole('tab', { name: 'Wager Break-even' }).click();
-  await expect(page.locator('#wagerbreakeven')).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Wager Break-even' })).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: 'Launch Forecast' })).toHaveCount(0);
   await expect(page.locator('#wb-results')).toContainText('$10,000');
   await expect(page.locator('#wb-results')).toContainText('$333.34');
   await expect(page.locator('#wb-results')).toContainText('10%');
@@ -104,8 +115,7 @@ test('wager break-even replaces TrackMan and matches the approved example', asyn
 });
 
 test('wager break-even applies location count to scoped audience and license inputs', async ({ page }) => {
-  await page.goto('/api/app.html');
-  await page.getByRole('tab', { name: 'Wager Break-even' }).click();
+  await openWagerBreakEven(page);
 
   await page.locator('#wb-locations').fill('5');
   await page.locator('#wb-mau').fill('10000');
@@ -131,7 +141,23 @@ test('new planning tools remain usable on mobile', async ({ page }) => {
   await openServedApp(page);
   await expect(page.getByRole('button', { name: 'Download customer plan PDF' })).toBeVisible();
   expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(375);
-  await page.locator('#mobile-workflow').selectOption('wagerbreakeven');
+  // Retired tab ids still resolve to their fold.
+  await page.evaluate(() => T('wagerbreakeven'));
+  await expect(page.locator('#tp-wb-fold')).toHaveJSProperty('open', true);
   await expect(page.locator('#wb-results')).toBeVisible();
   expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(375);
+});
+
+test('the retired tabs are folds and are internal in customer view', async ({ page }) => {
+  await page.goto('/api/app.html');
+  await page.evaluate(() => T('forecast'));
+  await expect(page.locator('#tournaments')).toBeVisible();
+  await expect(page.locator('#tp-forecast-fold')).toHaveJSProperty('open', true);
+  await expect(page.locator('#lf-summary')).toBeVisible();
+  await expect(page.locator('#mobile-workflow')).toHaveValue('tournaments');
+  await page.locator('#tp-customer-mode').check();
+  await expect(page.locator('#tp-forecast-fold')).toBeHidden();
+  await expect(page.locator('#tp-wb-fold')).toBeHidden();
+  await page.locator('#tp-customer-mode').uncheck();
+  await expect(page.locator('#tp-forecast-fold')).toBeVisible();
 });
