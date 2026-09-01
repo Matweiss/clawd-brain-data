@@ -748,3 +748,48 @@ test('applying the recommendation writes it into the model', async ({ page }) =>
   expect(await page.evaluate(() => TPvalidate(TP))).toEqual([]);
   expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).cleared)).toBe(true);
 });
+
+test('locations per contract year scale the model and explain themselves', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [60000, 60000, 60000, 60000, 60000] });
+  // One input per contract year, defaulting to a single location.
+  await expect(page.locator('#tp-locations input')).toHaveCount(3);
+  await expect(page.locator('#tp-loc-0')).toHaveValue('1');
+  await expect(page.locator('#tp-growth-note')).toContainText('One location');
+
+  await page.locator('#tp-loc-1').fill('3');
+  await page.locator('#tp-loc-2').fill('7');
+  await expect(page.locator('#tp-growth-note')).toContainText('1 → 3 → 7 locations');
+  await expect(page.locator('#tp-growth-note')).toContainText('Volume averages');
+
+  const r = await page.evaluate(() => TPcalculate(TP));
+  expect(r.months[35].handle).toBeCloseTo(r.months[0].handle * 7, 6);
+  // The licence one location could not retire now clears late in the term.
+  expect(r.payoffMonth).not.toBeNull();
+  await expect(page.locator('#tp-summary')).not.toContainText('Not retired');
+
+  // Persisted across a reload like everything else on the tab.
+  await page.reload();
+  await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
+  await expect(page.locator('#tp-loc-2')).toHaveValue('7');
+});
+
+test('a shrinking location count is held flat rather than modelled as closures', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 2, fees: [60000, 60000, 60000, 60000, 60000] });
+  await page.locator('#tp-loc-0').fill('4');
+  await page.locator('#tp-loc-1').fill('2');
+  expect(await page.evaluate(() => TPlocations(TPstate(TP)))).toEqual([4, 4]);
+});
+
+test('the ramp applies to each location and the brief says so', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 2, fees: [60000, 60000, 60000, 60000, 60000], includeH2H: true, mau: 100000 });
+  await page.locator('#tp-loc-1').fill('3');
+  await page.locator('#tp-ramp-on').check();
+  await expect(page.locator('#tp-ramp-fields')).toBeVisible();
+  await expect(page.locator('#tp-growth-note')).toContainText('ramping in');
+  const brief = await page.evaluate(() => TPbrief());
+  expect(brief).toContain('Locations: 1 -> 3');
+  expect(brief).toContain('each location opens at');
+});

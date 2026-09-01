@@ -1931,10 +1931,16 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="input-group"><label class="input-label" for="tpc-mau">Monthly active base</label><input class="pf-input" id="tpc-mau" type="number" min="0" step="1000" oninput="TPCsetMau(this.value)"><div class="sn">Customer system &middot; shared by both products</div></div>
     <div class="input-group"><label class="input-label" for="tpc-name">Partner name for the export</label><input class="pf-input" id="tpc-name" type="text" placeholder="Partner name" oninput="TPCrender()"><div class="sn">Labels the one-pager</div></div>
   </div>
-  <label class="tp-check"><input type="checkbox" id="tp-ramp-on" onchange="TPtoggle('rampOn',this.checked)"><span>Model a launch ramp</span></label>
-  <div class="inputs tp-three" id="tp-ramp-fields" hidden style="margin-top:12px;margin-bottom:0">
-    <div class="input-group"><label class="input-label" for="tp-ramp-start-pct">Month 1, % of full volume</label><div class="input-val"><input class="pf-input" id="tp-ramp-start-pct" type="number" min="0" max="100" step="5" oninput="TPset('rampStartPct',this.value)"><span class="vp">%</span></div><div class="sn">Estimated</div></div>
-    <div class="input-group"><label class="input-label" for="tp-ramp-months">Months to full volume</label><input class="pf-input" id="tp-ramp-months" type="number" min="1" max="24" step="1" oninput="TPset('rampMonths',this.value)"><div class="sn">Linear, then flat. Applies to both products.</div></div>
+  <div class="tp-subsection" id="tp-growth-block" style="margin-top:16px">
+    <div class="pf-section-title">Growth over the term</div>
+    <div class="sn">The base above is <strong>one location</strong>. Enter how many locations are running in each contract year and the model scales with them: a year's new openings are spread through that year, and each new location starts on the launch ramp below. A web-only customer leaves this at 1 and just uses the ramp.</div>
+    <div class="inputs tp-three" id="tp-locations" style="margin-top:12px;margin-bottom:0"></div>
+    <label class="tp-check" style="margin-top:12px"><input type="checkbox" id="tp-ramp-on" onchange="TPtoggle('rampOn',this.checked)"><span>Each location starts on a launch ramp</span></label>
+    <div class="inputs tp-three" id="tp-ramp-fields" hidden style="margin-top:12px;margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-ramp-start-pct">Opening month, % of full volume</label><div class="input-val"><input class="pf-input" id="tp-ramp-start-pct" type="number" min="0" max="100" step="5" oninput="TPset('rampStartPct',this.value)"><span class="vp">%</span></div><div class="sn">Estimated</div></div>
+      <div class="input-group"><label class="input-label" for="tp-ramp-months">Months to full volume</label><input class="pf-input" id="tp-ramp-months" type="number" min="1" max="24" step="1" oninput="TPset('rampMonths',this.value)"><div class="sn">Linear, then flat. Applies to every location from the month it opens.</div></div>
+    </div>
+    <div class="sn" id="tp-growth-note" role="status" style="margin-top:10px"></div>
   </div>
   <div class="tpc-grid" id="tpc-cases" aria-live="polite" style="margin-top:16px"></div>
   <div id="tpc-detail"></div>
@@ -3585,6 +3591,8 @@ var TP_DEFAULTS = {
   rampOn: false,
   rampStartPct: 25,
   rampMonths: 6,
+  // Locations running in each contract year. The base above is one location.
+  locations: [1, 1, 1, 1, 1],
   // Head-to-head
   h2hReach: 0,
   h2hMode: 'both',
@@ -3691,13 +3699,57 @@ function TPavgRamp(s, months) {
   return n > 0 ? total / n : 1;
 }
 
+/* Locations running in each contract year, never fewer than the year before
+   and never fewer than one. The base is entered for one location. */
+function TPlocations(s) {
+  var n = TPterm(s), raw = Array.isArray(s.locations) ? s.locations : [], out = [], prev = 1;
+  for (var i = 0; i < n; i++) {
+    var v = Math.max(1, Math.round(TPnum(raw[i], prev)));
+    if (v < prev) v = prev;
+    out.push(v); prev = v;
+  }
+  return out;
+}
+
+/* The month each location opens. Year-one locations are open from month one.
+   A year's additions are spread evenly through that year rather than all
+   landing on its first day, because that is how openings actually happen. */
+function TPopenings(s) {
+  var counts = TPlocations(s), open = [], prev = 0;
+  counts.forEach(function (count, y) {
+    var added = count - prev;
+    for (var k = 0; k < added; k++) {
+      open.push(y === 0 ? 1 : y * 12 + 1 + Math.floor(k * 12 / added));
+    }
+    prev = count;
+  });
+  return open;
+}
+
+/* Volume in a month as a multiple of one fully ramped location: every location
+   open by then, each on its own launch ramp from the month it opened. */
+function TPvolumeFactor(s, month) {
+  var total = 0;
+  TPopenings(s).forEach(function (opened) {
+    if (month >= opened) total += TPrampFactor(s, month - opened + 1);
+  });
+  return total;
+}
+
+function TPavgVolume(s, months) {
+  var n = months || TPterm(s) * 12, total = 0;
+  for (var m = 1; m <= n; m++) total += TPvolumeFactor(s, m);
+  return n > 0 ? total / n : 1;
+}
+
 /* Participants for one tournament type: its own headcount, or its own share of
-   the addressable base, scaled by the ramp. */
+   the addressable base, per location, scaled by the locations open and their
+   ramps that month. */
 function TPtypeParticipants(s, t, month) {
   var full = t.basis === 'mau'
     ? TPnum(s.mau, 0) * TPnum(t.participantPct, 0) / 100
     : TPnum(t.participants, 0);
-  return full * TPrampFactor(s, month);
+  return full * TPvolumeFactor(s, month);
 }
 
 function TPentriesPerEvent(s, t, month) {
@@ -3856,7 +3908,7 @@ function TPh2h(input, cfg, factor) {
     rewards = on && s.h2hMode !== 'wagering',
     reach = TPreach(s),
     engagement = on ? Math.min(100, TPnum(cfg.engagement, 0, 100) * f) : 0,
-    ramp = TPavgRamp(s),
+    ramp = TPavgVolume(s),
     engaged = reach * engagement / 100 * ramp,
     paidPlays = wagering ? engaged * TPnum(cfg.playsPerUser, 0) : 0,
     paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
@@ -4022,7 +4074,7 @@ function TPpitchH2H(input, cfg) {
   if (h.reach <= 0) return 'Enter addressable users to build the head-to-head pitch.';
   var out = TPmoney0(h.reach).replace('$', '') + ' addressable users at ' + (Math.round(h.engagement * 100) / 100) +
     '% engagement gives ' + Math.round(h.engaged).toLocaleString() + ' active players' +
-    (s.rampOn ? ' averaged across the ramp' : '') + '.';
+    (s.rampOn || TPlocations(s).slice(-1)[0] > 1 ? ' averaged across the ramp and openings' : '') + '.';
   if (h.wagering) {
     out += ' They play ' + (Math.round(TPnum(cfg.playsPerUser, 0) * 100) / 100) + ' paid games a month at ' +
       TPmoney0(TPnum(cfg.spendPerPlay, 0)) + ' an entry, which is ' + TPmoney0(h.paidVolume) +
@@ -4246,6 +4298,7 @@ function TPset(path, value) {
   var key = parts[parts.length - 1];
   target[key] = typeof target[key] === 'number' ? TPnum(value) : value;
   TPsave();
+  if (['rampStartPct', 'rampMonths'].indexOf(key) >= 0) TPrenderLocations();
   if (['mau', 'h2hReach', 'rampStartPct', 'rampMonths'].indexOf(key) >= 0) {
     TP.tournaments.forEach(function (t, i) { TPtourReadout(i); });
   }
@@ -4354,6 +4407,35 @@ function TPfeeTotal() {
   var el = $('tp-fee-total'); if (!el) return;
   el.textContent = TPterm(TP) > 1 ? 'Total contract ' + TPmoney(TPfees(TP).reduce(function (a, b) { return a + b; }, 0)) : '';
 }
+function TPlocation(i, value) {
+  var arr = TPlocations(TP).slice();
+  while (arr.length < TP_MAX_YEARS) arr.push(arr[arr.length - 1] || 1);
+  arr[i] = Math.max(1, Math.round(TPnum(value, 1)));
+  TP.locations = arr;
+  TPsave(); TPrenderLocations(); TPrender();
+}
+
+function TPrenderLocations() {
+  var host = $('tp-locations'); if (!host) return;
+  var n = TPterm(TP), locs = TPlocations(TP);
+  host.innerHTML = locs.map(function (count, i) {
+    return '<div class="input-group"><label class="input-label" for="tp-loc-' + i + '">' +
+      (n === 1 ? 'Locations' : 'Year ' + (i + 1) + ' locations') +
+      '</label><input class="pf-input" id="tp-loc-' + i + '" type="number" min="1" step="1" value="' + count +
+      '" oninput="TPlocation(' + i + ',this.value)">' +
+      (i === 0 ? '<div class="sn">Customer fact · running today</div>' : '<div class="sn">Customer plan</div>') + '</div>';
+  }).join('');
+  var note = $('tp-growth-note');
+  if (note) {
+    var st = TPstate(TP), avg = TPavgVolume(st), last = locs[locs.length - 1];
+    note.textContent = last <= 1 && !st.rampOn
+      ? 'One location at full volume throughout.'
+      : locs.join(' → ') + ' location' + (last === 1 ? '' : 's') + ' across the term. Volume averages ' +
+        (Math.round(avg * 100) / 100) + '× one fully ramped location, ' +
+        (st.rampOn ? 'with every new opening ramping in from ' + TPnum(st.rampStartPct, 0) + '%.' : 'with no launch ramp.');
+  }
+}
+
 function TPrenderFees() {
   var host = $('tp-fees'); if (!host) return;
   var n = TPterm(TP);
@@ -4525,6 +4607,7 @@ function TPrenderControls() {
   var rec = $('tp-recapture'); if (rec) rec.checked = !!TP.recapture;
   var rampOn = $('tp-ramp-on'); if (rampOn) rampOn.checked = !!TP.rampOn;
   if ($('tp-ramp-fields')) $('tp-ramp-fields').hidden = !TP.rampOn;
+  TPrenderLocations();
   $('tp-recapture-wrap').hidden = !!TP.freeLicense;
   $('tp-recapture-fields').hidden = !TP.recapture || !!TP.freeLicense;
   $('tp-post-title').textContent = TP.freeLicense
@@ -5002,8 +5085,13 @@ function TPbrief() {
       '% win rate and a ' + TPnum(MG.redeemRate, 0) + '% redemption rate are planning assumptions.');
   }
   if (showT) push('  Participation per event is a planning assumption. Entry prices and prize funding are the partner\'s own figures.');
-  if (TP.rampOn) push('  Launch ramp: month 1 at ' + TPnum(TP.rampStartPct, 0) + '% of full volume, full by month ' +
-    TPnum(TP.rampMonths, 1) + '. Every figure above averages the ramp, so multiplying users by engagement directly will not reproduce them.');
+  var locs = TPlocations(st), grows = locs[locs.length - 1] > 1;
+  if (grows) push('  Locations: ' + locs.join(' -> ') + ' across the contract years  [customer fact]. The base is one location; ' +
+    'new openings are spread through the year they open. Volume averages ' + (Math.round(TPavgVolume(st) * 100) / 100) +
+    'x one location over the term.');
+  if (TP.rampOn) push('  Launch ramp: each location opens at ' + TPnum(TP.rampStartPct, 0) + '% of full volume, full by its month ' +
+    TPnum(TP.rampMonths, 1) + '. Every figure above averages the ramp' + (grows ? ' and the openings' : '') +
+    ', so multiplying users by engagement directly will not reproduce them.');
   push('  Illustrative planning estimate, not a guarantee, offer or contract.');
   push('  Contact: ' + (TP.presenter || '<presenter>') + (TP.presenterEmail ? ' · ' + TP.presenterEmail : ''));
   push();
@@ -5347,7 +5435,8 @@ function TPCprint() {
 
   html += '<div class="tp-print-foot">Revenue generated is the pool each product produces before any revenue share, structured with the partner. ' +
     'Head-to-head is paid-game volume times the platform fee rate; tournaments are gross entries, with prize funding carried by the operator out of their own share. ' +
-    (TP.rampOn ? 'Figures average a launch ramp starting at ' + TPnum(TP.rampStartPct, 0) + '% of full volume over ' + TPnum(TP.rampMonths, 1) + ' months. ' : '') +
+    (TPlocations(TPstate(TP)).slice(-1)[0] > 1 ? 'The base is one location, growing to ' + TPlocations(TPstate(TP)).join(', then ') + ' across the contract years, with openings spread through each year. ' : '') +
+    (TP.rampOn ? 'Figures average a launch ramp starting at ' + TPnum(TP.rampStartPct, 0) + '% of full volume over ' + TPnum(TP.rampMonths, 1) + ' months for each location. ' : '') +
     'Excludes reward redemption returning to margin, sponsorship, and any other Lucra product. ' +
     'Illustrative planning estimate built on the assumptions above, not a guarantee, offer or contract.</div>';
 

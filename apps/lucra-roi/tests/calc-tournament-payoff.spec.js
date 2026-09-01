@@ -451,3 +451,68 @@ describe('The configuration recommender', () => {
     expect(TPrecommend(deal(), 0).ok).toBe(false);
   });
 });
+
+describe('Growth over the term: locations', () => {
+  const { TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TPh2h } = calc;
+  const grow = (o = {}) => base(Object.assign({
+    termYears: 3, annualFees: [60000, 60000, 60000], locations: [1, 3, 7],
+  }, o));
+
+  it('defaults to one location, so nothing changes for a web-only customer', () => {
+    const s = TPstate(base());
+    expect(TPlocations(s)).toEqual([1]);
+    expect(TPopenings(s)).toEqual([1]);
+    expect(TPvolumeFactor(s, 1)).toBe(1);
+    expect(TPavgVolume(s)).toBe(1);
+  });
+
+  it('never lets a year run fewer locations than the one before, or fewer than one', () => {
+    expect(TPlocations(TPstate(grow({ locations: [1, 3, 2] })))).toEqual([1, 3, 3]);
+    expect(TPlocations(TPstate(grow({ locations: [0, 0, 5] })))).toEqual([1, 1, 5]);
+    expect(TPlocations(TPstate(grow({ locations: [2] })))).toEqual([2, 2, 2]);
+  });
+
+  it('spreads a year\'s openings through that year rather than on its first day', () => {
+    const s = TPstate(grow());
+    expect(TPopenings(s)).toEqual([1, 13, 19, 25, 28, 31, 34]);
+    // Two locations at the start of year two would have doubled volume in
+    // month 13. Spreading them means month 13 sees only the first opening.
+    expect(TPvolumeFactor(s, 13)).toBe(2);
+    expect(TPvolumeFactor(s, 24)).toBe(3);
+    expect(TPvolumeFactor(s, 36)).toBe(7);
+  });
+
+  it('puts every new location on its own launch ramp from the month it opens', () => {
+    const s = TPstate(grow({ rampOn: true, rampStartPct: 25, rampMonths: 6 }));
+    expect(TPvolumeFactor(s, 1)).toBeCloseTo(0.25, 9);
+    expect(TPvolumeFactor(s, 12)).toBe(1);
+    // Month 13: the first location is at full volume, the new one just opened at 25%.
+    expect(TPvolumeFactor(s, 13)).toBeCloseTo(1.25, 9);
+    // Month 36: five of seven are fully ramped, the last two are still climbing.
+    expect(TPvolumeFactor(s, 36)).toBeLessThan(7);
+    expect(TPvolumeFactor(s, 36)).toBeGreaterThan(6);
+  });
+
+  it('scales tournaments and head-to-head by the same factor', () => {
+    const one = TPstate(grow({ locations: [1, 1, 1] })), seven = TPstate(grow());
+    const r1 = TPcalculate(one), r7 = TPcalculate(seven);
+    expect(r7.months[35].handle).toBeCloseTo(r1.months[35].handle * 7, 6);
+    expect(r7.months[0].handle).toBeCloseTo(r1.months[0].handle, 6);
+    const cfg = { engagement: 10, playsPerUser: 20, spendPerPlay: 2, feeRate: 10 };
+    const h1 = TPh2h(Object.assign({}, one, { includeH2H: true, mau: 100000 }), cfg, 1);
+    const h7 = TPh2h(Object.assign({}, seven, { includeH2H: true, mau: 100000 }), cfg, 1);
+    expect(h7.paidVolume / h1.paidVolume).toBeCloseTo(TPavgVolume(seven), 6);
+  });
+
+  it('retires a tiered licence that one location alone could not', () => {
+    // 100 participants at $10, 4 events: 4,000 of entries a month per location.
+    // One location credits 2,000 a month, 72,000 over three years, short of 180,000.
+    const alone = TPcalculate(TPstate(grow({ locations: [1, 1, 1] })));
+    expect(alone.payoffMonth).toBeNull();
+    expect(alone.balanceDue).toBeGreaterThan(0);
+    const growing = TPcalculate(TPstate(grow()));
+    expect(growing.payoffMonth).not.toBeNull();
+    expect(growing.balanceDue).toBe(0);
+    expect(growing.payoffMonth).toBeGreaterThan(24);
+  });
+});

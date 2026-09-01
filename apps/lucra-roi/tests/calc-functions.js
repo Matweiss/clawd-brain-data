@@ -245,6 +245,8 @@ var TP_DEFAULTS = {
   rampOn: false,
   rampStartPct: 25,
   rampMonths: 6,
+  // Locations running in each contract year. The base above is one location.
+  locations: [1, 1, 1, 1, 1],
   // Head-to-head
   h2hReach: 0,
   h2hMode: 'both',
@@ -351,13 +353,57 @@ function TPavgRamp(s, months) {
   return n > 0 ? total / n : 1;
 }
 
+/* Locations running in each contract year, never fewer than the year before
+   and never fewer than one. The base is entered for one location. */
+function TPlocations(s) {
+  var n = TPterm(s), raw = Array.isArray(s.locations) ? s.locations : [], out = [], prev = 1;
+  for (var i = 0; i < n; i++) {
+    var v = Math.max(1, Math.round(TPnum(raw[i], prev)));
+    if (v < prev) v = prev;
+    out.push(v); prev = v;
+  }
+  return out;
+}
+
+/* The month each location opens. Year-one locations are open from month one.
+   A year's additions are spread evenly through that year rather than all
+   landing on its first day, because that is how openings actually happen. */
+function TPopenings(s) {
+  var counts = TPlocations(s), open = [], prev = 0;
+  counts.forEach(function (count, y) {
+    var added = count - prev;
+    for (var k = 0; k < added; k++) {
+      open.push(y === 0 ? 1 : y * 12 + 1 + Math.floor(k * 12 / added));
+    }
+    prev = count;
+  });
+  return open;
+}
+
+/* Volume in a month as a multiple of one fully ramped location: every location
+   open by then, each on its own launch ramp from the month it opened. */
+function TPvolumeFactor(s, month) {
+  var total = 0;
+  TPopenings(s).forEach(function (opened) {
+    if (month >= opened) total += TPrampFactor(s, month - opened + 1);
+  });
+  return total;
+}
+
+function TPavgVolume(s, months) {
+  var n = months || TPterm(s) * 12, total = 0;
+  for (var m = 1; m <= n; m++) total += TPvolumeFactor(s, m);
+  return n > 0 ? total / n : 1;
+}
+
 /* Participants for one tournament type: its own headcount, or its own share of
-   the addressable base, scaled by the ramp. */
+   the addressable base, per location, scaled by the locations open and their
+   ramps that month. */
 function TPtypeParticipants(s, t, month) {
   var full = t.basis === 'mau'
     ? TPnum(s.mau, 0) * TPnum(t.participantPct, 0) / 100
     : TPnum(t.participants, 0);
-  return full * TPrampFactor(s, month);
+  return full * TPvolumeFactor(s, month);
 }
 
 function TPentriesPerEvent(s, t, month) {
@@ -516,7 +562,7 @@ function TPh2h(input, cfg, factor) {
     rewards = on && s.h2hMode !== 'wagering',
     reach = TPreach(s),
     engagement = on ? Math.min(100, TPnum(cfg.engagement, 0, 100) * f) : 0,
-    ramp = TPavgRamp(s),
+    ramp = TPavgVolume(s),
     engaged = reach * engagement / 100 * ramp,
     paidPlays = wagering ? engaged * TPnum(cfg.playsPerUser, 0) : 0,
     paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
@@ -682,7 +728,7 @@ function TPpitchH2H(input, cfg) {
   if (h.reach <= 0) return 'Enter addressable users to build the head-to-head pitch.';
   var out = TPmoney0(h.reach).replace('$', '') + ' addressable users at ' + (Math.round(h.engagement * 100) / 100) +
     '% engagement gives ' + Math.round(h.engaged).toLocaleString() + ' active players' +
-    (s.rampOn ? ' averaged across the ramp' : '') + '.';
+    (s.rampOn || TPlocations(s).slice(-1)[0] > 1 ? ' averaged across the ramp and openings' : '') + '.';
   if (h.wagering) {
     out += ' They play ' + (Math.round(TPnum(cfg.playsPerUser, 0) * 100) / 100) + ' paid games a month at ' +
       TPmoney0(TPnum(cfg.spendPerPlay, 0)) + ' an entry, which is ' + TPmoney0(h.paidVolume) +
@@ -882,5 +928,5 @@ function TPrecommend(input, mau) {
   };
 }
 /* TP-PURE-END */
-module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPh2h, TPpitchH2H, TPpitchTournaments,
+module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TPh2h, TPpitchH2H, TPpitchTournaments,
   TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend };
