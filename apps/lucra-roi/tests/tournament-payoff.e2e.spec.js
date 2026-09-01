@@ -686,3 +686,65 @@ test('the take fee is a custom rate held between 5 and 25 per cent', async ({ pa
   await box.blur();
   expect(await page.evaluate(() => MG.rake)).toBe(12.5);
 });
+
+test('the recommender proposes a configuration and shows where each number came from', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 1000000 });
+  await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
+
+  await expect(page.locator('.tp-rec-banner')).toContainText('clears the licence');
+  // Three tests, all reported, not just the flattering one.
+  await expect(page.locator('.tp-rec-test')).toHaveCount(3);
+  await expect(page.locator('.tp-rec-tests')).toContainText('Licence retired inside the term');
+  await expect(page.locator('.tp-rec-tests')).toContainText("Lucra's share covers the licence");
+  await expect(page.locator('.tp-rec-tests')).toContainText('Operator nets positive');
+  // Every recommended input carries its provenance.
+  const sources = await page.locator('.tp-rec-table td.tp-rec-src').allInnerTexts();
+  expect(sources.length).toBeGreaterThan(4);
+  expect(sources.every((s) => s.trim().length > 0)).toBe(true);
+  await expect(page.locator('.tp-rec-table')).toContainText('Antavo');
+  await expect(page.locator('.tp-rec-table')).toContainText('Lucra reference deals');
+  // Reward value is named as a benefit and kept out of revenue.
+  await expect(page.locator('#tp-rec-out')).toContainText('excluded from that figure');
+});
+
+test('a base too small to clear the licence says so and sizes the gap', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 25000 });
+  await page.evaluate(() => TPCsetMau(25000));
+  await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
+
+  await expect(page.locator('.tp-rec-banner')).toHaveClass(/short/);
+  await expect(page.locator('.tp-rec-banner')).toContainText('does not clear the licence');
+  await expect(page.locator('.tp-rec-banner')).toContainText('no published figure to justify it');
+  await expect(page.locator('.tp-rec-gap')).toBeVisible();
+  // Reaching for the ceiling is the one case that cites the published figure.
+  await expect(page.locator('.tp-rec-table')).toContainText('Skillz');
+
+  // Sponsorship closes the gap; retargeting value is recorded but never added in.
+  const gap = await page.evaluate(() => TPrecommend(TP, TPrecMau()).shortfallYear);
+  expect(gap).toBeGreaterThan(0);
+  await page.locator('#tp-sponsorship').fill(String(Math.ceil(gap)));
+  await expect(page.locator('.tp-rec-gap')).toContainText('Sponsorship closes the gap');
+  expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).shortfallYear)).toBeCloseTo(gap, 6);
+});
+
+test('applying the recommendation writes it into the model', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 1000000 });
+  await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
+  const before = await page.evaluate(() => ({ eng: MG.eng, rake: MG.rake, tours: TP.tournaments.length }));
+  await page.locator('#tp-rec-out button', { hasText: 'Apply these numbers' }).click();
+
+  const after = await page.evaluate(() => ({
+    eng: MG.eng, rake: MG.rake, names: TP.tournaments.map((t) => t.name),
+  }));
+  expect(after.names).toEqual(['Weekly open', 'Monthly major']);
+  expect(after.rake).toBeGreaterThanOrEqual(5);
+  expect(after.rake).toBeLessThanOrEqual(25);
+  expect(after.eng).toBeGreaterThan(0);
+  expect(after).not.toEqual(before);
+  // The applied deal is valid and still clears.
+  expect(await page.evaluate(() => TPvalidate(TP))).toEqual([]);
+  expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).cleared)).toBe(true);
+});

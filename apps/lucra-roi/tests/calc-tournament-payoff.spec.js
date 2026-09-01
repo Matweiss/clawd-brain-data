@@ -389,3 +389,65 @@ describe('A waived licence keeps the revenue split', () => {
     expect(TPvalidate(base({ includeTournaments: false, includeH2H: true, mau: 100000, post: { operator: 50, lucra: 50 } }))).toEqual([]);
   });
 });
+
+describe('The configuration recommender', () => {
+  const { TPrecommend, TPengCurve, TPrecPrizeShare, TP_BANDS } = calc;
+  const deal = (o = {}) => base(Object.assign({
+    includeH2H: true, termYears: 1, annualFees: [120000, 0, 0, 0, 0], post: { operator: 90, lucra: 10 },
+  }, o));
+
+  it('scales engagement down as the base grows, anchored on the reference deals', () => {
+    expect(TPengCurve(100000)).toBe(15);
+    expect(TPengCurve(500000)).toBe(10);
+    expect(TPengCurve(5000000)).toBe(8);
+    expect(TPengCurve(25000000)).toBe(2);
+    // Between anchors it interpolates rather than stepping off a cliff.
+    expect(TPengCurve(1000000)).toBeLessThan(10);
+    expect(TPengCurve(1000000)).toBeGreaterThan(8);
+    // A base smaller or larger than the anchors is clamped, never extrapolated.
+    expect(TPengCurve(1000)).toBe(15);
+    expect(TPengCurve(500000000)).toBe(2);
+  });
+
+  it('never models above the published ceiling, and reports the gap instead', () => {
+    // A base far too small for a $120k licence cannot be made to work.
+    const r = TPrecommend(deal(), 25000);
+    expect(r.cleared).toBe(false);
+    expect(r.chosen.step.key).toBe('published-2025');
+    expect(r.chosen.engagement).toBeLessThanOrEqual(TP_BANDS.engagement.ceiling);
+    expect(r.shortfallYear).toBeGreaterThan(0);
+    // The gap is the unretired licence, not a number invented to look tidy.
+    expect(r.licenceGapYear).toBeCloseTo(r.chosen.result.balanceDue, 6);
+  });
+
+  it('stops at the first step that clears rather than reaching for the ceiling', () => {
+    const r = TPrecommend(deal(), 1000000);
+    expect(r.cleared).toBe(true);
+    expect(r.chosen.step.key).toBe('conservative');
+    expect(r.shortfallYear).toBe(0);
+    expect(r.chosen.tests).toEqual({ licenceRetired: true, lucraCoversLicence: true, operatorPositive: true });
+  });
+
+  it('sizes prize funding inside the operator share so the programme is not self-defeating', () => {
+    // At the default recapture split the operator sees 40% during payoff, so a
+    // prize pool of half the entries would lose them money every month.
+    expect(TPrecPrizeShare(deal())).toBeCloseTo(0.32, 9);
+    const r = TPrecommend(deal(), 1000000);
+    expect(r.chosen.result.months[0].toOperator).toBeGreaterThan(0);
+    expect(r.chosen.result.lossMonths).toBe(0);
+    // A waived licence hands the operator more, so the prize can be richer.
+    expect(TPrecPrizeShare(deal({ freeLicense: true, post: { operator: 50, lucra: 50 } }))).toBeCloseTo(0.4, 9);
+  });
+
+  it('counts reward value as a benefit and keeps it out of revenue', () => {
+    const r = TPrecommend(deal(), 1000000);
+    expect(r.chosen.rewardValueYear).toBeGreaterThan(0);
+    const h = r.chosen.h2h;
+    expect(r.chosen.revenueYear).toBeCloseTo(h.platformFee * 12 + r.chosen.result.totalSplitBase, 6);
+    expect(r.chosen.revenueYear).not.toBeCloseTo(r.chosen.revenueYear + r.chosen.rewardValueYear, 6);
+  });
+
+  it('refuses to recommend without a base', () => {
+    expect(TPrecommend(deal(), 0).ok).toBe(false);
+  });
+});

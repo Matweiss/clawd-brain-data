@@ -218,6 +218,8 @@ var TP_MAX_YEARS = 5;
 
 var TP_DEFAULTS = {
   dealName: '',
+  sponsorship: 0,
+  retargetValue: 0,
   heatH2H: true,
   partnerSite: '',
   presenter: '',
@@ -727,5 +729,158 @@ function TPpitchTournaments(input) {
     : ' The operator earns ' + TPmoney0(r.totalOperator) + ' across the term.';
   return out;
 }
+
+/* ---------- configuration recommender ----------
+   Takes a monthly active base and proposes a programme that clears the licence.
+   Every band below is anchored to one of exactly two things: the reference deals
+   that already ship in this tool, or a published figure that can be cited. Where
+   no public benchmark exists the band stays a Lucra assumption and says so.
+   Nothing is modelled above the published ceiling: if the deal does not clear
+   there, the recommender reports the gap rather than inflating participation. */
+
+var TP_BANDS = {
+  engagement: {
+    anchors: [[100000, 15], [500000, 10], [5000000, 8], [25000000, 2]],
+    source: 'Lucra reference deals in this tool, interpolated by base size',
+    mid: 14.5, midSource: 'Skillz FY2024, 118k paying MAU of 816k MAU (SEC-filed)',
+    ceiling: 21, ceilingSource: 'Skillz FY2025, 141k paying MAU of 658k MAU (SEC-filed)'
+  },
+  takeFee: {
+    floor: 10, floorSource: 'Lucra reference deals',
+    ceiling: 19, ceilingSource: 'Skillz FY2025, $61.70 monthly revenue per paying user against ~$320 of entry volume'
+  },
+  spend: {
+    base: 40, baseSource: 'Lucra reference deals, 20 plays at $2',
+    published: 320, publishedSource: 'Skillz FY2025, $541.9m entry volume over 141k paying users'
+  },
+  redemption: {
+    base: 25, baseSource: 'Lucra reference deals',
+    ceiling: 49.8, ceilingSource: 'Antavo Global Customer Loyalty Report 2024, average reward redemption across 600 programmes'
+  },
+  rewardValue: {
+    base: 8, baseSource: 'Lucra reference deals',
+    context: 'Sits inside NFL concession pricing: $5.94 a hot dog, $9.67 a beer (Team Marketing Report Fan Cost Index 2024)'
+  },
+  participation: {
+    source: 'Lucra assumption. No public benchmark exists for tournament participation as a share of a host app base, so this one is not claimed as an industry figure.'
+  }
+};
+
+/* Engagement by base size, interpolated on a log scale between the reference
+   deals, because a bigger base engages a smaller share of itself. */
+function TPengCurve(mau) {
+  var m = TPnum(mau, 0), a = TP_BANDS.engagement.anchors;
+  if (m <= a[0][0]) return a[0][1];
+  if (m >= a[a.length - 1][0]) return a[a.length - 1][1];
+  for (var i = 1; i < a.length; i++) {
+    if (m <= a[i][0]) {
+      var t = (Math.log(m) - Math.log(a[i - 1][0])) / (Math.log(a[i][0]) - Math.log(a[i - 1][0]));
+      return Math.round((a[i - 1][1] + (a[i][1] - a[i - 1][1]) * t) * 10) / 10;
+    }
+  }
+  return a[a.length - 1][1];
+}
+
+/* The ladder. Step 0 is what the reference deals already say; the last step is
+   the highest published figure for this vertical. There is deliberately no
+   step beyond it. */
+function TPrecSteps() {
+  return [
+    { key: 'conservative', label: 'Lucra reference, conservative', engMin: 0, plays: 20, wager: 2, rake: 10,
+      basis: 'The reference deals in this tool, at their low end.' },
+    { key: 'reference-upper', label: 'Lucra reference, upper end', engMin: 0, plays: 25, wager: 3, rake: 12.5,
+      basis: 'Still inside the reference deals, at their upper end.' },
+    { key: 'published-2024', label: 'Engagement at the FY2024 published figure', engMin: 14.5, plays: 25, wager: 3, rake: 15,
+      basis: 'Paying share lifted to Skillz FY2024, the same vertical, SEC-filed.' },
+    { key: 'published-2025', label: 'Ceiling: the FY2025 published figure', engMin: 21, plays: 25, wager: 5, rake: 19,
+      basis: 'The highest published figures for this vertical. Nothing above this is modelled.' }
+  ];
+}
+
+/* A programme scaled to the base. Prize funding is sized against the share the
+   operator actually receives, not against gross entries: they fund the prize out
+   of their own share, so a pool bigger than that share loses them money every
+   month. A structural choice, not a benchmark. */
+function TPrecPrizeShare(s) {
+  var rates = TPsplitRates(TPstate(s));
+  return Math.max(0.15, Math.min(0.5, rates.operator * 0.8));
+}
+
+function TPrecTournaments(mau, prizeShare) {
+  var m = TPnum(mau, 0), ps = prizeShare === undefined ? 0.32 : prizeShare,
+    mk = function (id, name, price, events, pct) {
+      var prize = Math.round(m * pct / 100 * price * ps);
+    return { id: id, name: name, entryPrice: price, eventsPerMonth: events, basis: 'mau',
+      participants: 0, participantPct: pct, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0,
+      isCash: false, rewardFaceValue: prize, customerCashCost: prize, cashPrizeAmount: prize };
+    };
+  return [mk('rec-weekly', 'Weekly open', 5, 4, 1), mk('rec-major', 'Monthly major', 25, 1, 0.3)];
+}
+
+function TPrecCandidate(base, step, mau) {
+  var m = TPnum(mau, 0),
+    eng = Math.max(TPengCurve(m), step.engMin),
+    s = TPstate(Object.assign({}, base, {
+      mau: m, h2hReach: m, rampOn: false,
+      tournaments: base.includeTournaments ? TPrecTournaments(m, TPrecPrizeShare(base)) : (base.tournaments || [])
+    })),
+    cfg = { mau: m, engagement: eng, playsPerUser: step.plays, spendPerPlay: step.wager,
+      feeRate: step.rake, rewardGames: 8, winRate: 50,
+      redeemRate: TP_BANDS.redemption.base, valuePerRedemption: TP_BANDS.rewardValue.base,
+      tournament: s };
+  return { step: step, engagement: eng, state: s, cfg: cfg };
+}
+
+function TPrecMeasure(cand) {
+  var s = cand.state, r = TPcalculate(s), h = TPh2h(s, cand.cfg, 1),
+    term = TPterm(s) || 1, onH = !!s.includeH2H, onT = !!s.includeTournaments,
+    lucraYear = (onT && !r.errors.length ? r.totalLucra / term : 0) + (onH ? h.lucraShare * 12 : 0),
+    operatorYear = (onT && !r.errors.length ? r.totalOperator / term : 0) + (onH ? h.operatorShare * 12 : 0),
+    licenceYear = r.free ? 0 : (r.totalContract || 0) / term;
+  return {
+    errors: r.errors, result: r, h2h: h,
+    state: s, cfg: cand.cfg,
+    engagement: cand.engagement, step: cand.step,
+    licenceYear: licenceYear, lucraYear: lucraYear, operatorYear: operatorYear,
+    revenueYear: (onH ? h.platformFee * 12 : 0) + (onT && !r.errors.length ? r.totalSplitBase / term : 0),
+    prizeYear: onT && !r.errors.length ? r.totalPrizeCost / term : 0,
+    rewardValueYear: onH ? h.rewardValue * 12 : 0,
+    payoffMonth: r.payoffMonth,
+    tests: {
+      licenceRetired: r.free || (!r.errors.length && r.payoffMonth !== null),
+      lucraCoversLicence: r.free ? lucraYear > 0 : lucraYear >= licenceYear - 1e-6,
+      operatorPositive: operatorYear > 0
+    }
+  };
+}
+
+function TPrecPasses(m) { return m.tests.licenceRetired && m.tests.lucraCoversLicence && m.tests.operatorPositive; }
+
+/* Walk the ladder and stop at the first step that clears every test. If the
+   ceiling still does not clear, return the ceiling and the size of the gap. */
+function TPrecommend(input, mau) {
+  var base = TPstate(input), m = TPnum(mau, 0), steps = TPrecSteps(), tried = [], chosen = null;
+  if (m <= 0) return { ok: false, reason: 'Enter a monthly active base to build a recommendation.', tried: [] };
+  for (var i = 0; i < steps.length; i++) {
+    var measured = TPrecMeasure(TPrecCandidate(base, steps[i], m));
+    tried.push(measured);
+    if (!chosen && TPrecPasses(measured)) chosen = measured;
+  }
+  var final = chosen || tried[tried.length - 1],
+    term = TPterm(base) || 1,
+    licenceGap = final.result.free ? 0 : Math.max(0, (final.result.balanceDue || 0) / term),
+    lucraGap = Math.max(0, final.licenceYear - final.lucraYear),
+    gap = Math.max(licenceGap, lucraGap),
+    sponsorship = TPnum(base.sponsorship, 0), retarget = TPnum(base.retargetValue, 0);
+  return {
+    ok: true, mau: m, cleared: !!chosen, chosen: final, tried: tried,
+    licenceGapYear: licenceGap, lucraGapYear: lucraGap, shortfallYear: gap,
+    coveredBySponsorship: Math.min(gap, sponsorship),
+    remainingAfterSponsorship: Math.max(0, gap - sponsorship),
+    retargetValue: retarget,
+    closes: gap <= sponsorship + 1e-6
+  };
+}
 /* TP-PURE-END */
-module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPh2h, TPpitchH2H, TPpitchTournaments };
+module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPh2h, TPpitchH2H, TPpitchTournaments,
+  TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend };

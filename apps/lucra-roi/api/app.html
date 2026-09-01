@@ -498,6 +498,17 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 table.tp-heat td.vol{background:var(--surface);color:var(--text2);font-variant-numeric:tabular-nums}
 .tp-pitch{margin-top:14px;padding:13px 15px;border:1px solid var(--green-border);background:var(--green-bg);border-radius:var(--radius);font-size:13px;line-height:1.65;color:var(--text)}
 .tp-pitch:empty{display:none}
+.tp-rec-banner{border-radius:var(--radius);padding:12px 14px;margin:10px 0;border:1px solid var(--border);line-height:1.5}
+.tp-rec-banner.ok{background:var(--green-bg);border-color:var(--green-border)}
+.tp-rec-banner.short{background:var(--amber-bg);border-color:var(--amber)}
+.tp-rec-tests{display:grid;gap:8px;margin:12px 0}
+.tp-rec-test{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px}
+.tp-rec-mark{flex:0 0 auto;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:999px}
+.tp-rec-test.pass .tp-rec-mark{background:var(--green-bg);color:var(--green)}
+.tp-rec-test.fail .tp-rec-mark{background:var(--amber-bg);color:var(--amber)}
+.tp-rec-table td.tp-rec-val{font-variant-numeric:tabular-nums;white-space:nowrap}
+.tp-rec-table td.tp-rec-src{color:var(--text3);font-size:11px;line-height:1.45}
+.tp-rec-gap{margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);padding:14px}
 .tp-heat-controls{display:flex;flex-wrap:wrap;gap:18px;margin:10px 0 4px}
 .tp-heat-controls .tp-check{margin:0}
 .tp-heat-wrap{margin-top:8px}
@@ -1878,6 +1889,13 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="sn" id="tp-split-note"></div>
   </div>
   </div>
+
+  <section class="pf-section" id="tp-rec-block">
+    <div class="pf-section-title">Recommend a configuration</div>
+    <div class="sn">Takes the monthly active base above and proposes a programme that clears the licence. It starts at what the reference deals in this tool already say and steps up only as far as the highest published figure for this vertical. If the deal still does not clear there, it says so and sizes the gap rather than inflating participation until the maths works.</div>
+    <div class="tp-actions"><button type="button" class="primary" onclick="TPrecRun()">Recommend from the base</button></div>
+    <div id="tp-rec-out" aria-live="polite"></div>
+  </section>
 
   <div class="pf-section" id="tp-h2h-block" hidden><div class="pf-section-title">Head-to-head</div>
     <div class="inputs" style="margin-bottom:0">
@@ -3540,6 +3558,8 @@ var TP_MAX_YEARS = 5;
 
 var TP_DEFAULTS = {
   dealName: '',
+  sponsorship: 0,
+  retargetValue: 0,
   heatH2H: true,
   partnerSite: '',
   presenter: '',
@@ -4049,6 +4069,159 @@ function TPpitchTournaments(input) {
     : ' The operator earns ' + TPmoney0(r.totalOperator) + ' across the term.';
   return out;
 }
+
+/* ---------- configuration recommender ----------
+   Takes a monthly active base and proposes a programme that clears the licence.
+   Every band below is anchored to one of exactly two things: the reference deals
+   that already ship in this tool, or a published figure that can be cited. Where
+   no public benchmark exists the band stays a Lucra assumption and says so.
+   Nothing is modelled above the published ceiling: if the deal does not clear
+   there, the recommender reports the gap rather than inflating participation. */
+
+var TP_BANDS = {
+  engagement: {
+    anchors: [[100000, 15], [500000, 10], [5000000, 8], [25000000, 2]],
+    source: 'Lucra reference deals in this tool, interpolated by base size',
+    mid: 14.5, midSource: 'Skillz FY2024, 118k paying MAU of 816k MAU (SEC-filed)',
+    ceiling: 21, ceilingSource: 'Skillz FY2025, 141k paying MAU of 658k MAU (SEC-filed)'
+  },
+  takeFee: {
+    floor: 10, floorSource: 'Lucra reference deals',
+    ceiling: 19, ceilingSource: 'Skillz FY2025, $61.70 monthly revenue per paying user against ~$320 of entry volume'
+  },
+  spend: {
+    base: 40, baseSource: 'Lucra reference deals, 20 plays at $2',
+    published: 320, publishedSource: 'Skillz FY2025, $541.9m entry volume over 141k paying users'
+  },
+  redemption: {
+    base: 25, baseSource: 'Lucra reference deals',
+    ceiling: 49.8, ceilingSource: 'Antavo Global Customer Loyalty Report 2024, average reward redemption across 600 programmes'
+  },
+  rewardValue: {
+    base: 8, baseSource: 'Lucra reference deals',
+    context: 'Sits inside NFL concession pricing: $5.94 a hot dog, $9.67 a beer (Team Marketing Report Fan Cost Index 2024)'
+  },
+  participation: {
+    source: 'Lucra assumption. No public benchmark exists for tournament participation as a share of a host app base, so this one is not claimed as an industry figure.'
+  }
+};
+
+/* Engagement by base size, interpolated on a log scale between the reference
+   deals, because a bigger base engages a smaller share of itself. */
+function TPengCurve(mau) {
+  var m = TPnum(mau, 0), a = TP_BANDS.engagement.anchors;
+  if (m <= a[0][0]) return a[0][1];
+  if (m >= a[a.length - 1][0]) return a[a.length - 1][1];
+  for (var i = 1; i < a.length; i++) {
+    if (m <= a[i][0]) {
+      var t = (Math.log(m) - Math.log(a[i - 1][0])) / (Math.log(a[i][0]) - Math.log(a[i - 1][0]));
+      return Math.round((a[i - 1][1] + (a[i][1] - a[i - 1][1]) * t) * 10) / 10;
+    }
+  }
+  return a[a.length - 1][1];
+}
+
+/* The ladder. Step 0 is what the reference deals already say; the last step is
+   the highest published figure for this vertical. There is deliberately no
+   step beyond it. */
+function TPrecSteps() {
+  return [
+    { key: 'conservative', label: 'Lucra reference, conservative', engMin: 0, plays: 20, wager: 2, rake: 10,
+      basis: 'The reference deals in this tool, at their low end.' },
+    { key: 'reference-upper', label: 'Lucra reference, upper end', engMin: 0, plays: 25, wager: 3, rake: 12.5,
+      basis: 'Still inside the reference deals, at their upper end.' },
+    { key: 'published-2024', label: 'Engagement at the FY2024 published figure', engMin: 14.5, plays: 25, wager: 3, rake: 15,
+      basis: 'Paying share lifted to Skillz FY2024, the same vertical, SEC-filed.' },
+    { key: 'published-2025', label: 'Ceiling: the FY2025 published figure', engMin: 21, plays: 25, wager: 5, rake: 19,
+      basis: 'The highest published figures for this vertical. Nothing above this is modelled.' }
+  ];
+}
+
+/* A programme scaled to the base. Prize funding is sized against the share the
+   operator actually receives, not against gross entries: they fund the prize out
+   of their own share, so a pool bigger than that share loses them money every
+   month. A structural choice, not a benchmark. */
+function TPrecPrizeShare(s) {
+  var rates = TPsplitRates(TPstate(s));
+  return Math.max(0.15, Math.min(0.5, rates.operator * 0.8));
+}
+
+function TPrecTournaments(mau, prizeShare) {
+  var m = TPnum(mau, 0), ps = prizeShare === undefined ? 0.32 : prizeShare,
+    mk = function (id, name, price, events, pct) {
+      var prize = Math.round(m * pct / 100 * price * ps);
+    return { id: id, name: name, entryPrice: price, eventsPerMonth: events, basis: 'mau',
+      participants: 0, participantPct: pct, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0,
+      isCash: false, rewardFaceValue: prize, customerCashCost: prize, cashPrizeAmount: prize };
+    };
+  return [mk('rec-weekly', 'Weekly open', 5, 4, 1), mk('rec-major', 'Monthly major', 25, 1, 0.3)];
+}
+
+function TPrecCandidate(base, step, mau) {
+  var m = TPnum(mau, 0),
+    eng = Math.max(TPengCurve(m), step.engMin),
+    s = TPstate(Object.assign({}, base, {
+      mau: m, h2hReach: m, rampOn: false,
+      tournaments: base.includeTournaments ? TPrecTournaments(m, TPrecPrizeShare(base)) : (base.tournaments || [])
+    })),
+    cfg = { mau: m, engagement: eng, playsPerUser: step.plays, spendPerPlay: step.wager,
+      feeRate: step.rake, rewardGames: 8, winRate: 50,
+      redeemRate: TP_BANDS.redemption.base, valuePerRedemption: TP_BANDS.rewardValue.base,
+      tournament: s };
+  return { step: step, engagement: eng, state: s, cfg: cfg };
+}
+
+function TPrecMeasure(cand) {
+  var s = cand.state, r = TPcalculate(s), h = TPh2h(s, cand.cfg, 1),
+    term = TPterm(s) || 1, onH = !!s.includeH2H, onT = !!s.includeTournaments,
+    lucraYear = (onT && !r.errors.length ? r.totalLucra / term : 0) + (onH ? h.lucraShare * 12 : 0),
+    operatorYear = (onT && !r.errors.length ? r.totalOperator / term : 0) + (onH ? h.operatorShare * 12 : 0),
+    licenceYear = r.free ? 0 : (r.totalContract || 0) / term;
+  return {
+    errors: r.errors, result: r, h2h: h,
+    state: s, cfg: cand.cfg,
+    engagement: cand.engagement, step: cand.step,
+    licenceYear: licenceYear, lucraYear: lucraYear, operatorYear: operatorYear,
+    revenueYear: (onH ? h.platformFee * 12 : 0) + (onT && !r.errors.length ? r.totalSplitBase / term : 0),
+    prizeYear: onT && !r.errors.length ? r.totalPrizeCost / term : 0,
+    rewardValueYear: onH ? h.rewardValue * 12 : 0,
+    payoffMonth: r.payoffMonth,
+    tests: {
+      licenceRetired: r.free || (!r.errors.length && r.payoffMonth !== null),
+      lucraCoversLicence: r.free ? lucraYear > 0 : lucraYear >= licenceYear - 1e-6,
+      operatorPositive: operatorYear > 0
+    }
+  };
+}
+
+function TPrecPasses(m) { return m.tests.licenceRetired && m.tests.lucraCoversLicence && m.tests.operatorPositive; }
+
+/* Walk the ladder and stop at the first step that clears every test. If the
+   ceiling still does not clear, return the ceiling and the size of the gap. */
+function TPrecommend(input, mau) {
+  var base = TPstate(input), m = TPnum(mau, 0), steps = TPrecSteps(), tried = [], chosen = null;
+  if (m <= 0) return { ok: false, reason: 'Enter a monthly active base to build a recommendation.', tried: [] };
+  for (var i = 0; i < steps.length; i++) {
+    var measured = TPrecMeasure(TPrecCandidate(base, steps[i], m));
+    tried.push(measured);
+    if (!chosen && TPrecPasses(measured)) chosen = measured;
+  }
+  var final = chosen || tried[tried.length - 1],
+    term = TPterm(base) || 1,
+    licenceGap = final.result.free ? 0 : Math.max(0, (final.result.balanceDue || 0) / term),
+    lucraGap = Math.max(0, final.licenceYear - final.lucraYear),
+    gap = Math.max(licenceGap, lucraGap),
+    sponsorship = TPnum(base.sponsorship, 0), retarget = TPnum(base.retargetValue, 0);
+  return {
+    ok: true, mau: m, cleared: !!chosen, chosen: final, tried: tried,
+    licenceGapYear: licenceGap, lucraGapYear: lucraGap, shortfallYear: gap,
+    coveredBySponsorship: Math.min(gap, sponsorship),
+    remainingAfterSponsorship: Math.max(0, gap - sponsorship),
+    retargetValue: retarget,
+    closes: gap <= sponsorship + 1e-6
+  };
+}
+
 /* TP-PURE-END */
 
 /* ---------- state, persistence ---------- */
@@ -4563,6 +4736,121 @@ function TPrenderPitches() {
 /* Builds the brief the one-pager generator consumes. Every figure is traced to
    the section of that page it feeds, and each input is marked as a customer
    fact or an estimate so nothing unsourced reaches a partner-facing page. */
+/* ---------- recommender rendering ---------- */
+
+function TPrecRow(label, value, source) {
+  return '<tr><td>' + TPesc(label) + '</td><td class="tp-rec-val">' + TPesc(value) +
+    '</td><td class="tp-rec-src">' + TPesc(source) + '</td></tr>';
+}
+
+function TPrecTest(ok, label, detail) {
+  return '<div class="tp-rec-test ' + (ok ? 'pass' : 'fail') + '">' +
+    '<span class="tp-rec-mark">' + (ok ? 'Clears' : 'Short') + '</span>' +
+    '<div><strong>' + TPesc(label) + '</strong><div class="sn">' + TPesc(detail) + '</div></div></div>';
+}
+
+function TPrecMau() { return TPnum(TP.mau, 0) || TPnum(MG.tau, 0); }
+
+function TPrecRun() {
+  var host = $('tp-rec-out'); if (!host) return;
+  var rec = TPrecommend(TP, TPrecMau());
+  if (!rec.ok) { host.innerHTML = '<div class="sn">' + TPesc(rec.reason) + '</div>'; return; }
+
+  var c = rec.chosen, r = c.result, st = c.state, cfg = c.cfg,
+    money = function (v) { return TPmoney(v); },
+    B = TP_BANDS, onT = !!st.includeTournaments, onH = !!st.includeH2H;
+
+  var rows = '';
+  if (onH) {
+    rows += TPrecRow('Engagement', (Math.round(c.engagement * 10) / 10) + '% of the base',
+      c.engagement > B.engagement.mid ? B.engagement.ceilingSource : B.engagement.source);
+    rows += TPrecRow('Plays per player per month', cfg.playsPerUser, 'Lucra reference deals');
+    rows += TPrecRow('Average entry', money(cfg.spendPerPlay), 'Lucra reference deals');
+    rows += TPrecRow('Take fee', cfg.feeRate + '%',
+      cfg.feeRate > B.takeFee.floor ? B.takeFee.ceilingSource : B.takeFee.floorSource);
+    rows += TPrecRow('Reward games per player', cfg.rewardGames, B.rewardValue.baseSource);
+    rows += TPrecRow('Reward redemption', cfg.redeemRate + '%',
+      B.redemption.baseSource + '. Published average is ' + B.redemption.ceiling + '% (' + B.redemption.ceilingSource + ')');
+    rows += TPrecRow('Value per redemption', money(cfg.valuePerRedemption), B.rewardValue.context);
+  }
+  if (onT) {
+    st.tournaments.forEach(function (t) {
+      rows += TPrecRow(t.name, '$' + t.entryPrice + ' entry, ' + t.eventsPerMonth + 'x a month, ' +
+        t.participantPct + '% of the base, ' + money(t.customerCashCost) + ' prize',
+        B.participation.source);
+    });
+  }
+
+  var gap = rec.shortfallYear,
+    banner = rec.cleared
+      ? '<div class="tp-rec-banner ok"><strong>This base clears the licence.</strong> ' +
+        TPesc(c.step.label) + ' is enough. ' + TPesc(c.step.basis) + '</div>'
+      : '<div class="tp-rec-banner short"><strong>This base does not clear the licence.</strong> ' +
+        'Even at ' + TPesc(c.step.label.toLowerCase()) + ' the deal is ' + money(gap) +
+        ' a year short. Nothing above that is modelled, because there is no published figure to justify it.</div>';
+
+  var lucraLine = st.freeLicense
+    ? 'Licence waived, so this test only asks whether Lucra earns anything.'
+    : money(c.lucraYear) + ' a year against a ' + money(c.licenceYear) + ' licence.';
+
+  var tests = TPrecTest(c.tests.licenceRetired, 'Licence retired inside the term',
+      r.free ? 'No licence to retire.' : r.payoffMonth !== null
+        ? 'Retired by month ' + (Math.round(r.payoffMonth * 10) / 10).toFixed(1) + '.'
+        : money(r.balanceDue) + ' still outstanding at the end of the term.') +
+    TPrecTest(c.tests.lucraCoversLicence, "Lucra's share covers the licence", lucraLine) +
+    TPrecTest(c.tests.operatorPositive, 'Operator nets positive after prize funding',
+      money(c.operatorYear) + ' a year after funding ' + money(c.prizeYear) + ' of prizes.');
+
+  var shortfall = '';
+  if (gap > 0) {
+    var remaining = Math.max(0, gap - TPnum(TP.sponsorship, 0));
+    shortfall =
+      '<div class="tp-rec-gap"><div class="pf-section-title">Covering the ' + money(gap) + ' gap</div>' +
+      '<div class="sn">This is what has to come from somewhere other than play. Sponsorship is real money into the deal. Retargeting value is not revenue and is never added to it: record it here so the trade is visible, and keep it out of any revenue figure on a customer page.</div>' +
+      '<div class="inputs tp-three" style="margin-top:12px">' +
+      '<div class="input-group"><label class="input-label" for="tp-sponsorship">Sponsorship / yr</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-sponsorship" type="number" min="0" step="1000" value="' + TPnum(TP.sponsorship, 0) + '" oninput="TPsetRec(\'sponsorship\',this.value)"></div><div class="sn">Cash a sponsor puts in</div></div>' +
+      '<div class="input-group"><label class="input-label" for="tp-retarget">Retargeting value / yr</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="tp-retarget" type="number" min="0" step="1000" value="' + TPnum(TP.retargetValue, 0) + '" oninput="TPsetRec(\'retargetValue\',this.value)"></div><div class="sn">Marketing value, not revenue</div></div>' +
+      '</div>' +
+      '<div class="sn" style="margin-top:8px">' + (remaining <= 0
+        ? '<strong>Sponsorship closes the gap.</strong> The deal stands on play plus ' + money(TPnum(TP.sponsorship, 0)) + ' of sponsorship.'
+        : money(remaining) + ' a year still uncovered after sponsorship.' +
+          (TPnum(TP.retargetValue, 0) > 0 ? ' A further ' + money(TPnum(TP.retargetValue, 0)) + ' of retargeting value is recorded alongside it, not against it.' : '')) +
+      '</div></div>';
+  }
+
+  host.innerHTML = banner +
+    '<div class="tp-rec-tests">' + tests + '</div>' +
+    '<div class="tp-table-wrap"><table class="tp-months tp-rec-table"><thead><tr><th>Input</th><th>Recommended</th><th>Where it comes from</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<div class="sn" style="margin-top:10px">Revenue generated ' + money(c.revenueYear) + ' a year' +
+    (onH && c.rewardValueYear > 0 ? ', plus ' + money(c.rewardValueYear) + ' of reward value which is a venue benefit and is deliberately excluded from that figure' : '') + '.</div>' +
+    shortfall +
+    '<div class="tp-actions"><button type="button" class="primary" onclick="TPrecApply()">Apply these numbers</button></div>' +
+    '<div class="sn">Applying overwrites the head-to-head inputs and replaces the tournament programme. Everything stays editable afterwards.</div>';
+}
+
+function TPsetRec(key, value) {
+  TP[key] = TPnum(value, 0);
+  TPsave();
+  TPrecRun();
+}
+
+function TPrecApply() {
+  var rec = TPrecommend(TP, TPrecMau());
+  if (!rec.ok) return;
+  var c = rec.chosen, cfg = c.cfg;
+  if (TP.includeH2H) {
+    MG.eng = c.engagement; MG.plays = cfg.playsPerUser; MG.wager = cfg.spendPerPlay;
+    MG.rake = cfg.feeRate; MG.rewardGames = cfg.rewardGames; MG.win = cfg.winRate;
+    MG.redeem = cfg.redeemRate; MG.rewardValue = cfg.valuePerRedemption;
+    if (typeof MGsync === 'function') MGsync();
+    if (typeof MGu === 'function') MGu();
+  }
+  if (TP.includeTournaments) TP.tournaments = c.state.tournaments;
+  TPsave();
+  TPrenderControls(); TPrenderTournaments(); TPsyncH2H(); TPrender();
+  TPrecRun();
+}
+
 function TPbriefNum(n) {
   var v = TPnum(n, 0), r = Math.round(v * 100) / 100;
   return r + ' (' + TPmoney(v) + ')';
