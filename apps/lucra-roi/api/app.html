@@ -1855,7 +1855,9 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   </div>
 
 <div class="tp-subsection" id="tp-split-block"><div class="pf-section-title">Revenue split</div>
-    <label class="tp-check"><input type="checkbox" id="tp-recapture" onchange="TPtoggle('recapture',this.checked)"><span>Activity pays the licence down (recapture)</span></label>
+    <div id="tp-recapture-wrap">
+      <label class="tp-check"><input type="checkbox" id="tp-recapture" onchange="TPtoggle('recapture',this.checked)"><span>Activity pays the licence down (recapture)</span></label>
+    </div>
     <div class="sn" id="tp-recapture-note"></div>
     <div id="tp-recapture-fields">
       <div class="tp-split-switch" role="group" aria-label="Recapture structure" style="margin-top:14px">
@@ -1867,8 +1869,8 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
         <div class="input-group"><label class="input-label" for="tp-split-operator">Operator %</label><div class="input-val"><input class="pf-input" id="tp-split-operator" type="number" min="0" max="100" step="1" oninput="TPsetSplitPct('operator',this.value)"><span class="vp">%</span></div></div>
         <div class="input-group"><label class="input-label" for="tp-split-lucra">Lucra %</label><div class="input-val"><input class="pf-input" id="tp-split-lucra" type="number" min="0" max="100" step="1" oninput="TPsetSplitPct('lucra',this.value)"><span class="vp">%</span></div></div>
       </div>
-      <div class="pf-section-title" style="margin-top:18px">After the licence is retired</div>
     </div>
+    <div class="pf-section-title" id="tp-post-title" style="margin-top:18px">After the licence is retired</div>
     <div class="inputs tp-three">
       <div class="input-group"><label class="input-label" for="tp-post-operator">Operator %</label><div class="input-val"><input class="pf-input" id="tp-post-operator" type="number" min="0" max="100" step="1" oninput="TPset('post.operator',this.value)"><span class="vp">%</span></div></div>
       <div class="input-group"><label class="input-label" for="tp-post-lucra">Lucra %</label><div class="input-val"><input class="pf-input" id="tp-post-lucra" type="number" min="0" max="100" step="1" oninput="TPset('post.lucra',this.value)"><span class="vp">%</span></div></div>
@@ -3689,10 +3691,11 @@ function TPvalidate(input) {
 
   if (s.includeH2H && TPreach(s) <= 0) errors.push('Enter addressable users, or a head-to-head reach.');
 
-  if (!s.includeTournaments) return errors;
-
+  // Head-to-head is paid out of this split too, so it is checked for either product.
   var post = TPnum(s.post.operator) + TPnum(s.post.lucra);
   if (Math.abs(post - 100) > 0.001) errors.push('Operator and Lucra split must sum to 100%.');
+
+  if (!s.includeTournaments) return errors;
 
   if (!s.freeLicense) {
     var fees = TPfees(s);
@@ -4088,7 +4091,7 @@ var TP_H2H_FIELDS = [
   { k: 'eng', label: 'Engagement rate', unit: '%', min: 1, max: 60, step: 1, inStep: 0.5, note: 'Estimated · share of monthly active users playing' },
   { k: 'plays', label: 'Plays / user / month', min: 1, max: 200, step: 1, group: 'wagering', note: 'Estimated · frequency among engaged players' },
   { k: 'wager', label: 'Average entry / play', prefix: '$', min: 0.25, max: 20, step: 0.25, group: 'wagering', note: 'Customer fact · real-money entry per play' },
-  { k: 'rake', label: 'Platform fee rate', unit: '%', min: 2, max: 30, step: 0.5, group: 'wagering', note: 'Customer fact · share of paid-game volume' },
+  { k: 'rake', label: 'Take fee', unit: '%', min: 5, max: 25, step: 0.5, group: 'wagering', note: 'Customer fact · 5-25% of paid-game volume' },
   { k: 'rewardGames', label: 'Reward games / user / month', min: 0, max: 50, step: 1, group: 'rewards', note: 'Estimated · free-to-play reward games' },
   { k: 'win', label: 'Reward win rate', unit: '%', min: 0, max: 100, step: 1, group: 'rewards', note: 'Estimated · reward games creating an opportunity' },
   { k: 'redeem', label: 'Reward redemption rate', unit: '%', min: 0, max: 100, step: 1, group: 'rewards', note: 'Estimated · wins redeemed into visits' },
@@ -4105,8 +4108,9 @@ function TPrenderH2Hfields(force) {
     return true;
   });
   host.innerHTML = fields.map(function (f) {
-    var box = '<input class="pf-input" id="tph-' + f.k + '" type="number" min="' + f.min + '" step="' + (f.inStep || f.step) +
-      '" oninput="TPsetH2H(\'' + f.k + '\',this.value)" aria-label="' + f.label + '">';
+    var box = '<input class="pf-input" id="tph-' + f.k + '" type="number" min="' + f.min + '" max="' + f.max +
+      '" step="' + (f.inStep || f.step) +
+      '" oninput="TPsetH2H(\'' + f.k + '\',this.value)" onchange="TPclampH2H(\'' + f.k + '\')" aria-label="' + f.label + '">';
     var wrapped = f.prefix ? '<div class="input-val"><span class="vp">' + f.prefix + '</span>' + box + '</div>'
       : f.unit ? '<div class="input-val">' + box + '<span class="vp">' + f.unit + '</span></div>' : box;
     return '<div class="input-group"><label class="input-label" for="tph-' + f.k + '">' + f.label + '</label>' + wrapped +
@@ -4115,6 +4119,14 @@ function TPrenderH2Hfields(force) {
       '<div class="sn">' + f.note + '</div></div>';
   }).join('');
   host.dataset.built = mode;
+}
+
+function TPclampH2H(key) {
+  var f = null;
+  TP_H2H_FIELDS.forEach(function (x) { if (x.k === key) f = x; });
+  if (!f) return;
+  var v = TPnum(MG[key], 0), c = Math.max(f.min, Math.min(f.max, v));
+  if (c !== v) { MG[key] = c; TPsetH2H(key, c); }
 }
 
 function TPsetH2H(key, value) {
@@ -4323,7 +4335,9 @@ function TPrenderControls() {
   $('tp-shortfall-row').hidden = TPterm(TP) < 2 || TP.payoffBasis !== 'annual';
 
   $('tp-licence-block').hidden = !!TP.freeLicense;
-  $('tp-split-block').hidden = !!TP.freeLicense || !TP.includeTournaments;
+  // The split is never hidden. With a waived licence it matters more, not less:
+  // it is the only way Lucra is paid.
+  $('tp-split-block').hidden = !TP.includeTournaments && !TP.includeH2H;
   $('tp-free-note').hidden = !TP.freeLicense;
 
   document.querySelectorAll('.tp-split-switch button').forEach(function (b) {
@@ -4338,15 +4352,21 @@ function TPrenderControls() {
   var rec = $('tp-recapture'); if (rec) rec.checked = !!TP.recapture;
   var rampOn = $('tp-ramp-on'); if (rampOn) rampOn.checked = !!TP.rampOn;
   if ($('tp-ramp-fields')) $('tp-ramp-fields').hidden = !TP.rampOn;
+  $('tp-recapture-wrap').hidden = !!TP.freeLicense;
   $('tp-recapture-fields').hidden = !TP.recapture || !!TP.freeLicense;
+  $('tp-post-title').textContent = TP.freeLicense
+    ? 'Revenue split'
+    : TP.recapture ? 'After the licence is retired' : 'Revenue split';
   $('tp-recapture-note').textContent = TP.freeLicense
     ? 'The licence is waived, so there is nothing to pay down. Revenue splits between operator and Lucra.'
     : TP.recapture
       ? 'Activity retires the licence at the share below. Once it is retired the licence share redirects to the operator.'
       : 'Activity does not pay the licence down. The fee stays payable and revenue splits between operator and Lucra.';
-  $('tp-split-note').textContent = TP.recapture && !TP.freeLicense
-    ? "If the fee retires partway through a month, the rest of that month's revenue pays out at this split rather than being lost."
-    : 'This is the split applied to all activity.';
+  $('tp-split-note').textContent = TP.freeLicense
+    ? 'With the licence waived this split is the whole commercial: it is how Lucra is paid. Typically 75-95% to the operator against a paid licence; a waived licence often trades that for something nearer 50/50.'
+    : TP.recapture
+      ? "If the fee retires partway through a month, the rest of that month's revenue pays out at this split rather than being lost. Typically 75-95% to the operator."
+      : 'This is the split applied to all activity. Typically 75-95% to the operator.';
 
   document.querySelectorAll('.tp-mode-switch button').forEach(function (b) {
     var on = b.dataset.h2h === (TP.h2hMode || 'both');

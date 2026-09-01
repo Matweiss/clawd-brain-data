@@ -633,3 +633,56 @@ test('the brief has its own block and previews without the clipboard', async ({ 
   await expect(page.locator('#tp-brief-out')).toContainText('STAT BAND');
   await expect(page.locator('#tp-brief-out')).toContainText('INTERNAL — DO NOT PRINT');
 });
+
+test('a waived licence keeps the revenue split on screen and editable', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000 });
+  await expect(page.locator('#tp-split-block')).toBeVisible();
+
+  await page.locator('#tp-free').check();
+  // The split is how Lucra is paid, so it must survive the waiver.
+  await expect(page.locator('#tp-split-block')).toBeVisible();
+  await expect(page.locator('#tp-post-operator')).toBeEditable();
+  await expect(page.locator('#tp-post-lucra')).toBeEditable();
+  // Recapture is meaningless with nothing to retire, so its controls go.
+  await expect(page.locator('#tp-recapture-wrap')).toBeHidden();
+  await expect(page.locator('#tp-recapture-fields')).toBeHidden();
+  await expect(page.locator('#tp-post-title')).toHaveText('Revenue split');
+  await expect(page.locator('#tp-split-note')).toContainText('how Lucra is paid');
+
+  // A 50/50 waiver split reaches the engine as entered.
+  await page.locator('#tp-post-operator').fill('50');
+  await page.locator('#tp-post-lucra').fill('50');
+  const m = await page.evaluate(() => TPcalculate(TP).months[0]);
+  expect(m.toLicense).toBe(0);
+  expect(m.toLucra).toBeCloseTo(m.operatorGross, 6);
+});
+
+test('the split stays visible for a head-to-head-only deal', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
+  await page.locator('#tp-inc-tournaments').uncheck();
+  await expect(page.locator('#tp-split-block')).toBeVisible();
+  await expect(page.locator('#tp-post-lucra')).toBeEditable();
+});
+
+test('the take fee is a custom rate held between 5 and 25 per cent', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
+  const box = page.locator('#tph-rake');
+  await expect(box).toHaveAttribute('min', '5');
+  await expect(box).toHaveAttribute('max', '25');
+  await expect(page.locator('#tp-h2h-fields')).toContainText('Take fee');
+
+  // Anything can be typed; committing snaps it back into the sold range.
+  await box.fill('40');
+  await box.blur();
+  expect(await page.evaluate(() => MG.rake)).toBe(25);
+  await box.fill('1');
+  await box.blur();
+  expect(await page.evaluate(() => MG.rake)).toBe(5);
+  // A rate inside the range is left exactly as entered.
+  await box.fill('12.5');
+  await box.blur();
+  expect(await page.evaluate(() => MG.rake)).toBe(12.5);
+});

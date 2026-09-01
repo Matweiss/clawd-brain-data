@@ -349,3 +349,43 @@ describe('Model shape and guards', () => {
     expect(TPstate({ splitMode: 'standard' }).splitMode).toBe('recapture');
   });
 });
+
+describe('A waived licence keeps the revenue split', () => {
+  // The split is how Lucra is paid, so waiving the fee makes it more important,
+  // not less. With no licence to retire, everything runs at the operator/Lucra
+  // split exactly as entered.
+  it('routes all activity through the entered split rather than zeroing it', () => {
+    const s = base({ freeLicense: true, post: { operator: 50, lucra: 50 } });
+    const rates = TPsplitRates(TPstate(s));
+    expect(rates.free).toBe(true);
+    expect(rates.credit).toBe(0);
+    expect(rates.operator).toBeCloseTo(0.5, 9);
+    expect(rates.lucra).toBeCloseTo(0.5, 9);
+
+    const m = TPcalculate(s).months[0];
+    expect(m.splitBase).toBe(4000);
+    expect(m.toLicense).toBe(0);
+    expect(m.operatorGross).toBeCloseTo(2000, 6);
+    expect(m.toLucra).toBeCloseTo(2000, 6);
+    expect(m.toOperator).toBeCloseTo(2000 - 800, 6);
+  });
+
+  it('honours any split entered, from a 50/50 waiver to a 95/5 paid deal', () => {
+    const at = (operator, lucra, o = {}) =>
+      TPcalculate(base(Object.assign({ post: { operator, lucra } }, o))).months[0];
+    expect(at(50, 50, { freeLicense: true }).toLucra).toBeCloseTo(2000, 6);
+    expect(at(75, 25, { freeLicense: true }).toLucra).toBeCloseTo(1000, 6);
+    expect(at(95, 5, { freeLicense: true }).toLucra).toBeCloseTo(200, 6);
+    // Same split, paid licence with recapture off: the fee stays payable and the
+    // split still governs every dollar of activity.
+    const paid = at(95, 5, { recapture: false });
+    expect(paid.toLucra).toBeCloseTo(200, 6);
+    expect(TPcalculate(base({ recapture: false })).totalContract).toBe(60000);
+  });
+
+  it('validates the operator and Lucra split for a head-to-head-only deal', () => {
+    const s = base({ includeTournaments: false, includeH2H: true, mau: 100000, post: { operator: 60, lucra: 30 } });
+    expect(TPvalidate(s).join(' ')).toMatch(/sum to 100/);
+    expect(TPvalidate(base({ includeTournaments: false, includeH2H: true, mau: 100000, post: { operator: 50, lucra: 50 } }))).toEqual([]);
+  });
+});

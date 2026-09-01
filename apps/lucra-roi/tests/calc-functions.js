@@ -369,10 +369,11 @@ function TPvalidate(input) {
 
   if (s.includeH2H && TPreach(s) <= 0) errors.push('Enter addressable users, or a head-to-head reach.');
 
-  if (!s.includeTournaments) return errors;
-
+  // Head-to-head is paid out of this split too, so it is checked for either product.
   var post = TPnum(s.post.operator) + TPnum(s.post.lucra);
   if (Math.abs(post - 100) > 0.001) errors.push('Operator and Lucra split must sum to 100%.');
+
+  if (!s.includeTournaments) return errors;
 
   if (!s.freeLicense) {
     var fees = TPfees(s);
