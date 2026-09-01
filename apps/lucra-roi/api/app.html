@@ -5429,6 +5429,24 @@ function TPtoggleBrief(btn) {
   btn.textContent = open ? 'Hide the brief' : 'Show what this copies';
 }
 
+/* One row per contract year for the brief: fee, what activity retired, revenue
+   generated, the operator's earnings after prize funding, and Lucra's share. */
+function TPbriefYears(r, st) {
+  var term = TPterm(st), fees = r.free ? [] : TPfees(st).slice(0, term), rows = [];
+  for (var y = 1; y <= term; y++) {
+    var ms = r.months.filter(function (m) { return m.year === y; }), yr = (r.years || [])[y - 1] || {};
+    var sum = function (k) { return ms.reduce(function (a, m) { return a + (m[k] || 0); }, 0); };
+    rows.push({
+      year: y, fee: r.free ? 0 : (fees[y - 1] || 0),
+      credited: yr.credited || 0, sponsor: sum('sponsorCredit'), closing: yr.closing || 0,
+      revenue: sum('splitBase'), entries: sum('handle'), fee2: sum('h2hFee'),
+      operator: sum('toOperator'), prize: sum('prizeCost'), lucra: sum('toLucra')
+    });
+  }
+  var stepped = fees.length > 1 && fees.some(function (f) { return Math.abs(f - fees[0]) > 0.5; });
+  return { rows: rows, fees: fees, stepped: stepped };
+}
+
 function TPbriefNum(n) {
   var v = TPnum(n, 0), r = Math.round(v * 100) / 100;
   return r + ' (' + TPmoney(v) + ')';
@@ -5469,8 +5487,9 @@ function TPbrief() {
   push('  ' + [showH2H ? 'head-to-head' : null, showT ? 'tournaments' : null].filter(Boolean).join(' + '));
   push();
   push('DISCLOSURE');
-  push('  Show revenue generated, not the split. Do not print any net alongside a pool:');
-  push('  a pool and a net together let the reader recover the rate by division.');
+  push('  Show revenue generated. Never print the split percentages or Lucra\'s share.');
+  push('  The by-year block prints operator earnings beside revenue generated at the partner\'s request;');
+  push('  a reader can recover the operator\'s rate from that pair, so print it knowingly.');
   push();
   push('HERO  (two lines; the second carries the foil. Say the offer, not the product.)');
   push('  Offer: ' + money(totalYear) + ' of revenue generated a year on the partner\'s own user base.');
@@ -5560,6 +5579,27 @@ function TPbrief() {
   push('  Yearly is canonical. Monthly figures are term averages derived from it, ramp included.');
   push();
 
+  // The contract by year, what activity retires of it each year, and what the
+  // operator earns each year. Printed at the partner's request; see DISCLOSURE.
+  var byYear = TPbriefYears(r, st);
+  push('LICENCE AND EARNINGS BY YEAR  (one row per contract year)');
+  push('  Contract: ' + (r.free ? 'licence waived' : n(r.totalContract) + ' over ' + term + ' year' + (term === 1 ? '' : 's') +
+    (byYear.stepped ? ', stepped ' + byYear.fees.map(function (f) { return Math.round(f); }).join(' / ') : ', flat ' + Math.round(byYear.fees[0]) + ' a year') +
+    (r.annualBasis ? '. Each year\'s fee is retired within that year; the balance resets at every step.' : '. Retired as one balance across the whole term, so early years can retire later years\' fees.')) +
+    '  [customer fact]');
+  byYear.rows.forEach(function (y) {
+    push('  Year ' + y.year + ':' +
+      (r.free ? ' licence waived' : ' licence fee ' + n(y.fee) + ' · retired by activity ' + n(y.credited) +
+        (y.sponsor > 0 ? ' (of which sponsors ' + n(y.sponsor) + ')' : '') +
+        (y.closing > 0 && y.year === term ? ' · ' + n(y.closing) + ' outstanding' : '')) +
+      ' · revenue generated ' + n(y.revenue) +
+      ' · operator earns ' + n(y.operator) +
+      (showT ? ' after prize funding' + (y.prize > 0 ? ' of ' + n(y.prize) : '') : '') +
+      '  [derived from: the monthly result summed by year]');
+  });
+  if (!r.free) push('  Retired by activity is what the licence earns back from play and sponsors each year; the fee is what it costs.');
+  push();
+
   push('SENSITIVITY  (three rows, low case first; participation scales' +
     (showT ? ', prize funding is held fixed' : '') + ')');
   cases.forEach(function (c) {
@@ -5607,6 +5647,9 @@ function TPbrief() {
   push('  No participation or engagement benchmark is asserted anywhere.');
   push();
   push('INTERNAL — DO NOT PRINT');
+  TPbriefYears(r, st).rows.forEach(function (y) {
+    push('  Year ' + y.year + ' Lucra share ' + Math.round(y.lucra) + (r.free ? '' : ' plus licence fee ' + Math.round(y.fee)) + '  [internal]');
+  });
   push('  Rev share: ' + Math.round((rates.credit + rates.operator) * 100) + ' / ' + Math.round(rates.lucra * 100) +
     ' during payoff, ' + Math.round(rates.postOperator * 100) + ' / ' + Math.round(rates.postLucra * 100) + ' after  [internal]');
   push('  Licence: ' + (r.free ? 'waived' : money(r.totalContract) + ' over ' + term + ' year' + (term === 1 ? '' : 's')) + '  [internal]');

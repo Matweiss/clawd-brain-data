@@ -1014,3 +1014,30 @@ test('the head-to-head inputs fold behind a summary line, and the brief folds be
   await page.locator('#tp-brief-block button', { hasText: 'Hide the brief' }).click();
   await expect(page.locator('#tp-brief-detail')).toBeHidden();
 });
+
+test('the brief states the contract by year, what activity retires, and what the operator earns', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [40000, 60000, 80000, 80000, 80000], includeH2H: true, mau: 100000 });
+  await page.evaluate(() => { TPCsetMau(100000); MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrender(); });
+  const brief = await page.evaluate(() => TPbrief());
+  const block = brief.slice(brief.indexOf('LICENCE AND EARNINGS BY YEAR'), brief.indexOf('SENSITIVITY'));
+  expect(block).toContain('stepped 40000 / 60000 / 80000');
+  expect(block).toContain('180000 ($180,000) over 3 years');
+  for (const y of [1, 2, 3]) {
+    expect(block).toMatch(new RegExp('Year ' + y + ': licence fee \\d+ \\(\\$[\\d,]+\\) · retired by activity \\d+'));
+    expect(block).toMatch(new RegExp('Year ' + y + ':.*operator earns \\d+ \\(\\$[\\d,]+\\) after prize funding'));
+  }
+  // The rows reconcile with the engine, year by year.
+  const r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  const y2op = r.months.filter((m) => m.year === 2).reduce((a, m) => a + m.toOperator, 0);
+  expect(block).toContain('operator earns ' + Math.round(y2op * 100) / 100 + ' (');
+  // Lucra's per-year share stays behind the internal line.
+  const printable = brief.slice(0, brief.indexOf('INTERNAL — DO NOT PRINT'));
+  expect(printable).not.toMatch(/Lucra share \d/);
+  expect(brief.slice(brief.indexOf('INTERNAL'))).toMatch(/Year 2 Lucra share \d+ plus licence fee 60000/);
+  // A waived licence says so on every row instead of printing zeros.
+  await page.locator('#tp-free').check();
+  const waived = await page.evaluate(() => TPbrief());
+  expect(waived).toContain('Contract: licence waived');
+  expect(waived).toMatch(/Year 1: licence waived · revenue generated/);
+});
