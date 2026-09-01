@@ -531,6 +531,15 @@ body.tp-customer .tp-tour-warn{display:none!important}
 .tp-strip-item small{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
 .tp-strip-item strong{font-family:var(--mono);font-size:14px;color:var(--text)}
 .tp-strip-mode{margin:0}
+.tp-strip-modes{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.tp-estimates-count{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.tp-prov{display:inline-block;margin:0 0 4px;padding:1px 7px;border-radius:999px;font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;line-height:1.6;border:1px solid transparent}
+.tp-prov-fact{color:var(--green);background:var(--green-bg);border-color:var(--green-border)}
+.tp-prov-system{color:#8AB4F8;background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.35)}
+.tp-prov-measured{color:#C4A7FF;background:rgba(155,109,247,.12);border-color:rgba(155,109,247,.35)}
+.tp-prov-estimate{color:#F5B849;background:rgba(245,184,73,.12);border-color:rgba(245,184,73,.4)}
+body.tp-estimates #tournaments .input-group[data-prov]:not([data-prov="estimate"]){opacity:.28}
+body.tp-estimates #tournaments .input-group[data-prov="estimate"]{outline:1px solid rgba(245,184,73,.5);outline-offset:4px;border-radius:6px}
 body.tp-customer .tp-strip{border-color:var(--green-border);background:rgba(23,61,44,.92)}
 .tp-fold{border:1px solid var(--border);border-radius:var(--radius);padding:0 14px 12px;margin-top:12px}
 .tp-fold summary{cursor:pointer;list-style:none;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:12px 0}
@@ -1657,7 +1666,10 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 <div id="tp-calc-view">
   <div class="tp-strip" id="tp-strip" aria-live="polite">
     <div class="tp-strip-items" id="tp-strip-items"></div>
-    <label class="tp-check tp-strip-mode"><input type="checkbox" id="tp-customer-mode" onchange="TPtoggle('customerMode',this.checked)"><span>Customer view</span></label>
+    <div class="tp-strip-modes">
+      <label class="tp-check tp-strip-mode tp-internal"><input type="checkbox" id="tp-estimates-only" onchange="TPsetEstimatesOnly(this.checked)"><span>Show estimates only <span id="tp-estimates-count" class="tp-estimates-count"></span></span></label>
+      <label class="tp-check tp-strip-mode"><input type="checkbox" id="tp-customer-mode" onchange="TPtoggle('customerMode',this.checked)"><span>Customer view</span></label>
+    </div>
   </div>
   <div class="pf-section"><div class="pf-section-title">What the customer is taking</div>
     <div class="tp-products">
@@ -5193,8 +5205,60 @@ function TPrenderCustomer() {
     : '<div class="sn">Add tournament types on the calculator to build the customer summary.</div>';
 }
 
+/* ---------- provenance badges ----------
+   Every input on the tab is tagged with where its number comes from, so the
+   room can see at a glance which figures are the partner's own and which are
+   estimates. The tag comes from the input's own note when it names one, else
+   from what the input is. "Show estimates only" dims everything else. */
+var TP_PROV_LABELS = { fact: 'Customer fact', system: 'Customer system', measured: 'Lucra-measured', estimate: 'Estimate' };
+var TP_PROV_BY_ID = [
+  [/^tp-(part|rebuys|rebuypct)-\d+$/, 'estimate'],
+  [/^tp-(price|events|tname|name|prize|face|cost|cash)-\d+$/, 'fact'],
+  [/^tp-(loc|fee)-\d+$/, 'fact'],
+  [/^tp-sp-/, 'fact'],
+  [/^tpc-name$/, 'fact'],
+  [/^tp-(split|post)-/, 'fact'],
+  [/^tp-(term|deal-name|partner-site|presenter|presenter-email|upfront-mode|upfront-value|h2h-reach|reward-ratio)$/, 'fact'],
+  [/^tp-(mau|tpc-mau)$/, 'system'],
+  [/^tp-(ramp-start-pct|ramp-months|decay-rate|season-start|retarget)$/, 'estimate'],
+  [/^tp-season-m-?\d+$/, 'estimate'],
+  [/^tph-/, 'estimate']
+];
+function TPprovKind(group) {
+  var note = group.querySelector('.sn'), text = note ? note.textContent.trim().toLowerCase() : '';
+  if (text.indexOf('customer fact') === 0 || text.indexOf('deal term') === 0) return 'fact';
+  if (text.indexOf('customer system') === 0) return 'system';
+  if (text.indexOf('lucra-measured') === 0 || text.indexOf('lucra measured') === 0) return 'measured';
+  if (text.indexOf('estimated') === 0 || text.indexOf('estimate') === 0 || text.indexOf('planning assumption') === 0 || text.indexOf('illustrative') === 0) return 'estimate';
+  var input = group.querySelector('input,select'), id = input ? input.id : '';
+  for (var i = 0; i < TP_PROV_BY_ID.length; i++) if (TP_PROV_BY_ID[i][0].test(id)) return TP_PROV_BY_ID[i][1];
+  return '';
+}
+function TPapplyProvenance() {
+  var root = $('tournaments'); if (!root) return;
+  var count = 0;
+  Array.prototype.forEach.call(root.querySelectorAll('.input-group'), function (group) {
+    if (!group.querySelector('input,select')) return;
+    var kind = TPprovKind(group);
+    if (!kind) { delete group.dataset.prov; var stale = group.querySelector(':scope > .tp-prov'); if (stale) stale.remove(); return; }
+    group.dataset.prov = kind;
+    if (kind === 'estimate') count++;
+    var badge = group.querySelector(':scope > .tp-prov');
+    if (!badge) { badge = document.createElement('span'); group.insertBefore(badge, group.firstChild); }
+    badge.className = 'tp-prov tp-prov-' + kind;
+    badge.textContent = TP_PROV_LABELS[kind];
+  });
+  var c = $('tp-estimates-count'); if (c) c.textContent = count ? '(' + count + ')' : '';
+  var box = $('tp-estimates-only'); if (box) box.checked = document.body.classList.contains('tp-estimates');
+}
+function TPsetEstimatesOnly(on) {
+  document.body.classList.toggle('tp-estimates', !!on);
+  TPapplyProvenance();
+}
+
 function TPrender() {
   var r = TPcalculate(TP, TPCconfig());
+  TPapplyProvenance();
   TPrenderStrip(r);
   TPrenderResults(r);
   TPrenderChart(r);

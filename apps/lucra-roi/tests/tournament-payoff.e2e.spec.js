@@ -1179,3 +1179,34 @@ test('a payment at signing is entered on the deal and printed in the brief', asy
   await page.locator('#tp-upfront-mode').selectOption('none');
   expect(await page.evaluate(() => TPcalculate(TP, TPCconfig()).totalUpfrontCredited)).toBe(0);
 });
+
+test('every input carries a provenance badge, and estimates can be shown on their own', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 100000 });
+  await openH2H(page);
+  await page.evaluate(() => { TPrenderH2Hfields(true); TPrender(); });
+  const untagged = await page.evaluate(() => Array.from(document.querySelectorAll('#tournaments .input-group'))
+    .filter((g) => g.querySelector('input,select') && !g.closest('#forecast') && !g.closest('#wagerbreakeven') && !g.dataset.prov)
+    .map((g) => (g.querySelector('input,select') || {}).id));
+  expect(untagged).toEqual([]);
+  // The note wins where it names a source; the field type decides otherwise.
+  await expect(page.locator('#tp-fee-0').locator('xpath=ancestor::div[contains(@class,"input-group")][1]')).toHaveAttribute('data-prov', 'fact');
+  await expect(page.locator('#tp-part-0').locator('xpath=ancestor::div[contains(@class,"input-group")][1]')).toHaveAttribute('data-prov', 'estimate');
+  await expect(page.locator('#tph-eng').locator('xpath=ancestor::div[contains(@class,"input-group")][1]')).toHaveAttribute('data-prov', 'estimate');
+  await expect(page.locator('#tp-mau').locator('xpath=ancestor::div[contains(@class,"input-group")][1]')).toHaveAttribute('data-prov', 'system');
+  await expect(page.locator('#tp-part-0').locator('xpath=ancestor::div[contains(@class,"input-group")][1]/span[contains(@class,"tp-prov")]')).toHaveText('Estimate');
+  await expect(page.locator('#tp-estimates-count')).toHaveText(/\(\d+\)/);
+
+  await page.locator('#tp-estimates-only').check();
+  await expect(page.locator('body')).toHaveClass(/tp-estimates/);
+  const feeOpacity = await page.locator('#tp-fee-0').locator('xpath=ancestor::div[contains(@class,"input-group")][1]').evaluate((el) => getComputedStyle(el).opacity);
+  const partOpacity = await page.locator('#tp-part-0').locator('xpath=ancestor::div[contains(@class,"input-group")][1]').evaluate((el) => getComputedStyle(el).opacity);
+  expect(Number(feeOpacity)).toBeLessThan(0.5);
+  expect(Number(partOpacity)).toBe(1);
+  // Internal control: the customer never sees the filter.
+  await page.locator('#tp-customer-mode').check();
+  await expect(page.locator('#tp-estimates-only')).toBeHidden();
+  await page.locator('#tp-customer-mode').uncheck();
+  await page.locator('#tp-estimates-only').uncheck();
+  await expect(page.locator('body')).not.toHaveClass(/tp-estimates/);
+});
