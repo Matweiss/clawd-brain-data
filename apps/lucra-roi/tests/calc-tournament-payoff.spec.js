@@ -410,8 +410,9 @@ describe('The configuration recommender', () => {
   });
 
   it('never models above the published ceiling, and reports the gap instead', () => {
-    // A base far too small for a $120k licence cannot be made to work.
-    const r = TPrecommend(deal(), 25000);
+    // A base far too small for a $120k licence cannot be made to work. Since the
+    // head-to-head fee now credits the licence too, it takes a very small base.
+    const r = TPrecommend(deal(), 4000);
     expect(r.cleared).toBe(false);
     expect(r.chosen.step.key).toBe('published-2025');
     expect(r.chosen.engagement).toBeLessThanOrEqual(TP_BANDS.engagement.ceiling);
@@ -443,7 +444,10 @@ describe('The configuration recommender', () => {
     const r = TPrecommend(deal(), 1000000);
     expect(r.chosen.rewardValueYear).toBeGreaterThan(0);
     const h = r.chosen.h2h;
-    expect(r.chosen.revenueYear).toBeCloseTo(h.platformFee * 12 + r.chosen.result.totalSplitBase, 6);
+    // Revenue generated is the one pool both products feed, split month by month.
+    expect(r.chosen.revenueYear).toBeCloseTo(r.chosen.result.totalSplitBase, 6);
+    expect(r.chosen.result.totalSplitBase).toBeCloseTo(r.chosen.result.totalHandle + r.chosen.result.totalH2HFee, 6);
+    expect(h.platformFee * 12).toBeCloseTo(r.chosen.result.totalH2HFee, 3);
     expect(r.chosen.revenueYear).not.toBeCloseTo(r.chosen.revenueYear + r.chosen.rewardValueYear, 6);
   });
 
@@ -514,5 +518,128 @@ describe('Growth over the term: locations', () => {
     expect(growing.payoffMonth).not.toBeNull();
     expect(growing.balanceDue).toBe(0);
     expect(growing.payoffMonth).toBeGreaterThan(24);
+  });
+});
+
+describe('Head-to-head credits the licence at the same share', () => {
+  const { TPmonthlyH2H } = calc;
+  const cfg = { engagement: 10, playsPerUser: 20, spendPerPlay: 2, feeRate: 10 };
+  const both = () => base({ includeH2H: true, mau: 100000, annualFees: [1e6] });
+
+  it('adds the monthly platform fee to the pool that is split', () => {
+    const r = TPcalculate(both(), cfg);
+    const fee = TPmonthlyH2H(TPstate(both()), cfg, 1).platformFee;
+    // 100,000 x 10% x 20 x $2 x 10% = $40,000 a month of platform fee.
+    expect(fee).toBeCloseTo(40000, 6);
+    expect(r.months[0].h2hFee).toBeCloseTo(40000, 6);
+    expect(r.months[0].splitBase).toBeCloseTo(4000 + 40000, 6);
+    expect(r.months[0].toLicense).toBeCloseTo(44000 * 0.5, 6);
+    expect(r.includesH2H).toBe(true);
+  });
+
+  it('retires a licence that tournaments alone could not', () => {
+    const s = base({ includeH2H: true, mau: 100000, annualFees: [60000] });
+    const alone = TPcalculate(s);            // no head-to-head inputs passed
+    const together = TPcalculate(s, cfg);
+    expect(alone.includesH2H).toBe(false);
+    expect(alone.payoffMonth).toBeNull();
+    expect(together.payoffMonth).not.toBeNull();
+    expect(together.payoffMonth).toBeLessThan(3);
+  });
+
+  it('keeps head-to-head out of the split when the product is not selected', () => {
+    const r = TPcalculate(base({ includeH2H: false, mau: 100000 }), cfg);
+    expect(r.includesH2H).toBe(false);
+    expect(r.totalH2HFee).toBe(0);
+    expect(r.months[0].splitBase).toBe(4000);
+  });
+
+  it('models a head-to-head-only deal through the same result', () => {
+    const r = TPcalculate(base({ includeTournaments: false, includeH2H: true, mau: 100000, annualFees: [60000] }), cfg);
+    expect(r.errors).toEqual([]);
+    expect(r.totalHandle).toBe(0);
+    expect(r.months[0].splitBase).toBeCloseTo(40000, 6);
+    expect(r.payoffMonth).not.toBeNull();
+  });
+});
+
+describe('Sponsors credit the licence directly', () => {
+  it('lands against the licence in the month paid, before any split', () => {
+    const s = base({ annualFees: [60000], sponsors: [{ id: 'a', name: 'Launch sponsor', amount: 20000, month: 3 }] });
+    const r = TPcalculate(s);
+    expect(r.months[1].sponsorCredit).toBe(0);
+    expect(r.months[2].sponsorCredit).toBe(20000);
+    // Month three's activity still credits at the licence share on top.
+    expect(r.months[2].toLicense).toBe(2000);
+    expect(r.months[2].cumulativeLicense).toBe(2000 * 3 + 20000);
+    expect(r.totalSponsorCredited).toBe(20000);
+    expect(r.totalSponsorUnapplied).toBe(0);
+    // Sponsor money never enters the pool, so nothing of it reaches Lucra or the operator.
+    expect(r.months[2].toLucra).toBe(400);
+  });
+
+  it('reports sponsor money that has nothing left to retire rather than losing it', () => {
+    const s = base({ annualFees: [5000], sponsors: [{ id: 'a', name: 'Big', amount: 9000, month: 1 }] });
+    const r = TPcalculate(s);
+    expect(r.months[0].sponsorCredit).toBe(5000);
+    expect(r.totalSponsorUnapplied).toBe(4000);
+    expect(r.payoffMonth).toBe(0);
+    expect(r.balanceDue).toBe(0);
+  });
+
+  it('is ignored entirely on a waived licence', () => {
+    const r = TPcalculate(base({ freeLicense: true, sponsors: [{ id: 'a', name: 'X', amount: 1000, month: 1 }] }));
+    expect(r.totalSponsorCredited).toBe(0);
+    expect(r.totalSponsorUnapplied).toBe(1000);
+  });
+});
+
+describe('Engagement decay', () => {
+  const { TPdecayFactor, TPaudienceFactor } = calc;
+  it('is off by default and leaves every year at full engagement', () => {
+    const s = TPstate(base({ termYears: 3, annualFees: [1, 1, 1] }));
+    expect(TPdecayFactor(s, 1)).toBe(1);
+    expect(TPdecayFactor(s, 36)).toBe(1);
+  });
+  it('runs each contract year at the chosen share of the year before', () => {
+    const s = TPstate(base({ termYears: 3, annualFees: [1, 1, 1], decayOn: true, decayRate: 95 }));
+    expect(TPdecayFactor(s, 12)).toBe(1);
+    expect(TPdecayFactor(s, 13)).toBeCloseTo(0.95, 9);
+    expect(TPdecayFactor(s, 36)).toBeCloseTo(0.9025, 9);
+    const r = TPcalculate(s);
+    expect(r.months[24].handle).toBeCloseTo(r.months[0].handle * 0.9025, 6);
+  });
+  it('stacks with locations and season inside one audience factor', () => {
+    const s = TPstate(base({ termYears: 2, annualFees: [1, 1], locations: [1, 3], decayOn: true, decayRate: 90 }));
+    expect(TPaudienceFactor(s, 24)).toBeCloseTo(3 * 0.9, 9);
+  });
+});
+
+describe('Seasonality', () => {
+  const { TPseasonProfile, TPseasonFactor, TP_SEASONS } = calc;
+  it('is flat unless switched on', () => {
+    const s = TPstate(base());
+    expect(TPseasonProfile(s)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+  });
+  it('normalises every preset so a season moves volume around the year without changing the year', () => {
+    Object.keys(TP_SEASONS).forEach((key) => {
+      if (!TP_SEASONS[key].profile) return;
+      const p = TPseasonProfile(TPstate(base({ seasonOn: true, seasonPreset: key })));
+      expect(p.reduce((a, b) => a + b, 0)).toBeCloseTo(12, 9);
+    });
+    const flat = TPcalculate(base()), nfl = TPcalculate(base({ seasonOn: true, seasonPreset: 'nfl' }));
+    expect(nfl.totalHandle).toBeCloseTo(flat.totalHandle, 3);
+    expect(nfl.months[9].handle).toBeGreaterThan(nfl.months[4].handle); // October beats May for the NFL
+  });
+  it('starts the profile from the calendar month the contract begins', () => {
+    const jan = TPstate(base({ seasonOn: true, seasonPreset: 'nfl', seasonStart: 1 }));
+    const sep = TPstate(base({ seasonOn: true, seasonPreset: 'nfl', seasonStart: 9 }));
+    expect(TPseasonFactor(sep, 1)).toBeCloseTo(TPseasonFactor(jan, 9), 9);
+  });
+  it('accepts a custom twelve-month shape and normalises it too', () => {
+    const s = TPstate(base({ seasonOn: true, seasonPreset: 'custom', seasonProfile: [2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0] }));
+    const p = TPseasonProfile(s);
+    expect(p[0]).toBeCloseTo(2, 9);
+    expect(p[11]).toBe(0);
   });
 });

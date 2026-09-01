@@ -710,8 +710,9 @@ test('the recommender proposes a configuration and shows where each number came 
 
 test('a base too small to clear the licence says so and sizes the gap', async ({ page }) => {
   await openTab(page);
-  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 25000 });
-  await page.evaluate(() => TPCsetMau(25000));
+  // Head-to-head now credits the licence too, so it takes a very small base to fail.
+  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 2000 });
+  await page.evaluate(() => TPCsetMau(2000));
   await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
 
   await expect(page.locator('.tp-rec-banner')).toHaveClass(/short/);
@@ -721,12 +722,17 @@ test('a base too small to clear the licence says so and sizes the gap', async ({
   // Reaching for the ceiling is the one case that cites the published figure.
   await expect(page.locator('.tp-rec-table')).toContainText('Skillz');
 
-  // Sponsorship closes the gap; retargeting value is recorded but never added in.
-  const gap = await page.evaluate(() => TPrecommend(TP, TPrecMau()).shortfallYear);
-  expect(gap).toBeGreaterThan(0);
-  await page.locator('#tp-sponsorship').fill(String(Math.ceil(gap)));
-  await expect(page.locator('.tp-rec-gap')).toContainText('Sponsorship closes the gap');
-  expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).shortfallYear)).toBeCloseTo(gap, 6);
+  // The two kinds of gap are named separately: a sponsor can cover an unretired
+  // licence, and cannot lift Lucra's share. Retargeting value is recorded beside
+  // the gap and never added in.
+  const rec = await page.evaluate(() => TPrecommend(TP, TPrecMau()));
+  expect(rec.licenceGapYear).toBeGreaterThan(0);
+  expect(rec.lucraGapYear).toBeGreaterThan(0);
+  await expect(page.locator('.tp-rec-gap')).toContainText('not retired by play');
+  await expect(page.locator('.tp-rec-gap')).toContainText("Lucra's share is");
+  await page.locator('#tp-retarget').fill('5000');
+  await expect(page.locator('.tp-rec-gap')).toContainText('stays out of every revenue figure');
+  expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).shortfallYear)).toBeCloseTo(rec.shortfallYear, 6);
 });
 
 test('applying the recommendation writes it into the model', async ({ page }) => {
@@ -760,7 +766,7 @@ test('locations per contract year scale the model and explain themselves', async
   await page.locator('#tp-loc-1').fill('3');
   await page.locator('#tp-loc-2').fill('7');
   await expect(page.locator('#tp-growth-note')).toContainText('1 → 3 → 7 locations');
-  await expect(page.locator('#tp-growth-note')).toContainText('Volume averages');
+  await expect(page.locator('#tp-growth-note')).toContainText('Audience averages');
 
   const r = await page.evaluate(() => TPcalculate(TP));
   expect(r.months[35].handle).toBeCloseTo(r.months[0].handle * 7, 6);
@@ -792,4 +798,96 @@ test('the ramp applies to each location and the brief says so', async ({ page })
   const brief = await page.evaluate(() => TPbrief());
   expect(brief).toContain('Locations: 1 -> 3');
   expect(brief).toContain('each location opens at');
+});
+
+test('head-to-head credits the licence at the same share, and the table shows it', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, mau: 100000 });
+  await page.evaluate(() => { TPCsetMau(100000); MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrender(); });
+  // Tournaments alone at 4,000 a month cannot retire 60,000 inside a year.
+  let r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  expect(r.includesH2H).toBe(false);
+  expect(r.payoffMonth).toBeNull();
+  await expect(page.locator('#tp-table thead')).not.toContainText('Head-to-head fee');
+
+  await page.locator('#tp-inc-h2h').check();
+  r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  expect(r.includesH2H).toBe(true);
+  expect(r.months[0].h2hFee).toBeCloseTo(40000, 3);
+  expect(r.payoffMonth).not.toBeNull();
+  await expect(page.locator('#tp-table thead')).toContainText('Head-to-head fee');
+  await expect(page.locator('#tp-table thead')).toContainText('Pool to split');
+  await expect(page.locator('#tp-summary')).not.toContainText('Not retired');
+});
+
+test('sponsors are entered in the deal and credit the licence before the split', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000 });
+  await expect(page.locator('#tp-sponsors-list')).toContainText('No sponsors');
+  await page.locator('#tp-sponsors-block button', { hasText: 'Add a sponsor' }).click();
+  await page.locator('#tp-sp-name-0').fill('Launch partner');
+  await page.locator('#tp-sp-amount-0').fill('20000');
+  await page.locator('#tp-sp-month-0').fill('3');
+
+  const r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  expect(r.months[2].sponsorCredit).toBe(20000);
+  expect(r.totalSponsorCredited).toBe(20000);
+  await expect(page.locator('#tp-table thead')).toContainText('Sponsor to licence');
+  // Waiving the licence hides the sponsor block with the rest of the licence inputs.
+  await page.locator('#tp-free').check();
+  await expect(page.locator('#tp-sponsors-block')).toBeHidden();
+  await page.locator('#tp-free').uncheck();
+  await page.locator('#tp-sponsors-list .tp-remove').first().click();
+  await expect(page.locator('#tp-sponsors-list')).toContainText('No sponsors');
+});
+
+test('the recommender offers a sponsor for exactly the unretired licence', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 2000 });
+  await page.evaluate(() => TPCsetMau(2000));
+  await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
+  await expect(page.locator('.tp-rec-banner')).toHaveClass(/short/);
+  const gap = await page.evaluate(() => TPrecommend(TP, TPrecMau()).licenceGapYear);
+  expect(gap).toBeGreaterThan(0);
+  await page.locator('.tp-rec-gap button', { hasText: 'Add a sponsor for' }).click();
+  // A sponsor line now exists for the gap, and the licence test passes.
+  expect(await page.evaluate(() => TP.sponsors.length)).toBe(1);
+  expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).licenceGapYear)).toBe(0);
+  await expect(page.locator('#tp-sp-name-0')).toHaveValue('Gap sponsor');
+});
+
+test('decay and season are off by default and switch on with their controls', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [60000, 60000, 60000, 60000, 60000] });
+  await expect(page.locator('#tp-decay-fields')).toBeHidden();
+  await expect(page.locator('#tp-season-fields')).toBeHidden();
+  const flat = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+
+  await page.locator('#tp-decay-on').check();
+  await expect(page.locator('#tp-decay-fields')).toBeVisible();
+  await expect(page.locator('#tp-decay-rate')).toHaveValue('95');
+  await expect(page.locator('#tp-growth-note')).toContainText('95% of the prior year');
+  const decayed = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  expect(decayed.months[24].handle).toBeCloseTo(flat.months[24].handle * 0.9025, 3);
+  expect(decayed.months[0].handle).toBeCloseTo(flat.months[0].handle, 3);
+
+  await page.locator('#tp-season-on').check();
+  await expect(page.locator('#tp-season-fields')).toBeVisible();
+  await page.locator('#tp-season-preset').selectOption('nfl');
+  await page.locator('#tp-season-start').selectOption('9');
+  await expect(page.locator('#tp-season-grid input')).toHaveCount(12);
+  await expect(page.locator('#tp-season-note')).toContainText('Peak');
+  const seasonal = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  // The season moves volume around the year without changing the year.
+  expect(seasonal.totalHandle).toBeCloseTo(decayed.totalHandle, 1);
+  expect(seasonal.months[0].handle).toBeGreaterThan(seasonal.months[8].handle); // September start beats the following May
+  // Editing a month makes the profile custom.
+  await page.locator('#tp-season-grid input').first().fill('3');
+  expect(await page.evaluate(() => TP.seasonPreset)).toBe('custom');
+});
+
+test('the page carries a build stamp', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#build-stamp')).toContainText('Build local');
+  await expect(page.locator('#build-stamp')).toContainText(new Date().getFullYear().toString());
 });

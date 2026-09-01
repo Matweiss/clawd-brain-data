@@ -1,0 +1,91 @@
+# Lucra ROI calculator: test every push, preview every branch, never promote.
+#
+# Production is promoted by hand. This workflow builds a Vercel preview for
+# every branch push (including main) so a merge is visible before anyone
+# decides to make it live. It needs three repository secrets to deploy:
+#   VERCEL_TOKEN        a personal token from vercel.com/account/tokens
+#   VERCEL_ORG_ID       team_711KsxzQziHFZnU8wBzEQ9Sp
+#   VERCEL_PROJECT_ID   prj_cptCMUoHbrcg9nGAuYOVkai5yWOz
+# Without them the test job still runs and the deploy job is skipped.
+
+name: lucra-roi
+
+on:
+  push:
+    paths:
+      - 'apps/lucra-roi/**'
+      - '.github/workflows/lucra-roi.yml'
+  pull_request:
+    paths:
+      - 'apps/lucra-roi/**'
+
+concurrency:
+  group: lucra-roi-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit and browser tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/lucra-roi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/lucra-roi/package-lock.json
+      - run: npm ci
+      - name: Unit tests
+        run: npx vitest run
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser tests
+        run: npx playwright test
+        env:
+          CI: 'true'
+      - name: Keep traces from failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: apps/lucra-roi/test-results
+          retention-days: 7
+
+  preview:
+    name: Vercel preview
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip without Vercel secrets
+        id: gate
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "No VERCEL_TOKEN secret; skipping the preview deploy." >> "$GITHUB_STEP_SUMMARY"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: 22
+      - name: Deploy preview (never production)
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          npm i -g vercel@latest
+          vercel pull --yes --environment=preview --token="${{ secrets.VERCEL_TOKEN }}"
+          url=$(vercel deploy --yes --token="${{ secrets.VERCEL_TOKEN }}" \
+            --meta githubCommitSha="${GITHUB_SHA}" --meta githubCommitRef="${GITHUB_REF_NAME}")
+          echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+        id: deploy
+        env:
+          VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}

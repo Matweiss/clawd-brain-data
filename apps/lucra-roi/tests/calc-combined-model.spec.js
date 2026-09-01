@@ -175,10 +175,14 @@ describe('Combined revenue model', () => {
     expect(TPCcases(cfg({ engagement: 20 }))[2].result.engagement).toBeCloseTo(30, 6);
   });
 
-  it('reports zero tournament revenue rather than throwing on invalid tournaments', () => {
+  it('reports nothing rather than throwing on invalid tournaments', () => {
+    // Both products now come out of one monthly result, so a deal that fails
+    // validation produces no figures for either rather than a half answer.
     const r = TPCcase(cfg({ tournament: deal({ tournaments: [] }) }));
+    expect(r.tournamentResult.errors.length).toBeGreaterThan(0);
     expect(r.tournamentEntries).toBe(0);
-    expect(r.p2pFee).toBe(400000);
+    expect(r.p2pFee).toBe(0);
+    expect(r.revenueGenerated).toBe(0);
   });
 });
 

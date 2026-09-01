@@ -218,7 +218,6 @@ var TP_MAX_YEARS = 5;
 
 var TP_DEFAULTS = {
   dealName: '',
-  sponsorship: 0,
   retargetValue: 0,
   heatH2H: true,
   partnerSite: '',
@@ -247,6 +246,19 @@ var TP_DEFAULTS = {
   rampMonths: 6,
   // Locations running in each contract year. The base above is one location.
   locations: [1, 1, 1, 1, 1],
+  // Year-over-year engagement decay, off unless chosen. 95 means each contract
+  // year runs at 95% of the year before.
+  decayOn: false,
+  decayRate: 95,
+  // Seasonality, off unless chosen. A twelve-month shape normalised so the year
+  // still sums to the same total; seasonStart is the calendar month the contract
+  // begins in, 1 = January.
+  seasonOn: false,
+  seasonPreset: 'flat',
+  seasonProfile: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  seasonStart: 1,
+  // Sponsors credit the licence directly in the month paid, before any split.
+  sponsors: [],
   // Head-to-head
   h2hReach: 0,
   h2hMode: 'both',
@@ -358,8 +370,7 @@ function TPavgRamp(s, months) {
 function TPlocations(s) {
   var n = TPterm(s), raw = Array.isArray(s.locations) ? s.locations : [], out = [], prev = 1;
   for (var i = 0; i < n; i++) {
-    var v = Math.max(1, Math.round(TPnum(raw[i], prev)));
-    if (v < prev) v = prev;
+    var v = Math.max(1, prev, Math.round(TPnum(raw[i], 0)));
     out.push(v); prev = v;
   }
   return out;
@@ -396,6 +407,61 @@ function TPavgVolume(s, months) {
   return n > 0 ? total / n : 1;
 }
 
+/* Seasonal shapes. These are illustrative in-season / off-season shapes, not
+   measured data, and every profile is editable. They are normalised to a mean
+   of one so a season changes when volume lands, never how much lands in a year. */
+var TP_SEASONS = {
+  flat:   { label: 'Flat, no season', profile: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+  nfl:    { label: 'NFL (Sep-Feb)', profile: [1.3, 1.2, 0.6, 0.5, 0.5, 0.5, 0.6, 0.8, 1.4, 1.5, 1.5, 1.5] },
+  nbanhl: { label: 'NBA / NHL (Oct-Jun)', profile: [1.3, 1.3, 1.3, 1.4, 1.3, 1.1, 0.4, 0.4, 0.5, 1.2, 1.3, 1.4] },
+  mlb:    { label: 'MLB (Apr-Oct)', profile: [0.4, 0.5, 0.8, 1.3, 1.4, 1.4, 1.4, 1.4, 1.4, 1.3, 0.5, 0.4] },
+  venue:  { label: 'Venue / family entertainment', profile: [0.8, 0.9, 1.0, 1.0, 1.0, 1.3, 1.4, 1.3, 0.9, 0.9, 1.0, 1.5] },
+  custom: { label: 'Custom', profile: null }
+};
+
+function TPseasonProfile(s) {
+  var flat = TP_SEASONS.flat.profile;
+  if (!s.seasonOn) return flat;
+  var raw = s.seasonPreset === 'custom'
+    ? (Array.isArray(s.seasonProfile) && s.seasonProfile.length === 12 ? s.seasonProfile : flat)
+    : ((TP_SEASONS[s.seasonPreset] || TP_SEASONS.flat).profile || flat);
+  var arr = raw.map(function (v) { return TPnum(v, 0); }),
+    mean = arr.reduce(function (a, b) { return a + b; }, 0) / 12;
+  return mean > 0 ? arr.map(function (v) { return v / mean; }) : flat;
+}
+
+function TPseasonFactor(s, month) {
+  var start = Math.max(1, Math.min(12, Math.round(TPnum(s.seasonStart, 1))));
+  return TPseasonProfile(s)[(start - 1 + month - 1) % 12];
+}
+
+/* Engagement decay by contract year: year one is untouched, each later year
+   runs at the chosen share of the year before. */
+function TPdecayFactor(s, month) {
+  if (!s.decayOn) return 1;
+  var rate = TPnum(s.decayRate, 0, 100) / 100, year = Math.floor((month - 1) / 12);
+  return Math.pow(rate, year);
+}
+
+/* Everything that scales the audience in a month, as one factor: locations open
+   and ramping, engagement decay by year, and where in the season the month falls. */
+function TPaudienceFactor(s, month) {
+  return TPvolumeFactor(s, month) * TPdecayFactor(s, month) * TPseasonFactor(s, month);
+}
+
+function TPavgAudience(s, months) {
+  var n = months || TPterm(s) * 12, total = 0;
+  for (var m = 1; m <= n; m++) total += TPaudienceFactor(s, m);
+  return n > 0 ? total / n : 1;
+}
+
+/* Sponsor money landing in a given contract month. */
+function TPsponsorsInMonth(s, month) {
+  return (s.sponsors || []).reduce(function (a, sp) {
+    return a + (Math.round(TPnum(sp.month, 1)) === month ? Math.max(0, TPnum(sp.amount, 0)) : 0);
+  }, 0);
+}
+
 /* Participants for one tournament type: its own headcount, or its own share of
    the addressable base, per location, scaled by the locations open and their
    ramps that month. */
@@ -403,7 +469,7 @@ function TPtypeParticipants(s, t, month) {
   var full = t.basis === 'mau'
     ? TPnum(s.mau, 0) * TPnum(t.participantPct, 0) / 100
     : TPnum(t.participants, 0);
-  return full * TPvolumeFactor(s, month);
+  return full * TPaudienceFactor(s, month);
 }
 
 function TPentriesPerEvent(s, t, month) {
@@ -439,7 +505,12 @@ function TPvalidate(input) {
   return errors;
 }
 
-function TPcalculate(input) {
+/* The whole deal, month by month. Tournament entries and the head-to-head
+   platform fee form one pool that is split at the same rates and credits the
+   licence at the same share. Sponsors credit the licence directly, before the
+   split, in the month they pay. cfg carries the head-to-head inputs; without it
+   only tournaments are modelled. factor scales engagement, for the case band. */
+function TPcalculate(input, cfg, factor) {
   var s = TPstate(input), errors = TPvalidate(s);
   if (errors.length) return { errors: errors, months: [], years: [] };
 
@@ -453,6 +524,10 @@ function TPcalculate(input) {
     years = [], cumulativeLicense = 0, trueUpTotal = 0,
     totalOperator = 0, totalOperatorGross = 0, totalLucra = 0,
     totalHandle = 0, totalPrizeCost = 0, totalSplitBase = 0,
+    totalH2HFee = 0, totalH2HVolume = 0, totalRewardValue = 0,
+    totalSponsorCredited = 0, totalSponsorUnapplied = 0,
+    useH2H = !!s.includeH2H && !!cfg,
+    tournamentsOn = s.includeTournaments ? s.tournaments : [],
     lossMonths = 0, payoffMonth = null, months = [];
 
   for (var y = 0; y < (s.freeLicense ? termYears : fees.length); y++) {
@@ -473,8 +548,18 @@ function TPcalculate(input) {
       years[yi].opening = remaining;
     }
 
+    // Sponsors land first and go straight against the licence.
+    var sponsorPaid = TPsponsorsInMonth(s, month),
+      sponsorCredit = Math.min(remaining, sponsorPaid),
+      openingRemaining = remaining;
+    remaining = Math.max(0, remaining - sponsorCredit);
+    cumulativeLicense += sponsorCredit;
+    totalSponsorCredited += sponsorCredit;
+    totalSponsorUnapplied += sponsorPaid - sponsorCredit;
+    if (years[yi]) years[yi].credited += sponsorCredit;
+
     var handle = 0, prizeCost = 0, detail = [], participants = 0;
-    s.tournaments.forEach(function (t) {
+    tournamentsOn.forEach(function (t) {
       var events = TPnum(t.eventsPerMonth, 0),
         typeParticipants = TPtypeParticipants(s, t, month),
         entriesPerEvent = TPentriesPerEvent(s, t, month),
@@ -492,15 +577,17 @@ function TPcalculate(input) {
     // The commercial splits gross entries. The partner funds the prize pool out of
     // their own share afterwards, so prize cost never reduces the pool being split:
     // $10,000 raised -> partner $9,000 -> their $1,000 prize cost -> partner nets $8,000.
-    var splitBase = handle,
+    var hm = useH2H ? TPmonthlyH2H(s, cfg, month, factor) : null,
+      h2hFee = hm ? hm.platformFee : 0,
+      splitBase = handle + h2hFee,
       licenseGross = rates.credit > 0 ? Math.min(splitBase, remaining / rates.credit) : 0,
       postGross = splitBase - licenseGross,
       toLicense = Math.min(remaining, licenseGross * rates.credit),
       operatorGross = licenseGross * rates.operator + postGross * rates.postOperator,
       toLucra = licenseGross * rates.lucra + postGross * rates.postLucra,
       toOperator = operatorGross - prizeCost,
-      grossMargin = handle - prizeCost,
-      openingRemaining = remaining;
+      grossMargin = handle - prizeCost;
+    if (hm) { totalH2HFee += h2hFee; totalH2HVolume += hm.paidVolume; totalRewardValue += hm.rewardValue; }
 
     // A month is a loss when the partner's share does not cover the prizes they fund.
     if (toOperator < 0) lossMonths++;
@@ -510,7 +597,8 @@ function TPcalculate(input) {
     totalHandle += handle; totalPrizeCost += prizeCost; totalSplitBase += splitBase;
     if (years[yi]) years[yi].credited += toLicense;
 
-    var fraction = splitBase > 0 ? licenseGross / splitBase : 1;
+    // If a sponsor cleared it before any activity, the month is done at its start.
+    var fraction = splitBase > 0 ? licenseGross / splitBase : (sponsorCredit > 0 && remaining <= 1e-9 ? 0 : 1);
     if (years[yi] && years[yi].clearMonth === null && openingRemaining > 1e-9 && remaining <= 1e-9) {
       years[yi].clearMonth = month - 1 + fraction;
     }
@@ -521,6 +609,9 @@ function TPcalculate(input) {
     months.push({
       month: month, year: yi + 1, monthInYear: monthInYear,
       participants: participants, handle: handle, prizeCost: prizeCost,
+      h2hFee: h2hFee, h2hVolume: hm ? hm.paidVolume : 0, h2hEngaged: hm ? hm.engaged : 0,
+      rewardValue: hm ? hm.rewardValue : 0,
+      sponsorPaid: sponsorPaid, sponsorCredit: sponsorCredit,
       grossMargin: grossMargin, splitBase: splitBase,
       toLicense: toLicense, cumulativeLicense: cumulativeLicense,
       operatorGross: operatorGross, toOperator: toOperator, toLucra: toLucra,
@@ -549,46 +640,65 @@ function TPcalculate(input) {
     totalOwed: trueUpTotal + Math.max(0, remaining),
     totalOperator: totalOperator, totalOperatorGross: totalOperatorGross, totalLucra: totalLucra,
     totalHandle: totalHandle, totalPrizeCost: totalPrizeCost, totalSplitBase: totalSplitBase,
+    totalH2HFee: totalH2HFee, totalH2HVolume: totalH2HVolume, totalRewardValue: totalRewardValue,
+    totalSponsorCredited: totalSponsorCredited, totalSponsorUnapplied: totalSponsorUnapplied,
+    includesH2H: useH2H,
     lossMonths: lossMonths, free: rates.free
   };
 }
 
-/* Head-to-head on its own. Wagering produces the platform fee; rewards are free
+/* Head-to-head in one month. Wagering produces the platform fee; rewards are free
    to play and produce venue value through redeemed visits, never a fee. */
-function TPh2h(input, cfg, factor) {
-  var s = TPstate(input), f = factor === undefined ? 1 : TPnum(factor, 0),
+function TPmonthlyH2H(s, cfg, month, factor) {
+  var f = factor === undefined ? 1 : TPnum(factor, 0), c = cfg || {},
     on = !!s.includeH2H,
     wagering = on && s.h2hMode !== 'rewards',
     rewards = on && s.h2hMode !== 'wagering',
     reach = TPreach(s),
-    engagement = on ? Math.min(100, TPnum(cfg.engagement, 0, 100) * f) : 0,
-    ramp = TPavgVolume(s),
-    engaged = reach * engagement / 100 * ramp,
-    paidPlays = wagering ? engaged * TPnum(cfg.playsPerUser, 0) : 0,
-    paidVolume = paidPlays * TPnum(cfg.spendPerPlay, 0),
-    feeRate = TPnum(cfg.feeRate, 0, 100) / 100,
+    engagement = on ? Math.min(100, TPnum(c.engagement, 0, 100) * f) : 0,
+    aud = TPaudienceFactor(s, month),
+    engaged = reach * engagement / 100 * aud,
+    paidPlays = wagering ? engaged * TPnum(c.playsPerUser, 0) : 0,
+    paidVolume = paidPlays * TPnum(c.spendPerPlay, 0),
+    feeRate = TPnum(c.feeRate, 0, 100) / 100,
     platformFee = paidVolume * feeRate,
-    rewardPlays = rewards ? engaged * TPnum(cfg.rewardGames, 0) : 0,
-    rewardWins = rewardPlays * TPnum(cfg.winRate, 0, 100) / 100,
-    rewardRedemptions = rewardWins * TPnum(cfg.redeemRate, 0, 100) / 100,
-    rewardValue = rewardRedemptions * TPnum(cfg.valuePerRedemption, 0),
-    rates = TPsplitRates(s),
-    lucraShare = platformFee * rates.lucra,
-    // The Revenue Model tab is authoritative: a free licence waives Lucra's fee
-    // whatever any other tab holds.
-    licenseMonthly = s.freeLicense ? 0 : TPfees(s)[0] / 12,
-    operatorShare = platformFee - lucraShare;
-
+    rewardPlays = rewards ? engaged * TPnum(c.rewardGames, 0) : 0,
+    rewardWins = rewardPlays * TPnum(c.winRate, 0, 100) / 100,
+    rewardRedemptions = rewardWins * TPnum(c.redeemRate, 0, 100) / 100,
+    rewardValue = rewardRedemptions * TPnum(c.valuePerRedemption, 0);
   return {
-    on: on, wagering: wagering, rewards: rewards,
-    reach: reach, engagement: engagement, engaged: engaged, ramp: ramp,
-    paidPlays: paidPlays, paidVolume: paidVolume, feeRate: feeRate * 100,
-    platformFee: platformFee, lucraShare: lucraShare, operatorShare: operatorShare,
-    licenseMonthly: licenseMonthly, licenseWaived: !!s.freeLicense,
+    on: on, wagering: wagering, rewards: rewards, reach: reach, engagement: engagement,
+    audience: aud, engaged: engaged, paidPlays: paidPlays, paidVolume: paidVolume,
+    feeRate: feeRate * 100, platformFee: platformFee,
     rewardPlays: rewardPlays, rewardWins: rewardWins,
-    rewardRedemptions: rewardRedemptions, rewardValue: rewardValue,
-    revenueGenerated: platformFee
+    rewardRedemptions: rewardRedemptions, rewardValue: rewardValue
   };
+}
+
+/* Head-to-head averaged across the term, for readouts. The split of its fee is
+   worked out month by month inside TPcalculate, alongside tournament entries. */
+function TPh2h(input, cfg, factor) {
+  var s = TPstate(input), n = TPterm(s) * 12 || 12, sum = null, keys = [
+    'engaged', 'paidPlays', 'paidVolume', 'platformFee', 'rewardPlays', 'rewardWins', 'rewardRedemptions', 'rewardValue', 'audience'
+  ];
+  for (var m = 1; m <= n; m++) {
+    var x = TPmonthlyH2H(s, cfg, m, factor);
+    if (!sum) { sum = Object.assign({}, x); keys.forEach(function (k) { sum[k] = 0; }); }
+    keys.forEach(function (k) { sum[k] += x[k]; });
+  }
+  keys.forEach(function (k) { sum[k] = sum[k] / n; });
+  var rates = TPsplitRates(s);
+  sum.ramp = sum.audience;
+  // Indicative split of the average fee. The real month-by-month split, where the
+  // fee also credits the licence, lives in TPcalculate.
+  sum.lucraShare = sum.platformFee * rates.lucra;
+  sum.operatorShare = sum.platformFee - sum.lucraShare;
+  // The Revenue Model tab is authoritative: a free licence waives Lucra's fee
+  // whatever any other tab holds.
+  sum.licenseMonthly = s.freeLicense ? 0 : TPfees(s)[0] / 12;
+  sum.licenseWaived = !!s.freeLicense;
+  sum.revenueGenerated = sum.platformFee;
+  return sum;
 }
 
 function TPCcase(cfg, factor) {
@@ -597,16 +707,18 @@ function TPCcase(cfg, factor) {
     onTournaments = !!s.includeTournaments,
     h = TPh2h(s, cfg, f),
     tState = TPscaled(s, f, 1),
-    tResult = TPcalculate(tState),
-    months = tResult.months.length || 12,
-    usable = onTournaments && !tResult.errors.length,
+    r = TPcalculate(tState, cfg, f),
+    months = r.months.length || 12,
+    usable = !r.errors.length,
     // Both products contribute the pool their split is taken from: the head-to-head
     // platform fee, and gross tournament entries. Prize funding is the partner's own
     // cost out of their share, so it is reported separately, never netted off here.
-    tournamentMonthly = usable ? tResult.totalSplitBase / months : 0,
-    prizeFundingMonthly = usable ? tResult.totalPrizeCost / months : 0,
-    operatorNetMonthly = usable ? tResult.totalOperator / months : 0,
-    tournamentParticipants = usable ? (tResult.months[months - 1] || {}).participants || 0 : 0,
+    tournamentMonthly = usable && onTournaments ? r.totalHandle / months : 0,
+    feeMonthly = usable ? r.totalH2HFee / months : 0,
+    prizeFundingMonthly = usable ? r.totalPrizeCost / months : 0,
+    operatorNetMonthly = usable ? r.totalOperator / months : 0,
+    lucraMonthly = usable ? r.totalLucra / months : 0,
+    tournamentParticipants = usable && onTournaments ? (r.months[months - 1] || {}).participants || 0 : 0,
     mau = TPnum(s.mau, 0),
     tournamentShare = mau > 0 ? tournamentParticipants / mau * 100 : 0;
 
@@ -615,17 +727,19 @@ function TPCcase(cfg, factor) {
     includeH2H: h.on, includeTournaments: onTournaments,
     mau: mau, h2h: h,
     engagement: h.engagement, engaged: h.engaged,
-    paidVolume: h.paidVolume, p2pFee: h.platformFee,
+    paidVolume: h.paidVolume, p2pFee: feeMonthly,
     rewardRedemptions: h.rewardRedemptions, rewardValue: h.rewardValue,
-    lucraShare: h.lucraShare + (h.on ? h.licenseMonthly : 0),
+    // Lucra's share of both products, split month by month, plus the licence
+    // fee itself when one is paid.
+    lucraShare: lucraMonthly + (r.free ? 0 : (r.totalContract || 0) / months),
     tournamentParticipants: tournamentParticipants,
     tournamentShare: tournamentShare,
     tournamentEntries: tournamentMonthly,
     prizeFunding: prizeFundingMonthly,
     operatorNet: operatorNetMonthly,
-    tournamentResult: tResult,
-    revenueGenerated: h.platformFee + tournamentMonthly,
-    annualRevenueGenerated: (h.platformFee + tournamentMonthly) * 12,
+    tournamentResult: r,
+    revenueGenerated: feeMonthly + tournamentMonthly,
+    annualRevenueGenerated: (feeMonthly + tournamentMonthly) * 12,
     combinedShare: h.engagement + tournamentShare
   };
 }
@@ -664,7 +778,7 @@ function TPheatMap(input, h2hCfg) {
 
   var cells = rows.map(function (participation, ri) {
     return prices.map(function (price, ci) {
-      var c = TPscaled(s, factors[ri], factors[ci]), r = TPcalculate(c);
+      var c = TPscaled(s, factors[ri], factors[ci]), r = TPcalculate(c, h2hCfg, factors[ri]);
       if (r.errors.length) return { status: 'error', month: null, retired: 0, share: null, lucra: 0 };
       var retired = r.totalContract > 0 ? r.cumulativeLicense / r.totalContract : 1;
       return {
@@ -680,7 +794,7 @@ function TPheatMap(input, h2hCfg) {
      cell is visible rather than implied. Both products scale with the row
      factor, the same way the three cases do. */
   var volumes = rows.map(function (participation, ri) {
-    var c = TPscaled(s, factors[ri], 1), r = TPcalculate(c),
+    var c = TPscaled(s, factors[ri], 1), r = TPcalculate(c, h2hCfg, factors[ri]),
       h = h2hCfg ? TPh2h(s, h2hCfg, factors[ri]) : null;
     return {
       entriesValue: r.errors.length ? 0 : (r.totalHandle / (r.months.length || 1)),
@@ -747,8 +861,8 @@ function TPpitchH2H(input, cfg) {
   return out;
 }
 
-function TPpitchTournaments(input) {
-  var s = TPstate(input), r = TPcalculate(s);
+function TPpitchTournaments(input, cfg) {
+  var s = TPstate(input), r = TPcalculate(s, cfg);
   if (!s.includeTournaments) return '';
   if (r.errors.length) return 'Complete the tournament inputs to build the pitch.';
   var m1 = r.months[0] || {}, perYear = r.totalSplitBase / TPterm(s),
@@ -756,9 +870,11 @@ function TPpitchTournaments(input) {
     events = s.tournaments.reduce(function (a, t) { return a + TPnum(t.eventsPerMonth, 0); }, 0);
   var out = types + ' tournament format' + (types === 1 ? '' : 's') + ' running ' + Math.round(events) +
     ' event' + (Math.round(events) === 1 ? '' : 's') + ' a month draws ' + Math.round(m1.participants || 0).toLocaleString() +
-    ' participants in month one, generating ' + TPmoney0(m1.splitBase || 0) + ' of entries to split. ' +
+    ' participants in month one, generating ' + TPmoney0(m1.handle || 0) + ' of entries to split. ' +
     'The operator funds ' + TPmoney0(m1.prizeCost || 0) + ' of prizes out of their own share.';
-  out += ' Over the term that is ' + TPmoney0(perYear) + ' a year.';
+  out += ' Over the term that is ' + TPmoney0(r.totalHandle / TPterm(s)) + ' a year' +
+    (r.includesH2H && r.totalH2HFee > 0 ? ', and with the head-to-head fee alongside it the pool is ' + TPmoney0(perYear) + ' a year' : '') + '.';
+  if (r.totalSponsorCredited > 0) out += ' Sponsors put ' + TPmoney0(r.totalSponsorCredited) + ' straight against the licence.';
   if (r.free) {
     out += ' The licence is waived, so the operator and Lucra split it from month one.';
   } else if (!r.recapturing) {
@@ -878,19 +994,20 @@ function TPrecCandidate(base, step, mau) {
 }
 
 function TPrecMeasure(cand) {
-  var s = cand.state, r = TPcalculate(s), h = TPh2h(s, cand.cfg, 1),
+  var s = cand.state, r = TPcalculate(s, cand.cfg, 1), h = TPh2h(s, cand.cfg, 1),
     term = TPterm(s) || 1, onH = !!s.includeH2H, onT = !!s.includeTournaments,
-    lucraYear = (onT && !r.errors.length ? r.totalLucra / term : 0) + (onH ? h.lucraShare * 12 : 0),
-    operatorYear = (onT && !r.errors.length ? r.totalOperator / term : 0) + (onH ? h.operatorShare * 12 : 0),
+    ok = !r.errors.length,
+    lucraYear = ok ? r.totalLucra / term : 0,
+    operatorYear = ok ? r.totalOperator / term : 0,
     licenceYear = r.free ? 0 : (r.totalContract || 0) / term;
   return {
     errors: r.errors, result: r, h2h: h,
     state: s, cfg: cand.cfg,
     engagement: cand.engagement, step: cand.step,
     licenceYear: licenceYear, lucraYear: lucraYear, operatorYear: operatorYear,
-    revenueYear: (onH ? h.platformFee * 12 : 0) + (onT && !r.errors.length ? r.totalSplitBase / term : 0),
-    prizeYear: onT && !r.errors.length ? r.totalPrizeCost / term : 0,
-    rewardValueYear: onH ? h.rewardValue * 12 : 0,
+    revenueYear: ok ? r.totalSplitBase / term : 0,
+    prizeYear: ok && onT ? r.totalPrizeCost / term : 0,
+    rewardValueYear: ok && onH ? r.totalRewardValue / term : 0,
     payoffMonth: r.payoffMonth,
     tests: {
       licenceRetired: r.free || (!r.errors.length && r.payoffMonth !== null),
@@ -917,16 +1034,16 @@ function TPrecommend(input, mau) {
     licenceGap = final.result.free ? 0 : Math.max(0, (final.result.balanceDue || 0) / term),
     lucraGap = Math.max(0, final.licenceYear - final.lucraYear),
     gap = Math.max(licenceGap, lucraGap),
-    sponsorship = TPnum(base.sponsorship, 0), retarget = TPnum(base.retargetValue, 0);
+    sponsorsTotal = (base.sponsors || []).reduce(function (a, sp) { return a + Math.max(0, TPnum(sp.amount, 0)); }, 0);
+  // Sponsors are already inside the result: they credited the licence before
+  // any split, so licenceGap is what remains after them.
   return {
     ok: true, mau: m, cleared: !!chosen, chosen: final, tried: tried,
     licenceGapYear: licenceGap, lucraGapYear: lucraGap, shortfallYear: gap,
-    coveredBySponsorship: Math.min(gap, sponsorship),
-    remainingAfterSponsorship: Math.max(0, gap - sponsorship),
-    retargetValue: retarget,
-    closes: gap <= sponsorship + 1e-6
+    sponsorsTotal: sponsorsTotal, sponsorsPerYear: sponsorsTotal / term,
+    retargetValue: TPnum(base.retargetValue, 0)
   };
 }
 /* TP-PURE-END */
-module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TPh2h, TPpitchH2H, TPpitchTournaments,
+module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments,
   TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend };

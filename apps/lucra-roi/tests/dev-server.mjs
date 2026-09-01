@@ -23,5 +23,10 @@ http.createServer((req, res) => {
     return;
   }
   res.writeHead(200, { 'content-type': contentTypes[path.extname(filePath)] || 'application/octet-stream' });
+  if (relative === 'api/app.html') {
+    // Mirror api/index.js so the footer stamp renders in tests too.
+    res.end(fs.readFileSync(filePath, 'utf8').replace('__BUILD_SHA__', 'local').replace('__BUILD_DATE__', new Date().toISOString().slice(0, 10)));
+    return;
+  }
   fs.createReadStream(filePath).pipe(res);
 }).listen(port, '127.0.0.1');
