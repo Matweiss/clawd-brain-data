@@ -13,7 +13,14 @@ describe('secure scenario tokens', () => {
   it('rejects expired and tampered tokens', () => {
     const token = createScenarioToken({ customer: 'Acme' }, secret, { now: 1000, ttlSeconds: 300 });
     expect(() => parseScenarioToken(token, secret, { now: 302001 })).toThrow(/expired/i);
-    expect(() => parseScenarioToken(`${token.slice(0, -1)}x`, secret, { now: 2000 })).toThrow();
+    // Tamper inside the ciphertext, not at the final character. The token's last
+    // base64url character carries only two significant bits and takes just four
+    // values, so swapping it decodes to identical bytes about a quarter of the
+    // time and the "tampered" token is not tampered at all.
+    const [v, iv, ct, tag] = token.split('.');
+    const flipped = ct.slice(0, 4) + (ct[4] === 'A' ? 'B' : 'A') + ct.slice(5);
+    expect(flipped).not.toBe(ct);
+    expect(() => parseScenarioToken([v, iv, flipped, tag].join('.'), secret, { now: 2000 })).toThrow();
   });
 
   it('requires a strong server-side secret', () => {
