@@ -218,6 +218,8 @@ var TP_MAX_YEARS = 5;
 
 var TP_DEFAULTS = {
   dealName: '',
+  // Customer view hides every internal figure at once; inputs stay live.
+  customerMode: false,
   retargetValue: 0,
   heatH2H: true,
   partnerSite: '',
