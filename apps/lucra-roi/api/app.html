@@ -510,6 +510,11 @@ table.tp-heat td.vol{background:var(--surface);color:var(--text2);font-variant-n
 .tp-rec-table td.tp-rec-src{color:var(--text3);font-size:11px;line-height:1.45}
 .tp-rec-gap{margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);padding:14px}
 .tp-rec-gapline{margin:8px 0 12px;line-height:1.5}
+.tp-rec-levers ol{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}
+.tp-rec-levers li{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px}
+.tp-rec-levers li>div{flex:1}
+.tp-rec-levers li.clears .tp-rec-mark{background:var(--green-bg);color:var(--green)}
+.tp-rec-levers li.short .tp-rec-mark{background:var(--amber-bg);color:var(--amber)}
 .tp-season-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:12px}
 .tp-season-cell{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text3)}
 .tp-season-cell input{padding:6px 8px;font-size:12px}
@@ -555,6 +560,14 @@ body.tp-customer .tp-strip{border-color:var(--green-border);background:rgba(23,6
 .tp-ch-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .tp-ch-legend i.ref{background:none;border-top:2px dashed var(--text3);height:0;vertical-align:2px}
 .tp-ch-legend i.open{background:none;border-left:2px dotted var(--text3);width:0;height:10px}
+.tp-share{margin-top:8px}
+.tp-share input{font-family:var(--mono);font-size:11px}
+.tp-compare th{text-align:left}
+.tp-compare thead th small{display:block;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text3);font-size:10px;margin-top:2px}
+.tp-compare tbody th{color:var(--text3);font-weight:500;white-space:nowrap}
+.tp-compare-delta{display:block;font-size:10px;font-family:var(--mono);margin-top:2px}
+.tp-compare-delta.up{color:var(--green)}
+.tp-compare-delta.down{color:var(--amber)}
 .tp-heat-controls{display:flex;flex-wrap:wrap;gap:18px;margin:10px 0 4px}
 .tp-heat-controls .tp-check{margin:0}
 .tp-heat-wrap{margin-top:8px}
@@ -1949,6 +1962,9 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   <section class="pf-section tp-internal" id="tp-rec-block">
     <div class="pf-section-title">Recommend a configuration</div>
     <div class="sn">Takes the monthly active base above and proposes a programme that clears the licence. It starts at what the reference deals in this tool already say and steps up only as far as the highest published figure for this vertical. If the deal still does not clear there, it says so and sizes the gap rather than inflating participation until the maths works.</div>
+    <div class="inputs tp-three" style="margin-top:12px;margin-bottom:0">
+      <div class="input-group"><label class="input-label" for="tp-reward-ratio">A reward worth $100 costs the venue</label><div class="input-val"><input class="pf-input" id="tp-reward-ratio" type="number" min="0" max="100" step="5" placeholder="from the tournaments" oninput="TPset('rewardCostRatio',this.value)"><span class="vp">%</span></div><div class="sn">Customer fact · free gameplay, F&amp;B credit. Blank takes the ratio from the tournaments as entered; nothing is assumed.</div></div>
+    </div>
     <div class="tp-actions"><button type="button" class="primary" onclick="TPrecRun()">Recommend from the base</button></div>
     <div id="tp-rec-out" aria-live="polite"></div>
   </section>
@@ -2018,8 +2034,23 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   </div>
   <div class="tpc-grid" id="tpc-cases" aria-live="polite" style="margin-top:16px"></div>
   <div id="tpc-detail"></div>
-  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button></div>
+  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button><button type="button" id="tp-share-btn" onclick="TPshareDeal(this)">Share deal link</button></div>
+  <div class="sn">A deal link opens this configuration for anyone who can open the calculator. It is opaque and expires after 14 days.</div>
+  <div class="tp-share" id="tp-share-out" hidden><input class="pf-input" type="text" readonly aria-label="Deal link" onclick="this.select()"></div>
   <div class="sn">Shows revenue generated before any split, per the Lucra default. The operator and Lucra shares stay in the 12-month results below and never reach this export.</div>
+
+  <div class="tp-subsection" id="tp-compare-block" style="margin-top:22px">
+    <div class="pf-section-title">Compare two deal structures</div>
+    <div class="sn">Save the current deal as A, change it, save as B, and see them side by side. Built for the paid-licence-against-waived negotiation.</div>
+    <div class="tp-actions" style="margin-top:10px">
+      <button type="button" onclick="TPcompareSave('A',this)">Save as A</button>
+      <button type="button" onclick="TPcompareSave('B',this)">Save as B</button>
+      <button type="button" onclick="TPcompareLoad('A')" id="tp-compare-load-a">Load A</button>
+      <button type="button" onclick="TPcompareLoad('B')" id="tp-compare-load-b">Load B</button>
+      <button type="button" class="tp-remove" onclick="TPcompareClear()">Clear both</button>
+    </div>
+    <div id="tp-compare-out"></div>
+  </div>
 
   <div class="tp-subsection tp-internal" id="tp-brief-block" style="margin-top:22px">
     <div class="tp-actions" style="margin-top:0"><button type="button" class="primary" onclick="TPcopyBrief(this)">Copy one-pager brief</button><button type="button" onclick="TPtoggleBrief(this)" aria-expanded="false" aria-controls="tp-brief-detail">Show what this copies</button></div>
@@ -2782,6 +2813,8 @@ function checkPDFReady() {
   return ready;
 }
 restoreState();initP();sync();U();initSalesUx();
+// A ?deal= link opens the Revenue Model tab, which restores the deal from the link.
+if(new URLSearchParams(location.search).get('deal')){window.addEventListener('DOMContentLoaded',function(){if(typeof TPinit==='function')T('tournaments')})}
 
 /* ─── MINI GAMES ROI ──────────────────────────────────────────────── */
 var MGP=[
@@ -3640,6 +3673,15 @@ var TP_MAX_YEARS = 5;
 
 var TP_DEFAULTS = {
   dealName: '',
+  // 'A reward worth $X costs us $Y': the venue's cost as a share of face value,
+  // used by the recommender's reward-cost lever. Blank means take it from the
+  // tournaments as entered; never an assumed discount.
+  rewardCostRatio: '',
+  // Adjustments applied to the recommended tournament programme by the levers:
+  // extra weekly events a month, an entry-price multiplier, and whether prizes
+  // are in-kind at the venue's cost ratio. They travel with the deal so the
+  // recommender rebuilds the same programme when the base changes.
+  recAdjust: { events: 0, priceMult: 1, rewardAtRatio: false },
   // Customer view hides every internal figure at once; inputs stay live.
   customerMode: false,
   retargetValue: 0,
@@ -4403,12 +4445,51 @@ function TPrecTournaments(mau, prizeShare) {
   return [mk('rec-weekly', 'Weekly open', 5, 4, 1), mk('rec-major', 'Monthly major', 25, 1, 0.3)];
 }
 
-function TPrecCandidate(base, step, mau) {
-  var m = TPnum(mau, 0),
-    eng = Math.max(TPengCurve(m), step.engMin),
+/* The programme adjustments carried on the deal, normalised. */
+function TPrecAdjust(s) {
+  var a = (s && s.recAdjust) || {};
+  return {
+    events: Math.max(0, Math.round(TPnum(a.events, 0))),
+    priceMult: TPnum(a.priceMult, 1) || 1,
+    rewardAtRatio: !!a.rewardAtRatio
+  };
+}
+
+/* The recommended programme for this deal: the scaled programme with the
+   deal's own adjustments applied, so an applied lever survives a change of
+   base instead of being regenerated away. */
+function TPrecProgramme(base, mau) {
+  var a = TPrecAdjust(base), ratio = TPrewardCostRatio(base);
+  return TPrecTournaments(mau, TPrecPrizeShare(base)).map(function (t) {
+    var c = Object.assign({}, t);
+    if (c.id === 'rec-weekly') c.eventsPerMonth = c.eventsPerMonth + a.events;
+    if (a.priceMult !== 1) {
+      c.entryPrice = c.entryPrice * a.priceMult;
+      c.rewardFaceValue = Math.round(c.rewardFaceValue * a.priceMult);
+      c.customerCashCost = Math.round(c.customerCashCost * a.priceMult);
+      c.cashPrizeAmount = Math.round(c.cashPrizeAmount * a.priceMult);
+    }
+    if (a.rewardAtRatio) { c.isCash = false; c.customerCashCost = Math.round(c.rewardFaceValue * ratio); }
+    return c;
+  });
+}
+
+/* The take fee is a commercial term the seller sets inside the 5-25% band, not
+   a benchmark: a deal that already carries a higher fee than a ladder step is
+   never recommended a lower one. opts.rakeFloor is the deal's current fee. */
+function TPrecStepFor(step, opts) {
+  var floor = opts && opts.rakeFloor !== undefined && opts.rakeFloor !== null && isFinite(Number(opts.rakeFloor))
+    ? TPnum(opts.rakeFloor, 0, 25) : 0;
+  return floor > step.rake ? Object.assign({}, step, { rake: floor, rakeFromDeal: true }) : step;
+}
+
+function TPrecCandidate(base, step, mau, tournaments, opts) {
+  var m = TPnum(mau, 0);
+  step = TPrecStepFor(step, opts);
+  var eng = Math.max(TPengCurve(m), step.engMin),
     s = TPstate(Object.assign({}, base, {
       mau: m, h2hReach: m, rampOn: false,
-      tournaments: base.includeTournaments ? TPrecTournaments(m, TPrecPrizeShare(base)) : (base.tournaments || [])
+      tournaments: base.includeTournaments ? (tournaments || TPrecProgramme(base, m)) : (base.tournaments || [])
     })),
     cfg = { mau: m, engagement: eng, playsPerUser: step.plays, spendPerPlay: step.wager,
       feeRate: step.rake, rewardGames: 8, winRate: 50,
@@ -4441,32 +4522,145 @@ function TPrecMeasure(cand) {
   };
 }
 
-function TPrecPasses(m) { return m.tests.licenceRetired && m.tests.lucraCoversLicence && m.tests.operatorPositive; }
+/* The verdict. On a paid licence Lucra is paid the fee whether or not the split
+   share would have covered it, so that test is informational there and gates
+   only a waived deal, where the share is all Lucra earns. */
+function TPrecPasses(m) {
+  return m.tests.licenceRetired && m.tests.operatorPositive && (m.result.free ? m.tests.lucraCoversLicence : true);
+}
+
+/* The money gap someone still has to find, in dollars a year: an unretired
+   licence, or an operator who ends the year negative after prize funding. */
+function TPrecGapYear(m, term) {
+  var t = term || 1,
+    licenceGap = m.result.free ? 0 : Math.max(0, (m.result.balanceDue || 0) / t),
+    operatorGap = Math.max(0, -m.operatorYear);
+  return { licenceGap: licenceGap, operatorGap: operatorGap, gap: Math.max(licenceGap, operatorGap) };
+}
 
 /* Walk the ladder and stop at the first step that clears every test. If the
    ceiling still does not clear, return the ceiling and the size of the gap. */
-function TPrecommend(input, mau) {
+function TPrecommend(input, mau, opts) {
   var base = TPstate(input), m = TPnum(mau, 0), steps = TPrecSteps(), tried = [], chosen = null;
   if (m <= 0) return { ok: false, reason: 'Enter a monthly active base to build a recommendation.', tried: [] };
   for (var i = 0; i < steps.length; i++) {
-    var measured = TPrecMeasure(TPrecCandidate(base, steps[i], m));
+    var measured = TPrecMeasure(TPrecCandidate(base, steps[i], m, null, opts));
     tried.push(measured);
     if (!chosen && TPrecPasses(measured)) chosen = measured;
   }
   var final = chosen || tried[tried.length - 1],
     term = TPterm(base) || 1,
-    licenceGap = final.result.free ? 0 : Math.max(0, (final.result.balanceDue || 0) / term),
+    gaps = TPrecGapYear(final, term),
+    licenceGap = gaps.licenceGap,
     lucraGap = Math.max(0, final.licenceYear - final.lucraYear),
-    gap = Math.max(licenceGap, lucraGap),
+    gap = gaps.gap,
     sponsorsTotal = (base.sponsors || []).reduce(function (a, sp) { return a + Math.max(0, TPnum(sp.amount, 0)); }, 0);
   // Sponsors are already inside the result: they credited the licence before
   // any split, so licenceGap is what remains after them.
   return {
     ok: true, mau: m, cleared: !!chosen, chosen: final, tried: tried,
-    licenceGapYear: licenceGap, lucraGapYear: lucraGap, shortfallYear: gap,
+    licenceGapYear: licenceGap, lucraGapYear: lucraGap, operatorGapYear: gaps.operatorGap, shortfallYear: gap,
     sponsorsTotal: sponsorsTotal, sponsorsPerYear: sponsorsTotal / term,
     retargetValue: TPnum(base.retargetValue, 0)
   };
+}
+
+
+/* ---------- levers that close a gap ----------
+   When a deal is short, what single change closes it. Tried in the order that
+   matters commercially: the tournament programme first, because every customer
+   has one and a reward that costs less than it is worth lifts the operator's
+   net without touching entries; then the take fee, which is really a
+   head-to-head lever; then more locations, only for a customer that already
+   has more than one. The licence structure is not a lever. */
+
+/* The venue's cost for a reward as a share of its face value. Taken from the
+   deal if entered, otherwise from the tournaments as configured. Never an
+   assumed discount. */
+function TPrewardCostRatio(s) {
+  var entered = s.rewardCostRatio;
+  if (entered !== '' && entered !== null && entered !== undefined && isFinite(Number(entered))) {
+    return Math.max(0, Math.min(1, TPnum(entered, 0) / 100));
+  }
+  var face = 0, cost = 0;
+  (s.tournaments || []).forEach(function (t) {
+    if (t.isCash) return;
+    face += TPnum(t.rewardFaceValue, 0); cost += TPnum(t.customerCashCost, 0);
+  });
+  return face > 0 ? Math.max(0, Math.min(1, cost / face)) : 1;
+}
+
+function TPrecGapOf(base, cfg, mau, opts) {
+  var m = TPrecMeasure(TPrecCandidate(base, cfg.step, mau, cfg.tournaments, opts));
+  return { clears: TPrecPasses(m), gap: TPrecGapYear(m, TPterm(TPstate(base)) || 1).gap, measure: m };
+}
+
+/* Each lever is expressed as a patch to the deal (recAdjust, locations) or to
+   the take fee, so applying it changes the deal and the recommender then
+   rebuilds from the changed deal and agrees with itself. */
+function TPrecLevers(input, mau, step, opts) {
+  var base = TPstate(input), m = TPnum(mau, 0), levers = [];
+  if (m <= 0 || !step) return levers;
+  step = TPrecStepFor(step, opts);
+  var current = TPrecGapOf(base, { step: step }, m);
+  if (current.clears) return levers;
+  var tryLever = function (key, label, detail, patchedBase, patchedStep, apply) {
+    var out = TPrecGapOf(patchedBase, { step: patchedStep || step }, m);
+    levers.push({ key: key, label: label, detail: detail, clears: out.clears, gapAfter: out.gap, gapBefore: current.gap, apply: apply });
+    return out.clears;
+  };
+  var withAdjust = function (patch) { return Object.assign({}, base, { recAdjust: Object.assign({}, TPrecAdjust(base), patch) }); };
+
+  // 1. Tournament programme.
+  if (base.includeTournaments) {
+    var adj = TPrecAdjust(base), tours = TPrecProgramme(base, m), ratio = TPrewardCostRatio(base);
+
+    // a. one more weekly event a month
+    var eventsNow = tours[0].eventsPerMonth, eventsPatch = { events: adj.events + 1 };
+    tryLever('events', 'One more weekly event a month', 'Weekly open runs ' + (eventsNow + 1) + ' times a month instead of ' + eventsNow + '.',
+      withAdjust(eventsPatch), null, { adjust: eventsPatch });
+
+    // b. entry price doubled, once: beyond that is outside the reference range
+    if (adj.priceMult < 2) {
+      var pricePatch = { priceMult: adj.priceMult * 2 };
+      tryLever('price', 'Entry prices doubled', '$' + tours[0].entryPrice + ' becomes $' + (tours[0].entryPrice * 2) + ' and $' + tours[1].entryPrice + ' becomes $' + (tours[1].entryPrice * 2) + ', prizes scaled with them.',
+        withAdjust(pricePatch), null, { adjust: pricePatch });
+    }
+
+    // c. rewards that cost less than they are worth, at the venue's own ratio
+    if (ratio < 0.999 && !adj.rewardAtRatio) {
+      var ratioPatch = { rewardAtRatio: true };
+      tryLever('reward-cost', 'In-kind rewards at your cost ratio', 'Prizes keep their face value; they cost the venue ' + Math.round(ratio * 100) + '% of it, as entered.',
+        withAdjust(ratioPatch), null, { adjust: ratioPatch });
+    }
+  }
+
+  // 2. Take fee, within 5-25%, only when head-to-head runs.
+  if (base.includeH2H && step.rake < 25) {
+    var found = null;
+    for (var fee = step.rake + 0.5; fee <= 25 && !found; fee += 0.5) {
+      var st2 = Object.assign({}, step, { rake: fee });
+      if (TPrecGapOf(base, { step: st2 }, m).clears) found = fee;
+    }
+    var stepFee = Object.assign({}, step, { rake: found || 25 });
+    tryLever('take-fee', found ? 'Take fee to ' + found + '%' : 'Take fee at the 25% ceiling',
+      found ? 'From ' + step.rake + '% to ' + found + '% of paid-game volume, inside the 5-25% band.' : 'Even 25% does not clear it on its own.',
+      base, stepFee, { rake: found || 25 });
+  }
+
+  // 3. More locations, only for a customer that already has more than one.
+  var locs = TPlocations(base);
+  if (locs[locs.length - 1] > 1) {
+    var more = locs.slice(); more[more.length - 1] = more[more.length - 1] + 1;
+    for (var i = more.length - 2; i >= 1; i--) if (more[i] > more[i + 1]) more[i] = more[i + 1];
+    tryLever('locations', 'One more location in year ' + locs.length, locs.join(' → ') + ' becomes ' + more.join(' → ') + '.',
+      Object.assign({}, base, { locations: more }), null, { locations: more });
+  }
+
+  // Ones that clear first, then the commercial order.
+  var order = ['events', 'price', 'reward-cost', 'take-fee', 'locations'];
+  levers.sort(function (a, b) { return (b.clears - a.clears) || (order.indexOf(a.key) - order.indexOf(b.key)); });
+  return levers;
 }
 
 /* TP-PURE-END */
@@ -4489,6 +4683,7 @@ function TPesc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').rep
 
 function TPset(path, value) {
   var parts = path.split('.'), target = TP;
+  if (path === 'rewardCostRatio') { TP.rewardCostRatio = value === '' ? '' : TPnum(value, 0, 100); TPsave(); TPrecRun(); return; }
   for (var i = 0; i < parts.length - 1; i++) target = target[parts[i]];
   var key = parts[parts.length - 1];
   target[key] = typeof target[key] === 'number' ? TPnum(value) : value;
@@ -4787,6 +4982,7 @@ function TPview(name, btn) {
 /* ---------- rendering ---------- */
 
 function TPrenderControls() {
+  var rr = $('tp-reward-ratio'); if (rr && document.activeElement !== rr) rr.value = TP.rewardCostRatio === '' || TP.rewardCostRatio === undefined ? '' : TP.rewardCostRatio;
   var fields = { 'tp-deal-name': 'dealName', 'tp-partner-site': 'partnerSite',
     'tp-presenter': 'presenter', 'tp-presenter-email': 'presenterEmail', 'tp-mau': 'mau', 'tp-ramp-start-pct': 'rampStartPct', 'tp-ramp-months': 'rampMonths' };
   Object.keys(fields).forEach(function (id) {
@@ -5106,6 +5302,7 @@ function TPrender() {
   TPrenderChart(r);
   TPrenderHeat(r);
   TPrenderFoldSummary();
+  TPrenderCompare();
   TPrenderPitches();
   TPrenderTemplates();
   TPrenderCustomer();
@@ -5136,10 +5333,12 @@ function TPrecTest(ok, label, detail) {
 }
 
 function TPrecMau() { return TPnum(TP.mau, 0) || TPnum(MG.tau, 0); }
+/* The deal's own take fee floors the ladder when head-to-head is in scope. */
+function TPrecOpts() { return { rakeFloor: TP.includeH2H ? TPnum(MG.rake, 0, 25) : undefined }; }
 
 function TPrecRun() {
   var host = $('tp-rec-out'); if (!host) return;
-  var rec = TPrecommend(TP, TPrecMau());
+  var rec = TPrecommend(TP, TPrecMau(), TPrecOpts());
   if (!rec.ok) { host.innerHTML = '<div class="sn">' + TPesc(rec.reason) + '</div>'; return; }
 
   var c = rec.chosen, r = c.result, st = c.state, cfg = c.cfg,
@@ -5153,7 +5352,7 @@ function TPrecRun() {
     rows += TPrecRow('Plays per player per month', cfg.playsPerUser, 'Lucra reference deals');
     rows += TPrecRow('Average entry', money(cfg.spendPerPlay), 'Lucra reference deals');
     rows += TPrecRow('Take fee', cfg.feeRate + '%',
-      cfg.feeRate > B.takeFee.floor ? B.takeFee.ceilingSource : B.takeFee.floorSource);
+      c.step.rakeFromDeal ? 'As set on this deal, inside the 5-25% band' : cfg.feeRate > B.takeFee.floor ? B.takeFee.ceilingSource : B.takeFee.floorSource);
     rows += TPrecRow('Reward games per player', cfg.rewardGames, B.rewardValue.baseSource);
     rows += TPrecRow('Reward redemption', cfg.redeemRate + '%',
       B.redemption.baseSource + '. Published average is ' + B.redemption.ceiling + '% (' + B.redemption.ceilingSource + ')');
@@ -5196,9 +5395,21 @@ function TPrecRun() {
         (rec.sponsorsTotal > 0 ? ', and ' + money(rec.sponsorsTotal) + ' of sponsorship is already in the deal' : '') + '.' +
         '<div class="tp-actions" style="margin-top:8px"><button type="button" onclick="TPrecSponsorGap(' + Math.ceil(rec.licenceGapYear * term) + ')">Add a sponsor for ' + money(rec.licenceGapYear * term) + '</button></div></div>');
     }
-    if (rec.lucraGapYear > 0) {
-      lines.push('<div class="tp-rec-gapline"><strong>Lucra\'s share is ' + money(rec.lucraGapYear) + ' a year below the licence value.</strong> ' +
-        'A sponsor does not change that. It moves with activity or the split, and the recommender only proposes activity it can source.</div>');
+    if (rec.operatorGapYear > 0) {
+      lines.push('<div class="tp-rec-gapline"><strong>The operator ends the year ' + money(rec.operatorGapYear) + ' negative after prize funding.</strong> ' +
+        'Cheaper rewards or a richer split fix that; a sponsor does not.</div>');
+    }
+    var levers = TPrecLevers(TP, rec.mau, c.step, TPrecOpts());
+    TP_REC_LEVERS = levers;
+    if (levers.length) {
+      lines.push('<div class="tp-rec-levers"><div class="pf-section-title">What would close it</div>' +
+        '<div class="sn">Tried in commercial order: the tournament programme first, then the take fee, then more locations only for a customer that already has more than one. The licence itself is not a lever.</div>' +
+        '<ol>' + levers.map(function (l, i) {
+          return '<li class="' + (l.clears ? 'clears' : 'short') + '"><span class="tp-rec-mark">' + (l.clears ? 'Clears' : 'Short') + '</span>' +
+            '<div><strong>' + TPesc(l.label) + '</strong><div class="sn">' + TPesc(l.detail) + ' ' +
+            (l.clears ? 'On its own, this clears the deal.' : Math.abs(l.gapAfter - l.gapBefore) < 1 ? 'Does not move this gap.' : 'Gap falls to ' + money(l.gapAfter) + ' a year.') + '</div></div>' +
+            '<button type="button" onclick="TPrecApplyLever(' + i + ')">Apply</button></li>';
+        }).join('') + '</ol></div>');
     }
     shortfall =
       '<div class="tp-rec-gap"><div class="pf-section-title">Covering the gap</div>' + lines.join('') +
@@ -5224,6 +5435,18 @@ function TPrecSponsorGap(amount) {
   TPsave(); TPrenderControls(); TPrender(); TPrecRun();
 }
 
+var TP_REC_LEVERS = [];
+/* A lever changes the deal first, then the recommendation is applied from the
+   changed deal, so the banner that follows is measured on what was applied. */
+function TPrecApplyLever(i) {
+  var l = TP_REC_LEVERS[i]; if (!l) return;
+  if (l.apply.adjust) TP.recAdjust = Object.assign({}, TPrecAdjust(TP), l.apply.adjust);
+  if (l.apply.rake !== undefined) { MG.rake = TPnum(l.apply.rake, 0, 25); if (typeof MGsync === 'function') MGsync(); if (typeof MGu === 'function') MGu(); }
+  if (l.apply.locations) TP.locations = l.apply.locations;
+  TPsave();
+  TPrecApply();
+}
+
 function TPsetRec(key, value) {
   TP[key] = TPnum(value, 0);
   TPsave();
@@ -5231,7 +5454,7 @@ function TPsetRec(key, value) {
 }
 
 function TPrecApply() {
-  var rec = TPrecommend(TP, TPrecMau());
+  var rec = TPrecommend(TP, TPrecMau(), TPrecOpts());
   if (!rec.ok) return;
   var c = rec.chosen, cfg = c.cfg;
   if (TP.includeH2H) {
@@ -5245,6 +5468,143 @@ function TPrecApply() {
   TPsave();
   TPrenderControls(); TPrenderTournaments(); TPsyncH2H(); TPrender();
   TPrecRun();
+}
+
+/* ---------- share links ---------- */
+
+var TP_MG_KEYS = ['tau', 'eng', 'plays', 'wager', 'rake', 'rewardGames', 'win', 'redeem', 'rewardValue'];
+
+function TPh2hSnapshot() {
+  var out = {};
+  TP_MG_KEYS.forEach(function (k) { out[k] = TPnum(MG[k], 0); });
+  return out;
+}
+
+function TPapplyH2HSnapshot(mg) {
+  if (!mg) return;
+  TP_MG_KEYS.forEach(function (k) { if (mg[k] !== undefined) MG[k] = TPnum(mg[k], 0); });
+  if (typeof MGsync === 'function') MGsync();
+  if (typeof MGu === 'function') MGu();
+}
+
+async function TPshareDeal(btn) {
+  setButtonBusy(btn, 'Creating link…');
+  try {
+    var response = await fetch('/api/deal', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deal: { tp: TP, mg: TPh2hSnapshot() } })
+    }), data = await response.json();
+    if (!response.ok || !data.url) throw new Error(data.error || 'Deal links unavailable');
+    var box = $('tp-share-out');
+    if (box) { box.hidden = false; box.querySelector('input').value = data.url; }
+    try {
+      await navigator.clipboard.writeText(data.url);
+      setButtonState(btn, 'Link copied · 14 days ✓', 2600, true);
+    } catch (e) {
+      setButtonState(btn, 'Link ready · 14 days ✓', 2600, true);
+    }
+    return data.url;
+  } catch (error) {
+    setButtonState(btn, 'Link unavailable', 2600);
+    alert((error && error.message) || 'Deal links are unavailable. Nothing about the deal was placed in the URL.');
+    return null;
+  }
+}
+
+/* On load, a ?deal= link restores the deal and opens the tab. The token is
+   resolved server-side; the browser never sees a key. */
+async function TPloadDealFromUrl() {
+  var params = new URLSearchParams(location.search), token = params.get('deal');
+  if (!token) return false;
+  try {
+    var response = await fetch('/api/deal?deal=' + encodeURIComponent(token)), data = await response.json();
+    if (!response.ok || !data.deal) throw new Error(data.error || 'This deal link is not valid');
+    TP = TPstate(data.deal.tp || {});
+    TP_READY = true;
+    TPsave();
+    TPapplyH2HSnapshot(data.deal.mg);
+    if (typeof T === 'function') T('tournaments');
+    TPrenderControls(); TPrenderTournaments(); TPsyncH2H(); TPrender();
+    history.replaceState(null, '', location.pathname);
+    return true;
+  } catch (error) {
+    alert((error && error.message) || 'This deal link could not be opened. It may have expired.');
+    history.replaceState(null, '', location.pathname);
+    return false;
+  }
+}
+
+/* ---------- compare two deal structures ---------- */
+
+var TP_COMPARE_KEY = 'lucra-tp-compare-v1';
+
+function TPcompareRead() {
+  try { return JSON.parse(localStorage.getItem(TP_COMPARE_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function TPcompareWrite(obj) {
+  try { localStorage.setItem(TP_COMPARE_KEY, JSON.stringify(obj)); } catch (e) {}
+}
+function TPcompareSave(slot, btn) {
+  var all = TPcompareRead();
+  all[slot] = { tp: JSON.parse(JSON.stringify(TP)), mg: TPh2hSnapshot(), savedAt: new Date().toISOString(),
+    label: TP.dealName ? TP.dealName + ' · ' + (TP.freeLicense ? 'waived' : 'paid') : (TP.freeLicense ? 'Waived licence' : 'Paid licence') };
+  TPcompareWrite(all);
+  if (btn) setButtonState(btn, 'Saved as ' + slot + ' ✓', 1600, true);
+  TPrenderCompare();
+}
+function TPcompareLoad(slot) {
+  var sc = TPcompareRead()[slot]; if (!sc) return;
+  TP = TPstate(sc.tp); TPsave();
+  TPapplyH2HSnapshot(sc.mg);
+  TPrenderControls(); TPrenderTournaments(); TPsyncH2H(); TPrender();
+}
+function TPcompareClear() { TPcompareWrite({}); TPrenderCompare(); }
+
+function TPcompareMeasure(sc) {
+  var st = TPstate(sc.tp), mg = sc.mg || {},
+    cfg = { mau: mg.tau, engagement: mg.eng, playsPerUser: mg.plays, spendPerPlay: mg.wager, feeRate: mg.rake,
+      rewardGames: mg.rewardGames, winRate: mg.win, redeemRate: mg.redeem, valuePerRedemption: mg.rewardValue, tournament: st },
+    r = TPcalculate(st, cfg), term = TPterm(st) || 1, rates = TPsplitRates(st),
+    cases = r.errors.length ? null : TPCcases(cfg);
+  return { st: st, r: r, term: term, rates: rates, cases: cases, label: sc.label, savedAt: sc.savedAt };
+}
+
+function TPrenderCompare() {
+  var host = $('tp-compare-out'); if (!host) return;
+  var all = TPcompareRead(), a = all.A, b = all.B;
+  ['a', 'b'].forEach(function (k) { var el = $('tp-compare-load-' + k); if (el) el.disabled = !all[k.toUpperCase()]; });
+  if (!a && !b) { host.innerHTML = '<div class="sn">Nothing saved yet.</div>'; return; }
+  var cols = [a ? TPcompareMeasure(a) : null, b ? TPcompareMeasure(b) : null],
+    money = TPmoney, internal = !TP.customerMode,
+    cell = function (fn, numFn) {
+      return cols.map(function (c, i) {
+        var d = (i === 1 && numFn && cols[0] && cols[1] && !cols[0].r.errors.length && !cols[1].r.errors.length)
+          ? (function () { var v = numFn(cols[1]) - numFn(cols[0]); return '<span class="tp-compare-delta ' + (v >= 0 ? 'up' : 'down') + '">' + (v >= 0 ? '+' : '−') + money(Math.abs(v)) + ' vs A</span>'; })()
+          : '';
+        return '<td>' + (c ? (c.r.errors.length ? '—' : fn(c) + d) : '<span class="sn">not saved</span>') + '</td>';
+      }).join('');
+    },
+    row = function (label, fn, isInternal, numFn) {
+      if (isInternal && !internal) return '';
+      return '<tr' + (isInternal ? ' class="tp-internal"' : '') + '><th>' + TPesc(label) + '</th>' + cell(fn, numFn) + '</tr>';
+    };
+
+  host.innerHTML = '<div class="tp-table-wrap"><table class="tp-months tp-compare">' +
+    '<thead><tr><th></th><th>A' + (a ? '<small>' + TPesc(a.label) + '</small>' : '') + '</th><th>B' + (b ? '<small>' + TPesc(b.label) + '</small>' : '') + '</th></tr></thead><tbody>' +
+    row('Products', function (c) { return [c.st.includeTournaments ? 'tournaments' : null, c.st.includeH2H ? 'head-to-head' : null].filter(Boolean).join(' + '); }) +
+    row('Term', function (c) { return c.term + ' year' + (c.term === 1 ? '' : 's'); }) +
+    row('Locations', function (c) { return TPlocations(c.st).join(' → '); }) +
+    row('Licence', function (c) { return c.r.free ? 'Waived' : money(c.r.totalContract) + (TPfees(c.st).slice(0, c.term).some(function (f, i, arr) { return f !== arr[0]; }) ? ', stepped' : ''); }, true) +
+    row('Split, operator / Lucra', function (c) { return Math.round((c.rates.credit + c.rates.operator) * 100) + ' / ' + Math.round(c.rates.lucra * 100); }, true) +
+    row('Sponsors', function (c) { return c.r.totalSponsorCredited > 0 ? money(c.r.totalSponsorCredited) : '—'; }, true) +
+    row('Payoff', function (c) { return c.r.free ? 'Nothing to retire' : c.r.payoffMonth !== null ? 'Month ' + (Math.round(c.r.payoffMonth * 10) / 10).toFixed(1) : money(c.r.balanceDue) + ' outstanding'; }, true) +
+    row('Revenue generated / yr', function (c) { return money(c.r.totalSplitBase / c.term); }, false, function (x) { return x.r.totalSplitBase / x.term; }) +
+    row('Operator net / yr', function (c) { return money(c.r.totalOperator / c.term); }, true, function (x) { return x.r.totalOperator / x.term; }) +
+    row('Lucra / yr, share + licence', function (c) { return money(c.r.totalLucra / c.term + (c.r.free ? 0 : c.r.totalContract / c.term)); }, true, function (x) { return x.r.totalLucra / x.term + (x.r.free ? 0 : x.r.totalContract / x.term); }) +
+    row('Conservative / yr', function (c) { return c.cases ? money(c.cases[0].result.annualRevenueGenerated) : '—'; }) +
+    row('Best case / yr', function (c) { return c.cases ? money(c.cases[2].result.annualRevenueGenerated) : '—'; }) +
+    '</tbody></table></div>' +
+    '<div class="sn">Deltas read B against A. Saved ' + (a ? 'A ' + new Date(a.savedAt).toLocaleString() : '') + (a && b ? ' · ' : '') + (b ? 'B ' + new Date(b.savedAt).toLocaleString() : '') + '.</div>';
 }
 
 /* ---------- payoff chart ----------
@@ -5990,8 +6350,10 @@ function TPCprint() {
 
 /* ---------- init ---------- */
 
+var TP_DEAL_URL_CHECKED = false;
 function TPinit() {
   if (!TP_READY) { TPload(); TP_READY = true; }
+  if (!TP_DEAL_URL_CHECKED) { TP_DEAL_URL_CHECKED = true; TPloadDealFromUrl(); }
   TPrenderControls();
   TPrenderTournaments();
   TPview(TP_VIEW);

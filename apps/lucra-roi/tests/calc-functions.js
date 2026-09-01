@@ -218,6 +218,15 @@ var TP_MAX_YEARS = 5;
 
 var TP_DEFAULTS = {
   dealName: '',
+  // 'A reward worth $X costs us $Y': the venue's cost as a share of face value,
+  // used by the recommender's reward-cost lever. Blank means take it from the
+  // tournaments as entered; never an assumed discount.
+  rewardCostRatio: '',
+  // Adjustments applied to the recommended tournament programme by the levers:
+  // extra weekly events a month, an entry-price multiplier, and whether prizes
+  // are in-kind at the venue's cost ratio. They travel with the deal so the
+  // recommender rebuilds the same programme when the base changes.
+  recAdjust: { events: 0, priceMult: 1, rewardAtRatio: false },
   // Customer view hides every internal figure at once; inputs stay live.
   customerMode: false,
   retargetValue: 0,
@@ -981,12 +990,51 @@ function TPrecTournaments(mau, prizeShare) {
   return [mk('rec-weekly', 'Weekly open', 5, 4, 1), mk('rec-major', 'Monthly major', 25, 1, 0.3)];
 }
 
-function TPrecCandidate(base, step, mau) {
-  var m = TPnum(mau, 0),
-    eng = Math.max(TPengCurve(m), step.engMin),
+/* The programme adjustments carried on the deal, normalised. */
+function TPrecAdjust(s) {
+  var a = (s && s.recAdjust) || {};
+  return {
+    events: Math.max(0, Math.round(TPnum(a.events, 0))),
+    priceMult: TPnum(a.priceMult, 1) || 1,
+    rewardAtRatio: !!a.rewardAtRatio
+  };
+}
+
+/* The recommended programme for this deal: the scaled programme with the
+   deal's own adjustments applied, so an applied lever survives a change of
+   base instead of being regenerated away. */
+function TPrecProgramme(base, mau) {
+  var a = TPrecAdjust(base), ratio = TPrewardCostRatio(base);
+  return TPrecTournaments(mau, TPrecPrizeShare(base)).map(function (t) {
+    var c = Object.assign({}, t);
+    if (c.id === 'rec-weekly') c.eventsPerMonth = c.eventsPerMonth + a.events;
+    if (a.priceMult !== 1) {
+      c.entryPrice = c.entryPrice * a.priceMult;
+      c.rewardFaceValue = Math.round(c.rewardFaceValue * a.priceMult);
+      c.customerCashCost = Math.round(c.customerCashCost * a.priceMult);
+      c.cashPrizeAmount = Math.round(c.cashPrizeAmount * a.priceMult);
+    }
+    if (a.rewardAtRatio) { c.isCash = false; c.customerCashCost = Math.round(c.rewardFaceValue * ratio); }
+    return c;
+  });
+}
+
+/* The take fee is a commercial term the seller sets inside the 5-25% band, not
+   a benchmark: a deal that already carries a higher fee than a ladder step is
+   never recommended a lower one. opts.rakeFloor is the deal's current fee. */
+function TPrecStepFor(step, opts) {
+  var floor = opts && opts.rakeFloor !== undefined && opts.rakeFloor !== null && isFinite(Number(opts.rakeFloor))
+    ? TPnum(opts.rakeFloor, 0, 25) : 0;
+  return floor > step.rake ? Object.assign({}, step, { rake: floor, rakeFromDeal: true }) : step;
+}
+
+function TPrecCandidate(base, step, mau, tournaments, opts) {
+  var m = TPnum(mau, 0);
+  step = TPrecStepFor(step, opts);
+  var eng = Math.max(TPengCurve(m), step.engMin),
     s = TPstate(Object.assign({}, base, {
       mau: m, h2hReach: m, rampOn: false,
-      tournaments: base.includeTournaments ? TPrecTournaments(m, TPrecPrizeShare(base)) : (base.tournaments || [])
+      tournaments: base.includeTournaments ? (tournaments || TPrecProgramme(base, m)) : (base.tournaments || [])
     })),
     cfg = { mau: m, engagement: eng, playsPerUser: step.plays, spendPerPlay: step.wager,
       feeRate: step.rake, rewardGames: 8, winRate: 50,
@@ -1019,33 +1067,147 @@ function TPrecMeasure(cand) {
   };
 }
 
-function TPrecPasses(m) { return m.tests.licenceRetired && m.tests.lucraCoversLicence && m.tests.operatorPositive; }
+/* The verdict. On a paid licence Lucra is paid the fee whether or not the split
+   share would have covered it, so that test is informational there and gates
+   only a waived deal, where the share is all Lucra earns. */
+function TPrecPasses(m) {
+  return m.tests.licenceRetired && m.tests.operatorPositive && (m.result.free ? m.tests.lucraCoversLicence : true);
+}
+
+/* The money gap someone still has to find, in dollars a year: an unretired
+   licence, or an operator who ends the year negative after prize funding. */
+function TPrecGapYear(m, term) {
+  var t = term || 1,
+    licenceGap = m.result.free ? 0 : Math.max(0, (m.result.balanceDue || 0) / t),
+    operatorGap = Math.max(0, -m.operatorYear);
+  return { licenceGap: licenceGap, operatorGap: operatorGap, gap: Math.max(licenceGap, operatorGap) };
+}
 
 /* Walk the ladder and stop at the first step that clears every test. If the
    ceiling still does not clear, return the ceiling and the size of the gap. */
-function TPrecommend(input, mau) {
+function TPrecommend(input, mau, opts) {
   var base = TPstate(input), m = TPnum(mau, 0), steps = TPrecSteps(), tried = [], chosen = null;
   if (m <= 0) return { ok: false, reason: 'Enter a monthly active base to build a recommendation.', tried: [] };
   for (var i = 0; i < steps.length; i++) {
-    var measured = TPrecMeasure(TPrecCandidate(base, steps[i], m));
+    var measured = TPrecMeasure(TPrecCandidate(base, steps[i], m, null, opts));
     tried.push(measured);
     if (!chosen && TPrecPasses(measured)) chosen = measured;
   }
   var final = chosen || tried[tried.length - 1],
     term = TPterm(base) || 1,
-    licenceGap = final.result.free ? 0 : Math.max(0, (final.result.balanceDue || 0) / term),
+    gaps = TPrecGapYear(final, term),
+    licenceGap = gaps.licenceGap,
     lucraGap = Math.max(0, final.licenceYear - final.lucraYear),
-    gap = Math.max(licenceGap, lucraGap),
+    gap = gaps.gap,
     sponsorsTotal = (base.sponsors || []).reduce(function (a, sp) { return a + Math.max(0, TPnum(sp.amount, 0)); }, 0);
   // Sponsors are already inside the result: they credited the licence before
   // any split, so licenceGap is what remains after them.
   return {
     ok: true, mau: m, cleared: !!chosen, chosen: final, tried: tried,
-    licenceGapYear: licenceGap, lucraGapYear: lucraGap, shortfallYear: gap,
+    licenceGapYear: licenceGap, lucraGapYear: lucraGap, operatorGapYear: gaps.operatorGap, shortfallYear: gap,
     sponsorsTotal: sponsorsTotal, sponsorsPerYear: sponsorsTotal / term,
     retargetValue: TPnum(base.retargetValue, 0)
   };
 }
+
+
+/* ---------- levers that close a gap ----------
+   When a deal is short, what single change closes it. Tried in the order that
+   matters commercially: the tournament programme first, because every customer
+   has one and a reward that costs less than it is worth lifts the operator's
+   net without touching entries; then the take fee, which is really a
+   head-to-head lever; then more locations, only for a customer that already
+   has more than one. The licence structure is not a lever. */
+
+/* The venue's cost for a reward as a share of its face value. Taken from the
+   deal if entered, otherwise from the tournaments as configured. Never an
+   assumed discount. */
+function TPrewardCostRatio(s) {
+  var entered = s.rewardCostRatio;
+  if (entered !== '' && entered !== null && entered !== undefined && isFinite(Number(entered))) {
+    return Math.max(0, Math.min(1, TPnum(entered, 0) / 100));
+  }
+  var face = 0, cost = 0;
+  (s.tournaments || []).forEach(function (t) {
+    if (t.isCash) return;
+    face += TPnum(t.rewardFaceValue, 0); cost += TPnum(t.customerCashCost, 0);
+  });
+  return face > 0 ? Math.max(0, Math.min(1, cost / face)) : 1;
+}
+
+function TPrecGapOf(base, cfg, mau, opts) {
+  var m = TPrecMeasure(TPrecCandidate(base, cfg.step, mau, cfg.tournaments, opts));
+  return { clears: TPrecPasses(m), gap: TPrecGapYear(m, TPterm(TPstate(base)) || 1).gap, measure: m };
+}
+
+/* Each lever is expressed as a patch to the deal (recAdjust, locations) or to
+   the take fee, so applying it changes the deal and the recommender then
+   rebuilds from the changed deal and agrees with itself. */
+function TPrecLevers(input, mau, step, opts) {
+  var base = TPstate(input), m = TPnum(mau, 0), levers = [];
+  if (m <= 0 || !step) return levers;
+  step = TPrecStepFor(step, opts);
+  var current = TPrecGapOf(base, { step: step }, m);
+  if (current.clears) return levers;
+  var tryLever = function (key, label, detail, patchedBase, patchedStep, apply) {
+    var out = TPrecGapOf(patchedBase, { step: patchedStep || step }, m);
+    levers.push({ key: key, label: label, detail: detail, clears: out.clears, gapAfter: out.gap, gapBefore: current.gap, apply: apply });
+    return out.clears;
+  };
+  var withAdjust = function (patch) { return Object.assign({}, base, { recAdjust: Object.assign({}, TPrecAdjust(base), patch) }); };
+
+  // 1. Tournament programme.
+  if (base.includeTournaments) {
+    var adj = TPrecAdjust(base), tours = TPrecProgramme(base, m), ratio = TPrewardCostRatio(base);
+
+    // a. one more weekly event a month
+    var eventsNow = tours[0].eventsPerMonth, eventsPatch = { events: adj.events + 1 };
+    tryLever('events', 'One more weekly event a month', 'Weekly open runs ' + (eventsNow + 1) + ' times a month instead of ' + eventsNow + '.',
+      withAdjust(eventsPatch), null, { adjust: eventsPatch });
+
+    // b. entry price doubled, once: beyond that is outside the reference range
+    if (adj.priceMult < 2) {
+      var pricePatch = { priceMult: adj.priceMult * 2 };
+      tryLever('price', 'Entry prices doubled', '$' + tours[0].entryPrice + ' becomes $' + (tours[0].entryPrice * 2) + ' and $' + tours[1].entryPrice + ' becomes $' + (tours[1].entryPrice * 2) + ', prizes scaled with them.',
+        withAdjust(pricePatch), null, { adjust: pricePatch });
+    }
+
+    // c. rewards that cost less than they are worth, at the venue's own ratio
+    if (ratio < 0.999 && !adj.rewardAtRatio) {
+      var ratioPatch = { rewardAtRatio: true };
+      tryLever('reward-cost', 'In-kind rewards at your cost ratio', 'Prizes keep their face value; they cost the venue ' + Math.round(ratio * 100) + '% of it, as entered.',
+        withAdjust(ratioPatch), null, { adjust: ratioPatch });
+    }
+  }
+
+  // 2. Take fee, within 5-25%, only when head-to-head runs.
+  if (base.includeH2H && step.rake < 25) {
+    var found = null;
+    for (var fee = step.rake + 0.5; fee <= 25 && !found; fee += 0.5) {
+      var st2 = Object.assign({}, step, { rake: fee });
+      if (TPrecGapOf(base, { step: st2 }, m).clears) found = fee;
+    }
+    var stepFee = Object.assign({}, step, { rake: found || 25 });
+    tryLever('take-fee', found ? 'Take fee to ' + found + '%' : 'Take fee at the 25% ceiling',
+      found ? 'From ' + step.rake + '% to ' + found + '% of paid-game volume, inside the 5-25% band.' : 'Even 25% does not clear it on its own.',
+      base, stepFee, { rake: found || 25 });
+  }
+
+  // 3. More locations, only for a customer that already has more than one.
+  var locs = TPlocations(base);
+  if (locs[locs.length - 1] > 1) {
+    var more = locs.slice(); more[more.length - 1] = more[more.length - 1] + 1;
+    for (var i = more.length - 2; i >= 1; i--) if (more[i] > more[i + 1]) more[i] = more[i + 1];
+    tryLever('locations', 'One more location in year ' + locs.length, locs.join(' → ') + ' becomes ' + more.join(' → ') + '.',
+      Object.assign({}, base, { locations: more }), null, { locations: more });
+  }
+
+  // Ones that clear first, then the commercial order.
+  var order = ['events', 'price', 'reward-cost', 'take-fee', 'locations'];
+  levers.sort(function (a, b) { return (b.clears - a.clears) || (order.indexOf(a.key) - order.indexOf(b.key)); });
+  return levers;
+}
+
 /* TP-PURE-END */
 module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, LPcalculate, LPbreakEvenMap, LPtournamentMonthly, LPyearlySummary, LPrecommendPlan, LPvalidate, LP_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments,
-  TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend };
+  TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear };

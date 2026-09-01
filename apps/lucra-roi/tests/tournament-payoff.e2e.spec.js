@@ -738,7 +738,10 @@ test('a base too small to clear the licence says so and sizes the gap', async ({
   expect(rec.licenceGapYear).toBeGreaterThan(0);
   expect(rec.lucraGapYear).toBeGreaterThan(0);
   await expect(page.locator('.tp-rec-gap')).toContainText('not retired by play');
-  await expect(page.locator('.tp-rec-gap')).toContainText("Lucra's share is");
+  // On a paid licence Lucra is paid the fee regardless, so the split-share gap
+  // is information, not a line in the gap block; the levers are.
+  await expect(page.locator('.tp-rec-gap')).not.toContainText("Lucra's share is");
+  await expect(page.locator('.tp-rec-gap')).toContainText('What would close it');
   await page.locator('#tp-retarget').fill('5000');
   await expect(page.locator('.tp-rec-gap')).toContainText('stays out of every revenue figure');
   expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).shortfallYear)).toBeCloseTo(rec.shortfallYear, 6);
@@ -1040,4 +1043,114 @@ test('the brief states the contract by year, what activity retires, and what the
   const waived = await page.evaluate(() => TPbrief());
   expect(waived).toContain('Contract: licence waived');
   expect(waived).toMatch(/Year 1: licence waived · revenue generated/);
+});
+
+test('the recommender names the lever that closes a gap and applies it', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 3000 });
+  await page.evaluate(() => TPCsetMau(3000));
+  await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
+  await expect(page.locator('.tp-rec-banner')).toHaveClass(/short/);
+  await expect(page.locator('.tp-rec-levers')).toContainText('What would close it');
+  const first = page.locator('.tp-rec-levers li').first();
+  await expect(first).toHaveClass(/clears/);
+  await expect(first).toContainText('Take fee to');
+  // Levers that do not clear still say what they do.
+  await expect(page.locator('.tp-rec-levers li.short').first()).toContainText(/Gap falls to|Does not move/);
+  // Locations never appear as a lever for a single-site customer.
+  await expect(page.locator('.tp-rec-levers li', { hasText: 'location' })).toHaveCount(0);
+
+  await first.locator('button', { hasText: 'Apply' }).click();
+  const rake = await page.evaluate(() => MG.rake);
+  expect(rake).toBeGreaterThan(19);
+  expect(rake).toBeLessThanOrEqual(25);
+  await expect(page.locator('.tp-rec-banner')).toContainText('clears the licence');
+});
+
+test('the reward cost ratio is the venue\'s own number, and the lever uses it', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 3000 });
+  await page.evaluate(() => TPCsetMau(3000));
+  await expect(page.locator('#tp-reward-ratio')).toHaveValue('');
+  await page.locator('#tp-reward-ratio').fill('30');
+  expect(await page.evaluate(() => TPrewardCostRatio(TPstate(TP)))).toBeCloseTo(0.3, 9);
+  await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
+  await expect(page.locator('.tp-rec-levers')).toContainText('cost the venue 30% of it, as entered');
+});
+
+test('two deal structures can be saved and compared side by side', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 100000 });
+  await page.evaluate(() => { TPCsetMau(100000); MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrender(); });
+  await expect(page.locator('#tp-compare-out')).toContainText('Nothing saved yet');
+  await page.locator('#tp-compare-block button', { hasText: 'Save as A' }).click();
+
+  // Change to a waived 50/50 deal and save it as B.
+  await page.locator('#tp-free').check();
+  await page.locator('#tp-post-operator').fill('50');
+  await page.locator('#tp-post-lucra').fill('50');
+  await page.locator('#tp-compare-block button', { hasText: 'Save as B' }).click();
+
+  const table = page.locator('.tp-compare');
+  await expect(table).toBeVisible();
+  await expect(table).toContainText('Fairway Social · paid');
+  await expect(table).toContainText('Fairway Social · waived');
+  await expect(table.locator('tr', { hasText: 'Licence' }).first()).toContainText('$60,000');
+  await expect(table.locator('tr', { hasText: 'Licence' }).first()).toContainText('Waived');
+  await expect(table.locator('tr', { hasText: 'Split' })).toContainText('90 / 10');
+  await expect(table.locator('tr', { hasText: 'Split' })).toContainText('50 / 50');
+  await expect(table.locator('tr', { hasText: 'Payoff' })).toContainText('Nothing to retire');
+  // Deltas read B against A, and appear in column B only.
+  await expect(table.locator('.tp-compare-delta').first()).toContainText('vs A');
+  const revenueRow = table.locator('tr', { hasText: 'Revenue generated' });
+  await expect(revenueRow.locator('td').nth(0).locator('.tp-compare-delta')).toHaveCount(0);
+  await expect(revenueRow.locator('td').nth(1).locator('.tp-compare-delta')).toHaveCount(1);
+
+  // Loading A restores the paid deal.
+  await page.locator('#tp-compare-load-a').click();
+  await expect(page.locator('#tp-free')).not.toBeChecked();
+  await expect(page.locator('#tp-post-operator')).toHaveValue('90');
+  // Customer view keeps the comparison but drops the internal rows.
+  await page.locator('#tp-customer-mode').check();
+  await expect(table.locator('tr', { hasText: 'Revenue generated' })).toBeVisible();
+  await expect(table.locator('tr', { hasText: 'Split' })).toHaveCount(0);
+  await page.locator('#tp-customer-mode').uncheck();
+  await page.locator('#tp-compare-block button', { hasText: 'Clear both' }).click();
+  await expect(page.locator('#tp-compare-out')).toContainText('Nothing saved yet');
+});
+
+test('a deal link is created through the API and restores the deal on open', async ({ page }) => {
+  let posted = null;
+  await page.route('**/api/deal*', async (route) => {
+    const req = route.request();
+    if (req.method() === 'POST') {
+      posted = req.postDataJSON();
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, url: 'http://127.0.0.1/?deal=v1.stub', expiresInDays: 14 }) });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, deal: { kind: 'revenue-model', tp: posted.deal.tp, mg: posted.deal.mg } }) });
+  });
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+
+  await openTab(page);
+  await setBaseDeal(page, { fee: 45000, termYears: 2, fees: [45000, 55000, 0, 0, 0], includeH2H: true, mau: 100000 });
+  await page.evaluate(() => { TPCsetMau(100000); MG.eng = 13; MG.rake = 11; MGsync(); MGu(); TPrender(); });
+  await page.locator('#tp-loc-1').fill('4');
+  const share = page.locator('#tp-share-btn');
+  await expect(share).toHaveText('Share deal link');
+  await share.click();
+  await expect(share).toContainText(/Link (copied|ready)/);
+  await expect(page.locator('#tp-share-out input')).toHaveValue('http://127.0.0.1/?deal=v1.stub');
+  expect(posted.deal.tp.locations[1]).toBe(4);
+  expect(posted.deal.mg.eng).toBe(13);
+  expect(JSON.stringify(posted)).not.toContain('SCENARIO');
+
+  // A fresh page with a stale local state opens the link and lands on the tab.
+  await page.evaluate(() => { TP.dealName = 'Something else'; TP.locations = [1, 1, 1, 1, 1]; TPsave(); MG.eng = 2; MGsync(); });
+  await page.goto('/?deal=v1.stub');
+  await expect(page.locator('#tournaments')).toBeVisible();
+  await expect(page.locator('#tp-loc-1')).toHaveValue('4');
+  await expect(page.locator('#tp-deal-name')).toHaveValue('Fairway Social');
+  expect(await page.evaluate(() => MG.eng)).toBe(13);
+  expect(await page.evaluate(() => MG.rake)).toBe(11);
+  expect(page.url()).not.toContain('deal=');
 });

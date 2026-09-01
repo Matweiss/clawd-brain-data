@@ -412,7 +412,7 @@ describe('The configuration recommender', () => {
   it('never models above the published ceiling, and reports the gap instead', () => {
     // A base far too small for a $120k licence cannot be made to work. Since the
     // head-to-head fee now credits the licence too, it takes a very small base.
-    const r = TPrecommend(deal(), 4000);
+    const r = TPrecommend(deal(), 2000);
     expect(r.cleared).toBe(false);
     expect(r.chosen.step.key).toBe('published-2025');
     expect(r.chosen.engagement).toBeLessThanOrEqual(TP_BANDS.engagement.ceiling);
@@ -641,5 +641,109 @@ describe('Seasonality', () => {
     const p = TPseasonProfile(s);
     expect(p[0]).toBeCloseTo(2, 9);
     expect(p[11]).toBe(0);
+  });
+});
+
+
+describe('The recommender verdict and its levers', () => {
+  const { TPrecommend, TPrecLevers, TPrewardCostRatio } = calc;
+  const deal = (o = {}) => base(Object.assign({
+    includeH2H: true, termYears: 1, annualFees: [120000, 0, 0, 0, 0], post: { operator: 90, lucra: 10 },
+  }, o));
+
+  it('gates a paid licence on retirement and the operator, not on whether the split alone would cover the fee', () => {
+    // At 4,000 users the licence retires and the operator is positive, while
+    // Lucra's split share alone is well below the fee. Lucra is paid the fee
+    // anyway on a paid licence, so the deal clears.
+    const r = TPrecommend(deal(), 4000);
+    expect(r.chosen.tests.licenceRetired).toBe(true);
+    expect(r.chosen.tests.operatorPositive).toBe(true);
+    expect(r.chosen.tests.lucraCoversLicence).toBe(false);
+    expect(r.cleared).toBe(true);
+    expect(r.shortfallYear).toBe(0);
+    expect(r.lucraGapYear).toBeGreaterThan(0); // still reported, as information
+  });
+
+  it('gates a waived licence on Lucra earning anything at all', () => {
+    const waived = deal({ freeLicense: true, post: { operator: 50, lucra: 50 } });
+    expect(TPrecommend(waived, 4000).cleared).toBe(true);
+    const nothing = deal({ freeLicense: true, post: { operator: 100, lucra: 0 } });
+    expect(TPrecommend(nothing, 4000).chosen.tests.lucraCoversLicence).toBe(false);
+    expect(TPrecommend(nothing, 4000).cleared).toBe(false);
+  });
+
+  it('takes the reward cost ratio from the deal, else from the tournaments, and never assumes a discount', () => {
+    expect(TPrewardCostRatio(TPstate(deal()))).toBeCloseTo(200 / 500, 9);
+    expect(TPrewardCostRatio(TPstate(deal({ rewardCostRatio: 25 })))).toBeCloseTo(0.25, 9);
+    expect(TPrewardCostRatio(TPstate(deal({ rewardCostRatio: '' })))).toBeCloseTo(0.4, 9);
+    // A deal with only money prizes has no in-kind ratio to draw on: full cost.
+    expect(TPrewardCostRatio(TPstate(deal({ tournaments: [{ id: 'c', name: 'C', entryPrice: 10, eventsPerMonth: 1, basis: 'count', participants: 100, isCash: true, cashPrizeAmount: 300 }] })))).toBe(1);
+  });
+
+  it('tries the tournament programme first, then the take fee, and locations only for a multi-site deal', () => {
+    const r = TPrecommend(deal(), 3000);
+    expect(r.cleared).toBe(false);
+    const levers = TPrecLevers(deal(), 3000, r.chosen.step);
+    const keys = levers.map((l) => l.key);
+    expect(keys).not.toContain('locations');
+    // Within the ones that do not clear, the commercial order holds.
+    const shortKeys = levers.filter((l) => !l.clears).map((l) => l.key);
+    expect(shortKeys.indexOf('events')).toBeLessThan(shortKeys.indexOf('price'));
+    expect(shortKeys.indexOf('price')).toBeLessThan(shortKeys.indexOf('reward-cost'));
+    // Every lever reports what it does to the gap, and one clears here.
+    levers.forEach((l) => { expect(l.gapAfter).toBeLessThanOrEqual(l.gapBefore + 1e-6); });
+    const fee = levers.find((l) => l.key === 'take-fee');
+    expect(fee.clears).toBe(true);
+    expect(fee.apply.rake).toBeLessThanOrEqual(25);
+    expect(fee.apply.rake).toBeGreaterThan(r.chosen.step.rake);
+    expect(levers[0].key).toBe('take-fee'); // the one that clears leads
+  });
+
+  it('offers another location only when the customer already has more than one', () => {
+    const multi = deal({ termYears: 2, annualFees: [120000, 120000, 0, 0, 0], locations: [1, 2, 2, 2, 2] });
+    const r = TPrecommend(multi, 1500);
+    const levers = TPrecLevers(multi, 1500, r.chosen.step);
+    const loc = levers.find((l) => l.key === 'locations');
+    expect(loc).toBeTruthy();
+    expect(loc.apply.locations).toEqual([1, 3]);
+    expect(loc.gapAfter).toBeLessThan(loc.gapBefore);
+  });
+
+  it('returns no levers for a deal that already clears', () => {
+    const r = TPrecommend(deal(), 1000000);
+    expect(TPrecLevers(deal(), 1000000, r.chosen.step)).toEqual([]);
+  });
+
+  it('an applied lever changes the deal, and the recommender then agrees with itself', () => {
+    const { TPrecAdjust, TPrecProgramme } = calc;
+    const r = TPrecommend(deal(), 3000);
+    const fee = TPrecLevers(deal(), 3000, r.chosen.step).find((l) => l.key === 'take-fee');
+    // The take fee lives on the deal's head-to-head inputs; once set, the
+    // ladder is floored at it and the same base now clears.
+    const after = TPrecommend(deal(), 3000, { rakeFloor: fee.apply.rake });
+    expect(after.cleared).toBe(true);
+    expect(after.chosen.cfg.feeRate).toBe(fee.apply.rake);
+    expect(after.chosen.step.rakeFromDeal).toBe(true);
+    expect(TPrecLevers(deal(), 3000, after.chosen.step, { rakeFloor: fee.apply.rake })).toEqual([]);
+    // A floor below the step leaves the ladder alone, and the band caps it.
+    expect(TPrecommend(deal(), 3000, { rakeFloor: 5 }).chosen.step.rakeFromDeal).toBeUndefined();
+    expect(TPrecommend(deal(), 3000, { rakeFloor: 40 }).chosen.cfg.feeRate).toBe(25);
+
+    // Programme levers are patches to the deal that survive a change of base.
+    const events = TPrecLevers(deal(), 3000, r.chosen.step).find((l) => l.key === 'events');
+    const patched = deal({ recAdjust: Object.assign({}, TPrecAdjust(TPstate(deal())), events.apply.adjust) });
+    expect(TPrecAdjust(TPstate(patched)).events).toBe(1);
+    expect(TPrecProgramme(TPstate(patched), 3000)[0].eventsPerMonth).toBe(5);
+    expect(TPrecProgramme(TPstate(patched), 9000)[0].eventsPerMonth).toBe(5);
+    expect(TPrecommend(patched, 3000).chosen.state.tournaments[0].eventsPerMonth).toBe(5);
+    // Prices double once; the reward-cost lever is offered once, at the venue's ratio.
+    const priced = deal({ recAdjust: { priceMult: 2 } });
+    const pr = TPrecommend(priced, 3000);
+    const again = TPrecLevers(priced, 3000, pr.chosen.step).map((l) => l.key);
+    expect(again).not.toContain('price');
+    const inKind = deal({ recAdjust: { rewardAtRatio: true }, rewardCostRatio: 30 });
+    const prog = TPrecProgramme(TPstate(inKind), 3000);
+    prog.forEach((t) => { expect(t.isCash).toBe(false); expect(t.customerCashCost).toBe(Math.round(t.rewardFaceValue * 0.3)); });
+    expect(TPrecLevers(inKind, 3000, pr.chosen.step).map((l) => l.key)).not.toContain('reward-cost');
   });
 });
