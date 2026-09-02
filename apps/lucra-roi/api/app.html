@@ -657,6 +657,20 @@ table.tp-heat td.miss{background:var(--amber-bg);color:var(--amber)}
 .tp-card-value{font-size:20px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;line-height:1.2}
 .tp-card-note{font-size:11px;color:var(--text3);margin-top:5px}
 
+/* Where the licence was retired from. The point of the box is the second line. */
+.tp-source{display:grid;grid-template-columns:auto 1fr;gap:14px 18px;align-items:center;border:1px solid var(--green-border);background:var(--green-bg);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px}
+.tp-source[hidden]{display:none}
+.tp-source-head{grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)}
+.tp-source-lead{grid-column:1/-1;font-size:15px;font-weight:700;color:var(--text)}
+.tp-source-lead strong{color:var(--green)}
+.tp-source-rows{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tp-source-row{display:flex;flex-direction:column;gap:2px}
+.tp-source-row span{font-size:11px;color:var(--text3)}
+.tp-source-row b{font-size:16px;font-variant-numeric:tabular-nums;color:var(--text)}
+.tp-source-row.zero b{color:var(--green)}
+.tp-source-note{grid-column:1/-1;font-size:12px;color:var(--text2)}
+.tp-months td.tp-zero{color:var(--green)}
+
 .tp-progress{margin-bottom:18px}
 .tp-progress-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text2);margin-bottom:8px}
 .tp-bars{display:flex;align-items:flex-end;gap:5px;height:96px;padding:0 2px;border-bottom:1px solid var(--border)}
@@ -720,6 +734,8 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   body.tp-printing #tp-print-root .tp-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
   body.tp-printing #tp-print-root .tp-card{border:1px solid #bbb!important}
   body.tp-printing #tp-print-root .tp-card-value{font-size:16px}
+  body.tp-printing #tp-print-root .tp-print-source{border:1.5px solid #111!important;margin:10px 0 12px}
+  body.tp-printing #tp-print-root .tp-source-lead{font-size:13px}
   body.tp-printing #tp-print-root table.tp-months{width:100%;font-size:9.5px}
   body.tp-printing #tp-print-root table.tp-months th,body.tp-printing #tp-print-root table.tp-months td{padding:4px 6px;border-bottom:1px solid #ddd!important}
   body.tp-printing #tp-print-root .tp-bar-fill{background:#666!important}
@@ -1927,6 +1943,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   <section class="card-section" id="tp-results-section" aria-labelledby="tp-results-title">
     <div class="ct" id="tp-results-title">12-month results</div>
     <div class="tp-cards" id="tp-summary" aria-live="polite"></div>
+    <div class="tp-source" id="tp-licence-source" hidden></div>
     <div class="tp-progress" id="tp-progress"></div>
     <div class="tp-chart-wrap" id="tp-chart"></div>
     <div class="tp-table-wrap" id="tp-years" hidden></div>
@@ -4238,7 +4255,7 @@ function TPcalculate(input, cfg, factor) {
     totalHandle = 0, totalPrizeCost = 0, totalSplitBase = 0,
     totalH2HFee = 0, totalH2HVolume = 0, totalRewardValue = 0,
     totalSponsorCredited = 0, totalSponsorUnapplied = 0,
-    upfront = TPupfront(s), totalUpfrontCredited = 0,
+    upfront = TPupfront(s), totalUpfrontCredited = 0, totalActivityCredited = 0,
     useH2H = TPanyH2H(s),
     byProduct = {},
     lossMonths = 0, payoffMonth = null, months = [];
@@ -4247,7 +4264,7 @@ function TPcalculate(input, cfg, factor) {
   });
 
   for (var y = 0; y < (s.freeLicense ? termYears : fees.length); y++) {
-    years.push({ year: y + 1, fee: s.freeLicense ? 0 : fees[y], opening: 0, credited: 0, trueUp: 0, clearMonth: null, closing: 0 });
+    years.push({ year: y + 1, fee: s.freeLicense ? 0 : fees[y], opening: 0, credited: 0, activity: 0, fromOperator: 0, trueUp: 0, clearMonth: null, closing: 0 });
   }
   if (years[0]) years[0].opening = remaining;
 
@@ -4314,10 +4331,15 @@ function TPcalculate(input, cfg, factor) {
     // The commercial splits gross entries. The partner funds the prize pool out of
     // their own share afterwards, so prize cost never reduces the pool being split:
     // $10,000 raised -> partner $9,000 -> their $1,000 prize cost -> partner nets $8,000.
+    // The licence is retired from the licence share alone. The operator's share is
+    // theirs from month one and never funds the licence, so licenseFromOperator is
+    // zero by construction rather than by coincidence; it is carried explicitly so
+    // every table can print it.
     var splitBase = handle + h2hFee,
       licenseGross = rates.credit > 0 ? Math.min(splitBase, remaining / rates.credit) : 0,
       postGross = splitBase - licenseGross,
       toLicense = Math.min(remaining, licenseGross * rates.credit),
+      licenseFromOperator = 0,
       operatorGross = licenseGross * rates.operator + postGross * rates.postOperator,
       toLucra = licenseGross * rates.lucra + postGross * rates.postLucra,
       toOperator = operatorGross - prizeCost,
@@ -4330,7 +4352,8 @@ function TPcalculate(input, cfg, factor) {
     cumulativeLicense += toLicense;
     totalOperator += toOperator; totalOperatorGross += operatorGross; totalLucra += toLucra;
     totalHandle += handle; totalPrizeCost += prizeCost; totalSplitBase += splitBase;
-    if (years[yi]) years[yi].credited += toLicense;
+    totalActivityCredited += toLicense;
+    if (years[yi]) { years[yi].credited += toLicense; years[yi].activity += toLicense; }
 
     // If the signing payment or a sponsor cleared it before any activity, the
     // month is done at its start.
@@ -4351,7 +4374,7 @@ function TPcalculate(input, cfg, factor) {
       products: products,
       sponsorPaid: sponsorPaid, sponsorCredit: sponsorCredit, upfrontCredit: upfrontCredit,
       grossMargin: grossMargin, splitBase: splitBase,
-      toLicense: toLicense, cumulativeLicense: cumulativeLicense,
+      toLicense: toLicense, licenseFromShare: toLicense, licenseFromOperator: licenseFromOperator, cumulativeLicense: cumulativeLicense,
       operatorGross: operatorGross, toOperator: toOperator, toLucra: toLucra,
       split: licenseGross > 0 && postGross > 0 ? 'Crossover' : licenseGross > 0 ? 'Payoff' : 'Post-payoff',
       detail: detail
@@ -4381,6 +4404,10 @@ function TPcalculate(input, cfg, factor) {
     totalH2HFee: totalH2HFee, totalH2HVolume: totalH2HVolume, totalRewardValue: totalRewardValue,
     totalSponsorCredited: totalSponsorCredited, totalSponsorUnapplied: totalSponsorUnapplied,
     upfront: upfront, totalUpfrontCredited: totalUpfrontCredited,
+    // Where the retired licence came from. fromOperator is always zero: the
+    // operator's share is never diverted to the licence.
+    totalActivityCredited: totalActivityCredited,
+    licenceFunding: { fromShare: totalActivityCredited, fromOperator: 0, fromSponsors: totalSponsorCredited, fromUpfront: totalUpfrontCredited, trueUp: trueUpTotal },
     includesH2H: useH2H, includesTournaments: TPanyTournaments(s),
     byProduct: byProduct,
     customerType: s.customerType, scheduleStated: TPscheduleStated(s), schedule: TPschedule(s),
@@ -5692,6 +5719,44 @@ function TPrenderTournamentList(key) {
 /* Lucra figures show only when the toggle is on and the page is not in customer view. */
 function TPshowLucra() { return !!TP.showLucra && !TP.customerMode; }
 
+/* The box that says where the retired licence came from. The headline is that
+   the operator's share is never touched: the licence is retired out of the
+   licence share alone, and the operator's share is theirs from month one. */
+function TPlicenceSourceText(r) {
+  if (!r || r.errors.length || r.free || !r.recapturing || r.totalContract <= 0) return null;
+  var f = r.licenceFunding, rates = TPsplitRates(TPstate(TP)),
+    opPct = Math.round(rates.operator * 1000) / 10, postPct = Math.round(rates.postOperator * 1000) / 10,
+    steps = Math.abs(postPct - opPct) > 0.05;
+  return {
+    lead: 'Retired from the licence share alone. Your share is never diverted to the licence.',
+    detail: 'Your ' + opPct + '% is yours from month one' + (steps ? ', stepping up to ' + postPct + '% once the licence is cleared' : '') + '.' +
+      (f.trueUp > 0 ? ' Any year the activity share falls short is trued up in cash at year end, shown separately; it is still never taken from your share.' : ''),
+    fromShare: f.fromShare, fromOperator: f.fromOperator, fromSponsors: f.fromSponsors, fromUpfront: f.fromUpfront, trueUp: f.trueUp,
+    total: f.fromShare + f.fromOperator + f.fromSponsors + f.fromUpfront
+  };
+}
+
+function TPrenderLicenceSource(r) {
+  var host = $('tp-licence-source'); if (!host) return;
+  var t = TPlicenceSourceText(r);
+  if (!t) { host.hidden = true; host.innerHTML = ''; return; }
+  var rows = [
+    { label: 'From the licence share', value: TPmoney(t.fromShare) },
+    { label: 'From your share', value: TPmoney(t.fromOperator), zero: true }
+  ];
+  if (t.fromUpfront > 0) rows.push({ label: 'Paid at signing', value: TPmoney(t.fromUpfront) });
+  if (t.fromSponsors > 0) rows.push({ label: 'From sponsors', value: TPmoney(t.fromSponsors) });
+  rows.push({ label: 'Retired, total', value: TPmoney(t.total) });
+  if (t.trueUp > 0) rows.push({ label: 'Cash true-up, separate', value: TPmoney(t.trueUp) });
+  host.hidden = false;
+  host.innerHTML = '<div class="tp-source-head">Where the licence is retired from</div>' +
+    '<div class="tp-source-lead"><strong>' + TPesc(t.lead) + '</strong></div>' +
+    '<div class="tp-source-rows">' + rows.map(function (x) {
+      return '<div class="tp-source-row' + (x.zero ? ' zero' : '') + '"><span>' + TPesc(x.label) + '</span><b>' + TPesc(x.value) + '</b></div>';
+    }).join('') + '</div>' +
+    '<div class="tp-source-note">' + TPesc(t.detail) + '</div>';
+}
+
 function TPrenderResults(r) {
   var val = $('tp-validation');
   if (r.errors.length) {
@@ -5701,6 +5766,7 @@ function TPrenderResults(r) {
     $('tp-progress').innerHTML = '';
     $('tp-table').innerHTML = '';
     if ($('tp-years')) { $('tp-years').innerHTML = ''; $('tp-years').hidden = true; }
+    TPrenderLicenceSource(null);
     return;
   }
   val.hidden = true;
@@ -5720,6 +5786,7 @@ function TPrenderResults(r) {
     }).join('');
     $('tp-progress').innerHTML = '';
     if ($('tp-years')) { $('tp-years').innerHTML = ''; $('tp-years').hidden = true; }
+    TPrenderLicenceSource(null);
     var ch = !!r.includesH2H, chead = (r.termYears > 1 ? ['Year'] : []).concat(['Month', 'Participants', 'Entries value']).concat(ch ? ['Head-to-head fee'] : []).concat(['Revenue generated']);
     $('tp-table').innerHTML = '<table class="tp-months"><thead><tr>' + chead.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
       r.months.map(function (m) {
@@ -5745,6 +5812,8 @@ function TPrenderResults(r) {
     return '<div class="tp-card"><div class="tp-card-label">' + TPesc(c.label) + '</div><div class="tp-card-value">' + TPesc(c.value) + '</div><div class="tp-card-note">' + TPesc(c.note) + '</div></div>';
   }).join('');
 
+  TPrenderLicenceSource(r);
+
   if (r.free || r.licenseFee <= 0) {
     $('tp-progress').innerHTML = '<div class="sn">No licence balance to track.</div>';
   } else {
@@ -5762,12 +5831,16 @@ function TPrenderResults(r) {
     if (r.free || r.termYears < 2) { yearHost.innerHTML = ''; yearHost.hidden = true; }
     else {
       yearHost.hidden = false;
+      var extras = r.totalSponsorCredited > 0 || r.totalUpfrontCredited > 0;
       yearHost.innerHTML = '<table class="tp-months tp-years-table"><thead><tr>' +
-        ['Year', 'Fee', 'Opening balance', 'Retired by activity', 'Cleared', 'Cash true-up', 'Closing balance']
+        ['Year', 'Fee', 'Opening balance', 'From licence share', 'From operator share'].concat(extras ? ['Sponsors and signing'] : [])
+          .concat(['Retired, total', 'Cleared', 'Cash true-up', 'Closing balance'])
           .map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
         r.years.map(function (y) {
           return '<tr><td>Year ' + y.year + '</td><td>' + TPmoney(y.fee) + '</td><td>' + TPmoney(y.opening) +
-            '</td><td>' + TPmoney(y.credited) + '</td><td>' + (y.clearMonth === null ? '—' : TPmonthLabel(y.clearMonth)) +
+            '</td><td>' + TPmoney(y.activity) + '</td><td class="tp-zero">' + TPmoney(y.fromOperator) + '</td>' +
+            (extras ? '<td>' + TPmoney(y.credited - y.activity) + '</td>' : '') +
+            '<td>' + TPmoney(y.credited) + '</td><td>' + (y.clearMonth === null ? '—' : TPmonthLabel(y.clearMonth)) +
             '</td><td>' + (y.trueUp > 0 ? TPmoney(y.trueUp) : '—') + '</td><td>' + TPmoney(y.closing) + '</td></tr>';
         }).join('') + '</tbody></table>';
     }
@@ -5778,7 +5851,7 @@ function TPrenderResults(r) {
     .concat(h2h ? ['Head-to-head fee'] : [])
     .concat(['Pool to split'])
     .concat(sponsors ? ['Sponsor to licence'] : [])
-    .concat(['To licence', 'Cumulative licence', 'To operator, after prizes'])
+    .concat(['Licence share → licence', 'Operator share → licence', 'To licence, total', 'Cumulative licence', 'To operator, after prizes'])
     .concat(TPshowLucra() ? ['To Lucra'] : []);
   $('tp-table').innerHTML = '<table class="tp-months"><thead><tr>' +
     head.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
@@ -5792,7 +5865,9 @@ function TPrenderResults(r) {
         (h2h ? '<td>' + TPmoney(m.h2hFee) + '</td>' : '') +
         '<td>' + TPmoney(m.splitBase) + '</td>' +
         (sponsors ? '<td>' + (m.sponsorPaid > 0 ? TPmoney(m.sponsorCredit) : '—') + '</td>' : '') +
-        '<td>' + (r.free ? '—' : TPmoney(m.toLicense)) + '</td>' +
+        '<td>' + (r.free ? '—' : TPmoney(m.licenseFromShare)) + '</td>' +
+        '<td class="tp-zero">' + (r.free ? '—' : TPmoney(m.licenseFromOperator)) + '</td>' +
+        '<td>' + (r.free ? '—' : TPmoney(m.licenseFromShare + m.licenseFromOperator)) + '</td>' +
         '<td>' + (r.free ? '—' : TPmoney(m.cumulativeLicense)) + '</td>' +
         '<td>' + TPmoney(m.toOperator) + '</td>' +
         (TPshowLucra() ? '<td>' + TPmoney(m.toLucra) + '</td>' : '') + '</tr>';
@@ -6504,7 +6579,8 @@ function TPbriefYears(r, st) {
     var sum = function (k) { return ms.reduce(function (a, m) { return a + (m[k] || 0); }, 0); };
     rows.push({
       year: y, fee: r.free ? 0 : (fees[y - 1] || 0),
-      credited: yr.credited || 0, sponsor: sum('sponsorCredit'), upfront: sum('upfrontCredit'), closing: yr.closing || 0,
+      credited: yr.credited || 0, activity: yr.activity || 0, fromOperator: yr.fromOperator || 0,
+      sponsor: sum('sponsorCredit'), upfront: sum('upfrontCredit'), closing: yr.closing || 0,
       revenue: sum('splitBase'), entries: sum('handle'), fee2: sum('h2hFee'),
       operator: sum('toOperator'), prize: sum('prizeCost'), lucra: sum('toLucra')
     });
@@ -6572,8 +6648,9 @@ function TPbrief() {
   push('  Offer: ' + money(totalYear) + ' of revenue generated a year on the partner\'s own user base.');
   push('  Foil: ' + (r.free ? 'no licence fee at all.'
     : !r.recapturing ? 'the ' + money(r.totalContract) + ' licence is a flat fee, not recovered from activity.'
-    : r.payoffMonth !== null ? 'the ' + money(r.totalContract) + ' licence is retired by activity, not by invoice.'
-    : 'the ' + money(r.totalContract) + ' licence is paid down by activity, with ' + money(r.balanceDue) + ' left at term end.'));
+    : r.payoffMonth !== null ? 'the ' + money(r.totalContract) + ' licence is retired by activity, not by invoice, out of the licence share alone. Your share is yours from month one.'
+    : 'the ' + money(r.totalContract) + ' licence is paid down by activity out of the licence share alone, with ' +
+      (r.trueUpTotal > 0 && r.balanceDue <= 0 ? money(r.trueUpTotal) + ' settled in cash at year end' : money(r.balanceDue) + ' left at term end') + '. Your share is yours from month one.'));
   push('  Both lines are yours to rewrite. Do not add a claim the figures above do not carry.');
   push();
 
@@ -6668,9 +6745,13 @@ function TPbrief() {
     (byYear.stepped ? ', stepped ' + byYear.fees.map(function (f) { return Math.round(f); }).join(' / ') : ', flat ' + Math.round(byYear.fees[0]) + ' a year') +
     (r.annualBasis ? '. Each year\'s fee is retired within that year; the balance resets at every step.' : '. Retired as one balance across the whole term, so early years can retire later years\' fees.')) +
     '  [customer fact]');
+  if (!r.free && r.recapturing) {
+    push('  Funded from: the licence share of the pool alone. Nothing from the operator\'s share goes to the licence: it is theirs from month one and steps up once the licence is cleared.  [customer fact] [highlight]');
+  }
   byYear.rows.forEach(function (y) {
     push('  Year ' + y.year + ':' +
       (r.free ? ' licence waived' : ' licence fee ' + n(y.fee) + ' · retired by activity ' + n(y.credited) +
+        (r.recapturing ? ' (from the licence share ' + n(y.activity) + ', from the operator\'s share ' + n(y.fromOperator) + ')' : '') +
         (y.sponsor > 0 || y.upfront > 0 ? ' (of which' + (y.upfront > 0 ? ' paid at signing ' + n(y.upfront) : '') + (y.sponsor > 0 && y.upfront > 0 ? ',' : '') + (y.sponsor > 0 ? ' sponsors ' + n(y.sponsor) : '') + ')' : '') +
         (y.closing > 0 && y.year === term ? ' · ' + n(y.closing) + ' outstanding' : '')) +
       ' · revenue generated ' + n(y.revenue) +
@@ -6678,7 +6759,8 @@ function TPbrief() {
       (showT ? ' after prize funding' + (y.prize > 0 ? ' of ' + n(y.prize) : '') : '') +
       '  [derived from: the monthly result summed by year]');
   });
-  if (!r.free) push('  Retired by activity is what the licence earns back from play and sponsors each year; the fee is what it costs.');
+  if (!r.free) push('  Retired by activity is what the licence earns back from play and sponsors each year; the fee is what it costs.' +
+    (r.recapturing ? ' It is taken from the licence share only, never from the operator\'s share.' : ''));
   push();
 
   push('SENSITIVITY  (three rows, low case first; participation scales' +
@@ -6793,6 +6875,7 @@ function TPprintInternal() {
   TPrunPrint(
     TPprintHeader('Tournament payoff, ' + (r.termYears === 1 ? '12-month' : r.termYears + '-year') + ' model', 'Internal only') +
     '<div class="tp-print-cards">' + $('tp-summary').innerHTML + '</div>' +
+    ($('tp-licence-source') && !$('tp-licence-source').hidden ? '<div class="tp-source tp-print-source">' + $('tp-licence-source').innerHTML + '</div>' : '') +
     '<div class="tp-print-progress">' + $('tp-progress').innerHTML + '</div>' +
     ($('tp-years') && !$('tp-years').hidden ? '<div class="tp-print-table">' + $('tp-years').innerHTML + '</div>' : '') +
     '<div class="tp-print-table">' + $('tp-table').innerHTML + '</div>' +

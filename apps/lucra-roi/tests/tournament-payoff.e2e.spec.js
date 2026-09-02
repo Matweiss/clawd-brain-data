@@ -280,6 +280,47 @@ test('a multi-year term adds a per-year table and a year column', async ({ page 
   await expect(page.locator('#tp-basis-row')).toBeVisible();
 });
 
+test('the results say the licence is retired from the licence share alone, never the operator share', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [78000, 102000, 126000], payoffBasis: 'annual', shortfall: 'cash', mau: 8000 });
+  // Loco Bear terms: 50 to the licence, 45 to the operator, 5 to Lucra; 90/10 once cleared.
+  await page.evaluate(() => {
+    TP.splitMode = 'custom'; TP.custom = { credit: 50, operator: 45, lucra: 5 }; TP.post = { operator: 90, lucra: 10 };
+    TP.core.tournaments[0].participants = 500; TP.core.tournaments[0].customerCashCost = 250;
+    TPsave(); TPrenderControls(); TPrender();
+  });
+  const box = page.locator('#tp-licence-source');
+  await expect(box).toBeVisible();
+  await expect(box).toContainText('Retired from the licence share alone. Your share is never diverted to the licence.');
+  await expect(box).toContainText('Your 45% is yours from month one, stepping up to 90% once the licence is cleared.');
+  await expect(box.locator('.tp-source-row.zero')).toContainText('From your share');
+  await expect(box.locator('.tp-source-row.zero b')).toHaveText('$0');
+  // Three columns for the licence in both tables: from the licence share, from the operator share, the total.
+  const head = page.locator('#tp-table thead');
+  await expect(head).toContainText('Licence share → licence');
+  await expect(head).toContainText('Operator share → licence');
+  await expect(head).toContainText('To licence, total');
+  await expect(page.locator('#tp-table tbody tr').first().locator('td.tp-zero')).toHaveText('$0');
+  await expect(page.locator('#tp-years thead')).toContainText('From operator share');
+  await expect(page.locator('#tp-years tbody tr').first().locator('td.tp-zero')).toHaveText('$0');
+  const r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  expect(r.licenceFunding.fromOperator).toBe(0);
+  expect(r.licenceFunding.fromShare).toBeGreaterThan(0);
+  // The brief carries it as a highlighted line and on every year row.
+  const brief = await page.evaluate(() => TPbrief());
+  expect(brief).toMatch(/Foil: the \$306,000 licence is paid down by activity out of the licence share alone, with \$[\d,]+ settled in cash at year end\. Your share is yours from month one\./);
+  expect(brief).toContain("Funded from: the licence share of the pool alone. Nothing from the operator's share goes to the licence: it is theirs from month one and steps up once the licence is cleared.  [customer fact] [highlight]");
+  expect(brief).toMatch(/Year 1: licence fee 78000 \(\$78,000\) · retired by activity [\d.]+ \(\$[\d,]+\) \(from the licence share [\d.]+ \(\$[\d,]+\), from the operator's share 0 \(\$0\)\)/);
+  expect(brief).toContain('It is taken from the licence share only, never from the operator\'s share.');
+  // Customer view keeps the box out, as it keeps every licence figure out.
+  await page.evaluate(() => { TP.customerMode = true; TPsave(); TPrender(); });
+  await expect(box).toBeHidden();
+  await page.evaluate(() => { TP.customerMode = false; TPsave(); TPrender(); });
+  // A free licence has nothing to retire, so the box goes too.
+  await page.locator('#tp-free').check();
+  await expect(box).toBeHidden();
+});
+
 test('the break-even map renders a grid and hides on a free licence', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page, { fee: 40000 });
@@ -1246,7 +1287,7 @@ test('a payment at signing is entered on the deal and printed in the brief', asy
   expect(r.totalUpfrontCredited).toBe(15000);
   expect(r.months[0].upfrontCredit).toBe(15000);
   const brief = await page.evaluate(() => TPbrief());
-  expect(brief).toMatch(/Year 1: licence fee 60000 \(\$60,000\) · retired by activity [\d.]+ \(\$[\d,]+\) \(of which paid at signing 15000 \(\$15,000\)\)/);
+  expect(brief).toMatch(/Year 1: licence fee 60000 \(\$60,000\) · retired by activity [\d.]+ \(\$[\d,]+\) \(from the licence share [\d.]+ \(\$[\d,]+\), from the operator's share 0 \(\$0\)\) \(of which paid at signing 15000 \(\$15,000\)\)/);
   expect(brief).toContain('$15,000 paid at signing is credited against the licence in month 1 and is not revenue.  [customer fact]');
   // Switching to a dollar amount keeps the value and swaps the unit.
   await page.locator('#tp-upfront-mode').selectOption('amount');
@@ -1413,6 +1454,8 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await expect(cp.locator('#results')).toContainText('Revenue generated / yr');
   await expect(cp.locator('#results')).toContainText('You earn / yr');
   await expect(cp.locator('#results')).toContainText('Licence retired by activity');
+  await expect(cp.locator('#results .keep')).toContainText('The licence is retired out of the licence share alone. Your share is never diverted to it.');
+  await expect(cp.locator('#results .keep')).toContainText('and $0 from your share.');
   const text = await cp.locator('#model').innerText();
   expect(text).not.toMatch(BLOCKED);
   expect(text).not.toMatch(/Lucra['’]s share|split|55|35 %|10 %/);

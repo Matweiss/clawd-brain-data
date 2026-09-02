@@ -161,6 +161,72 @@ describe('The split is taken on gross entries', () => {
   });
 });
 
+describe('The licence is retired from the licence share alone', () => {
+  // Loco Bear terms: 50 to the licence, 45 to the operator, 5 to Lucra while the
+  // licence is being retired; 90/10 afterwards. Fee stepped 78k / 102k / 126k.
+  const bear = (o = {}) => base(Object.assign({
+    termYears: 3, annualFees: [78000, 102000, 126000], payoffBasis: 'annual', shortfall: 'cash',
+    splitMode: 'custom', custom: { credit: 50, operator: 45, lucra: 5 }, post: { operator: 90, lucra: 10 },
+    tournaments: [{ id: 't', name: 'Weekly', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 500, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 250 }],
+  }, o));
+
+  it('the operator keeps their 45% from month one; nothing from it goes to the licence', () => {
+    const r = TPcalculate(bear());
+    r.months.forEach((m) => {
+      expect(m.licenseFromOperator).toBe(0);
+      expect(m.licenseFromShare).toBe(m.toLicense);
+      if (m.split === 'Payoff') {
+        expect(m.toLicense).toBeCloseTo(m.splitBase * 0.5, 6);
+        expect(m.toOperator).toBeCloseTo(m.splitBase * 0.45 - m.prizeCost, 6);
+        expect(m.toLucra).toBeCloseTo(m.splitBase * 0.05, 6);
+      }
+      if (m.split === 'Post-payoff') {
+        expect(m.toLicense).toBe(0);
+        expect(m.toOperator).toBeCloseTo(m.splitBase * 0.9 - m.prizeCost, 6);
+      }
+      // The 50% alone retires the fee; the 45% is never part of the credit.
+      expect(m.toLicense).toBeLessThanOrEqual(m.splitBase * 0.5 + 1e-9);
+      expect(m.toOperator + m.prizeCost).toBeGreaterThanOrEqual(m.splitBase * 0.45 - 1e-9);
+    });
+    expect(r.months.some((m) => m.split === 'Payoff')).toBe(true);
+    expect(r.months.some((m) => m.split === 'Post-payoff')).toBe(true);
+  });
+
+  it('reports the funding sources so every table can print them', () => {
+    const r = TPcalculate(bear());
+    const f = r.licenceFunding;
+    expect(f.fromOperator).toBe(0);
+    expect(f.fromShare).toBeCloseTo(r.months.reduce((a, m) => a + m.toLicense, 0), 6);
+    expect(f.fromShare).toBe(r.totalActivityCredited);
+    expect(f.fromSponsors).toBe(0);
+    expect(f.fromUpfront).toBe(0);
+    expect(f.fromShare + f.fromSponsors + f.fromUpfront).toBeCloseTo(r.cumulativeLicense, 6);
+    r.years.forEach((y) => {
+      expect(y.fromOperator).toBe(0);
+      expect(y.activity).toBeCloseTo(y.credited, 6);
+    });
+  });
+
+  it('a signing payment or sponsor is its own source, still not the operator share', () => {
+    const r = TPcalculate(bear({ upfrontMode: 'amount', upfrontValue: 20000, sponsors: [{ name: 'S', amount: 5000, month: 2 }] }));
+    const f = r.licenceFunding;
+    expect(f.fromUpfront).toBe(20000);
+    expect(f.fromSponsors).toBe(5000);
+    expect(f.fromOperator).toBe(0);
+    expect(r.years[0].credited).toBeCloseTo(r.years[0].activity + 25000, 6);
+    expect(f.fromShare + f.fromSponsors + f.fromUpfront).toBeCloseTo(r.cumulativeLicense, 6);
+  });
+
+  it('a cash true-up is settled separately, never taken from the operator share', () => {
+    // Too little activity to retire 78k in year 1: the shortfall is a cash true-up.
+    const r = TPcalculate(bear({ tournaments: [{ id: 't', name: 'Weekly', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 50, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 100, customerCashCost: 50 }] }));
+    expect(r.trueUpTotal).toBeGreaterThan(0);
+    expect(r.licenceFunding.trueUp).toBe(r.trueUpTotal);
+    expect(r.licenceFunding.fromOperator).toBe(0);
+    r.months.forEach((m) => expect(m.toOperator).toBeCloseTo(m.splitBase * 0.45 - m.prizeCost, 6));
+  });
+});
+
 describe('Recapture toggle', () => {
   it('recapture on gives the licence a share of activity', () => {
     expect(TPsplitRates(base())).toMatchObject({ recapturing: true, credit: 0.5, operator: 0.4, lucra: 0.1 });

@@ -74,6 +74,11 @@ describe('/api/play — the customer sandbox', () => {
     expect(outputs.payoffMonth).not.toBeNull();
     expect(outputs.revenueYear).toBeGreaterThan(0);
     expect(outputs.years).toHaveLength(3);
+    // The licence is retired from the licence share alone; the customer's share never funds it.
+    expect(outputs.recapturing).toBe(true);
+    expect(outputs.licenceFromYou).toBe(0);
+    expect(outputs.licenceFromShare).toBeGreaterThan(0);
+    expect(outputs.licenceFromShare).toBeCloseTo(outputs.years.reduce((a, y) => a + y.retired, 0), 3);
     // Nothing that recovers the split beyond what the one-pager prints.
     const json = JSON.stringify(r.body);
     ['toLucra', 'totalLucra', 'lucraShare', 'splitMode', 'credit', 'postOperator', 'feeRate', 'rake', '"custom"', '17.5', 'operatorGross'].forEach((k) => {

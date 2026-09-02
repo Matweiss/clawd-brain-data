@@ -629,7 +629,7 @@ function TPcalculate(input, cfg, factor) {
     totalHandle = 0, totalPrizeCost = 0, totalSplitBase = 0,
     totalH2HFee = 0, totalH2HVolume = 0, totalRewardValue = 0,
     totalSponsorCredited = 0, totalSponsorUnapplied = 0,
-    upfront = TPupfront(s), totalUpfrontCredited = 0,
+    upfront = TPupfront(s), totalUpfrontCredited = 0, totalActivityCredited = 0,
     useH2H = TPanyH2H(s),
     byProduct = {},
     lossMonths = 0, payoffMonth = null, months = [];
@@ -638,7 +638,7 @@ function TPcalculate(input, cfg, factor) {
   });
 
   for (var y = 0; y < (s.freeLicense ? termYears : fees.length); y++) {
-    years.push({ year: y + 1, fee: s.freeLicense ? 0 : fees[y], opening: 0, credited: 0, trueUp: 0, clearMonth: null, closing: 0 });
+    years.push({ year: y + 1, fee: s.freeLicense ? 0 : fees[y], opening: 0, credited: 0, activity: 0, fromOperator: 0, trueUp: 0, clearMonth: null, closing: 0 });
   }
   if (years[0]) years[0].opening = remaining;
 
@@ -705,10 +705,15 @@ function TPcalculate(input, cfg, factor) {
     // The commercial splits gross entries. The partner funds the prize pool out of
     // their own share afterwards, so prize cost never reduces the pool being split:
     // $10,000 raised -> partner $9,000 -> their $1,000 prize cost -> partner nets $8,000.
+    // The licence is retired from the licence share alone. The operator's share is
+    // theirs from month one and never funds the licence, so licenseFromOperator is
+    // zero by construction rather than by coincidence; it is carried explicitly so
+    // every table can print it.
     var splitBase = handle + h2hFee,
       licenseGross = rates.credit > 0 ? Math.min(splitBase, remaining / rates.credit) : 0,
       postGross = splitBase - licenseGross,
       toLicense = Math.min(remaining, licenseGross * rates.credit),
+      licenseFromOperator = 0,
       operatorGross = licenseGross * rates.operator + postGross * rates.postOperator,
       toLucra = licenseGross * rates.lucra + postGross * rates.postLucra,
       toOperator = operatorGross - prizeCost,
@@ -721,7 +726,8 @@ function TPcalculate(input, cfg, factor) {
     cumulativeLicense += toLicense;
     totalOperator += toOperator; totalOperatorGross += operatorGross; totalLucra += toLucra;
     totalHandle += handle; totalPrizeCost += prizeCost; totalSplitBase += splitBase;
-    if (years[yi]) years[yi].credited += toLicense;
+    totalActivityCredited += toLicense;
+    if (years[yi]) { years[yi].credited += toLicense; years[yi].activity += toLicense; }
 
     // If the signing payment or a sponsor cleared it before any activity, the
     // month is done at its start.
@@ -742,7 +748,7 @@ function TPcalculate(input, cfg, factor) {
       products: products,
       sponsorPaid: sponsorPaid, sponsorCredit: sponsorCredit, upfrontCredit: upfrontCredit,
       grossMargin: grossMargin, splitBase: splitBase,
-      toLicense: toLicense, cumulativeLicense: cumulativeLicense,
+      toLicense: toLicense, licenseFromShare: toLicense, licenseFromOperator: licenseFromOperator, cumulativeLicense: cumulativeLicense,
       operatorGross: operatorGross, toOperator: toOperator, toLucra: toLucra,
       split: licenseGross > 0 && postGross > 0 ? 'Crossover' : licenseGross > 0 ? 'Payoff' : 'Post-payoff',
       detail: detail
@@ -772,6 +778,10 @@ function TPcalculate(input, cfg, factor) {
     totalH2HFee: totalH2HFee, totalH2HVolume: totalH2HVolume, totalRewardValue: totalRewardValue,
     totalSponsorCredited: totalSponsorCredited, totalSponsorUnapplied: totalSponsorUnapplied,
     upfront: upfront, totalUpfrontCredited: totalUpfrontCredited,
+    // Where the retired licence came from. fromOperator is always zero: the
+    // operator's share is never diverted to the licence.
+    totalActivityCredited: totalActivityCredited,
+    licenceFunding: { fromShare: totalActivityCredited, fromOperator: 0, fromSponsors: totalSponsorCredited, fromUpfront: totalUpfrontCredited, trueUp: trueUpTotal },
     includesH2H: useH2H, includesTournaments: TPanyTournaments(s),
     byProduct: byProduct,
     customerType: s.customerType, scheduleStated: TPscheduleStated(s), schedule: TPschedule(s),
@@ -1360,7 +1370,6 @@ function TPrecLevers(input, mau, step, opts) {
   levers.sort(function (a, b) { return (b.clears - a.clears) || (order.indexOf(a.key) - order.indexOf(b.key)); });
   return levers;
 }
-
 
 /* TP-PURE-END */
 module.exports = { TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPupfront, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments, TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear, TP_PRODUCTS, TP_PRODUCT_DEFAULTS, TP_H2H_DEFAULTS, TP_DEFAULT_TOURNAMENTS, TP_DEFAULT_MINI_TOURNAMENTS, TPproduct, TPproductOn, TPtournamentsOn, TPh2hOn, TPanyTournaments, TPanyH2H, TPtournamentsOf, TPallTournaments, TPcustomerDefaults, TPsingleLocation, TPyearCounts, TPscheduleFromYears, TPschedule, TPscheduleStated, TPlocationsOpen, TPminiEntered, TPproductBase, TPproductFactor, TPavgProductFactor, TPminiBase, TPprizeMultiplier, TPh2hInputs, TPprimaryTournament, TPrecCoreStep, TPrecProduct };
