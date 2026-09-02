@@ -430,14 +430,6 @@ async function store_saveInputs(id, inputs) {
   catch (error) { console.error('sandbox store', error && error.message); }
 }
 
-async function isRevoked(id) {
-  if (!id) return false;
-  const store = getStore();
-  if (!store.enabled) return false;
-  try { const link = await store.get(id); return !!(link && link.revoked); }
-  catch (error) { console.error('sandbox store', error && error.message); return false; }
-}
-
 /* Record what a customer did. Awaited before the response goes out (a
    serverless function may be frozen the moment it answers), but capped so a
    slow store can only delay a page, never break it. A first open also sends
@@ -463,12 +455,26 @@ function logActivity(id, event, data, req) {
   return Promise.race([work, budget]);
 }
 
-function verify(token, pass) {
+/* The passcode a link currently needs: the registry's, when the seller has
+   changed it from the dashboard, else the one sealed into the link. */
+function passcodeFor(data, link) {
+  return link && link.passcode ? String(link.passcode) : String(data.pass || '');
+}
+function verify(token, pass, link) {
   const parsed = parseScenarioToken(token, process.env.SCENARIO_SECRET);
   const data = parsed.data || {};
   if (data.kind !== 'revenue-sandbox') throw new Error('Not a sandbox link');
-  if (data.pass && String(pass || '') !== String(data.pass)) throw new Error('That passcode is not right');
+  const want = passcodeFor(data, link);
+  if (want && String(pass || '') !== want) throw new Error('That passcode is not right');
   return { data, exp: parsed.exp };
+}
+/* The registry row for a link, or null when there is none or the store is down. */
+async function linkRecord(id) {
+  if (!id) return null;
+  const store = getStore();
+  if (!store.enabled) return null;
+  try { return await store.get(id); }
+  catch (error) { console.error('sandbox store', error && error.message); return null; }
 }
 
 module.exports = async function handler(req, res) {
@@ -484,8 +490,9 @@ module.exports = async function handler(req, res) {
     let needsPass = false;
     try {
       const parsed = parseScenarioToken(req.query && req.query.deal, process.env.SCENARIO_SECRET);
-      needsPass = !!(parsed.data && parsed.data.pass);
-      if (await isRevoked(parsed.data && parsed.data.id)) throw new Error('The link was closed by the person who sent it');
+      const link = await linkRecord(parsed.data && parsed.data.id);
+      needsPass = !!passcodeFor(parsed.data || {}, link);
+      if (link && link.revoked) throw new Error('The link was closed by the person who sent it');
     }
     catch (error) { return res.status(400).end(`<!doctype html><title>Link unavailable</title><style>body{font:15px system-ui;background:#071a33;color:#eff6fb;padding:40px}</style><h1>This link is no longer open</h1><p>${esc(error && error.message || 'Link unavailable')}. Ask the person who sent it for a new one.</p>`); }
     return res.status(200).end(page().replace('__NEEDS_PASS__', needsPass ? 'true' : 'false'));
@@ -522,7 +529,7 @@ module.exports = async function handler(req, res) {
       if (store.enabled) {
         try {
           await store.create({ id, dealName: String(sealed.dealName || '').slice(0, 120), presenter: String(sealed.presenter || '').slice(0, 120),
-            presenterEmail: String(sealed.presenterEmail || '').slice(0, 200), createdAt, exp, days, pass: !!pass, unlockAdd: !!unlock.addTournaments,
+            presenterEmail: String(sealed.presenterEmail || '').slice(0, 200), createdAt, exp, days, pass: !!pass, passcode: pass, unlockAdd: !!unlock.addTournaments,
             customerType: sealed.customerType, term: E.TPterm(sealed) });
           // The live model: the seller can change it later from the dashboard,
           // and the customer's own inputs are kept beside it.
@@ -541,8 +548,9 @@ module.exports = async function handler(req, res) {
     try {
       // The passcode check happens inside verify; a wrong one is still logged.
       try { const peek = parseScenarioToken(body.deal, process.env.SCENARIO_SECRET); linkId = (peek.data && peek.data.id) || null; } catch { linkId = null; }
-      if (await isRevoked(linkId)) return res.status(410).json({ error: 'The link was closed by the person who sent it' });
-      const v = verify(body.deal, body.pass);
+      const link = await linkRecord(linkId);
+      if (link && link.revoked) return res.status(410).json({ error: 'The link was closed by the person who sent it' });
+      const v = verify(body.deal, body.pass, link);
       const meta = { unlock: v.data.unlock || { addTournaments: true }, exp: v.exp };
       // The live model wins over the token when the registry has one: the
       // seller may have changed it since the link was made.
@@ -601,4 +609,4 @@ module.exports = async function handler(req, res) {
   return res.status(400).json({ error: 'Unknown action' });
 };
 
-module.exports._internals = { applyInputs, facts, outputs, sealDeal, scenarioSummary };
+module.exports._internals = { applyInputs, facts, outputs, sealDeal, scenarioSummary, passcodeFor };

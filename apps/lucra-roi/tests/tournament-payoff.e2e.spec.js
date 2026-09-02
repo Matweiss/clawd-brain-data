@@ -1625,6 +1625,26 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await expect(row).toContainText('1 wrong attempt');
   await expect(row.locator('td').nth(5)).toContainText('1');
   await expect(row.locator('td').nth(5)).toContainText('first');
+  await expect(row.locator('td').nth(4).locator('code')).toHaveText('bear');
+  // Change the passcode from the dashboard: the customer's page, still open, needs the new one from now on.
+  dp.once('dialog', (d) => d.accept('otter-9001'));
+  await row.locator('button[data-act="passcode"]').click();
+  await expect(dp.locator('#main tbody tr').filter({ hasText: 'Fairway Social' }).first().locator('td').nth(4).locator('code')).toHaveText('otter-9001');
+  await cp.locator('#inputs input[type="number"]').first().fill('16500');
+  await expect(cp.locator('#res-err')).toContainText('passcode is not right');
+  const cpNew = await customer.newPage();
+  await cpNew.goto(url);
+  await cpNew.locator('#pass').fill('bear');
+  await cpNew.locator('#gate button').click();
+  await expect(cpNew.locator('#gate-err')).toContainText('passcode');
+  await cpNew.locator('#pass').fill('otter-9001');
+  await cpNew.locator('#gate button').click();
+  await expect(cpNew.locator('#model h1')).toHaveText('Fairway Social');
+  await cpNew.close();
+  await cp.reload();
+  await cp.locator('#pass').fill('otter-9001');
+  await cp.locator('#gate button').click();
+  await expect(cp.locator('#model h1')).toHaveText('Fairway Social');
   const edits = Number((await row.locator('td').nth(6).innerText()).split('\n')[0]);
   expect(edits).toBeGreaterThanOrEqual(2);
   await row.locator('summary').click();

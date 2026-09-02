@@ -5,6 +5,7 @@
 // POST /api/links { action:'revoke', key, id }    -> { ok }
 // POST /api/links { action:'reopen', key, id }    -> { ok }
 // POST /api/links { action:'remove', key, id }    -> { ok }
+// POST /api/links { action:'passcode', key, id, passcode } -> { ok }   change what the customer must enter
 //
 // The dashboard sits behind the site password like the calculator. An
 // optional second gate, SANDBOX_ADMIN_KEY, is asked for once per browser and
@@ -83,6 +84,8 @@ td .sub{display:block;color:var(--text3);font-size:11px;margin-top:2px}
 details{margin-top:4px}summary{cursor:pointer;color:var(--text2);font-size:12px}
 .scenario{margin:6px 0 0;padding:8px 10px;background:var(--surface2);border-radius:8px;font-family:var(--mono);font-size:11px;white-space:pre-wrap;color:var(--text2);max-width:520px}
 .foot{margin-top:14px;color:var(--text3);font-size:12px}
+code.code{font-family:var(--mono);background:var(--surface2);padding:2px 6px;border-radius:6px;font-size:12px}
+button.mini{padding:2px 8px;font-size:11px;margin-left:4px}
 </style></head><body><div class="wrap">
 <header><h1>Sandbox links<small>Every customer sandbox you have created, and what they have done with it.</small></h1>
 <div class="tools"><a href="/">Back to the calculator</a><button type="button" id="refresh" hidden>Refresh</button><button type="button" id="signout" hidden>Sign out</button></div></header>
@@ -121,13 +124,13 @@ function render(d){
       '<td><span class="pill '+l.status+'">'+l.status+'</span>'+(l.revokedAt?'<span class="sub">closed '+when(l.revokedAt)+'</span>':'')+'</td>'+
       '<td>'+when(l.createdAt)+'<span class="sub">'+ago(l.createdAt)+'</span></td>'+
       '<td>'+when(l.exp)+'<span class="sub">'+left(l.exp)+'</span></td>'+
-      '<td>'+(l.pass?'yes':'no')+(l.badPass?'<span class="sub" style="color:var(--amber)">'+l.badPass+' wrong attempt'+(l.badPass===1?'':'s')+'</span>':'')+'</td>'+
+      '<td>'+(l.passcode?'<code class="code">'+esc(l.passcode)+'</code>':(l.pass?'set when created':'none'))+' <button type="button" class="mini" data-act="passcode" data-id="'+esc(l.id)+'" title="Change the passcode; their link keeps working">Change</button>'+(l.passcodeAt?'<span class="sub">changed '+ago(l.passcodeAt)+'</span>':'')+(l.badPass?'<span class="sub" style="color:var(--amber)">'+l.badPass+' wrong attempt'+(l.badPass===1?'':'s')+'</span>':'')+'</td>'+
       '<td class="num">'+(l.opens||0)+(l.opens?'<span class="sub">first '+when(l.firstOpen)+'<br>last '+ago(l.lastOpen)+'</span>':'<span class="sub">not yet</span>')+(l.notifiedAt?'<span class="sub">emailed you</span>':'')+'</td>'+
       '<td class="num">'+(l.edits||0)+(l.edits?'<span class="sub">last '+ago(l.lastEdit)+'</span>':'')+(l.sellerUpdates?'<span class="sub" style="color:var(--green)">you saved '+l.sellerUpdates+'× · '+ago(l.lastSellerUpdate)+'</span>':'')+'</td>'+
       '<td>'+(l.lastInputs?'<details><summary>'+money(l.lastInputs.revenueYear)+' / yr · they earn '+money(l.lastInputs.operatorYear)+'</summary><pre class="scenario">'+esc(scenario(l.lastInputs))+'</pre></details>':'<span class="sub">nothing changed yet</span>')+'</td>'+
       '<td style="white-space:nowrap"><button type="button" class="primary" data-act="edit" data-id="'+esc(l.id)+'" title="Open their current model in the calculator; Save changes there writes it back to this link">Edit their model</button> '+(l.status==='open'?'<button type="button" class="danger" data-act="revoke" data-id="'+esc(l.id)+'">Close now</button>':l.status==='closed'&&l.exp>now?'<button type="button" data-act="reopen" data-id="'+esc(l.id)+'">Reopen</button>':'')+' <button type="button" data-act="remove" data-id="'+esc(l.id)+'" title="Remove from this list">Remove</button></td></tr>';
   });
-  h+='</tbody></table></div><div class="foot"><strong>Edit their model</strong> opens what the customer currently sees in the calculator, in a new tab; <em>Save changes to their link</em> there writes it back, and they see it on their next visit or refresh. Closing a link stops it immediately, before its expiry. Removing only takes it off this list; a removed link that has not expired still opens. Records are kept for 90 days after a link expires.</div>';
+  h+='</tbody></table></div><div class="foot"><strong>Change</strong> beside a passcode sets a new one on the spot; the customer keeps the same link. <strong>Edit their model</strong> opens what the customer currently sees in the calculator, in a new tab; <em>Save changes to their link</em> there writes it back, and they see it on their next visit or refresh. Closing a link stops it immediately, before its expiry. Removing only takes it off this list; a removed link that has not expired still opens. Records are kept for 90 days after a link expires.</div>';
   $('main').innerHTML=h;
 }
 function load(){
@@ -142,6 +145,12 @@ $('main').addEventListener('click',function(e){
   var b=e.target.closest('button[data-act]'); if(!b) return;
   if(b.dataset.act==='remove'&&!window.confirm('Remove this link from the list? It keeps working until it expires unless you close it first.')) return;
   b.disabled=true;
+  if(b.dataset.act==='passcode'){
+    var np=window.prompt('New passcode for this link (at least 4 characters). Their existing link keeps working with the new one.');
+    if(np===null){ b.disabled=false; return; }
+    api({action:'passcode',id:b.dataset.id,passcode:np}).then(load).catch(function(err){ b.disabled=false; alert(err.message); });
+    return;
+  }
   if(b.dataset.act==='edit'){
     var tab=window.open('','_blank');
     api({action:'edit',id:b.dataset.id}).then(function(d){ b.disabled=false; if(tab){ tab.location=d.url; } else { window.location=d.url; } }).catch(function(err){ b.disabled=false; if(tab) tab.close(); alert(err.message); });
@@ -203,6 +212,11 @@ module.exports = async function handler(req, res) {
       const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
       const proto = (req.headers && req.headers['x-forwarded-proto']) || (/^(127\.0\.0\.1|localhost)(:|$)/.test(host) ? 'http' : 'https');
       return res.status(200).json({ ok: true, url: `${proto}://${host}/?deal=${encodeURIComponent(token)}`, version: cur.version || 1, customerEdited: !!cur.inputs });
+    }
+    if (body.action === 'passcode') {
+      const passcode = String(body.passcode || '').trim().slice(0, 40);
+      if (passcode.length < 4) return res.status(400).json({ error: 'A passcode of at least 4 characters is required' });
+      return res.status(200).json({ ok: await store.setPasscode(id, passcode) });
     }
     if (body.action === 'revoke') return res.status(200).json({ ok: await store.revoke(id, true) });
     if (body.action === 'reopen') return res.status(200).json({ ok: await store.revoke(id, false) });

@@ -48,7 +48,7 @@ function redisClient(creds) {
 }
 
 /* Flat [k, v, k, v] to an object, numbers restored where they matter. */
-const NUMERIC = ['createdAt', 'exp', 'days', 'term', 'opens', 'edits', 'badPass', 'firstOpen', 'lastOpen', 'lastEdit', 'lastBadPass', 'revokedAt', 'notifiedAt', 'sellerUpdates', 'lastSellerUpdate'];
+const NUMERIC = ['createdAt', 'exp', 'days', 'term', 'opens', 'edits', 'badPass', 'firstOpen', 'lastOpen', 'lastEdit', 'lastBadPass', 'revokedAt', 'notifiedAt', 'sellerUpdates', 'lastSellerUpdate', 'passcodeAt'];
 function unflatten(flat) {
   if (!flat || !flat.length) return null;
   const out = {};
@@ -129,6 +129,14 @@ function createStore(redis, opts) {
       await redis.pipeline(cmds);
       return t;
     },
+    /* The seller changes a link's passcode from the dashboard; the customer's
+       existing link keeps working with the new one. */
+    async setPasscode(id, passcode) {
+      const exists = await redis.command(['EXISTS', key(id)]);
+      if (!Number(exists)) return false;
+      await redis.command(['HSET', key(id), 'passcode', String(passcode), 'pass', '1', 'passcodeAt', now()]);
+      return true;
+    },
     async revoke(id, on) {
       const exists = await redis.command(['EXISTS', key(id)]);
       if (!Number(exists)) return false;
@@ -197,7 +205,7 @@ const DISABLED = {
   enabled: false, makeId,
   async create() { return null; }, async get() { return null; }, async list() { return []; },
   async touch() { return null; }, async revoke() { return false; }, async remove() { return false; },
-  async saveDeal() { return null; }, async getDeal() { return null; }, async saveInputs() { return null; },
+  async saveDeal() { return null; }, async getDeal() { return null; }, async saveInputs() { return null; }, async setPasscode() { return false; },
 };
 
 let memorySingleton = null;

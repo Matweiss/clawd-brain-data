@@ -131,6 +131,31 @@ describe('The sandbox link registry', () => {
     expect((await dash({ action: 'revoke', id })).body.ok).toBe(false);
   });
 
+  it('lets the seller change a link\'s passcode; the customer keeps the same link', async () => {
+    const made = await link({ deal: { tp: deal() }, pass: 'bear-1234' });
+    const tok = tokenOf(made), id = made.body.id;
+    expect((await compute(tok, 'bear-1234', null)).statusCode).toBe(200);
+    let [l] = (await dash({ action: 'list' })).body.links;
+    expect(l.passcode).toBe('bear-1234');
+    expect((await dash({ action: 'passcode', id, passcode: 'abc' })).statusCode).toBe(400);
+    expect((await dash({ action: 'passcode', id, passcode: 'otter-9001' })).body.ok).toBe(true);
+    // The old passcode no longer opens it; the new one does; the page still asks for one.
+    const old = await compute(tok, 'bear-1234', null);
+    expect(old.statusCode).toBe(400);
+    expect(old.body.error).toMatch(/passcode is not right/);
+    expect((await compute(tok, 'otter-9001', null)).statusCode).toBe(200);
+    expect((await pageGet(tok)).body).toContain('needsPass = true');
+    [l] = (await dash({ action: 'list' })).body.links;
+    expect(l.passcode).toBe('otter-9001');
+    expect(l.passcodeAt).toBeGreaterThan(0);
+    expect(l.badPass).toBe(1);
+    // A link the registry no longer knows falls back to the passcode sealed in it.
+    await dash({ action: 'remove', id });
+    expect((await compute(tok, 'otter-9001', null)).statusCode).toBe(400);
+    expect((await compute(tok, 'bear-1234', null)).statusCode).toBe(200);
+    expect((await dash({ action: 'passcode', id, passcode: 'gone-0000' })).body.ok).toBe(false);
+  });
+
   it('gates the dashboard on its key and the same origin', async () => {
     const r = res();
     await links({ method: 'POST', body: { action: 'list', key: 'wrong' }, headers: HEADERS }, r);
