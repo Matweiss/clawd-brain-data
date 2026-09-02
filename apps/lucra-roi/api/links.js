@@ -13,6 +13,10 @@
 const { timingSafeEqual } = require('node:crypto');
 const { getStore, credentials } = require('../lib/sandbox-store');
 const notify = require('../lib/sandbox-notify');
+const { createScenarioToken } = require('../lib/scenario-token');
+const play = require('./play');
+
+const EDIT_TTL_SECONDS = 24 * 60 * 60;
 
 const MAX_BODY_BYTES = 8 * 1024;
 
@@ -118,11 +122,11 @@ function render(d){
       '<td>'+when(l.exp)+'<span class="sub">'+left(l.exp)+'</span></td>'+
       '<td>'+(l.pass?'yes':'no')+(l.badPass?'<span class="sub" style="color:var(--amber)">'+l.badPass+' wrong attempt'+(l.badPass===1?'':'s')+'</span>':'')+'</td>'+
       '<td class="num">'+(l.opens||0)+(l.opens?'<span class="sub">first '+when(l.firstOpen)+'<br>last '+ago(l.lastOpen)+'</span>':'<span class="sub">not yet</span>')+(l.notifiedAt?'<span class="sub">emailed you</span>':'')+'</td>'+
-      '<td class="num">'+(l.edits||0)+(l.edits?'<span class="sub">last '+ago(l.lastEdit)+'</span>':'')+'</td>'+
+      '<td class="num">'+(l.edits||0)+(l.edits?'<span class="sub">last '+ago(l.lastEdit)+'</span>':'')+(l.sellerUpdates?'<span class="sub" style="color:var(--green)">you saved '+l.sellerUpdates+'× · '+ago(l.lastSellerUpdate)+'</span>':'')+'</td>'+
       '<td>'+(l.lastInputs?'<details><summary>'+money(l.lastInputs.revenueYear)+' / yr · they earn '+money(l.lastInputs.operatorYear)+'</summary><pre class="scenario">'+esc(scenario(l.lastInputs))+'</pre></details>':'<span class="sub">nothing changed yet</span>')+'</td>'+
-      '<td style="white-space:nowrap">'+(l.status==='open'?'<button type="button" class="danger" data-act="revoke" data-id="'+esc(l.id)+'">Close now</button>':l.status==='closed'&&l.exp>now?'<button type="button" data-act="reopen" data-id="'+esc(l.id)+'">Reopen</button>':'')+' <button type="button" data-act="remove" data-id="'+esc(l.id)+'" title="Remove from this list">Remove</button></td></tr>';
+      '<td style="white-space:nowrap"><button type="button" class="primary" data-act="edit" data-id="'+esc(l.id)+'" title="Open their current model in the calculator; Save changes there writes it back to this link">Edit their model</button> '+(l.status==='open'?'<button type="button" class="danger" data-act="revoke" data-id="'+esc(l.id)+'">Close now</button>':l.status==='closed'&&l.exp>now?'<button type="button" data-act="reopen" data-id="'+esc(l.id)+'">Reopen</button>':'')+' <button type="button" data-act="remove" data-id="'+esc(l.id)+'" title="Remove from this list">Remove</button></td></tr>';
   });
-  h+='</tbody></table></div><div class="foot">Closing a link stops it immediately, before its expiry. Removing only takes it off this list; a removed link that has not expired still opens. Records are kept for 90 days after a link expires.</div>';
+  h+='</tbody></table></div><div class="foot"><strong>Edit their model</strong> opens what the customer currently sees in the calculator, in a new tab; <em>Save changes to their link</em> there writes it back, and they see it on their next visit or refresh. Closing a link stops it immediately, before its expiry. Removing only takes it off this list; a removed link that has not expired still opens. Records are kept for 90 days after a link expires.</div>';
   $('main').innerHTML=h;
 }
 function load(){
@@ -137,6 +141,11 @@ $('main').addEventListener('click',function(e){
   var b=e.target.closest('button[data-act]'); if(!b) return;
   if(b.dataset.act==='remove'&&!window.confirm('Remove this link from the list? It keeps working until it expires unless you close it first.')) return;
   b.disabled=true;
+  if(b.dataset.act==='edit'){
+    var tab=window.open('','_blank');
+    api({action:'edit',id:b.dataset.id}).then(function(d){ b.disabled=false; if(tab){ tab.location=d.url; } else { window.location=d.url; } }).catch(function(err){ b.disabled=false; if(tab) tab.close(); alert(err.message); });
+    return;
+  }
   api({action:b.dataset.act,id:b.dataset.id}).then(load).catch(function(err){ b.disabled=false; alert(err.message); });
 });
 try{ KEY=sessionStorage.getItem('sbx-key')||''; }catch(x){}
@@ -177,6 +186,24 @@ module.exports = async function handler(req, res) {
     const id = String(body.id || '');
     if (!/^[a-f0-9]{16}$/.test(id)) return res.status(400).json({ error: 'Link id required' });
     if (!store.enabled) return res.status(503).json({ error: 'No link registry attached' });
+    if (body.action === 'edit') {
+      // Open the customer's current model in the calculator: the seller's deal
+      // with the customer's own inputs on top, as one editable deal, carrying
+      // the link id so 'Save changes' can write it back.
+      if (!process.env.SCENARIO_SECRET) return res.status(503).json({ error: 'Deal links are not configured' });
+      const link = await store.get(id), cur = await store.getDeal(id);
+      if (!link || !cur || !cur.tp) return res.status(404).json({ error: 'No live model on record for that link' });
+      const effective = play._internals.applyInputs(cur.tp, cur.inputs, { addTournaments: !!link.unlockAdd });
+      // The Mini Game tab's copy of the base and the mini head-to-head must
+      // agree with the deal, or the calculator's own sync would overwrite it.
+      const mh = effective.mini.h2h;
+      const mg = { tau: effective.mau, eng: mh.engagement, plays: mh.playsPerUser, wager: mh.spendPerPlay, rake: mh.feeRate, rewardGames: mh.rewardGames, win: mh.winRate, redeem: mh.redeemRate, rewardValue: mh.valuePerRedemption };
+      const payload = { kind: 'revenue-model', tp: effective, mg, sandboxId: id, sandboxName: link.dealName || '', sandboxVersion: cur.version || 1, savedAt: new Date().toISOString() };
+      const token = createScenarioToken(payload, process.env.SCENARIO_SECRET, { ttlSeconds: EDIT_TTL_SECONDS });
+      const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
+      const proto = (req.headers && req.headers['x-forwarded-proto']) || (/^(127\.0\.0\.1|localhost)(:|$)/.test(host) ? 'http' : 'https');
+      return res.status(200).json({ ok: true, url: `${proto}://${host}/?deal=${encodeURIComponent(token)}`, version: cur.version || 1, customerEdited: !!cur.inputs });
+    }
     if (body.action === 'revoke') return res.status(200).json({ ok: await store.revoke(id, true) });
     if (body.action === 'reopen') return res.status(200).json({ ok: await store.revoke(id, false) });
     if (body.action === 'remove') return res.status(200).json({ ok: await store.remove(id) });

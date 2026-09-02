@@ -48,7 +48,7 @@ function redisClient(creds) {
 }
 
 /* Flat [k, v, k, v] to an object, numbers restored where they matter. */
-const NUMERIC = ['createdAt', 'exp', 'days', 'term', 'opens', 'edits', 'badPass', 'firstOpen', 'lastOpen', 'lastEdit', 'lastBadPass', 'revokedAt', 'notifiedAt'];
+const NUMERIC = ['createdAt', 'exp', 'days', 'term', 'opens', 'edits', 'badPass', 'firstOpen', 'lastOpen', 'lastEdit', 'lastBadPass', 'revokedAt', 'notifiedAt', 'sellerUpdates', 'lastSellerUpdate'];
 function unflatten(flat) {
   if (!flat || !flat.length) return null;
   const out = {};
@@ -80,7 +80,7 @@ function makeId() {
    memory implementation. */
 function createStore(redis, opts) {
   const now = (opts && opts.now) || (() => Date.now());
-  const key = (id) => 'sbx:link:' + id;
+  const key = (id) => 'sbx:link:' + id, dealKey = (id) => 'sbx:deal:' + id;
   const ttlFor = (exp) => Math.max(60, Math.round((exp + KEEP_AFTER_EXPIRY_MS - now()) / 1000));
 
   return {
@@ -120,6 +120,8 @@ function createStore(redis, opts) {
         cmds.push(['HINCRBY', key(id), 'badPass', 1], ['HSET', key(id), 'lastBadPass', t]);
       } else if (event === 'notified') {
         cmds.push(['HSET', key(id), 'notifiedAt', t]);
+      } else if (event === 'sellerUpdate') {
+        cmds.push(['HINCRBY', key(id), 'sellerUpdates', 1], ['HSET', key(id), 'lastSellerUpdate', t]);
       } else return null;
       // Only touch links that exist: HINCRBY on a missing key would recreate it.
       const exists = await redis.command(['EXISTS', key(id)]);
@@ -134,8 +136,33 @@ function createStore(redis, opts) {
       return true;
     },
     async remove(id) {
-      await redis.pipeline([['DEL', key(id)], ['ZREM', 'sbx:links', id]]);
+      await redis.pipeline([['DEL', key(id)], ['DEL', dealKey(id)], ['ZREM', 'sbx:links', id]]);
       return true;
+    },
+    /* The live model behind a link: the seller's deal as last saved, and the
+       customer's last inputs on top of it. Kept as one JSON string so a read
+       is one round trip. */
+    async saveDeal(id, deal, exp) {
+      const rec = Object.assign({ version: 1, inputs: null, updatedBy: 'seller', updatedAt: now() }, deal);
+      const ttl = exp ? ttlFor(exp) : KEEP_AFTER_EXPIRY_MS / 1000;
+      await redis.command(['SET', dealKey(id), JSON.stringify(rec), 'EX', Math.round(ttl)]);
+      return rec;
+    },
+    async getDeal(id) {
+      if (!id) return null;
+      const raw = await redis.command(['GET', dealKey(id)]);
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    },
+    /* The customer's latest inputs, kept with the deal so they find their own
+       changes again. The version does not move: only the seller moves it. */
+    async saveInputs(id, inputs) {
+      const cur = await this.getDeal(id);
+      if (!cur) return null;
+      cur.inputs = inputs || null; cur.inputsAt = now();
+      const ttl = await redis.command(['TTL', dealKey(id)]);
+      await redis.command(['SET', dealKey(id), JSON.stringify(cur)].concat(Number(ttl) > 0 ? ['EX', ttl] : []));
+      return cur;
     },
   };
 }
@@ -143,7 +170,7 @@ function createStore(redis, opts) {
 /* An in-memory Redis good enough for the commands above; tests and the dev
    server use it so the dashboard can be exercised without a network. */
 function createMemoryRedis() {
-  const hashes = new Map(), zset = new Map();
+  const hashes = new Map(), zset = new Map(), strings = new Map();
   async function command(args) {
     const [op, k, ...rest] = args.map((a) => String(a));
     switch (op) {
@@ -151,9 +178,12 @@ function createMemoryRedis() {
       case 'HSETNX': { const h = hashes.get(k) || {}; if (h[rest[0]] !== undefined) return 0; h[rest[0]] = rest[1]; hashes.set(k, h); return 1; }
       case 'HINCRBY': { const h = hashes.get(k) || {}; h[rest[0]] = String((Number(h[rest[0]]) || 0) + Number(rest[1])); hashes.set(k, h); return Number(h[rest[0]]); }
       case 'HGETALL': { const h = hashes.get(k); return h ? Object.keys(h).flatMap((f) => [f, h[f]]) : []; }
-      case 'EXISTS': return hashes.has(k) ? 1 : 0;
-      case 'EXPIRE': return hashes.has(k) ? 1 : 0;
-      case 'DEL': hashes.delete(k); return 1;
+      case 'EXISTS': return hashes.has(k) || strings.has(k) ? 1 : 0;
+      case 'EXPIRE': return hashes.has(k) || strings.has(k) ? 1 : 0;
+      case 'TTL': return strings.has(k) || hashes.has(k) ? 1000 : -2;
+      case 'SET': strings.set(k, rest[0]); return 'OK';
+      case 'GET': return strings.has(k) ? strings.get(k) : null;
+      case 'DEL': hashes.delete(k); strings.delete(k); return 1;
       case 'ZADD': zset.set(rest[1], Number(rest[0])); return 1;
       case 'ZREM': rest.forEach((m) => zset.delete(m)); return rest.length;
       case 'ZREVRANGE': return [...zset.entries()].sort((a, b) => b[1] - a[1]).map((e) => e[0]).slice(Number(rest[0]), Number(rest[1]) + 1);
@@ -167,6 +197,7 @@ const DISABLED = {
   enabled: false, makeId,
   async create() { return null; }, async get() { return null; }, async list() { return []; },
   async touch() { return null; }, async revoke() { return false; }, async remove() { return false; },
+  async saveDeal() { return null; }, async getDeal() { return null; }, async saveInputs() { return null; },
 };
 
 let memorySingleton = null;

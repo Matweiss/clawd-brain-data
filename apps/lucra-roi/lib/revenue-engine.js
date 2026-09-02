@@ -653,6 +653,10 @@ function TPcalculate(input, cfg, factor) {
       }
       remaining += fees[yi];
       years[yi].opening = remaining;
+    } else if (!annual && monthInYear === 1 && month > 1 && years[yi]) {
+      // One balance across the term: each year opens where the last one closed.
+      years[yi - 1].closing = remaining;
+      years[yi].opening = remaining;
     }
 
     // The upfront payment lands at signing, then sponsors; both go straight

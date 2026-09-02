@@ -678,6 +678,9 @@ table.tp-heat td.miss{background:var(--amber-bg);color:var(--amber)}
 .tpc-from-deal .tpc-from-note button{background:none;border:0;padding:0;color:var(--green);font:inherit;cursor:pointer;text-decoration:underline}
 .tp-months td.tp-zero{color:var(--green)}
 .tp-months td.tp-neg{color:var(--red)}
+.tp-cowork{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding:12px 14px;border:1px solid var(--green-border);background:var(--green-bg);border-radius:var(--radius)}
+.tp-cowork[hidden]{display:none}
+.tp-cowork strong{color:var(--green)}
 .tp-months tr.tp-subtotal td{background:var(--surface2);font-weight:600;border-top:1px solid var(--border)}
 .tp-months tr.tp-total td{background:var(--green-bg);font-weight:700;color:var(--text);border-top:2px solid var(--green-border)}
 .tp-operator{margin:22px 0 4px}
@@ -1928,7 +1931,11 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     </div>
     <div class="tp-actions"><button type="button" id="tp-sandbox-btn" onclick="TPsandboxLink(this)">Create sandbox link</button></div>
     <div class="tp-share" id="tp-sandbox-out" hidden><input class="pf-input" type="text" readonly aria-label="Sandbox link" onclick="this.select()"><div class="sn" id="tp-sandbox-note"></div></div>
-    <div class="sn" style="margin-top:10px">Links are unlimited. <a href="/links" target="_blank" rel="noopener" id="tp-sandbox-manage">Manage sandbox links</a> to see when each one is opened, what the customer changes, and to close one early.</div>
+    <div class="tp-cowork" id="tp-sandbox-cowork" hidden>
+      <div><strong id="tp-sandbox-cowork-title">Editing a customer's sandbox</strong><div class="sn" id="tp-sandbox-cowork-note"></div></div>
+      <div class="tp-actions" style="margin:0"><button type="button" class="primary" id="tp-sandbox-save" onclick="TPsandboxUpdate(this)">Save changes to their link</button><button type="button" onclick="TPsandboxStopEditing()">Stop editing</button></div>
+    </div>
+    <div class="sn" style="margin-top:10px">Links are unlimited. <a href="/links" target="_blank" rel="noopener" id="tp-sandbox-manage">Manage sandbox links</a> to see when each one is opened, what the customer changes, edit what they see, and close one early.</div>
   </details>
   <div class="sn">Shows revenue generated before any split, per the Lucra default. The operator and Lucra shares stay in the 12-month results below and never reach this export.</div>
 
@@ -4294,6 +4301,10 @@ function TPcalculate(input, cfg, factor) {
       }
       remaining += fees[yi];
       years[yi].opening = remaining;
+    } else if (!annual && monthInYear === 1 && month > 1 && years[yi]) {
+      // One balance across the term: each year opens where the last one closed.
+      years[yi - 1].closing = remaining;
+      years[yi].opening = remaining;
     }
 
     // The upfront payment lands at signing, then sponsors; both go straight
@@ -6375,11 +6386,57 @@ async function TPshareDeal(btn) {
   }
 }
 
+/* Co-working a customer's sandbox: the dashboard opens their current model
+   here with the link id attached; Save writes it back so they see it on their
+   next visit. The edit token is the authorisation and lives for a day. */
+var TP_SANDBOX_KEY = 'lucra-tp-sandbox-edit';
+var TP_SANDBOX = null;
+function TPsandboxCoworkStart(info) {
+  TP_SANDBOX = info;
+  try { sessionStorage.setItem(TP_SANDBOX_KEY, JSON.stringify(info)); } catch (e) { /* ignore */ }
+  TPsandboxCoworkRender();
+  var fold = $('tp-sandbox-fold'); if (fold) fold.open = true;
+}
+function TPsandboxStopEditing() {
+  TP_SANDBOX = null;
+  try { sessionStorage.removeItem(TP_SANDBOX_KEY); } catch (e) { /* ignore */ }
+  TPsandboxCoworkRender();
+}
+function TPsandboxCoworkRender() {
+  var box = $('tp-sandbox-cowork'); if (!box) return;
+  if (!TP_SANDBOX) { try { TP_SANDBOX = JSON.parse(sessionStorage.getItem(TP_SANDBOX_KEY) || 'null'); } catch (e) { TP_SANDBOX = null; } }
+  if (!TP_SANDBOX) { box.hidden = true; return; }
+  box.hidden = false;
+  $('tp-sandbox-cowork-title').textContent = 'Editing ' + (TP_SANDBOX.name || 'a customer') + '\u2019s sandbox';
+  $('tp-sandbox-cowork-note').textContent = 'Loaded from their link as they last saw it (version ' + TP_SANDBOX.version + '). Change anything above, then save: they see it on their next visit or refresh, and their own edits start again from your version.';
+}
+async function TPsandboxUpdate(btn) {
+  if (!TP_SANDBOX) return null;
+  setButtonBusy(btn, 'Saving…');
+  try {
+    var response = await fetch('/api/play', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', edit: TP_SANDBOX.token, deal: { tp: TP, mg: TPh2hSnapshot() } })
+    }), data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || 'Could not save to the link');
+    TP_SANDBOX.version = data.version;
+    try { sessionStorage.setItem(TP_SANDBOX_KEY, JSON.stringify(TP_SANDBOX)); } catch (e) { /* ignore */ }
+    TPsandboxCoworkRender();
+    $('tp-sandbox-cowork-note').textContent = 'Saved as version ' + data.version + (data.status === 'open' ? '. They see it on their next visit or refresh.' : '. The link is ' + data.status + ', so reopen or extend it for them to see this.');
+    setButtonState(btn, 'Saved ✓', 2600, true);
+    return data;
+  } catch (error) {
+    setButtonState(btn, 'Not saved', 2600);
+    alert((error && error.message) || 'Could not save to the link.');
+    return null;
+  }
+}
+
 /* On load, a ?deal= link restores the deal and opens the tab. The token is
    resolved server-side; the browser never sees a key. */
 async function TPloadDealFromUrl() {
   var params = new URLSearchParams(location.search), token = params.get('deal');
-  if (!token) return false;
+  if (!token) { TPsandboxCoworkRender(); return false; }
   try {
     var response = await fetch('/api/deal?deal=' + encodeURIComponent(token)), data = await response.json();
     if (!response.ok || !data.deal) throw new Error(data.error || 'This deal link is not valid');
@@ -6389,6 +6446,10 @@ async function TPloadDealFromUrl() {
     TPmigrateLoaded(data.deal.tp || {});
     TP_READY = true;
     TPsave();
+    // A link minted from the sandbox dashboard carries the customer's link id:
+    // the seller is editing what that customer sees, and can save it back.
+    if (data.deal.sandboxId) TPsandboxCoworkStart({ id: data.deal.sandboxId, name: data.deal.sandboxName || '', version: data.deal.sandboxVersion || 1, token: token });
+    else TPsandboxCoworkRender();
     if (typeof T === 'function') T('tournaments');
     TPrenderControls(); TPrenderTournaments(); TPsyncH2H(); TPrender();
     history.replaceState(null, '', location.pathname);

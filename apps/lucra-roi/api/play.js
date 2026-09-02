@@ -155,27 +155,60 @@ function scenarioSummary(f, o) {
   };
 }
 
-/* Customer-safe outputs only. Nothing here lets a reader recover the split
-   beyond what the one-pager already prints. */
+/* Customer-safe outputs. The seller asked for the licence share and the
+   operator's share to be printed as percentages on the customer page, so they
+   are here by name; Lucra's own percentage and Lucra's earnings never are. */
 function outputs(s) {
   const cfg = miniCfg(s), r = E.TPcalculate(s, cfg), term = E.TPterm(s);
   if (r.errors.length) return { errors: r.errors };
-  const cases = E.TPCcases(cfg).map((c) => ({ key: c.key, label: c.label, note: c.note, revenueYear: c.result.annualRevenueGenerated, operatorYear: c.result.operatorNet * 12, payoffMonth: c.result.tournamentResult.payoffMonth }));
-  const years = E.TPyearTotals(r).map((y) => ({
-    year: y.year, revenue: y.splitBase, entries: y.handle, fee: y.h2hFee, prize: y.prizeCost, operator: y.toOperator,
-    operatorCumulative: y.cumulative.toOperator, settle: y.trueUp + y.balanceDue, operatorAfterSettle: y.cumulative.operatorAfterTrueUp,
-    licenceFee: r.free ? 0 : y.fee, retired: r.free ? 0 : ((r.years || [])[y.year - 1] || {}).credited || 0, locations: y.locationsOpen,
-  }));
+  const allCases = E.TPCcases(cfg), mid = allCases[1].result, hh = mid.h2h || {};
+  const cases = allCases.map((c) => ({ key: c.key, label: c.label, note: c.note, revenueYear: c.result.annualRevenueGenerated, operatorYear: c.result.operatorNet * 12, payoffMonth: c.result.tournamentResult.payoffMonth }));
+  const rates = E.TPsplitRates(s), pct = (x) => Math.round(x * 1000) / 10;
+  const totals = E.TPyearTotals(r);
+  const years = totals.map((y) => {
+    const yr = (r.years || [])[y.year - 1] || {};
+    return {
+      year: y.year, months: y.months, locations: y.locationsOpen, participantsAvg: y.participantsAvg,
+      revenue: y.splitBase, entries: y.handle, fee: y.h2hFee,
+      toLicence: y.toLicense, licenceCumulative: y.cumulativeLicense,
+      yourShare: y.operatorGross, prize: y.prizeCost, operator: y.toOperator,
+      operatorCumulative: y.cumulative.toOperator, settle: y.trueUp + y.balanceDue, settleCumulative: y.cumulative.trueUp + y.balanceDue,
+      operatorAfterSettle: y.cumulative.operatorAfterTrueUp, operatorYearAfterSettle: y.operatorAfterTrueUp,
+      licenceFee: r.free ? 0 : y.fee, opening: r.free ? 0 : (yr.opening || 0), fromShare: r.free ? 0 : (yr.activity || 0), fromYou: 0,
+      fromSigning: r.free ? 0 : ((yr.credited || 0) - (yr.activity || 0)), retired: r.free ? 0 : (yr.credited || 0),
+      clearMonth: yr.clearMonth === undefined ? null : yr.clearMonth, closing: r.free ? 0 : (yr.closing || 0),
+    };
+  });
+  let opCum = 0;
+  const monthly = r.months.map((m) => {
+    opCum += m.toOperator;
+    return { month: m.month, year: m.year, monthInYear: m.monthInYear, participants: m.participants, entries: m.handle, fee: m.h2hFee, revenue: m.splitBase,
+      toLicence: m.licenseFromShare, licenceCumulative: m.cumulativeLicense, yourShare: m.operatorGross, prize: m.prizeCost, operator: m.toOperator, operatorCumulative: opCum,
+      locationsOpen: m.locationsOpen, phase: m.split };
+  });
+  const funding = r.licenceFunding;
   return {
     errors: [], term, free: r.free, payoffMonth: r.payoffMonth, balanceDue: r.balanceDue, licenceTotal: r.totalContract,
+    contract: { total: r.totalContract, fees: r.free ? [] : E.TPfees(s).slice(0, term), annual: !!r.annualBasis, waived: r.free },
     // Where the retired licence came from. Your share never funds it, so licenceFromYou is zero by construction.
-    recapturing: !!r.recapturing, licenceFromShare: r.licenceFunding.fromShare, licenceFromYou: r.licenceFunding.fromOperator,
-    licenceFromSigning: r.licenceFunding.fromUpfront + r.licenceFunding.fromSponsors, trueUp: r.licenceFunding.trueUp,
+    recapturing: !!r.recapturing, licenceFromShare: funding.fromShare, licenceFromYou: funding.fromOperator,
+    licenceFromSigning: funding.fromUpfront + funding.fromSponsors, trueUp: funding.trueUp,
+    // The split as it applies to the customer: the licence share while the licence is being retired, their share then and after.
+    rates: r.recapturing ? { licenceSharePct: pct(rates.credit), yourSharePct: pct(rates.operator), yourSharePostPct: pct(rates.postOperator) } : { licenceSharePct: 0, yourSharePct: pct(rates.postOperator), yourSharePostPct: pct(rates.postOperator) },
     revenueYear: r.totalSplitBase / term, entriesYear: r.totalHandle / term, feeYear: r.totalH2HFee / term,
     prizeYear: r.totalPrizeCost / term, operatorYear: r.totalOperator / term, rewardValueYear: r.totalRewardValue / term,
     byProduct: { core: { revenueYear: r.byProduct.core.splitBase / term, on: r.byProduct.core.on }, mini: { revenueYear: r.byProduct.mini.splitBase / term, on: r.byProduct.mini.on } },
-    months: r.months.map((m) => ({ month: m.month, revenue: m.splitBase, operator: m.toOperator, locationsOpen: m.locationsOpen })),
-    operatorTotal: r.totalOperator, settleTotal: r.trueUpTotal + r.balanceDue,
+    months: r.months.map((m) => ({ month: m.month, revenue: m.splitBase, operator: m.toOperator, locationsOpen: m.locationsOpen, licenceCumulative: m.cumulativeLicense })),
+    monthly,
+    operatorTotal: r.totalOperator, yourShareTotal: r.totalOperatorGross, revenueTotal: r.totalSplitBase, prizeTotal: r.totalPrizeCost, toLicenceTotal: funding.fromShare,
+    settleTotal: r.trueUpTotal + r.balanceDue, operatorAfterSettleTotal: r.totalOperator - r.trueUpTotal - r.balanceDue,
+    // The combined model's tiles, at the expected case.
+    combined: {
+      mau: mid.mau, includeH2H: !!mid.includeH2H, includeTournaments: !!mid.includeTournaments,
+      reach: hh.reach || 0, engagement: hh.engagement || 0, engaged: hh.engaged || 0, paidVolume: hh.paidVolume || 0,
+      rewardValue: mid.rewardValue || 0, rewardRedemptions: hh.rewardRedemptions || 0,
+      tournamentParticipants: mid.tournamentParticipants || 0, tournamentShare: mid.tournamentShare || 0, combinedShare: mid.combinedShare || 0,
+    },
     cases, years,
   };
 }
@@ -198,11 +231,16 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 8px;b
 .err{border:1px solid var(--red);color:var(--red);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px}.note{color:var(--muted);font-size:12px;margin-top:8px}.keep{border:1px solid rgba(138,233,26,.4);background:rgba(138,233,26,.08);border-radius:12px;padding:12px 14px;margin:14px 0 6px;display:flex;flex-direction:column;gap:4px}.keep strong{color:var(--green);font-size:15px}.keep span{color:var(--muted);font-size:13px}
 .gate{max-width:420px;margin:60px auto;text-align:center}.gate input{text-align:center;font-size:18px;letter-spacing:.2em}
 .sched{margin:6px 0}.sched .row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin:6px 0}.chip{display:inline-block;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;margin:3px 4px 3px 0;color:var(--muted)}.chip.est{border-color:var(--amber)}
-.bars{display:flex;align-items:flex-end;gap:2px;height:90px;margin:8px 0 2px}.bars i{flex:1;background:var(--green);border-radius:2px 2px 0 0;min-width:2px;opacity:.85}.bars i.neg{background:var(--red)}.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}
+.full{margin-top:18px}.section{margin-top:18px}.section h3{margin:0 0 4px;font-size:14px}.section .hint{margin-bottom:8px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.tablewrap table{min-width:640px}.tablewrap th,.tablewrap td{white-space:nowrap}tr.sub td{background:rgba(255,255,255,.04);font-weight:600;border-top:1px solid var(--line)}td.neg{color:var(--red)}td.zero{color:var(--green)}
+.keep .rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:6px}.keep .rows div{display:flex;flex-direction:column}.keep .rows span{font-size:11px}.keep .rows b{font:700 15px var(--mono);color:var(--text)}.keep .rows b.zero{color:var(--green)}.keep .rows b.neg{color:var(--red)}
+.banner{border:1px solid var(--blue);background:rgba(111,177,255,.1);border-radius:10px;padding:10px 12px;margin:14px 0 0;font-size:13px;color:var(--text)}.banner b{color:var(--blue)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}.stat{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:10px}.stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}.stat strong{display:block;font:750 18px var(--mono);margin-top:4px}.stat small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.bars{display:flex;align-items:flex-end;gap:2px;height:90px;margin:8px 0 2px}.bars i{flex:1;background:var(--green);border-radius:2px 2px 0 0;min-width:2px;opacity:.85}.bars i.neg{background:var(--red)}.bars.pay i{background:var(--blue)}.bars.pay i.done{background:var(--green)}.bars.pay i.ys{border-left:1px solid var(--line)}.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}
 footer{margin-top:26px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
 </style></head><body><main class="wrap" id="app"><div class="gate" id="gate"><div class="brand">LUCRA · REVENUE MODEL</div><h1>Your model</h1><p class="sub" style="margin:auto">Enter the passcode you were given to open it.</p><form onsubmit="return openIt(event)"><p><input id="pass" type="password" autocomplete="off" placeholder="Passcode"></p><p><button class="primary" type="submit">Open</button></p><div class="err" id="gate-err" hidden></div></form></div><div id="model" hidden></div></main>
 <script>
-var TOKEN = new URLSearchParams(location.search).get('deal') || '', PASS = '', FACTS = null, OUT = null, INPUTS = null, timer = null, needsPass = __NEEDS_PASS__;
+var TOKEN = new URLSearchParams(location.search).get('deal') || '', PASS = '', FACTS = null, OUT = null, INPUTS = null, timer = null, needsPass = __NEEDS_PASS__, VERSION = null, REBASED = false;
 function $(id){return document.getElementById(id)}
 function money(n){var v=Math.round(Number(n)||0);return (v<0?'-$':'$')+Math.abs(v).toLocaleString()}
 function num(n){return Math.round(Number(n)||0).toLocaleString()}
@@ -210,7 +248,7 @@ function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){retur
 function openIt(ev){ if(ev)ev.preventDefault(); PASS=$('pass')?$('pass').value:''; load(); return false; }
 async function post(body){ var r=await fetch('/api/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); var d=await r.json().catch(function(){return {}}); if(!r.ok) throw new Error(d.error||'Could not load the model'); return d; }
 async function load(){
-  try{ var d=await post({action:'compute',deal:TOKEN,pass:PASS,inputs:null}); FACTS=d.facts; OUT=d.outputs; INPUTS=inputsFromFacts(FACTS); $('gate').hidden=true; $('model').hidden=false; render(); }
+  try{ var d=await post({action:'compute',deal:TOKEN,pass:PASS,inputs:null}); FACTS=d.facts; OUT=d.outputs; VERSION=FACTS.version||null; INPUTS=inputsFromFacts(FACTS); $('gate').hidden=true; $('model').hidden=false; render(); }
   catch(e){ var g=$('gate-err'); g.hidden=false; g.textContent=e.message; if(!needsPass){ $('gate').querySelector('form').hidden=true; } }
 }
 function inputsFromFacts(f){
@@ -220,7 +258,9 @@ function inputsFromFacts(f){
 }
 function schedule(){ clearTimeout(timer); timer=setTimeout(recompute,250); }
 async function recompute(){
-  try{ var body={action:'compute',deal:TOKEN,pass:PASS,inputs:INPUTS}; var d=await post(body); FACTS=d.facts; OUT=d.outputs; renderResults(); if(!FACTS.single) renderSchedule(); }
+  try{ var body={action:'compute',deal:TOKEN,pass:PASS,inputs:INPUTS,version:VERSION}; var d=await post(body); FACTS=d.facts; OUT=d.outputs;
+    if(FACTS.rebased){ VERSION=FACTS.version; INPUTS=inputsFromFacts(FACTS); REBASED=true; render(); return; }
+    renderResults(); if(!FACTS.single) renderSchedule(); }
   catch(e){ var el=$('res-err'); if(el){el.hidden=false; el.textContent=e.message;} }
 }
 function set(path,v,isNum){ var parts=path.split('.'),o=INPUTS; for(var i=0;i<parts.length-1;i++){o=o[parts[i]]} o[parts[parts.length-1]]=isNum?Number(v):v; schedule(); }
@@ -237,8 +277,11 @@ function reset(){ INPUTS=null; PASS=PASS; load(); }
 function render(){
   var f=FACTS, exp=f.expiresAt?new Date(f.expiresAt):null;
   $('model').innerHTML='<header><div><div class="brand">LUCRA · REVENUE MODEL</div><h1>'+esc(f.dealName||'Your revenue model')+'</h1><div class="sub">Change your own numbers and watch the model move. The licence and the commercial terms are as proposed and cannot be changed here.</div></div><div class="stamp">'+(f.presenter?'Prepared by '+esc(f.presenter)+(f.presenterEmail?'<br>'+esc(f.presenterEmail):'')+'<br>':'')+(exp?'Link open until '+exp.toLocaleDateString():'')+'</div></header>'+
+    (f.updatedBy==='seller'&&(f.version||1)>1?'<div class="banner"><b>'+esc(f.presenter||'The person who sent this')+' updated this model</b> on '+new Date(f.updatedAt).toLocaleDateString()+(REBASED?'. Your view has been refreshed to their version; your earlier changes were replaced.':'. This is their latest version.')+'</div>':'')+
     '<div class="grid"><div><div class="panel" id="inputs"></div></div><div><div class="panel" id="results"></div></div></div>'+
+    '<div class="panel full" id="term"></div>'+
     '<footer>Illustrative planning estimate built on the numbers above, not a guarantee, offer or contract. Revenue generated is the pool before any revenue share. Prize funding is carried by you out of your share. Reward redemptions are venue value, not revenue, and are not counted.</footer>';
+  REBASED=false;
   renderInputs(); renderResults();
 }
 function renderInputs(){
@@ -297,29 +340,90 @@ function renderSchedule(){
   }
   el.innerHTML=h;
 }
+function pctS(v){ return (Math.round(v*10)/10)+'%'; }
+function shareLabel(o){ var r=o.rates; return o.recapturing&&Math.abs(r.yourSharePostPct-r.yourSharePct)>0.05 ? pctS(r.yourSharePct)+' then '+pctS(r.yourSharePostPct) : pctS(r.yourSharePct); }
 function renderResults(){
   var o=OUT, f=FACTS, h='<h2>What the model says</h2><div class="hint">Updated as you type. Averages across the '+f.term+'-year term.</div><div class="err" id="res-err" hidden></div>';
-  if(o.errors&&o.errors.length){ $('results').innerHTML=h+'<div class="err">'+o.errors.map(esc).join('<br>')+'</div>'; return; }
+  if(o.errors&&o.errors.length){ $('results').innerHTML=h+'<div class="err">'+o.errors.map(esc).join('<br>')+'</div>'; $('term').innerHTML=''; $('term').hidden=true; return; }
+  $('term').hidden=false;
   var payoff = o.free ? 'No licence to retire' : o.payoffMonth!==null ? 'Month '+(Math.round(o.payoffMonth*10)/10).toFixed(1) : money(o.balanceDue)+' left at term end';
   h+='<div class="tiles"><div class="tile"><span>Revenue generated / yr</span><strong>'+money(o.revenueYear)+'</strong><small>'+(o.byProduct.core.on&&o.byProduct.mini.on?'Venues '+money(o.byProduct.core.revenueYear)+' · app '+money(o.byProduct.mini.revenueYear):'Before any revenue share')+'</small></div>'+
     '<div class="tile"><span>You earn / yr</span><strong class="'+(o.operatorYear<0?'bad':'')+'">'+money(o.operatorYear)+'</strong><small>After funding '+money(o.prizeYear)+' of prizes</small></div>'+
     '<div class="tile"><span>'+(o.free?'Licence':'Licence retired by activity')+'</span><strong>'+payoff+'</strong><small>'+(o.free?'Waived':money(o.licenceTotal)+' over the term')+'</small></div>'+
     '<div class="tile"><span>Your prize funding / yr</span><strong>'+money(o.prizeYear)+'</strong><small>'+(o.feeYear>0?'Entries '+money(o.entriesYear)+' · head-to-head '+money(o.feeYear)+' a year':'Carried out of your share')+'</small></div></div>';
-  if(!o.free&&o.recapturing) h+='<div class="keep"><strong>The licence is retired out of the licence share alone. Your share is never diverted to it.</strong><span>Of the '+money(o.licenceFromShare+o.licenceFromYou+o.licenceFromSigning)+' retired over the term, '+money(o.licenceFromShare)+' came from the licence share'+(o.licenceFromSigning>0?', '+money(o.licenceFromSigning)+' from signing and sponsors':'')+' and '+money(o.licenceFromYou)+' from your share. Your share is yours from month one and steps up once the licence is cleared.'+(o.trueUp>0?' Any shortfall is settled separately at year end, never taken from your share.':'')+'</span></div>';
+  // The combined model: one base, both products, three cases.
+  var c=o.combined;
+  h+='<h3 style="margin:14px 0 2px;font-size:14px">Combined revenue model'+(c.includeH2H&&c.includeTournaments?' · head-to-head + tournaments':c.includeH2H?' · head-to-head':' · tournaments')+'</h3><div class="hint">One base feeds both products. Head-to-head takes a share of it; tournaments take their own share, or the count you entered.</div>';
+  h+='<div class="stats"><div class="stat"><span>'+(f.single?'Monthly active users':'Users per location')+'</span><strong>'+num(c.mau)+'</strong><small>'+(f.single?'The base both products draw on':'× '+f.locations[f.locations.length-1]+' locations by the end of the term')+'</small></div>'+
+    (c.includeH2H?'<div class="stat"><span>Paid-game volume / mo</span><strong>'+money(c.paidVolume)+'</strong><small>'+num(c.engaged)+' players at '+pctS(c.engagement)+'</small></div>':'')+
+    (c.includeH2H&&c.rewardValue>0?'<div class="stat"><span>Reward value / mo</span><strong>'+money(c.rewardValue)+'</strong><small>'+num(c.rewardRedemptions)+' redemptions · not revenue</small></div>':'')+
+    (c.includeTournaments?'<div class="stat"><span>Tournament participants</span><strong>'+num(c.tournamentParticipants)+'</strong><small>'+(Math.round(c.tournamentShare*100)/100)+'% of the base per event</small></div>':'')+'</div>';
   h+='<div class="cases">'+o.cases.map(function(c){return '<div class="case'+(c.key==='expected'?' mid':'')+'"><span>'+esc(c.label)+'</span><strong>'+money(c.revenueYear)+'</strong><small>'+esc(c.note)+' · you earn '+money(c.operatorYear)+'</small></div>'}).join('')+'</div>';
+  if(c.includeH2H&&c.includeTournaments) h+='<div class="note">A player can take part in both, so the two audiences are not netted against each other: at the expected case about '+(Math.round(c.combinedShare*100)/100)+'% of the base is active across both.</div>';
   var max=Math.max.apply(null,o.months.map(function(m){return Math.abs(m.revenue)}).concat([1]));
-  h+='<div class="hint">Revenue generated by month</div><div class="bars">'+o.months.map(function(m){return '<i style="height:'+Math.max(2,Math.round(m.revenue/max*88))+'px" title="Month '+m.month+': '+money(m.revenue)+(m.locationsOpen>1?' · '+m.locationsOpen+' locations':'')+'"></i>'}).join('')+'</div><div class="axis"><span>Month 1</span><span>Month '+o.months.length+'</span></div>';
-  var settle=o.settleTotal>0, multi=o.years.length>1;
-  h+='<table><thead><tr><th>Year</th>'+(f.single?'':'<th>Locations</th>')+'<th>Revenue generated</th><th>You earn</th>'+(multi?'<th>You earn, cumulative</th>':'')+(o.free?'':'<th>Licence retired</th>')+(settle?'<th>Settled at year end</th><th>Cumulative, after settling</th>':'')+'</tr></thead><tbody>'+
-    o.years.map(function(y){return '<tr><td>Year '+y.year+'</td>'+(f.single?'':'<td>'+y.locations+'</td>')+'<td>'+money(y.revenue)+'</td><td'+(y.operator<0?' style="color:var(--red)"':'')+'>'+money(y.operator)+'</td>'+(multi?'<td>'+money(y.operatorCumulative)+'</td>':'')+(o.free?'':'<td>'+money(y.retired)+'</td>')+(settle?'<td>'+(y.settle>0?money(y.settle):'—')+'</td><td'+(y.operatorAfterSettle<0?' style="color:var(--red)"':'')+'>'+money(y.operatorAfterSettle)+'</td>':'')+'</tr>'}).join('')+
-    (multi?'<tr class="total"><td>Term</td>'+(f.single?'':'<td></td>')+'<td>'+money(o.years.reduce(function(a,y){return a+y.revenue},0))+'</td><td'+(o.operatorTotal<0?' style="color:var(--red)"':'')+'>'+money(o.operatorTotal)+'</td><td>'+money(o.operatorTotal)+'</td>'+(o.free?'':'<td>'+money(o.years.reduce(function(a,y){return a+y.retired},0))+'</td>')+(settle?'<td>'+money(o.settleTotal)+'</td><td'+(o.operatorTotal-o.settleTotal<0?' style="color:var(--red)"':'')+'>'+money(o.operatorTotal-o.settleTotal)+'</td>':'')+'</tr>':'')+
-    '</tbody></table>';
-  if(settle) h+='<div class="note">Settled at year end is what the licence still needed after the activity share, paid separately. It is shown against what you have earned so far so the two can be read together; it is never taken out of your share of the pool.</div>';
+  h+='<div class="hint" style="margin-top:12px">Revenue generated by month</div><div class="bars">'+o.months.map(function(m){return '<i style="height:'+Math.max(2,Math.round(m.revenue/max*88))+'px" title="Month '+m.month+': '+money(m.revenue)+(m.locationsOpen>1?' · '+m.locationsOpen+' locations':'')+'"></i>'}).join('')+'</div><div class="axis"><span>Month 1</span><span>Month '+o.months.length+'</span></div>';
   if(o.rewardValueYear>0) h+='<div class="note">Reward games add about '+money(o.rewardValueYear)+' a year of value to your venue through redeemed visits. That is a benefit, not revenue, so it is kept out of every figure above.</div>';
   $('results').innerHTML=h;
+  renderTerm();
+}
+function renderTerm(){
+  var o=OUT, f=FACTS, r=o.rates, multi=o.years.length>1, settle=o.settleTotal>0, single=f.single, h='';
+  var yourLabel='Your share ('+shareLabel(o)+')', licLabel='To licence share ('+pctS(r.licenceSharePct)+')', settleLabel=o.balanceDue>0?'True-up / balance due':'True-up, settled at year end';
+  h+='<h2>Results over the term</h2><div class="hint">The licence, what retires it, and what you make: by year and by month.</div>';
+  if(!o.free&&o.recapturing){
+    var total=o.licenceFromShare+o.licenceFromYou+o.licenceFromSigning;
+    h+='<div class="keep"><strong>The licence is retired out of the licence share alone. Your share is never diverted to it.</strong>'+
+      '<span>'+pctS(r.licenceSharePct)+' of every pool goes to the licence until that year\\'s fee is cleared; your '+pctS(r.yourSharePct)+' is yours from month one'+(Math.abs(r.yourSharePostPct-r.yourSharePct)>0.05?', stepping up to '+pctS(r.yourSharePostPct)+' once it is':'')+'.'+(settle?' Where a year falls short, the difference is settled separately at year end and shown here against what you have earned.':'')+'</span>'+
+      '<div class="rows"><div><span>From the licence share</span><b>'+money(o.licenceFromShare)+'</b></div><div><span>From your share</span><b class="zero">'+money(o.licenceFromYou)+'</b></div>'+(o.licenceFromSigning>0?'<div><span>Signing and sponsors</span><b>'+money(o.licenceFromSigning)+'</b></div>':'')+'<div><span>Retired, total</span><b>'+money(total)+'</b></div>'+
+      '<div><span>'+settleLabel+'</span><b>'+(settle?money(o.settleTotal):'$0')+'</b></div><div><span>You earn after the true-up</span><b class="'+(o.operatorAfterSettleTotal<0?'neg':'')+'">'+money(o.operatorAfterSettleTotal)+'</b><small class="hint" style="margin:2px 0 0">'+money(o.operatorTotal)+' earned over the term'+(settle?', less '+money(o.settleTotal):'')+'</small></div></div></div>';
+  }
+  // Payoff over the term: the licence retired month by month against the contract.
+  if(!o.free){
+    var ct=o.licenceTotal||1;
+    h+='<div class="section"><h3>Licence payoff over the term</h3><div class="hint">Cumulative licence retired by activity, month by month, against the '+money(o.licenceTotal)+' contract.</div>'+
+      '<div class="bars pay">'+o.months.map(function(m){var p=Math.min(100,m.licenceCumulative/ct*100);return '<i class="'+(p>=99.999?'done':'')+((m.month-1)%12===0&&m.month>1?' ys':'')+'" style="height:'+Math.max(2,Math.round(p*0.88))+'px" title="Month '+m.month+': '+money(m.licenceCumulative)+' of '+money(o.licenceTotal)+'"></i>'}).join('')+'</div><div class="axis"><span>Month 1</span><span>'+money(o.months[o.months.length-1].licenceCumulative)+' of '+money(o.licenceTotal)+' by month '+o.months.length+'</span></div>';
+    if(multi){
+      h+='<div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>Year</th><th>Licence fee</th><th>From the licence share</th><th>From your share</th>'+(o.licenceFromSigning>0?'<th>Signing and sponsors</th>':'')+'<th>Retired, total</th><th>Cleared</th><th>'+settleLabel+'</th><th>Closing balance</th></tr></thead><tbody>'+
+        o.years.map(function(y){return '<tr><td>Year '+y.year+'</td><td>'+money(y.licenceFee)+'</td><td>'+money(y.fromShare)+'</td><td class="zero">'+money(y.fromYou)+'</td>'+(o.licenceFromSigning>0?'<td>'+money(y.fromSigning)+'</td>':'')+'<td>'+money(y.retired)+'</td><td>'+(y.clearMonth===null?'—':'Month '+(Math.round(y.clearMonth*10)/10).toFixed(1))+'</td><td>'+(y.settle>0?money(y.settle):'—')+'</td><td>'+money(y.closing)+'</td></tr>'}).join('')+
+        '</tbody></table></div>';
+    }
+    h+='</div>';
+  }
+  // What you make, by year: the seller's column order.
+  h+='<div class="section"><h3>What you make</h3><div class="hint">Your share of the pool is yours from month one; the licence is retired out of the licence share, not this. Prize funding comes out of your share.'+(settle?' Where a year falls short on the licence, the true-up is read against what you have earned so far.':'')+'</div>';
+  h+='<div class="tablewrap"><table><thead><tr><th>Year</th>'+(single?'':'<th>Locations</th>')+'<th>Revenue generated</th>'+(o.free?'':'<th>'+licLabel+'</th>')+(settle?'<th>'+settleLabel+'</th>':'')+'<th>'+yourLabel+'</th><th>Prize funding</th><th>You earn, after prizes</th>'+(multi?'<th>You earn, cumulative</th>':'')+(settle?'<th>Cumulative, after the true-up</th>':'')+'</tr></thead><tbody>'+
+    o.years.map(function(y){return '<tr><td>Year '+y.year+'</td>'+(single?'':'<td>'+y.locations+'</td>')+'<td>'+money(y.revenue)+'</td>'+(o.free?'':'<td>'+money(y.toLicence)+'</td>')+(settle?'<td>'+(y.settle>0?money(y.settle):'—')+'</td>':'')+'<td>'+money(y.yourShare)+'</td><td>'+money(y.prize)+'</td><td'+(y.operator<0?' class="neg"':'')+'>'+money(y.operator)+'</td>'+(multi?'<td>'+money(y.operatorCumulative)+'</td>':'')+(settle?'<td'+(y.operatorAfterSettle<0?' class="neg"':'')+'>'+money(y.operatorAfterSettle)+'</td>':'')+'</tr>'}).join('')+
+    (multi?'<tr class="total"><td>Term</td>'+(single?'':'<td></td>')+'<td>'+money(o.revenueTotal)+'</td>'+(o.free?'':'<td>'+money(o.toLicenceTotal)+'</td>')+(settle?'<td>'+money(o.settleTotal)+'</td>':'')+'<td>'+money(o.yourShareTotal)+'</td><td>'+money(o.prizeTotal)+'</td><td'+(o.operatorTotal<0?' class="neg"':'')+'>'+money(o.operatorTotal)+'</td><td>'+money(o.operatorTotal)+'</td>'+(settle?'<td'+(o.operatorAfterSettleTotal<0?' class="neg"':'')+'>'+money(o.operatorAfterSettleTotal)+'</td>':'')+'</tr>':'')+
+    '</tbody></table></div>';
+  if(settle) h+='<div class="note">The true-up is what the licence still needed after the licence share, settled separately at year end. It is never taken out of your share of the pool; it is shown beside it so both can be read together.</div>';
+  h+='</div>';
+  // Month by month: the break-even map.
+  var h2h=o.feeYear>0||o.monthly.some(function(m){return m.fee>0});
+  var cell=function(v,cls){return '<td'+(cls?' class="'+cls+'"':'')+'>'+v+'</td>'};
+  var row=function(m){return '<tr>'+(multi?cell(m.year):'')+cell(multi?m.monthInYear:m.month)+(single?'':cell(m.locationsOpen))+cell(num(m.participants))+cell(money(m.entries))+(h2h?cell(money(m.fee)):'')+cell(money(m.revenue))+(o.free?'':cell(money(m.toLicence))+cell(money(m.licenceCumulative)))+cell(money(m.yourShare))+cell(money(m.prize))+cell(money(m.operator),m.operator<0?'neg':'')+cell(money(m.operatorCumulative))+'</tr>'};
+  var sub=function(label,y,cls){return '<tr class="'+cls+'">'+(multi?cell(label):'')+cell(multi?'Total':label)+(single?'':cell(''))+cell(num(y.participantsAvg)+' avg')+cell(money(y.entries))+(h2h?cell(money(y.fee)):'')+cell(money(y.revenue))+(o.free?'':cell(money(y.toLicence))+cell(money(y.licenceCumulative)))+cell(money(y.yourShare))+cell(money(y.prize))+cell(money(y.operator),y.operator<0?'neg':'')+cell(money(y.operatorCumulative))+'</tr>'};
+  var body='';
+  o.years.forEach(function(y){ o.monthly.filter(function(m){return m.year===y.year}).forEach(function(m){ body+=row(m); }); if(multi) body+=sub('Year '+y.year,y,'sub'); });
+  var last=o.years[o.years.length-1];
+  body+=sub(multi?'Term':'Year total',{participantsAvg:o.monthly.reduce(function(a,m){return a+m.participants},0)/Math.max(1,o.monthly.length),entries:o.years.reduce(function(a,y){return a+y.entries},0),fee:o.years.reduce(function(a,y){return a+y.fee},0),revenue:o.revenueTotal,toLicence:o.toLicenceTotal,licenceCumulative:last.licenceCumulative,yourShare:o.yourShareTotal,prize:o.prizeTotal,operator:o.operatorTotal,operatorCumulative:o.operatorTotal},'total');
+  h+='<div class="section"><h3>Month by month</h3><div class="hint">How much you make each month, with the participants behind it. A subtotal closes each year; the term is at the bottom.</div>'+
+    '<div class="tablewrap"><table><thead><tr>'+(multi?'<th>Year</th>':'')+'<th>Month</th>'+(single?'':'<th>Locations</th>')+'<th>Participants</th><th>Entries</th>'+(h2h?'<th>Head-to-head fee</th>':'')+'<th>Revenue generated</th>'+(o.free?'':'<th>'+licLabel+'</th><th>Licence, cumulative</th>')+'<th>'+yourLabel+'</th><th>Prize funding</th><th>You earn, after prizes</th><th>You earn, cumulative</th></tr></thead><tbody>'+body+'</tbody></table></div></div>';
+  $('term').innerHTML=h;
 }
 if(!needsPass){ load(); } else { $('pass').focus(); }
 </script></body></html>`;
+}
+
+async function liveDeal(id) {
+  if (!id) return null;
+  const store = getStore();
+  if (!store.enabled) return null;
+  try { const d = await store.getDeal(id); return d && d.tp ? d : null; }
+  catch (error) { console.error('sandbox store', error && error.message); return null; }
+}
+async function store_saveInputs(id, inputs) {
+  try { await getStore().saveInputs(id, inputs); }
+  catch (error) { console.error('sandbox store', error && error.message); }
 }
 
 async function isRevoked(id) {
@@ -412,6 +516,9 @@ module.exports = async function handler(req, res) {
           await store.create({ id, dealName: String(sealed.dealName || '').slice(0, 120), presenter: String(sealed.presenter || '').slice(0, 120),
             presenterEmail: String(sealed.presenterEmail || '').slice(0, 200), createdAt, exp, days, pass: !!pass, unlockAdd: !!unlock.addTournaments,
             customerType: sealed.customerType, term: E.TPterm(sealed) });
+          // The live model: the seller can change it later from the dashboard,
+          // and the customer's own inputs are kept beside it.
+          await store.saveDeal(id, { tp: sealed, inputs: null, version: 1, updatedBy: 'seller', updatedAt: createdAt }, exp);
           tracked = true;
         } catch (error) { console.error('sandbox store', error && error.message); }
       }
@@ -429,12 +536,56 @@ module.exports = async function handler(req, res) {
       if (await isRevoked(linkId)) return res.status(410).json({ error: 'The link was closed by the person who sent it' });
       const v = verify(body.deal, body.pass);
       const meta = { unlock: v.data.unlock || { addTournaments: true }, exp: v.exp };
-      const s = applyInputs(v.data.tp, body.inputs, meta.unlock);
+      // The live model wins over the token when the registry has one: the
+      // seller may have changed it since the link was made.
+      const live = await liveDeal(linkId);
+      const base = live ? live.tp : v.data.tp;
+      let inputs = body.inputs, rebased = false;
+      if (live && inputs && body.version !== undefined && Number(body.version) < Number(live.version)) {
+        // The seller saved a new version while this page was open: their
+        // version replaces what the page was about to send.
+        inputs = null; rebased = true;
+      } else if (live && !inputs && live.inputs) {
+        // A returning customer finds their own changes where they left them.
+        inputs = live.inputs;
+      }
+      const s = applyInputs(base, inputs, meta.unlock);
       const f = facts(s, meta), o = outputs(s);
+      if (live) {
+        f.version = live.version; f.updatedAt = live.updatedAt; f.updatedBy = live.updatedBy; f.rebased = rebased;
+        if (body.inputs && !rebased) await store_saveInputs(linkId, body.inputs);
+      }
       await logActivity(linkId, body.inputs ? 'edit' : 'open', body.inputs ? scenarioSummary(f, o) : null, req);
       return res.status(200).json({ ok: true, facts: f, outputs: o });
     } catch (error) {
       if (/passcode/i.test(String(error && error.message))) await logActivity(linkId, 'badPass', null, req);
+      return res.status(400).json({ error: String(error && error.message || error) });
+    }
+  }
+  if (body.action === 'update') {
+    // The seller saves changes to a link the customer already has. The
+    // authorisation is the edit token the dashboard minted (kind
+    // revenue-model with a sandboxId), which only the key-gated dashboard
+    // can produce.
+    if (!allowedOrigin(req)) return res.status(403).json({ error: 'Origin not allowed' });
+    try {
+      const parsed = parseScenarioToken(body.edit, process.env.SCENARIO_SECRET);
+      const id = parsed.data && parsed.data.kind === 'revenue-model' && parsed.data.sandboxId;
+      if (!id) return res.status(400).json({ error: 'Not a sandbox edit link' });
+      const store = getStore();
+      if (!store.enabled) return res.status(503).json({ error: 'No link registry attached' });
+      const link = await store.get(id), cur = await store.getDeal(id);
+      if (!link || !cur) return res.status(404).json({ error: 'That sandbox link is no longer on record' });
+      const deal = body.deal;
+      if (!deal || typeof deal !== 'object' || !deal.tp) return res.status(400).json({ error: 'Deal payload required' });
+      const sealed = sealDeal(deal.tp, deal.mg);
+      const errors = E.TPvalidate(sealed);
+      if (errors.length) return res.status(400).json({ error: 'Fix the deal first: ' + errors[0] });
+      const version = Number(cur.version || 1) + 1, updatedAt = Date.now();
+      await store.saveDeal(id, { tp: sealed, inputs: null, version, updatedBy: 'seller', updatedAt }, link.exp);
+      await store.touch(id, 'sellerUpdate');
+      return res.status(200).json({ ok: true, id, version, updatedAt, dealName: link.dealName, status: link.revoked ? 'closed' : link.exp <= updatedAt ? 'expired' : 'open' });
+    } catch (error) {
       return res.status(400).json({ error: String(error && error.message || error) });
     }
   }

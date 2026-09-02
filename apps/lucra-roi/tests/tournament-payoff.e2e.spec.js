@@ -1565,11 +1565,32 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await expect(cp.locator('#results')).toContainText('Revenue generated / yr');
   await expect(cp.locator('#results')).toContainText('You earn / yr');
   await expect(cp.locator('#results')).toContainText('Licence retired by activity');
-  await expect(cp.locator('#results .keep')).toContainText('The licence is retired out of the licence share alone. Your share is never diverted to it.');
-  await expect(cp.locator('#results .keep')).toContainText('and $0 from your share.');
+  await expect(cp.locator('#term .keep')).toContainText('The licence is retired out of the licence share alone. Your share is never diverted to it.');
+  await expect(cp.locator('#term .keep .rows b.zero')).toHaveText('$0');
   const text = await cp.locator('#model').innerText();
   expect(text).not.toMatch(BLOCKED);
-  expect(text).not.toMatch(/Lucra['’]s share|split|55|35 %|10 %/);
+  // The customer sees the licence share and their own share as percentages; Lucra's is never printed.
+  const rates = await page.evaluate(() => TPsplitRates(TPstate(TP)));
+  const pc = (v) => (Math.round(v * 1000) / 10) + '%';
+  expect(text.toLowerCase()).toContain('to licence share (' + pc(rates.credit) + ')');
+  expect(text.toLowerCase()).toContain('your share (' + pc(rates.operator) + ' then ' + pc(rates.postOperator) + ')');
+  expect(text).not.toMatch(/Lucra['’]s share|split/);
+  expect(text).not.toContain(pc(rates.lucra) + ' ');
+  expect(text).not.toContain('(' + pc(rates.postLucra) + ')');
+  // The combined model, the payoff over the term, what they make, and the month-by-month map.
+  await expect(cp.locator('#results')).toContainText('Combined revenue model');
+  await expect(cp.locator('#results .stat')).toHaveCount(4);
+  await expect(cp.locator('#results .case')).toHaveCount(3);
+  await expect(cp.locator('#term')).toContainText('Licence payoff over the term');
+  await expect(cp.locator('#term .bars.pay i')).toHaveCount(36);
+  await expect(cp.locator('#term .keep .rows div')).toHaveCount(5);
+  await expect(cp.locator('#term .keep')).toContainText('You earn after the true-up');
+  await expect(cp.locator('#term')).toContainText('What you make');
+  await expect(cp.locator('#term')).toContainText('Month by month');
+  const tables = cp.locator('#term table');
+  await expect(tables).toHaveCount(3);
+  await expect(tables.nth(2).locator('tbody tr')).toHaveCount(36 + 3 + 1);
+  await expect(tables.nth(2).locator('tbody tr.total')).toContainText('Term');
   const html = await cp.content();
   expect(html).not.toContain('"credit"');
   expect(html).not.toContain('lucra');
@@ -1622,5 +1643,67 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   expect(closedResponse.status()).toBe(400);
   await expect(cp2.locator('h1')).toHaveText('This link is no longer open');
   await customer.close();
+  await dp.close();
+});
+
+test('the seller edits a customer\'s sandbox from the dashboard and the customer sees the new version', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [78000, 102000, 126000], payoffBasis: 'annual', shortfall: 'cash', mau: 6000 });
+  await page.evaluate(() => { TP.dealName = 'Loco Bear'; TP.presenter = 'Mat'; TPsave(); TPrender(); document.getElementById('tp-sandbox-fold').open = true; });
+  await page.locator('#tp-sandbox-btn').click();
+  await expect(page.locator('#tp-sandbox-out')).toBeVisible();
+  const url = await page.locator('#tp-sandbox-out input').inputValue();
+  await expect(page.locator('#tp-sandbox-cowork')).toBeHidden();
+
+  // The customer opens it and changes their base; it is kept for them.
+  const customer = await page.context().browser().newContext();
+  const cp = await customer.newPage();
+  await cp.goto(url);
+  await expect(cp.locator('#model h1')).toHaveText('Loco Bear');
+  await cp.locator('#inputs input[type="number"]').first().fill('9000');
+  await cp.waitForTimeout(500);
+  const cp2 = await customer.newPage();
+  await cp2.goto(url);
+  await expect(cp2.locator('#inputs input[type="number"]').first()).toHaveValue('9000');
+  await cp2.close();
+
+  // The seller opens their model from the dashboard: the calculator loads it with the customer's 9,000.
+  const dp = await page.context().newPage();
+  await dp.goto('/links');
+  await dp.locator('#key').fill('playwright-dashboard-key');
+  await dp.locator('#enter').click();
+  const row = dp.locator('#main tbody tr').filter({ hasText: 'Loco Bear' }).first();
+  await expect(row).toBeVisible();
+  const [editor] = await Promise.all([page.context().waitForEvent('page'), row.locator('button[data-act="edit"]').click()]);
+  await editor.waitForLoadState();
+  await expect(editor.locator('#tp-sandbox-cowork')).toBeVisible();
+  await expect(editor.locator('#tp-sandbox-cowork-title')).toHaveText('Editing Loco Bear’s sandbox');
+  await expect(editor.locator('#tp-mau')).toHaveValue('9000');
+  // The seller adds a tournament and raises the base, then saves it to the link.
+  await editor.evaluate(() => {
+    TP.mau = 10000; MG.tau = 10000;
+    TP.core.tournaments.push(Object.assign({}, TP.core.tournaments[0], { id: 'special', name: 'Seller special', eventsPerMonth: 2 }));
+    TPsave(); TPrenderControls(); TPrenderTournaments(); TPrender();
+  });
+  await editor.locator('#tp-sandbox-save').click();
+  await expect(editor.locator('#tp-sandbox-cowork-note')).toContainText('Saved as version 2');
+  // The customer's open page recomputes with stale inputs and is moved onto the seller's version.
+  await cp.locator('#inputs input[type="number"]').first().fill('9500');
+  await expect(cp.locator('.banner')).toContainText('Mat updated this model');
+  await expect(cp.locator('.banner')).toContainText('Your view has been refreshed');
+  await expect(cp.locator('#inputs input[type="number"]').first()).toHaveValue('10000');
+  await expect(cp.locator('#inputs .tour .head input').nth(1)).toHaveValue('Seller special');
+  // And a fresh visit is the seller's version too.
+  const cp3 = await customer.newPage();
+  await cp3.goto(url);
+  await expect(cp3.locator('#inputs input[type="number"]').first()).toHaveValue('10000');
+  await expect(cp3.locator('.banner')).toContainText('This is their latest version');
+  await expect(dp.locator('#main')).toBeVisible();
+  await dp.locator('#refresh').click();
+  await expect(dp.locator('#main tbody tr').filter({ hasText: 'Loco Bear' }).first()).toContainText('you saved 1×');
+  await editor.locator('button', { hasText: 'Stop editing' }).click();
+  await expect(editor.locator('#tp-sandbox-cowork')).toBeHidden();
+  await customer.close();
+  await editor.close();
   await dp.close();
 });

@@ -219,6 +219,110 @@ describe('The sandbox link registry', () => {
   });
 });
 
+describe('Co-working a customer\'s sandbox', () => {
+  async function update(edit, tp) {
+    const r = res();
+    await play({ method: 'POST', body: { action: 'update', edit, deal: { tp } }, headers: HEADERS }, r);
+    return r;
+  }
+  const editToken = (r) => new URL(r.body.url).searchParams.get('deal');
+
+  it('keeps the customer\'s own changes for their next visit', async () => {
+    const tok = tokenOf(await link({ deal: { tp: deal() } }));
+    const first = (await compute(tok, '', null)).body;
+    expect(first.facts.version).toBe(1);
+    expect(first.facts.mau).toBe(6000);
+    await compute(tok, '', { mau: 9000, core: { tournaments: [{ id: 't1', eventsPerMonth: 8 }] } });
+    // A fresh load (inputs null) comes back where they left off.
+    const again = (await compute(tok, '', null)).body;
+    expect(again.facts.mau).toBe(9000);
+    expect(again.facts.core.tournaments[0].eventsPerMonth).toBe(8);
+    expect(again.facts.version).toBe(1);
+    expect(again.facts.rebased).toBe(false);
+  });
+
+  it('lets the seller open the customer\'s current model, save changes, and the customer sees them', async () => {
+    const made = await link({ deal: { tp: deal() } });
+    const tok = tokenOf(made), id = made.body.id;
+    await compute(tok, '', { mau: 9000 });
+    // The dashboard mints an edit link carrying the customer's inputs on top of the deal.
+    const edit = await dash({ action: 'edit', id });
+    expect(edit.statusCode).toBe(200);
+    expect(edit.body.url).toMatch(/^https:\/\/roi\.test\/\?deal=v1\./);
+    expect(edit.body.customerEdited).toBe(true);
+    const parsed = require('../lib/scenario-token').parseScenarioToken(editToken(edit), SECRET);
+    expect(parsed.data.kind).toBe('revenue-model');
+    expect(parsed.data.sandboxId).toBe(id);
+    expect(parsed.data.sandboxName).toBe('Loco Bear');
+    expect(parsed.data.tp.mau).toBe(9000);
+    // The seller changes the deal and adds a tournament, then saves it back.
+    const tp = E.TPstate(parsed.data.tp);
+    tp.mau = 10000;
+    tp.core.tournaments.push(Object.assign({}, tp.core.tournaments[0], { id: 'seller-added', name: 'Seller special', eventsPerMonth: 2 }));
+    const saved = await update(editToken(edit), tp);
+    expect(saved.statusCode).toBe(200);
+    expect(saved.body.version).toBe(2);
+    expect(saved.body.status).toBe('open');
+    // The customer's page, still open on version 1, sends its stale inputs: it is rebased, not honoured.
+    const staleR = res();
+    await play({ method: 'POST', body: { action: 'compute', deal: tok, pass: '', inputs: { mau: 9000 }, version: 1 }, headers: HEADERS }, staleR);
+    expect(staleR.body.facts.rebased).toBe(true);
+    expect(staleR.body.facts.version).toBe(2);
+    expect(staleR.body.facts.mau).toBe(10000);
+    expect(staleR.body.facts.core.tournaments.map((t) => t.name)).toContain('Seller special');
+    expect(staleR.body.facts.updatedBy).toBe('seller');
+    // A fresh visit gets the seller's version outright.
+    const fresh = (await compute(tok, '', null)).body;
+    expect(fresh.facts.mau).toBe(10000);
+    expect(fresh.facts.version).toBe(2);
+    // And from there the customer can edit again on top of it.
+    const edited = (await compute(tok, '', { mau: 11000 })).body;
+    expect(edited.facts.mau).toBe(11000);
+    expect(edited.facts.rebased).toBe(false);
+    const [l] = (await dash({ action: 'list' })).body.links;
+    expect(l.sellerUpdates).toBe(1);
+    expect(l.lastSellerUpdate).toBeGreaterThan(0);
+  });
+
+  it('refuses an update without a sandbox edit token, and a bad deal', async () => {
+    const made = await link({ deal: { tp: deal() } });
+    const plain = require('../lib/scenario-token').createScenarioToken({ kind: 'revenue-model', tp: deal() }, SECRET, { ttlSeconds: 600 });
+    expect((await update(plain, deal())).statusCode).toBe(400);
+    const edit = editToken(await dash({ action: 'edit', id: made.body.id }));
+    const bad = await update(edit, E.TPstate({ annualFees: [0], mau: 1000 }));
+    expect(bad.statusCode).toBe(400);
+    expect(bad.body.error).toMatch(/Fix the deal first/);
+    await dash({ action: 'remove', id: made.body.id });
+    expect((await update(edit, deal())).statusCode).toBe(404);
+    expect((await dash({ action: 'edit', id: made.body.id })).statusCode).toBe(404);
+  });
+});
+
+describe('The customer page outputs', () => {
+  it('carry the split as it applies to the customer, by year and by month, never Lucra\'s', async () => {
+    const tok = tokenOf(await link({ deal: { tp: deal() } }));
+    const { outputs: o } = (await compute(tok, '', null)).body;
+    expect(o.rates).toEqual({ licenceSharePct: 50, yourSharePct: 45, yourSharePostPct: 90 });
+    expect(o.years).toHaveLength(3);
+    expect(o.monthly).toHaveLength(36);
+    const y1 = o.years[0], m1 = o.monthly[0];
+    expect(m1.toLicence).toBeCloseTo(m1.revenue * 0.5, 6);
+    expect(m1.yourShare).toBeCloseTo(m1.revenue * 0.45, 6);
+    expect(m1.operator).toBeCloseTo(m1.yourShare - m1.prize, 6);
+    expect(y1.revenue).toBeCloseTo(o.monthly.filter((m) => m.year === 1).reduce((a, m) => a + m.revenue, 0), 6);
+    expect(y1.toLicence).toBeCloseTo(y1.fromShare, 6);
+    expect(y1.fromYou).toBe(0);
+    expect(o.years[2].operatorCumulative).toBeCloseTo(o.operatorTotal, 6);
+    expect(o.monthly[35].operatorCumulative).toBeCloseTo(o.operatorTotal, 6);
+    expect(o.operatorAfterSettleTotal).toBeCloseTo(o.operatorTotal - o.settleTotal, 6);
+    expect(o.contract.total).toBe(306000);
+    expect(o.combined.mau).toBe(6000);
+    const json = JSON.stringify(o);
+    ['toLucra', 'lucraShare', 'postOperator', 'credit', 'operatorGross', 'feeRate'].forEach((k) => expect(json).not.toContain(k));
+    expect(json).not.toMatch(/"lucra/i);
+  });
+});
+
 describe('The store over the Redis REST protocol', () => {
   it('speaks Upstash pipelines and reads hashes back', async () => {
     const sent = [];

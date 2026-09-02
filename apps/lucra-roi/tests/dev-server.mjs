@@ -13,6 +13,7 @@ process.env.SANDBOX_STORE = process.env.SANDBOX_STORE || 'memory';
 process.env.SANDBOX_ADMIN_KEY = process.env.SANDBOX_ADMIN_KEY || 'playwright-dashboard-key';
 const playHandler = require('../api/play.js');
 const linksHandler = require('../api/links.js');
+const dealHandler = require('../api/deal.js');
 
 function shim(req, res, body, query) {
   const out = {
@@ -36,8 +37,8 @@ const contentTypes = {
 
 http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`), urlPath = url.pathname;
-  if (urlPath === '/play' || urlPath === '/api/play' || urlPath === '/links' || urlPath === '/api/links') {
-    const handler = urlPath.endsWith('links') ? linksHandler : playHandler;
+  if (urlPath === '/play' || urlPath === '/api/play' || urlPath === '/links' || urlPath === '/api/links' || urlPath === '/api/deal') {
+    const handler = urlPath.endsWith('links') ? linksHandler : urlPath === '/api/deal' ? dealHandler : playHandler;
     let raw = '';
     req.on('data', (c) => { raw += c; });
     req.on('end', () => {
