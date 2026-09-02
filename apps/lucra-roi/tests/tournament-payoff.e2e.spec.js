@@ -1377,3 +1377,59 @@ test('a deal saved before the split migrates onto core with the head-to-head num
   // 20,000 x 14% x 30 x $3 x 12% = $30,240 in month 1.
   expect(await page.evaluate(() => TPcalculate(TP, TPCconfig()).months[0].products.core.h2hFee)).toBeCloseTo(30240, 6);
 });
+
+test('the customer sandbox: a passcoded page that plays with their numbers and never shows the terms', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [60000, 60000, 60000, 0, 0], mau: 8000, includeH2H: true });
+  await page.locator('#tp-loc-1').fill('3');
+  await page.locator('#tp-loc-2').fill('5');
+  await page.evaluate(() => { TP.presenter = 'Mat'; TP.splitMode = 'custom'; TP.custom = { credit: 55, operator: 35, lucra: 10 }; TPsave(); TPrender(); });
+  const fold = page.locator('#tp-sandbox-fold');
+  await fold.locator('summary').click();
+  await page.locator('#tp-sandbox-days').selectOption('7');
+  await page.locator('#tp-sandbox-pass').fill('bear');
+  await page.locator('#tp-sandbox-btn').click();
+  await expect(page.locator('#tp-sandbox-btn')).toContainText(/Link (copied|ready)/);
+  const url = await page.locator('#tp-sandbox-out input').inputValue();
+  expect(url).toMatch(/\/play\?deal=v1\./);
+  await expect(page.locator('#tp-sandbox-note')).toContainText('7 days · passcode required');
+  // The sandbox is internal: customer view hides the control.
+  await page.locator('#tp-customer-mode').check();
+  await expect(fold).toBeHidden();
+  await page.locator('#tp-customer-mode').uncheck();
+
+  // The customer opens it in a browser with nothing of ours in it.
+  const customer = await page.context().browser().newContext();
+  const cp = await customer.newPage();
+  await cp.goto(url);
+  await expect(cp.locator('#gate')).toBeVisible();
+  await cp.locator('#pass').fill('wrong');
+  await cp.locator('#gate button').click();
+  await expect(cp.locator('#gate-err')).toContainText('passcode');
+  await cp.locator('#pass').fill('bear');
+  await cp.locator('#gate button').click();
+  await expect(cp.locator('#model h1')).toHaveText('Fairway Social');
+  await expect(cp.locator('#model')).toContainText('Prepared by Mat');
+  await expect(cp.locator('#results')).toContainText('Revenue generated / yr');
+  await expect(cp.locator('#results')).toContainText('You earn / yr');
+  await expect(cp.locator('#results')).toContainText('Licence retired by activity');
+  const text = await cp.locator('#model').innerText();
+  expect(text).not.toMatch(BLOCKED);
+  expect(text).not.toMatch(/Lucra['’]s share|split|55|35 %|10 %/);
+  const html = await cp.content();
+  expect(html).not.toContain('"credit"');
+  expect(html).not.toContain('lucra');
+
+  // Their numbers move the model; the licence does not move.
+  const before = await cp.locator('#results .tile strong').first().innerText();
+  await cp.locator('#inputs input[type="number"]').first().fill('16000');
+  await expect(cp.locator('#results .tile strong').first()).not.toHaveText(before);
+  await expect(cp.locator('#results')).toContainText('$180,000 over the term');
+  // Exact months, and a new tournament.
+  await cp.locator('#sched button', { hasText: 'Set the exact months' }).click();
+  await expect(cp.locator('#sched .row')).toHaveCount(5);
+  await cp.locator('#inputs button', { hasText: 'Add a tournament' }).first().click();
+  await expect(cp.locator('#inputs .tour')).toHaveCount(2);
+  await expect(cp.locator('#res-err')).toBeHidden();
+  await customer.close();
+});

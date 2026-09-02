@@ -2,6 +2,23 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+// The customer sandbox is a real route in tests: the page and its API run
+// through the same handler production uses, with a test secret.
+const require = createRequire(import.meta.url);
+process.env.SCENARIO_SECRET = process.env.SCENARIO_SECRET || 'playwright-secret-that-is-long-enough-for-aes-256';
+const playHandler = require('../api/play.js');
+
+function shim(req, res, body, query) {
+  const out = {
+    setHeader: (k, v) => res.setHeader(k, v),
+    status: (n) => { res.statusCode = n; return out; },
+    json: (b) => { res.setHeader('content-type', 'application/json; charset=utf-8'); res.end(JSON.stringify(b)); return out; },
+    end: (b) => { res.end(b); return out; },
+  };
+  return { req: { method: req.method, headers: req.headers, query, body }, res: out };
+}
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PW_PORT || 8766);
@@ -14,7 +31,19 @@ const contentTypes = {
 };
 
 http.createServer((req, res) => {
-  const urlPath = new URL(req.url, `http://${req.headers.host}`).pathname;
+  const url = new URL(req.url, `http://${req.headers.host}`), urlPath = url.pathname;
+  if (urlPath === '/play' || urlPath === '/api/play') {
+    let raw = '';
+    req.on('data', (c) => { raw += c; });
+    req.on('end', () => {
+      let body = {};
+      try { body = raw ? JSON.parse(raw) : {}; } catch { body = {}; }
+      const query = Object.fromEntries(url.searchParams.entries());
+      const s = shim(req, res, body, query);
+      Promise.resolve(playHandler(s.req, s.res)).catch((e) => { res.statusCode = 500; res.end(String(e)); });
+    });
+    return;
+  }
   const relative = urlPath === '/' ? 'api/app.html' : urlPath.replace(/^\//, '');
   const filePath = path.resolve(root, relative);
   if (!filePath.startsWith(root + path.sep) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {

@@ -10,6 +10,10 @@ describe('Tournament Payoff formula drift guard', () => {
     expect(normalise(extractFromMirror())).toBe(normalise(extractFromApp()));
   });
 
+  it('the server engine in lib/revenue-engine.js matches the code shipped in app.html', () => {
+    expect(normalise(extractFromMirror(new URL('../lib/revenue-engine.js', import.meta.url).pathname))).toBe(normalise(extractFromApp()));
+  });
+
   it('both markers are present on both sides', () => {
     expect(extractFromApp().length).toBeGreaterThan(1000);
     expect(extractFromMirror().length).toBeGreaterThan(1000);
