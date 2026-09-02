@@ -6,11 +6,25 @@ const { TPh2h, TPCcase, TPCcases, TPheatMap, TPscaled, TPcalculate, TPvalidate, 
 // Tournaments: 100 participants, $10 entry, 4 events, $200 cost per event
 // -> 4,000 of entries a month, which is the pool that is split. The 800 of prize
 // funding is the operator's own cost out of their share, never netted off the pool.
-const deal = (o = {}) => Object.assign(JSON.parse(JSON.stringify(TP_DEFAULTS)), {
-  termYears: 1, annualFees: [60000], mau: 1000000,
-  includeTournaments: true, includeH2H: true,
-  tournaments: [{ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }],
-}, o);
+// This spec models mini games: Lucra's catalog on the customer's app, where
+// the head-to-head inputs come from the Mini Game tab as config. The helper
+// takes the old flat option names and writes them onto the mini product.
+const deal = (o = {}) => {
+  const opts = Object.assign({}, o);
+  const mini = {
+    on: true,
+    tournamentsOn: opts.includeTournaments !== false,
+    h2hOn: opts.includeH2H !== false,
+    mauMode: 'entered', mau: opts.mau !== undefined ? opts.mau : 1000000,
+    h2h: Object.assign({}, opts.h2hMode ? { mode: opts.h2hMode } : {}, opts.h2hReach ? { reach: opts.h2hReach } : {}),
+    tournaments: opts.tournaments || [{ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }],
+  };
+  ['includeTournaments', 'includeH2H', 'h2hMode', 'h2hReach', 'tournaments'].forEach((k) => { delete opts[k]; });
+  return Object.assign(JSON.parse(JSON.stringify(TP_DEFAULTS)), {
+    termYears: 1, annualFees: [60000], mau: 1000000, customerType: 'app',
+    core: { on: false }, mini,
+  }, opts);
+};
 
 // Head-to-head inputs come from the Mini Game state, passed in as config.
 const cfg = (o = {}) => Object.assign({
@@ -219,16 +233,16 @@ describe('TPscaled', () => {
   it('scales participation and price without mutating the input', () => {
     const s = deal();
     const scaled = TPscaled(s, 2, 3);
-    expect(scaled.tournaments[0].participants).toBe(200);
-    expect(scaled.tournaments[0].entryPrice).toBe(30);
-    expect(s.tournaments[0].participants).toBe(100);
-    expect(s.tournaments[0].entryPrice).toBe(10);
+    expect(scaled.mini.tournaments[0].participants).toBe(200);
+    expect(scaled.mini.tournaments[0].entryPrice).toBe(30);
+    expect(s.mini.tournaments[0].participants).toBe(100);
+    expect(s.mini.tournaments[0].entryPrice).toBe(10);
   });
 
   it('leaves fees, splits and prize costs alone', () => {
     const scaled = TPscaled(deal(), 2, 2);
     expect(scaled.annualFees[0]).toBe(60000);
-    expect(scaled.tournaments[0].customerCashCost).toBe(200);
+    expect(scaled.mini.tournaments[0].customerCashCost).toBe(200);
   });
 });
 
@@ -260,7 +274,7 @@ describe('Pitches', () => {
   });
 
   it('the tournament pitch reports a shortfall rather than implying payoff', () => {
-    expect(TPpitchTournaments(deal({ annualFees: [500000] }))).toMatch(/outstanding at the end/);
+    expect(TPpitchTournaments(deal({ annualFees: [500000], includeH2H: false }))).toMatch(/outstanding at the end/);
   });
 
   it('the tournament pitch says so when activity does not pay the licence down', () => {

@@ -191,17 +191,49 @@ var TP_SPLITS = {
 
 var TP_MAX_YEARS = 5;
 
+/* Two products under one licence. The dividing line is who owns the
+   competition layer: 'core' is Lucra's tournament and head-to-head layer on the
+   customer's own game or venue experience, and carries locations; 'mini' is
+   Lucra's catalog on the customer's app or site, universal to all their users,
+   never per location. */
+var TP_PRODUCTS = ['core', 'mini'];
+
+var TP_H2H_DEFAULTS = {
+  mode: 'both', reach: 0, engagement: 10, playsPerUser: 20, spendPerPlay: 2, feeRate: 10,
+  rewardGames: 8, winRate: 50, redeemRate: 25, valuePerRedemption: 8
+};
+
+var TP_PRODUCT_DEFAULTS = {
+  on: false, tournamentsOn: true, h2hOn: false,
+  tournaments: [],
+  h2h: TP_H2H_DEFAULTS,
+  // Adjustments applied to the recommended programme by the levers: extra weekly
+  // events a month, an entry-price multiplier, and whether prizes are in-kind at
+  // the venue's cost ratio. They travel with the product so the recommender
+  // rebuilds the same programme when the base changes.
+  recAdjust: { events: 0, priceMult: 1, rewardAtRatio: false }
+};
+
+var TP_DEFAULT_TOURNAMENTS = [
+  { id: 't1', name: 'Weekly open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, participantPct: 5, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200, cashPrizeAmount: 500, scope: 'each' },
+  { id: 't2', name: 'Monthly headline', entryPrice: 25, eventsPerMonth: 1, basis: 'count', participants: 50, participantPct: 2, rebuyMode: 'avg', rebuys: 1, rebuyPct: 0, isCash: true, rewardFaceValue: 1000, customerCashCost: 1000, cashPrizeAmount: 1000, scope: 'each' }
+];
+
+/* A starting programme for mini games, placeholders in the same spirit as the
+   core defaults: one weekly open across the app base. */
+var TP_DEFAULT_MINI_TOURNAMENTS = [
+  { id: 'm1', name: 'App weekly open', entryPrice: 5, eventsPerMonth: 4, basis: 'mau', participants: 0, participantPct: 1, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, isCash: false, rewardFaceValue: 250, customerCashCost: 100, cashPrizeAmount: 250, scope: 'network' }
+];
+
 var TP_DEFAULTS = {
   dealName: '',
+  // Who the customer is: 'venues' (in-person, locations), 'app' (website or app
+  // only, a single location), or 'both'. Sets defaults, never hard blocks.
+  customerType: 'venues',
   // 'A reward worth $X costs us $Y': the venue's cost as a share of face value,
   // used by the recommender's reward-cost lever. Blank means take it from the
   // tournaments as entered; never an assumed discount.
   rewardCostRatio: '',
-  // Adjustments applied to the recommended tournament programme by the levers:
-  // extra weekly events a month, an entry-price multiplier, and whether prizes
-  // are in-kind at the venue's cost ratio. They travel with the deal so the
-  // recommender rebuilds the same programme when the base changes.
-  recAdjust: { events: 0, priceMult: 1, rewardAtRatio: false },
   // Customer view hides every internal figure at once; inputs stay live.
   customerMode: false,
   retargetValue: 0,
@@ -210,10 +242,15 @@ var TP_DEFAULTS = {
   presenter: '',
   presenterEmail: '',
   confidential: true,
-  // What the customer is taking
-  includeTournaments: true,
-  includeH2H: false,
+  // The addressable base for one location (a venue), or the whole base for an
+  // app-only customer, which is one location by definition.
   mau: 0,
+  // The two products. Core carries the location model; mini is universal.
+  core: { on: true, tournamentsOn: true, h2hOn: false, tournaments: TP_DEFAULT_TOURNAMENTS },
+  // mauMode 'derived': the mini-games base is the venue base times locations
+  // open, so it grows with every opening. 'entered': the customer's own app or
+  // site MAU. Derived is an estimate; entered is a customer fact.
+  mini: { on: false, tournamentsOn: true, h2hOn: true, mauMode: 'derived', mau: 0 },
   // Deal and licence
   termYears: 1,
   annualFees: [60000, 60000, 60000, 60000, 60000],
@@ -230,8 +267,13 @@ var TP_DEFAULTS = {
   rampOn: false,
   rampStartPct: 25,
   rampMonths: 6,
-  // Locations running in each contract year. The base above is one location.
+  // Locations running at the end of each contract year, the quick way in. The
+  // base above is one location.
   locations: [1, 1, 1, 1, 1],
+  // The opening schedule as the customer states it: contract month and the
+  // number of locations added then. Empty means no months are known and the
+  // year's additions are spread evenly through the year, as an estimate.
+  openings: [],
   // Year-over-year engagement decay, off unless chosen. 95 means each contract
   // year runs at 95% of the year before.
   decayOn: false,
@@ -246,18 +288,9 @@ var TP_DEFAULTS = {
   // Sponsors credit the licence directly in the month paid, before any split.
   sponsors: [],
   // A payment at signing, credited against the licence in month 1 before any
-  // activity. 'amount' is dollars; 'pct' is a share of the year-1 fee. Ported
-  // from the retired Licence Payoff engine.
+  // activity. 'amount' is dollars; 'pct' is a share of the year-1 fee.
   upfrontMode: 'none',
-  upfrontValue: 0,
-  // Head-to-head
-  h2hReach: 0,
-  h2hMode: 'both',
-  // Tournaments
-  tournaments: [
-    { id: 't1', name: 'Weekly open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, participantPct: 5, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200, cashPrizeAmount: 500 },
-    { id: 't2', name: 'Monthly headline', entryPrice: 25, eventsPerMonth: 1, basis: 'count', participants: 50, participantPct: 2, rebuyMode: 'avg', rebuys: 1, rebuyPct: 0, isCash: true, rewardFaceValue: 1000, customerCashCost: 1000, cashPrizeAmount: 1000 }
-  ]
+  upfrontValue: 0
 };
 
 function TPnum(v, lo, hi) {
@@ -276,16 +309,35 @@ function TPfees(s) {
   return out;
 }
 
-/* Head-to-head reach defaults to the deal-level addressable base, and can be
-   overridden when only part of that base is reachable for real-money play. */
-function TPreach(s) {
-  var own = TPnum(s.h2hReach, 0);
-  return own > 0 ? own : TPnum(s.mau, 0);
+function TPtournamentNorm(t, shared) {
+  var c = Object.assign({ basis: 'count', participants: 0, participantPct: 0, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, scope: 'each' }, t);
+  if (t && t.basis === undefined && shared) {
+    var wasCustom = t.participationMode === 'custom';
+    c.basis = shared.basis;
+    c.participants = wasCustom ? TPnum(t.participantsCustom, 0) : shared.count;
+    c.participantPct = wasCustom ? TPnum(t.participantPctCustom, 0) : shared.pct;
+  }
+  if (c.scope !== 'network') c.scope = 'each';
+  if (c.isCash) { c.rewardFaceValue = TPnum(c.cashPrizeAmount, 0); c.customerCashCost = TPnum(c.cashPrizeAmount, 0); }
+  return c;
 }
 
+function TPproductNorm(src, shared) {
+  var p = Object.assign({}, TP_PRODUCT_DEFAULTS, src || {});
+  p.h2h = Object.assign({}, TP_H2H_DEFAULTS, (src && src.h2h) || {});
+  p.recAdjust = Object.assign({}, TP_PRODUCT_DEFAULTS.recAdjust, (src && src.recAdjust) || {});
+  p.tournaments = (Array.isArray(p.tournaments) ? p.tournaments : []).map(function (t) { return TPtournamentNorm(t, shared); });
+  p.on = !!p.on; p.tournamentsOn = p.tournamentsOn !== false; p.h2hOn = !!p.h2hOn;
+  return p;
+}
+
+/* Normalise a deal. Deals saved before the two-product split carried one
+   tournament list and one head-to-head switch, and locations scaled both, which
+   is the core product's behaviour: they migrate onto core, and mini stays off. */
 function TPstate(s) {
   var out = JSON.parse(JSON.stringify(TP_DEFAULTS)), src = s || {};
   Object.keys(src).forEach(function (k) {
+    if (k === 'core' || k === 'mini') return;
     out[k] = src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])
       ? Object.assign({}, out[k] || {}, src[k])
       : src[k];
@@ -300,21 +352,56 @@ function TPstate(s) {
     out.annualFees.push(out.annualFees.length ? out.annualFees[out.annualFees.length - 1] : 0);
   }
   if (out.splitMode === 'standard') out.splitMode = 'recapture';
+  if (['venues', 'app', 'both'].indexOf(out.customerType) < 0) out.customerType = 'venues';
 
-  // Participation moved from one shared field onto each tournament type.
-  var sharedCount = TPnum(src.participants, 0), sharedPct = TPnum(src.participantPct, 0),
-    sharedBasis = src.participantBasis === 'mau' ? 'mau' : 'count';
-  out.tournaments = (src.tournaments || out.tournaments).map(function (t) {
-    var c = Object.assign({ basis: 'count', participants: 0, participantPct: 0, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0 }, t);
-    if (t && t.basis === undefined) {
-      var wasCustom = t.participationMode === 'custom';
-      c.basis = sharedBasis;
-      c.participants = wasCustom ? TPnum(t.participantsCustom, 0) : sharedCount;
-      c.participantPct = wasCustom ? TPnum(t.participantPctCustom, 0) : sharedPct;
-    }
-    if (c.isCash) { c.rewardFaceValue = TPnum(c.cashPrizeAmount, 0); c.customerCashCost = TPnum(c.cashPrizeAmount, 0); }
-    return c;
-  });
+  // Participation once lived on one shared field; older deals still carry it.
+  var shared = { count: TPnum(src.participants, 0), pct: TPnum(src.participantPct, 0), basis: src.participantBasis === 'mau' ? 'mau' : 'count' };
+
+  out.core = TPproductNorm(Object.assign({}, TP_DEFAULTS.core, src.core || {}), shared);
+  out.mini = TPproductNorm(Object.assign({}, TP_DEFAULTS.mini, src.mini || {}), shared);
+  // Legacy fields, when present, describe the core product and win over it.
+  var legacy = {};
+  if (Array.isArray(src.tournaments)) legacy.tournaments = src.tournaments.map(function (t) { return TPtournamentNorm(t, shared); });
+  if (src.includeTournaments !== undefined) legacy.tournamentsOn = src.includeTournaments !== false;
+  if (src.includeH2H !== undefined) legacy.h2hOn = !!src.includeH2H;
+  if (src.includeTournaments !== undefined || src.includeH2H !== undefined) legacy.on = (src.includeTournaments !== false) || !!src.includeH2H;
+  if (src.recAdjust && src.core === undefined) legacy.recAdjust = Object.assign({}, out.core.recAdjust, src.recAdjust);
+  if (src.h2hMode !== undefined || src.h2hReach !== undefined) {
+    legacy.h2h = Object.assign({}, out.core.h2h, src.h2hMode !== undefined ? { mode: src.h2hMode } : {}, src.h2hReach !== undefined ? { reach: TPnum(src.h2hReach, 0) } : {});
+  }
+  Object.assign(out.core, legacy);
+  if (out.mini.mauMode !== 'entered') out.mini.mauMode = 'derived';
+  out.mini.mau = TPnum(out.mini.mau, 0);
+  // Mini games have no locations: every tournament is one across the base.
+  out.mini.tournaments.forEach(function (t) { t.scope = 'network'; });
+  delete out.includeTournaments; delete out.includeH2H; delete out.tournaments;
+  delete out.h2hReach; delete out.h2hMode; delete out.recAdjust;
+
+  out.openings = (Array.isArray(out.openings) ? out.openings : [])
+    .map(function (o) { return { month: Math.max(1, Math.round(TPnum(o && o.month, 1))), add: Math.max(0, Math.round(TPnum(o && o.add, 0))) }; })
+    .filter(function (o) { return o.add > 0; })
+    .sort(function (a, b) { return a.month - b.month; });
+  return out;
+}
+
+/* Defaults a customer type implies. Applied by the UI when the type is chosen;
+   never enforced by the engine, so any combination stays possible. */
+function TPcustomerDefaults(type) {
+  if (type === 'app') return { core: false, mini: true, singleLocation: true };
+  if (type === 'both') return { core: true, mini: true, singleLocation: false };
+  return { core: true, mini: false, singleLocation: false };
+}
+
+function TPproduct(s, key) { return (s && s[key]) || TPproductNorm(TP_PRODUCT_DEFAULTS); }
+function TPproductOn(s, key) { return !!TPproduct(s, key).on; }
+function TPtournamentsOn(s, key) { var p = TPproduct(s, key); return !!p.on && p.tournamentsOn !== false; }
+function TPh2hOn(s, key) { var p = TPproduct(s, key); return !!p.on && !!p.h2hOn; }
+function TPanyTournaments(s) { return TP_PRODUCTS.some(function (k) { return TPtournamentsOn(s, k); }); }
+function TPanyH2H(s) { return TP_PRODUCTS.some(function (k) { return TPh2hOn(s, k); }); }
+function TPtournamentsOf(s, key) { return TPtournamentsOn(s, key) ? TPproduct(s, key).tournaments : []; }
+function TPallTournaments(s) {
+  var out = [];
+  TP_PRODUCTS.forEach(function (k) { TPtournamentsOf(s, k).forEach(function (t) { out.push(Object.assign({ product: k }, t)); }); });
   return out;
 }
 
@@ -356,10 +443,20 @@ function TPavgRamp(s, months) {
   return n > 0 ? total / n : 1;
 }
 
-/* Locations running in each contract year, never fewer than the year before
-   and never fewer than one. The base is entered for one location. */
-function TPlocations(s) {
+/* ---------- locations and the opening schedule ----------
+   The schedule is the truth: a list of contract months and how many locations
+   open in each. When the customer has given months, those are facts. When they
+   have only given a count per year, each year's additions are spread evenly
+   through that year, and that spread is an estimate. An app-only customer is a
+   single location. */
+
+function TPsingleLocation(s) { return s.customerType === 'app'; }
+
+/* Locations at the end of each contract year from the per-year entry, never
+   fewer than the year before and never fewer than one. */
+function TPyearCounts(s) {
   var n = TPterm(s), raw = Array.isArray(s.locations) ? s.locations : [], out = [], prev = 1;
+  if (TPsingleLocation(s)) { for (var j = 0; j < n; j++) out.push(1); return out; }
   for (var i = 0; i < n; i++) {
     var v = Math.max(1, prev, Math.round(TPnum(raw[i], 0)));
     out.push(v); prev = v;
@@ -367,19 +464,62 @@ function TPlocations(s) {
   return out;
 }
 
-/* The month each location opens. Year-one locations are open from month one.
-   A year's additions are spread evenly through that year rather than all
-   landing on its first day, because that is how openings actually happen. */
-function TPopenings(s) {
-  var counts = TPlocations(s), open = [], prev = 0;
+/* The even spread of a year's additions, as an estimate. Year-one locations are
+   open from month one. */
+function TPscheduleFromYears(s) {
+  var counts = TPyearCounts(s), out = [], prev = 0;
   counts.forEach(function (count, y) {
     var added = count - prev;
     for (var k = 0; k < added; k++) {
-      open.push(y === 0 ? 1 : y * 12 + 1 + Math.floor(k * 12 / added));
+      var month = y === 0 ? 1 : y * 12 + 1 + Math.floor(k * 12 / added), last = out[out.length - 1];
+      if (last && last.month === month) last.add += 1; else out.push({ month: month, add: 1, source: y === 0 ? 'fact' : 'estimate' });
     }
     prev = count;
   });
+  return out;
+}
+
+/* The schedule in force: the customer's months when given, else the spread. A
+   stated schedule always starts with month one. */
+function TPschedule(s) {
+  if (TPsingleLocation(s)) return [{ month: 1, add: 1, source: 'fact' }];
+  var stated = Array.isArray(s.openings) ? s.openings : [], total = TPterm(s) * 12;
+  if (!stated.length) return TPscheduleFromYears(s);
+  var out = [], first = true;
+  stated.forEach(function (o) {
+    var month = Math.max(1, Math.round(TPnum(o.month, 1))), add = Math.max(0, Math.round(TPnum(o.add, 0)));
+    if (add <= 0 || month > total) return;
+    if (first && month > 1) { out.push({ month: 1, add: 1, source: 'fact' }); }
+    first = false;
+    var last = out[out.length - 1];
+    if (last && last.month === month) last.add += add; else out.push({ month: month, add: add, source: 'fact' });
+  });
+  if (!out.length) out.push({ month: 1, add: 1, source: 'fact' });
+  return out;
+}
+
+function TPscheduleStated(s) { return !TPsingleLocation(s) && Array.isArray(s.openings) && s.openings.length > 0; }
+
+/* Locations running at the end of each contract year, from the schedule. */
+function TPlocations(s) {
+  var n = TPterm(s), sched = TPschedule(s), out = [];
+  for (var y = 1; y <= n; y++) {
+    out.push(sched.reduce(function (a, o) { return a + (o.month <= y * 12 ? o.add : 0); }, 0));
+  }
+  return out;
+}
+
+/* The month each location opens, one entry per location. */
+function TPopenings(s) {
+  var open = [];
+  TPschedule(s).forEach(function (o) { for (var k = 0; k < o.add; k++) open.push(o.month); });
   return open;
+}
+
+/* Locations open in a month, as a headcount: a location that opened that month
+   counts in full. Used for anything that runs at every location, like a prize. */
+function TPlocationsOpen(s, month) {
+  return TPopenings(s).filter(function (opened) { return month >= opened; }).length;
 }
 
 /* Volume in a month as a multiple of one fully ramped location: every location
@@ -434,8 +574,9 @@ function TPdecayFactor(s, month) {
   return Math.pow(rate, year);
 }
 
-/* Everything that scales the audience in a month, as one factor: locations open
-   and ramping, engagement decay by year, and where in the season the month falls. */
+/* Everything that scales the core audience in a month, as one factor: locations
+   open and ramping, engagement decay by year, and where in the season the month
+   falls. */
 function TPaudienceFactor(s, month) {
   return TPvolumeFactor(s, month) * TPdecayFactor(s, month) * TPseasonFactor(s, month);
 }
@@ -444,6 +585,42 @@ function TPavgAudience(s, months) {
   var n = months || TPterm(s) * 12, total = 0;
   for (var m = 1; m <= n; m++) total += TPaudienceFactor(s, m);
   return n > 0 ? total / n : 1;
+}
+
+/* ---------- the two bases ----------
+   Core runs on users per location, scaled by the locations open. Mini games run
+   on the whole base: the customer's app or site MAU when entered, otherwise the
+   venue base times locations open, so it grows with every opening. */
+function TPminiEntered(s) { return s.mini.mauMode === 'entered' && TPnum(s.mini.mau, 0) > 0; }
+
+function TPproductBase(s, key) {
+  if (key === 'mini' && TPminiEntered(s)) return TPnum(s.mini.mau, 0);
+  return TPnum(s.mau, 0);
+}
+
+function TPproductFactor(s, key, month) {
+  // An entered app base does not multiply by locations, but it still launches
+  // on the ramp, decays and follows the season like everything else.
+  if (key === 'mini' && TPminiEntered(s)) return TPrampFactor(s, month) * TPdecayFactor(s, month) * TPseasonFactor(s, month);
+  return TPaudienceFactor(s, month);
+}
+
+function TPavgProductFactor(s, key, months) {
+  var n = months || TPterm(s) * 12, total = 0;
+  for (var m = 1; m <= n; m++) total += TPproductFactor(s, key, m);
+  return n > 0 ? total / n : 1;
+}
+
+/* The mini-games base in a month, for readouts: the entered MAU, or the venue
+   base times the locations open and ramping. */
+function TPminiBase(s, month) {
+  return TPminiEntered(s) ? TPnum(s.mini.mau, 0) : TPnum(s.mau, 0) * TPvolumeFactor(s, month || 1);
+}
+
+/* Head-to-head reach for a product: its own reach when set, else its base. */
+function TPreach(s, key) {
+  var k = key || 'core', own = TPnum(TPproduct(s, k).h2h.reach, 0);
+  return own > 0 ? own : TPproductBase(s, k);
 }
 
 /* Sponsor money landing in a given contract month. */
@@ -464,31 +641,47 @@ function TPupfront(s) {
 }
 
 /* Participants for one tournament type: its own headcount, or its own share of
-   the addressable base, per location, scaled by the locations open and their
-   ramps that month. */
-function TPtypeParticipants(s, t, month) {
-  var full = t.basis === 'mau'
-    ? TPnum(s.mau, 0) * TPnum(t.participantPct, 0) / 100
-    : TPnum(t.participants, 0);
-  return full * TPaudienceFactor(s, month);
+   the product's base, scaled by that product's factor for the month. For core
+   that is per location times locations open and ramping; for mini games it is
+   the whole base. */
+function TPtypeParticipants(s, t, month, key) {
+  var k = key || t.product || 'core',
+    full = t.basis === 'mau'
+      ? TPproductBase(s, k) * TPnum(t.participantPct, 0) / 100
+      : TPnum(t.participants, 0);
+  return full * TPproductFactor(s, k, month);
 }
 
-function TPentriesPerEvent(s, t, month) {
-  var p = TPtypeParticipants(s, t, month);
+function TPentriesPerEvent(s, t, month, key) {
+  var p = TPtypeParticipants(s, t, month, key);
   return p + (t.rebuyMode === 'pct' ? p * TPnum(t.rebuyPct, 0) / 100 : p * TPnum(t.rebuys, 0));
+}
+
+/* How many times a tournament's prize is funded in a month: once per location
+   open when it runs at every location, once when it is one across the network,
+   and always once for mini games. */
+function TPprizeMultiplier(s, t, month, key) {
+  var k = key || t.product || 'core';
+  if (k === 'mini' || t.scope === 'network') return 1;
+  return Math.max(1, TPlocationsOpen(s, month));
 }
 
 function TPvalidate(input) {
   var s = TPstate(input), errors = [];
-  if (!s.includeTournaments && !s.includeH2H) errors.push('Select at least one product: tournaments, head-to-head, or both.');
+  var anyOn = TP_PRODUCTS.some(function (k) { return TPproductOn(s, k) && (TPtournamentsOn(s, k) || TPh2hOn(s, k)); });
+  if (!anyOn) errors.push('Select at least one product, with tournaments, head-to-head, or both.');
 
-  if (s.includeH2H && TPreach(s) <= 0) errors.push('Enter addressable users, or a head-to-head reach.');
+  TP_PRODUCTS.forEach(function (k) {
+    if (TPh2hOn(s, k) && TPreach(s, k) <= 0) {
+      errors.push(k === 'mini' ? 'Enter the app or site users for mini-games head-to-head, or a reach.' : 'Enter users per location for core head-to-head, or a reach.');
+    }
+  });
 
   // Head-to-head is paid out of this split too, so it is checked for either product.
   var post = TPnum(s.post.operator) + TPnum(s.post.lucra);
   if (Math.abs(post - 100) > 0.001) errors.push('Operator and Lucra split must sum to 100%.');
 
-  if (!s.includeTournaments) return errors;
+  if (!TPanyTournaments(s)) return errors;
 
   if (!s.freeLicense) {
     var fees = TPfees(s);
@@ -499,18 +692,109 @@ function TPvalidate(input) {
     if (Math.abs(sum - 100) > 0.001) errors.push('Recapture split must sum to 100%. It currently sums to ' + Math.round(sum * 10) / 10 + '%.');
     if (TPnum(s.custom.credit) <= 0) errors.push('Licence share must be above 0%. Switch recapture off if activity should not pay the licence down.');
   }
-  if (!(s.tournaments || []).length) errors.push('Add at least one tournament type.');
-  if ((s.tournaments || []).some(function (t) { return t.basis === 'mau'; }) && TPnum(s.mau, 0) <= 0) {
-    errors.push('Enter addressable users, or set tournament participation as a headcount.');
-  }
+  TP_PRODUCTS.forEach(function (k) {
+    if (!TPtournamentsOn(s, k)) return;
+    var list = TPproduct(s, k).tournaments, label = k === 'mini' ? 'mini games' : 'core';
+    if (!list.length) errors.push('Add at least one tournament type for ' + label + ', or switch its tournaments off.');
+    if (list.some(function (t) { return t.basis === 'mau'; }) && TPproductBase(s, k) <= 0) {
+      errors.push('Enter ' + (k === 'mini' ? 'app or site users' : 'users per location') + ', or set ' + label + ' tournament participation as a headcount.');
+    }
+  });
   return errors;
 }
 
-/* The whole deal, month by month. Tournament entries and the head-to-head
-   platform fee form one pool that is split at the same rates and credits the
-   licence at the same share. Sponsors credit the licence directly, before the
-   split, in the month they pay. cfg carries the head-to-head inputs; without it
-   only tournaments are modelled. factor scales engagement, for the case band. */
+/* The head-to-head inputs a product runs on. Mini games can be overridden by
+   cfg, which is how the Mini Game ROI tab and the recommender drive them. */
+function TPh2hInputs(s, key, cfg) {
+  var own = TPproduct(s, key).h2h;
+  if (key === 'mini' && cfg) {
+    return {
+      mode: own.mode, reach: own.reach,
+      engagement: cfg.engagement, playsPerUser: cfg.playsPerUser, spendPerPlay: cfg.spendPerPlay, feeRate: cfg.feeRate,
+      rewardGames: cfg.rewardGames, winRate: cfg.winRate, redeemRate: cfg.redeemRate, valuePerRedemption: cfg.valuePerRedemption
+    };
+  }
+  return own;
+}
+
+/* Head-to-head for one product in one month. Wagering produces the platform
+   fee; rewards are free to play and produce venue value through redeemed visits,
+   never a fee. */
+function TPmonthlyH2H(s, cfg, month, factor, key) {
+  var k = key || 'core', f = factor === undefined ? 1 : TPnum(factor, 0),
+    c = TPh2hInputs(s, k, cfg),
+    on = TPh2hOn(s, k),
+    wagering = on && c.mode !== 'rewards',
+    rewards = on && c.mode !== 'wagering',
+    reach = TPreach(s, k),
+    engagement = on ? Math.min(100, TPnum(c.engagement, 0, 100) * f) : 0,
+    aud = TPproductFactor(s, k, month),
+    engaged = reach * engagement / 100 * aud,
+    paidPlays = wagering ? engaged * TPnum(c.playsPerUser, 0) : 0,
+    paidVolume = paidPlays * TPnum(c.spendPerPlay, 0),
+    feeRate = TPnum(c.feeRate, 0, 100) / 100,
+    platformFee = paidVolume * feeRate,
+    rewardPlays = rewards ? engaged * TPnum(c.rewardGames, 0) : 0,
+    rewardWins = rewardPlays * TPnum(c.winRate, 0, 100) / 100,
+    rewardRedemptions = rewardWins * TPnum(c.redeemRate, 0, 100) / 100,
+    rewardValue = rewardRedemptions * TPnum(c.valuePerRedemption, 0);
+  return {
+    product: k, on: on, wagering: wagering, rewards: rewards, reach: reach, engagement: engagement,
+    audience: aud, engaged: engaged, paidPlays: paidPlays, paidVolume: paidVolume,
+    feeRate: feeRate * 100, platformFee: platformFee,
+    rewardPlays: rewardPlays, rewardWins: rewardWins,
+    rewardRedemptions: rewardRedemptions, rewardValue: rewardValue
+  };
+}
+
+/* Head-to-head averaged across the term, for readouts. With no key it is the
+   two products added together. The split of the fee is worked out month by
+   month inside TPcalculate, alongside tournament entries. */
+function TPh2h(input, cfg, factor, key) {
+  var s = TPstate(input), n = TPterm(s) * 12 || 12, keys = key ? [key] : TP_PRODUCTS, list = [
+    'engaged', 'paidPlays', 'paidVolume', 'platformFee', 'rewardPlays', 'rewardWins', 'rewardRedemptions', 'rewardValue', 'audience'
+  ];
+  var sum = Object.assign({}, TPmonthlyH2H(s, cfg, 1, factor, keys[0]));
+  list.forEach(function (q) { sum[q] = 0; });
+  sum.on = false; sum.wagering = false; sum.rewards = false; sum.reach = 0; sum.products = [];
+  var engWeighted = 0, reachTotal = 0;
+  keys.forEach(function (k) {
+    var first = TPmonthlyH2H(s, cfg, 1, factor, k);
+    if (!first.on) return;
+    var acc = {}; list.forEach(function (q) { acc[q] = 0; });
+    for (var m = 1; m <= n; m++) {
+      var x = TPmonthlyH2H(s, cfg, m, factor, k);
+      list.forEach(function (q) { acc[q] += x[q]; });
+    }
+    list.forEach(function (q) { sum[q] += acc[q] / n; });
+    sum.on = true; sum.wagering = sum.wagering || first.wagering; sum.rewards = sum.rewards || first.rewards;
+    sum.reach += first.reach; sum.products.push(k);
+    engWeighted += first.engagement * first.reach; reachTotal += first.reach;
+  });
+  // Engagement is reach-weighted across products; the fee rate is what the
+  // fee actually was against the volume.
+  sum.engagement = reachTotal > 0 ? engWeighted / reachTotal : 0;
+  sum.feeRate = sum.paidVolume > 0 ? sum.platformFee / sum.paidVolume * 100 : 0;
+  var rates = TPsplitRates(s);
+  sum.ramp = sum.audience;
+  // Indicative split of the average fee. The real month-by-month split, where the
+  // fee also credits the licence, lives in TPcalculate.
+  sum.lucraShare = sum.platformFee * rates.lucra;
+  sum.operatorShare = sum.platformFee - sum.lucraShare;
+  // The Revenue Model tab is authoritative: a free licence waives Lucra's fee
+  // whatever any other tab holds.
+  sum.licenseMonthly = s.freeLicense ? 0 : TPfees(s)[0] / 12;
+  sum.licenseWaived = !!s.freeLicense;
+  sum.revenueGenerated = sum.platformFee;
+  return sum;
+}
+
+/* The whole deal, month by month. Both products contribute to one pool: gross
+   tournament entries and the head-to-head platform fee, from core and from mini
+   games, are split at the same rates and credit the one licence at the same
+   share. Sponsors and the signing payment credit the licence directly, before
+   the split. cfg carries the Mini Game tab's head-to-head inputs when that tab
+   drives them; factor scales engagement, for the case band. */
 function TPcalculate(input, cfg, factor) {
   var s = TPstate(input), errors = TPvalidate(s);
   if (errors.length) return { errors: errors, months: [], years: [] };
@@ -528,9 +812,12 @@ function TPcalculate(input, cfg, factor) {
     totalH2HFee = 0, totalH2HVolume = 0, totalRewardValue = 0,
     totalSponsorCredited = 0, totalSponsorUnapplied = 0,
     upfront = TPupfront(s), totalUpfrontCredited = 0,
-    useH2H = !!s.includeH2H && !!cfg,
-    tournamentsOn = s.includeTournaments ? s.tournaments : [],
+    useH2H = TPanyH2H(s),
+    byProduct = {},
     lossMonths = 0, payoffMonth = null, months = [];
+  TP_PRODUCTS.forEach(function (k) {
+    byProduct[k] = { on: TPproductOn(s, k), tournaments: TPtournamentsOn(s, k), h2h: TPh2hOn(s, k), handle: 0, prizeCost: 0, h2hFee: 0, h2hVolume: 0, rewardValue: 0, splitBase: 0 };
+  });
 
   for (var y = 0; y < (s.freeLicense ? termYears : fees.length); y++) {
     years.push({ year: y + 1, fee: s.freeLicense ? 0 : fees[y], opening: 0, credited: 0, trueUp: 0, clearMonth: null, closing: 0 });
@@ -566,28 +853,41 @@ function TPcalculate(input, cfg, factor) {
     totalSponsorUnapplied += sponsorPaid - sponsorCredit;
     if (years[yi]) years[yi].credited += sponsorCredit;
 
-    var handle = 0, prizeCost = 0, detail = [], participants = 0;
-    tournamentsOn.forEach(function (t) {
-      var events = TPnum(t.eventsPerMonth, 0),
-        typeParticipants = TPtypeParticipants(s, t, month),
-        entriesPerEvent = TPentriesPerEvent(s, t, month),
-        tHandle = entriesPerEvent * TPnum(t.entryPrice, 0) * events,
-        tPrize = TPnum(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0) * events;
-      handle += tHandle;
-      prizeCost += tPrize;
-      participants += typeParticipants;
-      detail.push({
-        name: t.name, participants: typeParticipants, entriesPerEvent: entriesPerEvent,
-        events: events, handle: tHandle, prizeCost: tPrize, loss: tPrize > tHandle
+    var handle = 0, prizeCost = 0, detail = [], participants = 0, h2hFee = 0, h2hVolume = 0, h2hEngaged = 0, rewardValue = 0,
+      products = {};
+    TP_PRODUCTS.forEach(function (k) {
+      var pm = { handle: 0, prizeCost: 0, participants: 0, h2hFee: 0, h2hVolume: 0, h2hEngaged: 0, rewardValue: 0 };
+      TPtournamentsOf(s, k).forEach(function (t) {
+        var events = TPnum(t.eventsPerMonth, 0),
+          typeParticipants = TPtypeParticipants(s, t, month, k),
+          entriesPerEvent = TPentriesPerEvent(s, t, month, k),
+          tHandle = entriesPerEvent * TPnum(t.entryPrice, 0) * events,
+          mult = TPprizeMultiplier(s, t, month, k),
+          tPrize = TPnum(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0) * events * mult;
+        pm.handle += tHandle;
+        pm.prizeCost += tPrize;
+        pm.participants += typeParticipants;
+        detail.push({
+          product: k, name: t.name, participants: typeParticipants, entriesPerEvent: entriesPerEvent,
+          events: events, handle: tHandle, prizeCost: tPrize, prizeMultiplier: mult, loss: tPrize > tHandle
+        });
       });
+      if (TPh2hOn(s, k)) {
+        var hm = TPmonthlyH2H(s, cfg, month, factor, k);
+        pm.h2hFee = hm.platformFee; pm.h2hVolume = hm.paidVolume; pm.h2hEngaged = hm.engaged; pm.rewardValue = hm.rewardValue;
+      }
+      pm.splitBase = pm.handle + pm.h2hFee;
+      products[k] = pm;
+      handle += pm.handle; prizeCost += pm.prizeCost; participants += pm.participants;
+      h2hFee += pm.h2hFee; h2hVolume += pm.h2hVolume; h2hEngaged += pm.h2hEngaged; rewardValue += pm.rewardValue;
+      byProduct[k].handle += pm.handle; byProduct[k].prizeCost += pm.prizeCost; byProduct[k].h2hFee += pm.h2hFee;
+      byProduct[k].h2hVolume += pm.h2hVolume; byProduct[k].rewardValue += pm.rewardValue; byProduct[k].splitBase += pm.splitBase;
     });
 
     // The commercial splits gross entries. The partner funds the prize pool out of
     // their own share afterwards, so prize cost never reduces the pool being split:
     // $10,000 raised -> partner $9,000 -> their $1,000 prize cost -> partner nets $8,000.
-    var hm = useH2H ? TPmonthlyH2H(s, cfg, month, factor) : null,
-      h2hFee = hm ? hm.platformFee : 0,
-      splitBase = handle + h2hFee,
+    var splitBase = handle + h2hFee,
       licenseGross = rates.credit > 0 ? Math.min(splitBase, remaining / rates.credit) : 0,
       postGross = splitBase - licenseGross,
       toLicense = Math.min(remaining, licenseGross * rates.credit),
@@ -595,7 +895,7 @@ function TPcalculate(input, cfg, factor) {
       toLucra = licenseGross * rates.lucra + postGross * rates.postLucra,
       toOperator = operatorGross - prizeCost,
       grossMargin = handle - prizeCost;
-    if (hm) { totalH2HFee += h2hFee; totalH2HVolume += hm.paidVolume; totalRewardValue += hm.rewardValue; }
+    if (useH2H) { totalH2HFee += h2hFee; totalH2HVolume += h2hVolume; totalRewardValue += rewardValue; }
 
     // A month is a loss when the partner's share does not cover the prizes they fund.
     if (toOperator < 0) lossMonths++;
@@ -618,8 +918,10 @@ function TPcalculate(input, cfg, factor) {
     months.push({
       month: month, year: yi + 1, monthInYear: monthInYear,
       participants: participants, handle: handle, prizeCost: prizeCost,
-      h2hFee: h2hFee, h2hVolume: hm ? hm.paidVolume : 0, h2hEngaged: hm ? hm.engaged : 0,
-      rewardValue: hm ? hm.rewardValue : 0,
+      h2hFee: h2hFee, h2hVolume: h2hVolume, h2hEngaged: h2hEngaged,
+      rewardValue: rewardValue,
+      locationsOpen: TPlocationsOpen(s, month),
+      products: products,
       sponsorPaid: sponsorPaid, sponsorCredit: sponsorCredit, upfrontCredit: upfrontCredit,
       grossMargin: grossMargin, splitBase: splitBase,
       toLicense: toLicense, cumulativeLicense: cumulativeLicense,
@@ -652,69 +954,17 @@ function TPcalculate(input, cfg, factor) {
     totalH2HFee: totalH2HFee, totalH2HVolume: totalH2HVolume, totalRewardValue: totalRewardValue,
     totalSponsorCredited: totalSponsorCredited, totalSponsorUnapplied: totalSponsorUnapplied,
     upfront: upfront, totalUpfrontCredited: totalUpfrontCredited,
-    includesH2H: useH2H,
+    includesH2H: useH2H, includesTournaments: TPanyTournaments(s),
+    byProduct: byProduct,
+    customerType: s.customerType, scheduleStated: TPscheduleStated(s), schedule: TPschedule(s),
     lossMonths: lossMonths, free: rates.free
   };
-}
-
-/* Head-to-head in one month. Wagering produces the platform fee; rewards are free
-   to play and produce venue value through redeemed visits, never a fee. */
-function TPmonthlyH2H(s, cfg, month, factor) {
-  var f = factor === undefined ? 1 : TPnum(factor, 0), c = cfg || {},
-    on = !!s.includeH2H,
-    wagering = on && s.h2hMode !== 'rewards',
-    rewards = on && s.h2hMode !== 'wagering',
-    reach = TPreach(s),
-    engagement = on ? Math.min(100, TPnum(c.engagement, 0, 100) * f) : 0,
-    aud = TPaudienceFactor(s, month),
-    engaged = reach * engagement / 100 * aud,
-    paidPlays = wagering ? engaged * TPnum(c.playsPerUser, 0) : 0,
-    paidVolume = paidPlays * TPnum(c.spendPerPlay, 0),
-    feeRate = TPnum(c.feeRate, 0, 100) / 100,
-    platformFee = paidVolume * feeRate,
-    rewardPlays = rewards ? engaged * TPnum(c.rewardGames, 0) : 0,
-    rewardWins = rewardPlays * TPnum(c.winRate, 0, 100) / 100,
-    rewardRedemptions = rewardWins * TPnum(c.redeemRate, 0, 100) / 100,
-    rewardValue = rewardRedemptions * TPnum(c.valuePerRedemption, 0);
-  return {
-    on: on, wagering: wagering, rewards: rewards, reach: reach, engagement: engagement,
-    audience: aud, engaged: engaged, paidPlays: paidPlays, paidVolume: paidVolume,
-    feeRate: feeRate * 100, platformFee: platformFee,
-    rewardPlays: rewardPlays, rewardWins: rewardWins,
-    rewardRedemptions: rewardRedemptions, rewardValue: rewardValue
-  };
-}
-
-/* Head-to-head averaged across the term, for readouts. The split of its fee is
-   worked out month by month inside TPcalculate, alongside tournament entries. */
-function TPh2h(input, cfg, factor) {
-  var s = TPstate(input), n = TPterm(s) * 12 || 12, sum = null, keys = [
-    'engaged', 'paidPlays', 'paidVolume', 'platformFee', 'rewardPlays', 'rewardWins', 'rewardRedemptions', 'rewardValue', 'audience'
-  ];
-  for (var m = 1; m <= n; m++) {
-    var x = TPmonthlyH2H(s, cfg, m, factor);
-    if (!sum) { sum = Object.assign({}, x); keys.forEach(function (k) { sum[k] = 0; }); }
-    keys.forEach(function (k) { sum[k] += x[k]; });
-  }
-  keys.forEach(function (k) { sum[k] = sum[k] / n; });
-  var rates = TPsplitRates(s);
-  sum.ramp = sum.audience;
-  // Indicative split of the average fee. The real month-by-month split, where the
-  // fee also credits the licence, lives in TPcalculate.
-  sum.lucraShare = sum.platformFee * rates.lucra;
-  sum.operatorShare = sum.platformFee - sum.lucraShare;
-  // The Revenue Model tab is authoritative: a free licence waives Lucra's fee
-  // whatever any other tab holds.
-  sum.licenseMonthly = s.freeLicense ? 0 : TPfees(s)[0] / 12;
-  sum.licenseWaived = !!s.freeLicense;
-  sum.revenueGenerated = sum.platformFee;
-  return sum;
 }
 
 function TPCcase(cfg, factor) {
   var f = factor === undefined ? 1 : TPnum(factor, 0),
     s = TPstate(cfg.tournament),
-    onTournaments = !!s.includeTournaments,
+    onTournaments = TPanyTournaments(s),
     h = TPh2h(s, cfg, f),
     tState = TPscaled(s, f, 1),
     r = TPcalculate(tState, cfg, f),
@@ -762,22 +1012,35 @@ function TPCcases(cfg) {
   ];
 }
 
-/* Scale participation and entry price. Used by the case band and the map. */
+/* Scale participation and entry price on every tournament of both products.
+   Used by the case band and the map. */
 function TPscaled(input, participationFactor, priceFactor) {
   var s = TPstate(input), p = TPnum(participationFactor, 0), q = priceFactor === undefined ? 1 : TPnum(priceFactor, 0);
-  s.tournaments = s.tournaments.map(function (t) {
-    var c = Object.assign({}, t);
-    c.participants = TPnum(c.participants, 0) * p;
-    c.participantPct = TPnum(c.participantPct, 0) * p;
-    c.entryPrice = TPnum(c.entryPrice, 0) * q;
-    return c;
+  TP_PRODUCTS.forEach(function (k) {
+    s[k].tournaments = s[k].tournaments.map(function (t) {
+      var c = Object.assign({}, t);
+      c.participants = TPnum(c.participants, 0) * p;
+      c.participantPct = TPnum(c.participantPct, 0) * p;
+      c.entryPrice = TPnum(c.entryPrice, 0) * q;
+      return c;
+    });
   });
   return s;
 }
 
+/* The primary tournament, for the map and the pitch: the first of the first
+   product that runs tournaments. */
+function TPprimaryTournament(s) {
+  for (var i = 0; i < TP_PRODUCTS.length; i++) {
+    var list = TPtournamentsOf(s, TP_PRODUCTS[i]);
+    if (list.length) return Object.assign({ product: TP_PRODUCTS[i] }, list[0]);
+  }
+  return {};
+}
+
 function TPheatMap(input, h2hCfg) {
   var s = TPstate(input), factors = [0.5, 0.75, 1, 1.25, 1.5],
-    first = (s.tournaments && s.tournaments[0]) || {},
+    first = TPprimaryTournament(s),
     basisMau = first.basis === 'mau',
     baseParticipation = basisMau ? TPnum(first.participantPct, 0) : TPnum(first.participants, 0),
     primaryPrice = TPnum(first.entryPrice, 0),
@@ -805,7 +1068,7 @@ function TPheatMap(input, h2hCfg) {
      factor, the same way the three cases do. */
   var volumes = rows.map(function (participation, ri) {
     var c = TPscaled(s, factors[ri], 1), r = TPcalculate(c, h2hCfg, factors[ri]),
-      h = h2hCfg ? TPh2h(s, h2hCfg, factors[ri]) : null;
+      h = TPanyH2H(s) ? TPh2h(s, h2hCfg, factors[ri]) : null;
     return {
       entriesValue: r.errors.length ? 0 : (r.totalHandle / (r.months.length || 1)),
       paidGameVolume: h ? h.paidVolume : 0,
@@ -816,7 +1079,7 @@ function TPheatMap(input, h2hCfg) {
   return {
     basisMau: basisMau, prices: prices, participation: rows, cells: cells, volumes: volumes,
     totalMonths: totalMonths, baseParticipation: baseParticipation, primaryPrice: primaryPrice,
-    showLucra: !!s.showLucra, includeH2H: !!s.includeH2H && s.heatH2H !== false
+    showLucra: !!s.showLucra, includeH2H: TPanyH2H(s) && s.heatH2H !== false
   };
 }
 
@@ -824,11 +1087,15 @@ function TPcustomerProjection(input) {
   var s = TPstate(input);
   return {
     dealName: String(s.dealName || ''),
-    tournaments: s.tournaments.map(function (t) {
+    customerType: s.customerType,
+    tournaments: TPallTournaments(s).map(function (t) {
       var rebuys = TPnum(t.rebuys, 0), label;
       if (t.rebuyMode === 'pct') label = TPnum(t.rebuyPct, 0) > 0 ? 'Rebuys available' : 'Single entry';
       else label = rebuys > 0 ? 'Up to ' + (rebuys % 1 === 0 ? rebuys : rebuys.toFixed(2)) + ' rebuys' : 'Single entry';
       return {
+        product: t.product,
+        productLabel: t.product === 'mini' ? 'Mini games' : 'Core',
+        scopeLabel: t.product === 'mini' ? 'Across the app' : (t.scope === 'network' ? 'One across all locations' : 'At every location'),
         name: String(t.name || 'Tournament'),
         entryPrice: TPnum(t.entryPrice, 0),
         rebuyLabel: label,
@@ -850,12 +1117,13 @@ function TPpitchH2H(input, cfg) {
   var s = TPstate(input), h = TPh2h(s, cfg, 1);
   if (!h.on) return '';
   if (h.reach <= 0) return 'Enter addressable users to build the head-to-head pitch.';
-  var out = TPmoney0(h.reach).replace('$', '') + ' addressable users at ' + (Math.round(h.engagement * 100) / 100) +
+  var both = h.products.length > 1,
+    out = TPmoney0(h.reach).replace('$', '') + ' addressable users at ' + (Math.round(h.engagement * 100) / 100) +
     '% engagement gives ' + Math.round(h.engaged).toLocaleString() + ' active players' +
-    (s.rampOn || TPlocations(s).slice(-1)[0] > 1 ? ' averaged across the ramp and openings' : '') + '.';
+    (both ? ' across core and mini games' : h.products[0] === 'mini' ? ' on the app' : '') +
+    (s.rampOn || TPlocations(s).slice(-1)[0] > 1 ? ', averaged across the ramp and openings' : '') + '.';
   if (h.wagering) {
-    out += ' They play ' + (Math.round(TPnum(cfg.playsPerUser, 0) * 100) / 100) + ' paid games a month at ' +
-      TPmoney0(TPnum(cfg.spendPerPlay, 0)) + ' an entry, which is ' + TPmoney0(h.paidVolume) +
+    out += ' Paid play comes to ' + TPmoney0(h.paidVolume) +
       ' of paid-game volume a month and ' + TPmoney0(h.platformFee) + ' of platform fee at ' +
       (Math.round(h.feeRate * 100) / 100) + '%. Across a year that is ' + TPmoney0(h.platformFee * 12) + '.';
     out += ' The operator keeps ' + TPmoney0(h.operatorShare * 12) + ' of that a year';
@@ -873,13 +1141,17 @@ function TPpitchH2H(input, cfg) {
 
 function TPpitchTournaments(input, cfg) {
   var s = TPstate(input), r = TPcalculate(s, cfg);
-  if (!s.includeTournaments) return '';
+  if (!TPanyTournaments(s)) return '';
   if (r.errors.length) return 'Complete the tournament inputs to build the pitch.';
   var m1 = r.months[0] || {}, perYear = r.totalSplitBase / TPterm(s),
-    types = s.tournaments.length,
-    events = s.tournaments.reduce(function (a, t) { return a + TPnum(t.eventsPerMonth, 0); }, 0);
+    all = TPallTournaments(s), types = all.length,
+    events = all.reduce(function (a, t) { return a + TPnum(t.eventsPerMonth, 0); }, 0),
+    coreOn = TPtournamentsOn(s, 'core'), miniOn = TPtournamentsOn(s, 'mini'),
+    locs = TPlocations(s).slice(-1)[0];
   var out = types + ' tournament format' + (types === 1 ? '' : 's') + ' running ' + Math.round(events) +
-    ' event' + (Math.round(events) === 1 ? '' : 's') + ' a month draws ' + Math.round(m1.participants || 0).toLocaleString() +
+    ' event' + (Math.round(events) === 1 ? '' : 's') + ' a month' +
+    (coreOn && miniOn ? ' across core and mini games' : miniOn ? ' on the app' : locs > 1 ? ' per location' : '') +
+    ' draws ' + Math.round(m1.participants || 0).toLocaleString() +
     ' participants in month one, generating ' + TPmoney0(m1.handle || 0) + ' of entries to split. ' +
     'The operator funds ' + TPmoney0(m1.prizeCost || 0) + ' of prizes out of their own share.';
   out += ' Over the term that is ' + TPmoney0(r.totalHandle / TPterm(s)) + ' a year' +
@@ -906,10 +1178,13 @@ function TPpitchTournaments(input, cfg) {
 /* ---------- configuration recommender ----------
    Takes a monthly active base and proposes a programme that clears the licence.
    Every band below is anchored to one of exactly two things: the reference deals
-   that already ship in this tool, or a published figure that can be cited. Where
-   no public benchmark exists the band stays a Lucra assumption and says so.
-   Nothing is modelled above the published ceiling: if the deal does not clear
-   there, the recommender reports the gap rather than inflating participation. */
+   that already ship in this tool, or a published figure that can be cited. Those
+   figures describe mini games, Lucra's catalog on an app or site. For core, the
+   customer's own game or venue, there is no published benchmark and none is
+   borrowed: the recommender tests the deal as entered, sizes any gap, and names
+   the levers, but proposes no rate of its own. Nothing is modelled above the
+   published ceiling: if a deal does not clear there, the recommender reports the
+   gap rather than inflating participation. */
 
 var TP_BANDS = {
   engagement: {
@@ -936,6 +1211,9 @@ var TP_BANDS = {
   },
   participation: {
     source: 'Lucra assumption. No public benchmark exists for tournament participation as a share of a host app base, so this one is not claimed as an industry figure.'
+  },
+  core: {
+    source: 'No published benchmark for in-venue play. The numbers are the deal\'s own, as entered.'
   }
 };
 
@@ -954,9 +1232,9 @@ function TPengCurve(mau) {
   return a[a.length - 1][1];
 }
 
-/* The ladder. Step 0 is what the reference deals already say; the last step is
-   the highest published figure for this vertical. There is deliberately no
-   step beyond it. */
+/* The ladder for mini games. Step 0 is what the reference deals already say;
+   the last step is the highest published figure for this vertical. There is
+   deliberately no step beyond it. */
 function TPrecSteps() {
   return [
     { key: 'conservative', label: 'Lucra reference, conservative', engMin: 0, plays: 20, wager: 2, rake: 10,
@@ -968,6 +1246,22 @@ function TPrecSteps() {
     { key: 'published-2025', label: 'Ceiling: the FY2025 published figure', engMin: 21, plays: 25, wager: 5, rake: 19,
       basis: 'The highest published figures for this vertical. Nothing above this is modelled.' }
   ];
+}
+
+/* The single core "step": the deal as entered. It exists so the same tests,
+   gap and levers run for core without a ladder behind them. */
+function TPrecCoreStep(s) {
+  var h = TPproduct(s, 'core').h2h;
+  return { key: 'entered', label: 'The deal as entered', engMin: 0, plays: TPnum(h.playsPerUser, 0), wager: TPnum(h.spendPerPlay, 0),
+    rake: TPnum(h.feeRate, 0, 100), noBenchmark: true, basis: TP_BANDS.core.source };
+}
+
+/* Which product a recommendation is for: the one asked for, else mini games when
+   they are in the deal, else core. */
+function TPrecProduct(s, opts) {
+  var p = opts && opts.product;
+  if (p === 'mini' || p === 'core') return p;
+  return TPproductOn(s, 'mini') ? 'mini' : 'core';
 }
 
 /* A programme scaled to the base. Prize funding is sized against the share the
@@ -985,14 +1279,14 @@ function TPrecTournaments(mau, prizeShare) {
       var prize = Math.round(m * pct / 100 * price * ps);
     return { id: id, name: name, entryPrice: price, eventsPerMonth: events, basis: 'mau',
       participants: 0, participantPct: pct, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0,
-      isCash: false, rewardFaceValue: prize, customerCashCost: prize, cashPrizeAmount: prize };
+      isCash: false, rewardFaceValue: prize, customerCashCost: prize, cashPrizeAmount: prize, scope: 'network' };
     };
   return [mk('rec-weekly', 'Weekly open', 5, 4, 1), mk('rec-major', 'Monthly major', 25, 1, 0.3)];
 }
 
-/* The programme adjustments carried on the deal, normalised. */
-function TPrecAdjust(s) {
-  var a = (s && s.recAdjust) || {};
+/* The programme adjustments carried on a product, normalised. */
+function TPrecAdjust(s, key) {
+  var a = (TPproduct(s, key || 'mini').recAdjust) || {};
   return {
     events: Math.max(0, Math.round(TPnum(a.events, 0))),
     priceMult: TPnum(a.priceMult, 1) || 1,
@@ -1000,21 +1294,42 @@ function TPrecAdjust(s) {
   };
 }
 
-/* The recommended programme for this deal: the scaled programme with the
-   deal's own adjustments applied, so an applied lever survives a change of
-   base instead of being regenerated away. */
-function TPrecProgramme(base, mau) {
-  var a = TPrecAdjust(base), ratio = TPrewardCostRatio(base);
-  return TPrecTournaments(mau, TPrecPrizeShare(base)).map(function (t) {
+/* The venue's cost for a reward as a share of its face value. Taken from the
+   deal if entered, otherwise from the product's tournaments as configured.
+   Never an assumed discount. */
+function TPrewardCostRatio(s, key) {
+  var entered = s.rewardCostRatio;
+  if (entered !== '' && entered !== null && entered !== undefined && isFinite(Number(entered))) {
+    return Math.max(0, Math.min(1, TPnum(entered, 0) / 100));
+  }
+  var face = 0, cost = 0, list = key ? TPproduct(s, key).tournaments : TPallTournaments(s);
+  list.forEach(function (t) {
+    if (t.isCash) return;
+    face += TPnum(t.rewardFaceValue, 0); cost += TPnum(t.customerCashCost, 0);
+  });
+  return face > 0 ? Math.max(0, Math.min(1, cost / face)) : 1;
+}
+
+/* The programme the recommender runs for a product: for mini games the scaled
+   programme, for core the tournaments as entered; in both cases with the
+   product's own adjustments applied, so an applied lever survives a change of
+   base instead of being regenerated away. The busiest tournament takes the
+   extra event. */
+function TPrecProgramme(base, mau, key) {
+  var k = key || 'mini', a = TPrecAdjust(base, k), ratio = TPrewardCostRatio(base, k),
+    list = k === 'mini' ? TPrecTournaments(mau, TPrecPrizeShare(base)) : TPproduct(base, 'core').tournaments,
+    busiest = -1, busy = -1;
+  list.forEach(function (t, i) { if (TPnum(t.eventsPerMonth, 0) > busy) { busy = TPnum(t.eventsPerMonth, 0); busiest = i; } });
+  return list.map(function (t, i) {
     var c = Object.assign({}, t);
-    if (c.id === 'rec-weekly') c.eventsPerMonth = c.eventsPerMonth + a.events;
+    if (i === busiest) c.eventsPerMonth = TPnum(c.eventsPerMonth, 0) + a.events;
     if (a.priceMult !== 1) {
-      c.entryPrice = c.entryPrice * a.priceMult;
-      c.rewardFaceValue = Math.round(c.rewardFaceValue * a.priceMult);
-      c.customerCashCost = Math.round(c.customerCashCost * a.priceMult);
-      c.cashPrizeAmount = Math.round(c.cashPrizeAmount * a.priceMult);
+      c.entryPrice = TPnum(c.entryPrice, 0) * a.priceMult;
+      c.rewardFaceValue = Math.round(TPnum(c.rewardFaceValue, 0) * a.priceMult);
+      c.customerCashCost = Math.round(TPnum(c.customerCashCost, 0) * a.priceMult);
+      c.cashPrizeAmount = Math.round(TPnum(c.cashPrizeAmount, 0) * a.priceMult);
     }
-    if (a.rewardAtRatio) { c.isCash = false; c.customerCashCost = Math.round(c.rewardFaceValue * ratio); }
+    if (a.rewardAtRatio) { c.isCash = false; c.customerCashCost = Math.round(TPnum(c.rewardFaceValue, 0) * ratio); }
     return c;
   });
 }
@@ -1028,31 +1343,52 @@ function TPrecStepFor(step, opts) {
   return floor > step.rake ? Object.assign({}, step, { rake: floor, rakeFromDeal: true }) : step;
 }
 
+/* A candidate deal for one product. Mini games: the base entered as the app
+   MAU, the programme generated, head-to-head from the step. Core: the deal as
+   entered with the base applied, its own head-to-head, its own tournaments. */
 function TPrecCandidate(base, step, mau, tournaments, opts) {
-  var m = TPnum(mau, 0);
+  var m = TPnum(mau, 0), k = TPrecProduct(base, opts), s, cfg, eng;
   step = TPrecStepFor(step, opts);
-  var eng = Math.max(TPengCurve(m), step.engMin),
+  if (k === 'mini') {
+    eng = Math.max(TPengCurve(m), step.engMin);
     s = TPstate(Object.assign({}, base, {
-      mau: m, h2hReach: m, rampOn: false,
-      tournaments: base.includeTournaments ? (tournaments || TPrecProgramme(base, m)) : (base.tournaments || [])
-    })),
+      rampOn: false,
+      mini: Object.assign({}, base.mini, {
+        on: true, mauMode: 'entered', mau: m,
+        tournaments: TPtournamentsOn(base, 'mini') ? (tournaments || TPrecProgramme(base, m, 'mini')) : (base.mini.tournaments || []),
+        h2h: Object.assign({}, base.mini.h2h, { reach: 0 })
+      })
+    }));
     cfg = { mau: m, engagement: eng, playsPerUser: step.plays, spendPerPlay: step.wager,
       feeRate: step.rake, rewardGames: 8, winRate: 50,
       redeemRate: TP_BANDS.redemption.base, valuePerRedemption: TP_BANDS.rewardValue.base,
       tournament: s };
-  return { step: step, engagement: eng, state: s, cfg: cfg };
+  } else {
+    var h = Object.assign({}, base.core.h2h, { feeRate: step.rake });
+    eng = TPnum(h.engagement, 0, 100);
+    s = TPstate(Object.assign({}, base, {
+      rampOn: false, mau: m > 0 ? m : TPnum(base.mau, 0),
+      core: Object.assign({}, base.core, {
+        on: true,
+        tournaments: TPtournamentsOn(base, 'core') ? (tournaments || TPrecProgramme(base, m, 'core')) : (base.core.tournaments || []),
+        h2h: h
+      })
+    }));
+    cfg = (opts && opts.miniCfg) || null;
+  }
+  return { product: k, step: step, engagement: eng, state: s, cfg: cfg };
 }
 
 function TPrecMeasure(cand) {
   var s = cand.state, r = TPcalculate(s, cand.cfg, 1), h = TPh2h(s, cand.cfg, 1),
-    term = TPterm(s) || 1, onH = !!s.includeH2H, onT = !!s.includeTournaments,
+    term = TPterm(s) || 1, onH = TPanyH2H(s), onT = TPanyTournaments(s),
     ok = !r.errors.length,
     lucraYear = ok ? r.totalLucra / term : 0,
     operatorYear = ok ? r.totalOperator / term : 0,
     licenceYear = r.free ? 0 : (r.totalContract || 0) / term;
   return {
     errors: r.errors, result: r, h2h: h,
-    state: s, cfg: cand.cfg,
+    product: cand.product, state: s, cfg: cand.cfg,
     engagement: cand.engagement, step: cand.step,
     licenceYear: licenceYear, lucraYear: lucraYear, operatorYear: operatorYear,
     revenueYear: ok ? r.totalSplitBase / term : 0,
@@ -1083,13 +1419,17 @@ function TPrecGapYear(m, term) {
   return { licenceGap: licenceGap, operatorGap: operatorGap, gap: Math.max(licenceGap, operatorGap) };
 }
 
-/* Walk the ladder and stop at the first step that clears every test. If the
-   ceiling still does not clear, return the ceiling and the size of the gap. */
+/* Mini games: walk the ladder and stop at the first step that clears every
+   test; if the ceiling still does not clear, return the ceiling and the gap.
+   Core: one measurement of the deal as entered, no ladder, no benchmark. */
 function TPrecommend(input, mau, opts) {
-  var base = TPstate(input), m = TPnum(mau, 0), steps = TPrecSteps(), tried = [], chosen = null;
-  if (m <= 0) return { ok: false, reason: 'Enter a monthly active base to build a recommendation.', tried: [] };
+  var base = TPstate(input), k = TPrecProduct(base, opts), m = TPnum(mau, 0), tried = [], chosen = null,
+    o = Object.assign({}, opts || {}, { product: k });
+  if (k === 'mini' && m <= 0) return { ok: false, product: k, reason: 'Enter the app or site users to build a mini-games recommendation.', tried: [] };
+  if (k === 'core' && m <= 0 && TPnum(base.mau, 0) <= 0) return { ok: false, product: k, reason: 'Enter users per location to test the core deal.', tried: [] };
+  var steps = k === 'mini' ? TPrecSteps() : [TPrecCoreStep(base)];
   for (var i = 0; i < steps.length; i++) {
-    var measured = TPrecMeasure(TPrecCandidate(base, steps[i], m, null, opts));
+    var measured = TPrecMeasure(TPrecCandidate(base, steps[i], m, null, o));
     tried.push(measured);
     if (!chosen && TPrecPasses(measured)) chosen = measured;
   }
@@ -1103,103 +1443,98 @@ function TPrecommend(input, mau, opts) {
   // Sponsors are already inside the result: they credited the licence before
   // any split, so licenceGap is what remains after them.
   return {
-    ok: true, mau: m, cleared: !!chosen, chosen: final, tried: tried,
+    ok: true, product: k, noBenchmark: k === 'core', mau: m, cleared: !!chosen, chosen: final, tried: tried,
     licenceGapYear: licenceGap, lucraGapYear: lucraGap, operatorGapYear: gaps.operatorGap, shortfallYear: gap,
     sponsorsTotal: sponsorsTotal, sponsorsPerYear: sponsorsTotal / term,
     retargetValue: TPnum(base.retargetValue, 0)
   };
 }
 
-
 /* ---------- levers that close a gap ----------
    When a deal is short, what single change closes it. Tried in the order that
    matters commercially: the tournament programme first, because every customer
    has one and a reward that costs less than it is worth lifts the operator's
    net without touching entries; then the take fee, which is really a
-   head-to-head lever; then more locations, only for a customer that already
-   has more than one. The licence structure is not a lever. */
-
-/* The venue's cost for a reward as a share of its face value. Taken from the
-   deal if entered, otherwise from the tournaments as configured. Never an
-   assumed discount. */
-function TPrewardCostRatio(s) {
-  var entered = s.rewardCostRatio;
-  if (entered !== '' && entered !== null && entered !== undefined && isFinite(Number(entered))) {
-    return Math.max(0, Math.min(1, TPnum(entered, 0) / 100));
-  }
-  var face = 0, cost = 0;
-  (s.tournaments || []).forEach(function (t) {
-    if (t.isCash) return;
-    face += TPnum(t.rewardFaceValue, 0); cost += TPnum(t.customerCashCost, 0);
-  });
-  return face > 0 ? Math.max(0, Math.min(1, cost / face)) : 1;
-}
+   head-to-head lever; then more locations, only for a core customer that
+   already has more than one. The licence structure is not a lever. */
 
 function TPrecGapOf(base, cfg, mau, opts) {
   var m = TPrecMeasure(TPrecCandidate(base, cfg.step, mau, cfg.tournaments, opts));
   return { clears: TPrecPasses(m), gap: TPrecGapYear(m, TPterm(TPstate(base)) || 1).gap, measure: m };
 }
 
-/* Each lever is expressed as a patch to the deal (recAdjust, locations) or to
-   the take fee, so applying it changes the deal and the recommender then
-   rebuilds from the changed deal and agrees with itself. */
+/* Each lever is expressed as a patch to the deal (a product's recAdjust or
+   take fee, or the locations) so applying it changes the deal and the
+   recommender then rebuilds from the changed deal and agrees with itself. */
 function TPrecLevers(input, mau, step, opts) {
-  var base = TPstate(input), m = TPnum(mau, 0), levers = [];
-  if (m <= 0 || !step) return levers;
-  step = TPrecStepFor(step, opts);
-  var current = TPrecGapOf(base, { step: step }, m);
+  var base = TPstate(input), k = TPrecProduct(base, opts), o = Object.assign({}, opts || {}, { product: k }),
+    m = TPnum(mau, 0), levers = [];
+  if (!step) return levers;
+  if (k === 'mini' && m <= 0) return levers;
+  step = TPrecStepFor(step, o);
+  var current = TPrecGapOf(base, { step: step }, m, o);
   if (current.clears) return levers;
   var tryLever = function (key, label, detail, patchedBase, patchedStep, apply) {
-    var out = TPrecGapOf(patchedBase, { step: patchedStep || step }, m);
-    levers.push({ key: key, label: label, detail: detail, clears: out.clears, gapAfter: out.gap, gapBefore: current.gap, apply: apply });
+    var out = TPrecGapOf(patchedBase, { step: patchedStep || step }, m, o);
+    levers.push({ key: key, product: k, label: label, detail: detail, clears: out.clears, gapAfter: out.gap, gapBefore: current.gap, apply: apply });
     return out.clears;
   };
-  var withAdjust = function (patch) { return Object.assign({}, base, { recAdjust: Object.assign({}, TPrecAdjust(base), patch) }); };
+  var withAdjust = function (patch) {
+    var p = {}; p[k] = Object.assign({}, base[k], { recAdjust: Object.assign({}, TPrecAdjust(base, k), patch) });
+    return Object.assign({}, base, p);
+  };
 
   // 1. Tournament programme.
-  if (base.includeTournaments) {
-    var adj = TPrecAdjust(base), tours = TPrecProgramme(base, m), ratio = TPrewardCostRatio(base);
+  if (TPtournamentsOn(base, k)) {
+    var adj = TPrecAdjust(base, k), tours = TPrecProgramme(base, m, k), ratio = TPrewardCostRatio(base, k);
+    if (tours.length) {
+      var busiest = tours.reduce(function (b, t) { return TPnum(t.eventsPerMonth, 0) > TPnum(b.eventsPerMonth, 0) ? t : b; }, tours[0]),
+        eventsNow = TPnum(busiest.eventsPerMonth, 0), eventsPatch = { events: adj.events + 1 };
+      tryLever('events', 'One more ' + (busiest.name || 'tournament') + ' a month', (busiest.name || 'It') + ' runs ' + (eventsNow + 1) + ' times a month instead of ' + eventsNow + '.',
+        withAdjust(eventsPatch), null, { product: k, adjust: eventsPatch });
 
-    // a. one more weekly event a month
-    var eventsNow = tours[0].eventsPerMonth, eventsPatch = { events: adj.events + 1 };
-    tryLever('events', 'One more weekly event a month', 'Weekly open runs ' + (eventsNow + 1) + ' times a month instead of ' + eventsNow + '.',
-      withAdjust(eventsPatch), null, { adjust: eventsPatch });
+      if (adj.priceMult < 2) {
+        var pricePatch = { priceMult: adj.priceMult * 2 };
+        tryLever('price', 'Entry prices doubled', tours.map(function (t) { return '$' + TPnum(t.entryPrice, 0) + ' becomes $' + (TPnum(t.entryPrice, 0) * 2); }).join(', ') + ', prizes scaled with them.',
+          withAdjust(pricePatch), null, { product: k, adjust: pricePatch });
+      }
 
-    // b. entry price doubled, once: beyond that is outside the reference range
-    if (adj.priceMult < 2) {
-      var pricePatch = { priceMult: adj.priceMult * 2 };
-      tryLever('price', 'Entry prices doubled', '$' + tours[0].entryPrice + ' becomes $' + (tours[0].entryPrice * 2) + ' and $' + tours[1].entryPrice + ' becomes $' + (tours[1].entryPrice * 2) + ', prizes scaled with them.',
-        withAdjust(pricePatch), null, { adjust: pricePatch });
-    }
-
-    // c. rewards that cost less than they are worth, at the venue's own ratio
-    if (ratio < 0.999 && !adj.rewardAtRatio) {
-      var ratioPatch = { rewardAtRatio: true };
-      tryLever('reward-cost', 'In-kind rewards at your cost ratio', 'Prizes keep their face value; they cost the venue ' + Math.round(ratio * 100) + '% of it, as entered.',
-        withAdjust(ratioPatch), null, { adjust: ratioPatch });
+      if (ratio < 0.999 && !adj.rewardAtRatio) {
+        var ratioPatch = { rewardAtRatio: true };
+        tryLever('reward-cost', 'In-kind rewards at your cost ratio', 'Prizes keep their face value; they cost the venue ' + Math.round(ratio * 100) + '% of it, as entered.',
+          withAdjust(ratioPatch), null, { product: k, adjust: ratioPatch });
+      }
     }
   }
 
-  // 2. Take fee, within 5-25%, only when head-to-head runs.
-  if (base.includeH2H && step.rake < 25) {
+  // 2. Take fee, within 5-25%, only when this product's head-to-head runs.
+  if (TPh2hOn(base, k) && step.rake < 25) {
     var found = null;
     for (var fee = step.rake + 0.5; fee <= 25 && !found; fee += 0.5) {
       var st2 = Object.assign({}, step, { rake: fee });
-      if (TPrecGapOf(base, { step: st2 }, m).clears) found = fee;
+      if (TPrecGapOf(base, { step: st2 }, m, o).clears) found = fee;
     }
     var stepFee = Object.assign({}, step, { rake: found || 25 });
     tryLever('take-fee', found ? 'Take fee to ' + found + '%' : 'Take fee at the 25% ceiling',
       found ? 'From ' + step.rake + '% to ' + found + '% of paid-game volume, inside the 5-25% band.' : 'Even 25% does not clear it on its own.',
-      base, stepFee, { rake: found || 25 });
+      base, stepFee, { product: k, rake: found || 25 });
   }
 
-  // 3. More locations, only for a customer that already has more than one.
+  // 3. More locations, only for a core customer that already has more than one.
   var locs = TPlocations(base);
-  if (locs[locs.length - 1] > 1) {
-    var more = locs.slice(); more[more.length - 1] = more[more.length - 1] + 1;
-    for (var i = more.length - 2; i >= 1; i--) if (more[i] > more[i + 1]) more[i] = more[i + 1];
-    tryLever('locations', 'One more location in year ' + locs.length, locs.join(' → ') + ' becomes ' + more.join(' → ') + '.',
-      Object.assign({}, base, { locations: more }), null, { locations: more });
+  if (k === 'core' && !TPsingleLocation(base) && locs[locs.length - 1] > 1) {
+    var term = TPterm(base), patched;
+    if (TPscheduleStated(base)) {
+      var extra = { month: (term - 1) * 12 + 1, add: 1 };
+      patched = { openings: base.openings.concat([extra]) };
+    } else {
+      var more = locs.slice(); more[more.length - 1] = more[more.length - 1] + 1;
+      for (var i = more.length - 2; i >= 1; i--) if (more[i] > more[i + 1]) more[i] = more[i + 1];
+      patched = { locations: more };
+    }
+    var after = TPlocations(TPstate(Object.assign({}, base, patched)));
+    tryLever('locations', 'One more location in year ' + term, locs.join(' → ') + ' becomes ' + after.join(' → ') + '.',
+      Object.assign({}, base, patched), null, Object.assign({ product: k }, patched));
   }
 
   // Ones that clear first, then the commercial order.
@@ -1210,4 +1545,5 @@ function TPrecLevers(input, mau, step, opts) {
 
 /* TP-PURE-END */
 module.exports = { C, MGcalc, tmCompute, gmCompute, FTPcalc, FTPmatrix, FTPramp, FTP_DEFAULTS, BQcalc, BQ_DEFAULTS, DMcalc, DM_DEFAULTS, TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPupfront, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments,
-  TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear };
+  TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear,
+  TP_PRODUCTS, TP_PRODUCT_DEFAULTS, TP_H2H_DEFAULTS, TP_DEFAULT_TOURNAMENTS, TP_DEFAULT_MINI_TOURNAMENTS, TPproduct, TPproductOn, TPtournamentsOn, TPh2hOn, TPanyTournaments, TPanyH2H, TPtournamentsOf, TPallTournaments, TPcustomerDefaults, TPsingleLocation, TPyearCounts, TPscheduleFromYears, TPschedule, TPscheduleStated, TPlocationsOpen, TPminiEntered, TPproductBase, TPproductFactor, TPavgProductFactor, TPminiBase, TPprizeMultiplier, TPh2hInputs, TPprimaryTournament, TPrecCoreStep, TPrecProduct };

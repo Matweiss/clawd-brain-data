@@ -31,15 +31,27 @@ async function setBaseDeal(page, o = {}) {
       includeH2H: !!opts.includeH2H,
       mau: opts.mau || 1000000,
       tournaments: [{ id: 't', name: 'Weekly open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }],
+      customerType: opts.customerType || 'venues',
+      // The mini-games product, when a test wants it: the Mini Game tab's inputs drive its head-to-head.
+      mini: Object.assign({ on: false, tournamentsOn: true, h2hOn: true }, opts.mini || {}),
+      core: opts.core || undefined,
     }));
+    if (TP.mini.on && TP.mini.tournamentsOn !== false && !TP.mini.tournaments.length) TP.mini.tournaments = JSON.parse(JSON.stringify(TP_DEFAULT_MINI_TOURNAMENTS));
+    // The Mini Game tab holds the working copy of the base; keep it in step.
+    MG.tau = TP.mau;
     TPsave(); TPrenderControls(); TPrenderTournaments(); TPrender();
   }, o);
 }
 
 // The head-to-head inputs fold by default; tests that touch them open the fold.
 async function openH2H(page) {
-  await page.evaluate(() => { const d = document.getElementById('tp-h2h-fold'); if (d) d.open = true; });
+  await page.evaluate(() => { ['tp-h2h-fold', 'tp-h2h-fold-core'].forEach((id) => { const d = document.getElementById(id); if (d) d.open = true; }); });
 }
+
+// A mini-games head-to-head deal: the Mini Game tab's inputs, the original ids.
+const MINI_H2H = { includeH2H: false, mini: { on: true, tournamentsOn: false, h2hOn: true } };
+// An app-only mini-games deal with both halves, the product the recommender's ladder describes.
+const MINI = { includeTournaments: false, includeH2H: false, customerType: 'app', mini: { on: true, tournamentsOn: true, h2hOn: true } };
 
 async function stubPrint(page) {
   await page.evaluate(() => {
@@ -55,9 +67,9 @@ test('the tab renders without console errors', async ({ page }) => {
   page.on('pageerror', (e) => errors.push(e.message));
   await openTab(page);
   await expect(page.locator('#tp-mau')).toBeVisible();
-  await expect(page.locator('#tp-inc-tournaments')).toBeVisible();
+  await expect(page.locator('#tp-prod-core')).toBeVisible();
   await expect(page.locator('#tp-fee-0')).toBeVisible();
-  await expect(page.locator('#tp-tournaments-list .tp-tour')).toHaveCount(2);
+  await expect(page.locator('#tp-tournaments-list-core .tp-tour')).toHaveCount(2);
   expect(errors).toEqual([]);
 });
 
@@ -65,7 +77,7 @@ test('setup sections sit in one top box', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page);
   const box = page.locator('#tp-calc-view .pf-section').first();
-  await expect(box).toContainText('What the customer is taking');
+  await expect(box).toContainText('Who the customer is, and what they are taking');
   await expect(box.locator('#tp-deal-block')).toBeVisible();
   await expect(box.locator('#tp-split-block')).toBeVisible();
   // The participants box is gone; participation lives on each tournament.
@@ -73,24 +85,66 @@ test('setup sections sit in one top box', async ({ page }) => {
   await expect(page.locator('#tp-part-0')).toBeVisible();
 });
 
-test('product checkboxes show and hide each half', async ({ page }) => {
+test('product cards show and hide each product and each half', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page);
-  await expect(page.locator('#tp-inc-tournaments')).toBeChecked();
+  // A venue customer: core on, mini games off.
+  await expect(page.locator('.tp-customer-switch button[data-customer="venues"]')).toHaveClass(/on/);
+  await expect(page.locator('#tp-prod-core')).toBeChecked();
+  await expect(page.locator('#tp-prod-core-t')).toBeChecked();
+  await expect(page.locator('#tp-prod-mini')).not.toBeChecked();
+  await expect(page.locator('#tp-h2h-block-core')).toBeHidden();
+  await expect(page.locator('#tp-h2h-block')).toBeHidden();
+  await expect(page.locator('#tp-tournaments-block-mini')).toBeHidden();
+
+  await page.locator('#tp-prod-core-h').check();
+  await expect(page.locator('#tp-h2h-block-core')).toBeVisible();
   await expect(page.locator('#tp-h2h-block')).toBeHidden();
 
-  await page.locator('#tp-inc-h2h').check();
-  await expect(page.locator('#tp-h2h-block')).toBeVisible();
-  await expect(page.locator('#tpc-title')).toContainText('head-to-head + tournaments');
+  await page.locator('#tp-prod-core-t').uncheck();
+  await expect(page.locator('#tp-tournaments-block-core')).toBeHidden();
+  await expect(page.locator('#tp-h2h-block-core')).toBeVisible();
 
-  await page.locator('#tp-inc-tournaments').uncheck();
-  await expect(page.locator('#tp-deal-block')).toBeHidden();
-  await expect(page.locator('#tp-tournaments-block')).toBeHidden();
-  await expect(page.locator('#tp-results-section')).toBeHidden();
+  // Mini games on: its own tournament list, seeded, and its own head-to-head.
+  await page.locator('#tp-prod-mini').check();
+  await expect(page.locator('#tp-tournaments-block-mini')).toBeVisible();
+  await expect(page.locator('#tp-tournaments-list-mini .tp-tour')).toHaveCount(1);
   await expect(page.locator('#tp-h2h-block')).toBeVisible();
+  await expect(page.locator('#tp-mini-mau-row')).toBeVisible();
 
-  await page.locator('#tp-inc-h2h').uncheck();
+  await page.locator('#tp-prod-core').uncheck();
+  await page.locator('#tp-prod-mini').uncheck();
   await expect(page.locator('#tp-product-note')).toContainText('at least one product');
+  await expect(page.locator('#tp-deal-block')).toBeHidden();
+});
+
+test('the customer step sets the defaults: app-only is one location with mini games', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 2, fees: [60000, 60000, 0, 0, 0] });
+  await page.locator('#tp-loc-1').fill('4');
+  await expect(page.locator('#tp-openings')).toContainText('Opening schedule');
+  await page.locator('.tp-customer-switch button[data-customer="app"]').click();
+  await expect(page.locator('#tp-prod-mini')).toBeChecked();
+  await expect(page.locator('#tp-prod-core')).not.toBeChecked();
+  await expect(page.locator('#tp-mau-label')).toHaveText('Monthly active users on the app or site');
+  await expect(page.locator('#tp-loc-1')).toHaveCount(0);
+  await expect(page.locator('#tp-mini-mau-row')).toBeHidden();
+  expect(await page.evaluate(() => TPlocations(TPstate(TP)))).toEqual([1, 1]);
+  // A digital platform with its own game switches core back on, still one location.
+  await page.locator('#tp-prod-core').check();
+  await expect(page.locator('#tp-tournaments-list-core .tp-tour')).toHaveCount(1);
+  await expect(page.locator('#tp-tournaments-list-core .tp-scope-switch')).toHaveCount(0);
+  expect(await page.evaluate(() => TPcalculate(TP, TPCconfig()).months[23].locationsOpen)).toBe(1);
+  // Both: venues and an app. The mini base derives from the venues until entered.
+  await page.locator('.tp-customer-switch button[data-customer="both"]').click();
+  await expect(page.locator('#tp-prod-core')).toBeChecked();
+  await expect(page.locator('#tp-prod-mini')).toBeChecked();
+  await expect(page.locator('#tp-mini-mau-row')).toBeVisible();
+  await expect(page.locator('#tp-mini-mau-note')).toContainText('grows with every opening');
+  await page.locator('#tp-mini-mau-mode').selectOption('entered');
+  await expect(page.locator('#tp-mini-mau-group')).toBeVisible();
+  await page.locator('#tp-mini-mau').fill('250000');
+  expect(await page.evaluate(() => TPminiBase(TPstate(TP), 24))).toBe(250000);
 });
 
 test('the recapture toggle reveals the licence share and the after-retirement fields', async ({ page }) => {
@@ -239,14 +293,14 @@ test('the break-even map renders a grid and hides on a free licence', async ({ p
 test('head-to-head carries its own reach and the eight shared inputs', async ({ page }) => {
   await openTab(page);
   await openH2H(page);
-  await setBaseDeal(page, { includeH2H: true, mau: 1000000 });
+  await setBaseDeal(page, Object.assign({ mau: 1000000 }, MINI_H2H));
 
   await expect(page.locator('#tp-h2h-reach')).toHaveValue('1000000');
-  await expect(page.locator('#tp-reach-note')).toContainText('following addressable users');
+  await expect(page.locator('#tp-h2h-reach-note')).toContainText('following the app base');
 
   await page.locator('#tp-h2h-reach').fill('200000');
-  await expect(page.locator('#tp-reach-note')).toContainText('overriding');
-  expect(await page.evaluate(() => TPreach(TPstate(TP)))).toBe(200000);
+  await expect(page.locator('#tp-h2h-reach-note')).toContainText('overriding');
+  expect(await page.evaluate(() => TPreach(TPstate(TP), 'mini'))).toBe(200000);
 
   for (const k of ['eng', 'plays', 'wager', 'rake', 'rewardGames', 'win', 'redeem', 'rewardValue']) {
     await expect(page.locator('#tph-' + k)).toBeVisible();
@@ -259,28 +313,51 @@ test('head-to-head carries its own reach and the eight shared inputs', async ({ 
 test('the head-to-head mode switch shows only the fields that run', async ({ page }) => {
   await openTab(page);
   await openH2H(page);
-  await setBaseDeal(page, { includeH2H: true });
+  await setBaseDeal(page, MINI_H2H);
 
-  await page.locator('.tp-mode-switch button[data-h2h="wagering"]').click();
+  await page.locator('#tp-h2h-block .tp-mode-switch button[data-h2h="wagering"]').click();
   await expect(page.locator('#tph-plays')).toBeVisible();
   await expect(page.locator('#tph-rewardGames')).toHaveCount(0);
   await expect(page.locator('#tph-win')).toHaveCount(0);
   expect(await page.evaluate(() => TPh2h(TPstate(TP), TPCconfig(), 1).rewardValue)).toBe(0);
 
-  await page.locator('.tp-mode-switch button[data-h2h="rewards"]').click();
+  await page.locator('#tp-h2h-block .tp-mode-switch button[data-h2h="rewards"]').click();
   await expect(page.locator('#tph-rewardGames')).toBeVisible();
   await expect(page.locator('#tph-plays')).toHaveCount(0);
   expect(await page.evaluate(() => TPh2h(TPstate(TP), TPCconfig(), 1).platformFee)).toBe(0);
 
-  await page.locator('.tp-mode-switch button[data-h2h="both"]').click();
+  await page.locator('#tp-h2h-block .tp-mode-switch button[data-h2h="both"]').click();
   await expect(page.locator('#tph-plays')).toBeVisible();
   await expect(page.locator('#tph-rewardGames')).toBeVisible();
+});
+
+test('core head-to-head has its own inputs and scales with the locations open', async ({ page }) => {
+  await openTab(page);
+  await openH2H(page);
+  await setBaseDeal(page, { includeH2H: true, mau: 8000, termYears: 2, fees: [60000, 60000, 0, 0, 0] });
+  await expect(page.locator('#tp-h2h-block-core')).toBeVisible();
+  await expect(page.locator('#tp-h2h-block')).toBeHidden();
+  await expect(page.locator('#tp-h2h-reach-core')).toHaveValue('8000');
+  await expect(page.locator('#tp-h2h-reach-note-core')).toContainText('users per location');
+  for (const k of ['eng', 'plays', 'wager', 'rake']) await expect(page.locator('#tph-core-' + k)).toBeVisible();
+  // The core inputs live on the deal, not on the Mini Game tab.
+  await page.locator('#tph-core-eng').fill('12');
+  await page.locator('#tph-core-rake').fill('15');
+  expect(await page.evaluate(() => [TP.core.h2h.engagement, TP.core.h2h.feeRate, MG.eng])).toEqual([12, 15, 10]);
+  await page.locator('#tp-h2h-block-core .tp-mode-switch button[data-h2h="wagering"]').click();
+  await expect(page.locator('#tph-core-rewardGames')).toHaveCount(0);
+  // 8,000 x 12% x 20 x $2 x 15% = $5,760 per location; three locations by month 24.
+  await page.locator('#tp-loc-1').fill('3');
+  const fees = await page.evaluate(() => { const r = TPcalculate(TP, TPCconfig()); return [r.months[0].products.core.h2hFee, r.months[23].products.core.h2hFee]; });
+  expect(fees[0]).toBeCloseTo(5760, 6);
+  expect(fees[1]).toBeCloseTo(5760 * 3, 6);
+  await expect(page.locator('#tp-h2h-readout-core')).toContainText('averaged across the locations open');
 });
 
 test('head-to-head inputs stay in step with the Mini Game tab', async ({ page }) => {
   await openTab(page);
   await openH2H(page);
-  await setBaseDeal(page, { includeH2H: true });
+  await setBaseDeal(page, MINI_H2H);
   await page.locator('#tph-eng').fill('12');
   await page.locator('#tphs-rewardGames').fill('10');
   expect(await page.evaluate(() => [MG.eng, MG.rewardGames])).toEqual([12, 10]);
@@ -306,7 +383,7 @@ test('both pitches render and carry no blocked vocabulary', async ({ page }) => 
   for (const text of [h2h, tour]) expect(text).not.toMatch(BLOCKED);
 
   // Each pitch disappears with its product.
-  await page.locator('#tp-inc-h2h').uncheck();
+  await page.locator('#tp-prod-core-h').uncheck();
   await expect(page.locator('#tp-h2h-pitch')).toHaveText('');
 });
 
@@ -375,8 +452,8 @@ test('the one-pager drops the product that is not selected', async ({ page }) =>
   expect(html).toContain('Tournament entries / yr');
   expect(html).not.toContain('Head-to-head / yr');
 
-  await page.locator('#tp-inc-h2h').check();
-  await page.locator('#tp-inc-tournaments').uncheck();
+  await page.locator('#tp-prod-core-h').check();
+  await page.locator('#tp-prod-core-t').uncheck();
   await page.locator('#tpc-section button', { hasText: 'Generate combined one-pager' }).click();
   html = await page.evaluate(() => window.__printHTML);
   expect(html).toContain('Head-to-head / yr');
@@ -392,9 +469,9 @@ test('templates save, load and delete and survive a reload', async ({ page }) =>
   await page.locator('.tp-template-save button').click();
   await expect(page.locator('#tp-template-list .tp-template')).toHaveCount(1);
 
-  await page.evaluate(() => { TP.tournaments = []; TPsave(); TPrenderTournaments(); TPrender(); });
+  await page.evaluate(() => { TP.core.tournaments = []; TPsave(); TPrenderTournaments(); TPrender(); });
   await page.locator('#tp-template-list button', { hasText: 'Load' }).click();
-  expect(await page.evaluate(() => TP.tournaments.length)).toBe(1);
+  expect(await page.evaluate(() => TP.core.tournaments.length)).toBe(1);
 
   await page.reload();
   await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
@@ -417,12 +494,12 @@ test('the customer summary shows structure and no internal economics', async ({ 
 test('state persists across a reload', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page, { fee: 12345, includeH2H: true });
-  await page.locator('#tp-h2h-reach').fill('250000');
+  await page.locator('#tp-h2h-reach-core').fill('250000');
   await page.reload();
   await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
   await expect(page.locator('#tp-fee-0')).toHaveValue('12345');
   await expect(page.locator('#tp-deal-name')).toHaveValue('Fairway Social');
-  await expect(page.locator('#tp-h2h-reach')).toHaveValue('250000');
+  await expect(page.locator('#tp-h2h-reach-core')).toHaveValue('250000');
 });
 
 test('the Mini Game tab keeps its own generator and no combined section', async ({ page }) => {
@@ -491,7 +568,7 @@ test('the Lucra toggle hides Lucra economics across the tab', async ({ page }) =
   await expect(page.locator('#tp-summary')).toContainText('Lucra earnings');
   await expect(page.locator('#tp-table thead')).toContainText('To Lucra');
   await expect(page.locator('#tp-heat thead')).toContainText('To Lucra');
-  await expect(page.locator('#tp-h2h-readout')).toContainText('Lucra takes');
+  await expect(page.locator('#tp-h2h-readout-core')).toContainText('Lucra takes');
   await expect(page.locator('#tpc-cases')).toContainText('To Lucra');
 
   await page.locator('#tp-show-lucra').uncheck();
@@ -499,7 +576,7 @@ test('the Lucra toggle hides Lucra economics across the tab', async ({ page }) =
   await expect(page.locator('#tp-summary')).not.toContainText('Lucra earnings');
   await expect(page.locator('#tp-table thead')).not.toContainText('To Lucra');
   await expect(page.locator('#tp-heat thead')).not.toContainText('To Lucra');
-  await expect(page.locator('#tp-h2h-readout')).not.toContainText('Lucra takes');
+  await expect(page.locator('#tp-h2h-readout-core')).not.toContainText('Lucra takes');
   await expect(page.locator('#tpc-cases')).not.toContainText('To Lucra');
   await expect(page.locator('#tp-tour-pitch')).not.toContainText('and Lucra $');
 
@@ -589,8 +666,8 @@ test('the brief drops the product that is not selected', async ({ page }) => {
   expect(brief).not.toContain('STAT BAND — HEAD-TO-HEAD');
   expect(brief).not.toContain('ONE PLAYER');
 
-  await page.locator('#tp-inc-h2h').check();
-  await page.locator('#tp-inc-tournaments').uncheck();
+  await page.locator('#tp-prod-core-h').check();
+  await page.locator('#tp-prod-core-t').uncheck();
   brief = await page.evaluate(() => TPbrief());
   expect(brief).toContain('head-to-head');
   expect(brief).not.toContain('STAT BAND — TOURNAMENTS');
@@ -611,7 +688,7 @@ test('the break-even map carries its own head-to-head and Lucra switches', async
   // Turning the map switch off drops the column without touching product selection.
   await page.locator('#tp-heat-h2h').uncheck();
   expect(await headers()).not.toContain('paid-game volume');
-  expect(await page.evaluate(() => TP.includeH2H)).toBe(true);
+  expect(await page.evaluate(() => TP.core.h2hOn)).toBe(true);
 
   await page.locator('#tp-heat-h2h').check();
   expect(await headers()).toContain('paid-game volume');
@@ -627,7 +704,7 @@ test('the map explains a missing head-to-head column rather than hiding it silen
   await openTab(page);
   await setBaseDeal(page, { fee: 60000 });
   await expect(page.locator('#tp-heat-h2h')).toBeDisabled();
-  await expect(page.locator('#tp-heat-controls-note')).toContainText('not selected at the top');
+  await expect(page.locator('#tp-heat-controls-note')).toContainText('No head-to-head is selected above');
   expect((await page.locator('#tp-heat thead th').allInnerTexts()).join('|').toLowerCase()).not.toContain('paid-game volume');
 });
 
@@ -669,7 +746,7 @@ test('a waived licence keeps the revenue split on screen and editable', async ({
 test('the split stays visible for a head-to-head-only deal', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
-  await page.locator('#tp-inc-tournaments').uncheck();
+  await page.locator('#tp-prod-core-t').uncheck();
   await expect(page.locator('#tp-split-block')).toBeVisible();
   await expect(page.locator('#tp-post-lucra')).toBeEditable();
 });
@@ -677,7 +754,7 @@ test('the split stays visible for a head-to-head-only deal', async ({ page }) =>
 test('the take fee is a custom rate held between 5 and 25 per cent', async ({ page }) => {
   await openTab(page);
   await openH2H(page);
-  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 1000000 });
+  await setBaseDeal(page, Object.assign({ fee: 60000, mau: 1000000 }, MINI_H2H));
   const box = page.locator('#tph-rake');
   await expect(box).toHaveAttribute('min', '5');
   await expect(box).toHaveAttribute('max', '25');
@@ -698,7 +775,7 @@ test('the take fee is a custom rate held between 5 and 25 per cent', async ({ pa
 
 test('the recommender proposes a configuration and shows where each number came from', async ({ page }) => {
   await openTab(page);
-  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 1000000 });
+  await setBaseDeal(page, Object.assign({ fee: 120000, mau: 1000000 }, MINI));
   await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
 
   await expect(page.locator('.tp-rec-banner')).toContainText('clears the licence');
@@ -720,7 +797,7 @@ test('the recommender proposes a configuration and shows where each number came 
 test('a base too small to clear the licence says so and sizes the gap', async ({ page }) => {
   await openTab(page);
   // Head-to-head now credits the licence too, so it takes a very small base to fail.
-  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 2000 });
+  await setBaseDeal(page, Object.assign({ fee: 120000, mau: 2000 }, MINI));
   await page.evaluate(() => TPCsetMau(2000));
   await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
 
@@ -734,7 +811,7 @@ test('a base too small to clear the licence says so and sizes the gap', async ({
   // The two kinds of gap are named separately: a sponsor can cover an unretired
   // licence, and cannot lift Lucra's share. Retargeting value is recorded beside
   // the gap and never added in.
-  const rec = await page.evaluate(() => TPrecommend(TP, TPrecMau()));
+  const rec = await page.evaluate(() => TPrecommend(TP, TPrecBase(), TPrecOpts()));
   expect(rec.licenceGapYear).toBeGreaterThan(0);
   expect(rec.lucraGapYear).toBeGreaterThan(0);
   await expect(page.locator('.tp-rec-gap')).toContainText('not retired by play');
@@ -744,18 +821,18 @@ test('a base too small to clear the licence says so and sizes the gap', async ({
   await expect(page.locator('.tp-rec-gap')).toContainText('What would close it');
   await page.locator('#tp-retarget').fill('5000');
   await expect(page.locator('.tp-rec-gap')).toContainText('stays out of every revenue figure');
-  expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).shortfallYear)).toBeCloseTo(rec.shortfallYear, 6);
+  expect(await page.evaluate(() => TPrecommend(TP, TPrecBase(), TPrecOpts()).shortfallYear)).toBeCloseTo(rec.shortfallYear, 6);
 });
 
 test('applying the recommendation writes it into the model', async ({ page }) => {
   await openTab(page);
-  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 1000000 });
+  await setBaseDeal(page, Object.assign({ fee: 120000, mau: 1000000 }, MINI));
   await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
-  const before = await page.evaluate(() => ({ eng: MG.eng, rake: MG.rake, tours: TP.tournaments.length }));
+  const before = await page.evaluate(() => ({ eng: MG.eng, rake: MG.rake, tours: TP.mini.tournaments.length }));
   await page.locator('#tp-rec-out button', { hasText: 'Apply these numbers' }).click();
 
   const after = await page.evaluate(() => ({
-    eng: MG.eng, rake: MG.rake, names: TP.tournaments.map((t) => t.name),
+    eng: MG.eng, rake: MG.rake, names: TP.mini.tournaments.map((t) => t.name),
   }));
   expect(after.names).toEqual(['Weekly open', 'Monthly major']);
   expect(after.rake).toBeGreaterThanOrEqual(5);
@@ -764,7 +841,7 @@ test('applying the recommendation writes it into the model', async ({ page }) =>
   expect(after).not.toEqual(before);
   // The applied deal is valid and still clears.
   expect(await page.evaluate(() => TPvalidate(TP))).toEqual([]);
-  expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).cleared)).toBe(true);
+  expect(await page.evaluate(() => TPrecommend(TP, TPrecBase(), TPrecOpts()).cleared)).toBe(true);
 });
 
 test('locations per contract year scale the model and explain themselves', async ({ page }) => {
@@ -822,7 +899,7 @@ test('head-to-head credits the licence at the same share, and the table shows it
   expect(r.payoffMonth).toBeNull();
   await expect(page.locator('#tp-table thead')).not.toContainText('Head-to-head fee');
 
-  await page.locator('#tp-inc-h2h').check();
+  await page.locator('#tp-prod-core-h').check();
   r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
   expect(r.includesH2H).toBe(true);
   expect(r.months[0].h2hFee).toBeCloseTo(40000, 3);
@@ -855,16 +932,16 @@ test('sponsors are entered in the deal and credit the licence before the split',
 
 test('the recommender offers a sponsor for exactly the unretired licence', async ({ page }) => {
   await openTab(page);
-  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 2000 });
+  await setBaseDeal(page, Object.assign({ fee: 120000, mau: 2000 }, MINI));
   await page.evaluate(() => TPCsetMau(2000));
   await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
   await expect(page.locator('.tp-rec-banner')).toHaveClass(/short/);
-  const gap = await page.evaluate(() => TPrecommend(TP, TPrecMau()).licenceGapYear);
+  const gap = await page.evaluate(() => TPrecommend(TP, TPrecBase(), TPrecOpts()).licenceGapYear);
   expect(gap).toBeGreaterThan(0);
   await page.locator('.tp-rec-gap button', { hasText: 'Add a sponsor for' }).click();
   // A sponsor line now exists for the gap, and the licence test passes.
   expect(await page.evaluate(() => TP.sponsors.length)).toBe(1);
-  expect(await page.evaluate(() => TPrecommend(TP, TPrecMau()).licenceGapYear)).toBe(0);
+  expect(await page.evaluate(() => TPrecommend(TP, TPrecBase(), TPrecOpts()).licenceGapYear)).toBe(0);
   await expect(page.locator('#tp-sp-name-0')).toHaveValue('Gap sponsor');
 });
 
@@ -975,7 +1052,7 @@ test('customer view hides every internal figure at once and keeps the inputs liv
   // Inputs stay live: moving engagement moves the strip.
   const before = await page.locator('#tp-strip-items').innerText();
   await openH2H(page);
-  await page.locator('#tph-eng').fill('20');
+  await page.locator('#tph-core-eng').fill('20');
   await expect(page.locator('#tp-strip-items')).not.toHaveText(before);
 
   await page.locator('#tp-customer-mode').uncheck();
@@ -999,7 +1076,7 @@ test('the sticky strip tracks the deal as it is edited', async ({ page }) => {
 
 test('the head-to-head inputs fold behind a summary line, and the brief folds behind its copy button', async ({ page }) => {
   await openTab(page);
-  await setBaseDeal(page, { fee: 60000, includeH2H: true, mau: 100000 });
+  await setBaseDeal(page, Object.assign({ fee: 60000, mau: 100000 }, MINI_H2H));
   await page.evaluate(() => { MG.eng = 12; MG.plays = 18; MG.wager = 3; MG.rake = 12; MGsync(); MGu(); TPrender(); });
   const fold = page.locator('#tp-h2h-fold');
   expect(await fold.evaluate((el) => el.open)).toBe(false);
@@ -1047,7 +1124,7 @@ test('the brief states the contract by year, what activity retires, and what the
 
 test('the recommender names the lever that closes a gap and applies it', async ({ page }) => {
   await openTab(page);
-  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 3000 });
+  await setBaseDeal(page, Object.assign({ fee: 120000, mau: 3000 }, MINI));
   await page.evaluate(() => TPCsetMau(3000));
   await page.locator('#tp-rec-block button', { hasText: 'Recommend from the base' }).click();
   await expect(page.locator('.tp-rec-banner')).toHaveClass(/short/);
@@ -1069,7 +1146,7 @@ test('the recommender names the lever that closes a gap and applies it', async (
 
 test('the reward cost ratio is the venue\'s own number, and the lever uses it', async ({ page }) => {
   await openTab(page);
-  await setBaseDeal(page, { fee: 120000, includeH2H: true, mau: 3000 });
+  await setBaseDeal(page, Object.assign({ fee: 120000, mau: 3000 }, MINI));
   await page.evaluate(() => TPCsetMau(3000));
   await expect(page.locator('#tp-reward-ratio')).toHaveValue('');
   await page.locator('#tp-reward-ratio').fill('30');
@@ -1209,4 +1286,94 @@ test('every input carries a provenance badge, and estimates can be shown on thei
   await page.locator('#tp-customer-mode').uncheck();
   await page.locator('#tp-estimates-only').uncheck();
   await expect(page.locator('body')).not.toHaveClass(/tp-estimates/);
+});
+
+test('the opening schedule is entered in months, shown against the calendar, and printed as fact', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [60000, 60000, 60000, 0, 0], mau: 8000 });
+  await page.locator('#tp-loc-1').fill('3');
+  await page.locator('#tp-loc-2').fill('4');
+  // Until months are given, the spread is shown and labelled as an estimate.
+  await expect(page.locator('#tp-openings')).toContainText('spread evenly');
+  await expect(page.locator('#tp-openings .tp-schedule-item.est')).toHaveCount(3);
+  const spread = await page.evaluate(() => TPcalculate(TP, TPCconfig()).totalHandle);
+  let brief = await page.evaluate(() => TPbrief());
+  expect(brief).toMatch(/Locations: 1 → 3 → 4 across the term: .*\[estimate\]/);
+
+  await page.locator('#tp-openings button', { hasText: 'Set the exact months' }).click();
+  await expect(page.locator('#tp-open-month-1')).toHaveValue('13');
+  await expect(page.locator('#tp-open-cal-1')).toHaveText('Jan +1y');
+  // The customer says month 14 for two and month 30 for the fourth: the same
+  // counts per year as the spread, later in each year.
+  await page.locator('#tp-open-add-1').fill('2');
+  await page.locator('#tp-open-month-1').fill('14');
+  await page.locator('#tp-open-month-2').fill('30');
+  await page.locator('#tp-open-add-3').fill('0');
+  await expect(page.locator('#tp-open-cal-1')).toHaveText('Feb +1y');
+  expect(await page.evaluate(() => TPopenings(TPstate(TP)))).toEqual([1, 14, 14, 30]);
+  await expect(page.locator('#tp-loc-1')).toHaveValue('3');
+  await expect(page.locator('#tp-loc-2')).toHaveValue('4');
+  const stated = await page.evaluate(() => TPcalculate(TP, TPCconfig()).totalHandle);
+  expect(stated).toBeLessThan(spread);
+  brief = await page.evaluate(() => TPbrief());
+  expect(brief).toContain('Locations: 1 → 3 → 4 across the term: 1 location in month 1, 2 locations in month 14, 1 location in month 30  [customer fact]');
+  expect(brief).toContain('One licence covers every location. Adding sites during the term adds no fee.  [customer fact]');
+  // Editing a per-year count drops back to the spread; the schedule can also be cleared.
+  await page.locator('#tp-openings button', { hasText: 'Back to counts per year' }).click();
+  await expect(page.locator('#tp-openings')).toContainText('spread evenly');
+  expect(await page.evaluate(() => TPlocations(TPstate(TP)))).toEqual([1, 3, 4]);
+  // It survives a reload.
+  await page.locator('#tp-openings button', { hasText: 'Set the exact months' }).click();
+  await page.reload();
+  await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
+  await expect(page.locator('#tp-open-month-1')).toHaveValue('13');
+});
+
+test('a core tournament runs at every location or once across the network, and mini games never per location', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 2, fees: [60000, 60000, 0, 0, 0], mau: 8000, customerType: 'both', mini: { on: true, tournamentsOn: true, h2hOn: false } });
+  await page.locator('#tp-loc-1').fill('3');
+  await expect(page.locator('#tp-tournaments-list-core .tp-tour').first().locator('.tp-scope-switch')).toBeVisible();
+  await expect(page.locator('#tp-tournaments-list-mini .tp-scope-switch')).toHaveCount(0);
+  let r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  expect(r.months[23].products.core.prizeCost).toBe(800 * 3);
+  expect(r.months[23].products.mini.prizeCost).toBe(r.months[0].products.mini.prizeCost);
+  await expect(page.locator('#tp-tournaments-list-core .tp-tour-readout').first()).toContainText('prize funding');
+
+  await page.locator('#tp-tournaments-list-core .tp-scope-switch button[data-scope="network"]').first().click();
+  r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  expect(r.months[23].products.core.prizeCost).toBe(800);
+  expect(r.months[23].products.core.handle).toBeCloseTo(4000 * 3, 6);
+  // The customer summary names where each tournament runs.
+  await page.locator('#tp-view-tournaments-btn').click();
+  await expect(page.locator('#tp-customer-cards')).toContainText('One across all locations');
+  await expect(page.locator('#tp-customer-cards')).toContainText('Across the app');
+});
+
+test('a deal saved before the split migrates onto core with the head-to-head numbers it had', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem('lucra-tournament-payoff-v1', JSON.stringify({
+      dealName: 'Old venue', termYears: 2, annualFees: [60000, 60000], includeTournaments: true, includeH2H: true, mau: 50000, h2hReach: 20000, locations: [1, 2],
+      tournaments: [{ id: 'a', name: 'Legacy open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, customerCashCost: 200, rewardFaceValue: 500 }],
+    }));
+    MG.eng = 14; MG.plays = 30; MG.wager = 3; MG.rake = 12;
+  });
+  await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
+  await expect(page.locator('#tp-deal-name')).toHaveValue('Old venue');
+  const s = await page.evaluate(() => ({ core: TP.core, mini: TP.mini.on, ct: TP.customerType, legacy: TP.tournaments }));
+  expect(s.legacy).toBeUndefined();
+  expect(s.ct).toBe('venues');
+  expect(s.mini).toBe(false);
+  expect(s.core.on).toBe(true);
+  expect(s.core.h2hOn).toBe(true);
+  expect(s.core.h2h.reach).toBe(20000);
+  expect(s.core.h2h.engagement).toBe(14);
+  expect(s.core.h2h.playsPerUser).toBe(30);
+  expect(s.core.h2h.feeRate).toBe(12);
+  expect(s.core.tournaments.map((t) => t.name)).toEqual(['Legacy open']);
+  await expect(page.locator('#tp-h2h-block-core')).toBeVisible();
+  await expect(page.locator('#tp-loc-1')).toHaveValue('2');
+  // 20,000 x 14% x 30 x $3 x 12% = $30,240 in month 1.
+  expect(await page.evaluate(() => TPcalculate(TP, TPCconfig()).months[0].products.core.h2hFee)).toBeCloseTo(30240, 6);
 });

@@ -78,8 +78,8 @@ test('routes the paid quick estimate into the Revenue Model as the deal', async 
   await expect(page.locator('#tp-deal-name')).toHaveValue('Acme Golf');
   const deal = await page.evaluate(() => ({
     mau: TP.mau, term: TP.termYears, fees: TP.annualFees.slice(0, 3), free: TP.freeLicense,
-    tournaments: TP.includeTournaments, h2h: TP.includeH2H,
-    t: TP.tournaments.map((t) => [t.name, t.entryPrice, t.participants, t.eventsPerMonth, t.customerCashCost, t.isCash]),
+    tournaments: TP.core.on && TP.core.tournamentsOn, h2h: TP.core.h2hOn,
+    t: TP.core.tournaments.map((t) => [t.name, t.entryPrice, t.participants, t.eventsPerMonth, t.customerCashCost, t.isCash]),
   }));
   expect(deal.mau).toBe(50000);
   expect(deal.term).toBe(3);

@@ -17,7 +17,7 @@ const base = (o = {}) => Object.assign(JSON.parse(JSON.stringify(TP_DEFAULTS)), 
   tournaments: [{ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }],
 }, o);
 
-const t0 = (s) => TPstate(s).tournaments[0];
+const t0 = (s) => TPstate(s).core.tournaments[0];
 
 describe('Launch ramp', () => {
   it('is off by default, so every month runs at full volume', () => {
@@ -79,7 +79,7 @@ describe('Per-tournament participation', () => {
 
   it('a share basis needs an addressable base', () => {
     const s = base({ mau: 0, tournaments: [{ id: 'a', name: 'A', entryPrice: 1, eventsPerMonth: 1, basis: 'mau', participantPct: 4 }] });
-    expect(TPvalidate(s).join(' ')).toMatch(/addressable users/i);
+    expect(TPvalidate(s).join(' ')).toMatch(/users per location/i);
   });
 
   it('a headcount basis needs no addressable base at all', () => {
@@ -291,7 +291,7 @@ describe('Head-to-head reach', () => {
   });
 
   it('needs one of the two when head-to-head is selected', () => {
-    expect(TPvalidate(base({ includeH2H: true, mau: 0, h2hReach: 0 })).join(' ')).toMatch(/addressable users/i);
+    expect(TPvalidate(base({ includeH2H: true, mau: 0, h2hReach: 0 })).join(' ')).toMatch(/users per location/i);
     expect(TPvalidate(base({ includeH2H: true, mau: 0, h2hReach: 50000 }))).toEqual([]);
   });
 });
@@ -299,8 +299,8 @@ describe('Head-to-head reach', () => {
 describe('Customer-safe projection', () => {
   it('returns exactly the whitelisted keys', () => {
     const p = TPcustomerProjection(base());
-    expect(Object.keys(p).sort()).toEqual(['dealName', 'tournaments']);
-    expect(Object.keys(p.tournaments[0]).sort()).toEqual(['entryPrice', 'frequencyLabel', 'name', 'rebuyLabel', 'rewardLabel']);
+    expect(Object.keys(p).sort()).toEqual(['customerType', 'dealName', 'tournaments']);
+    expect(Object.keys(p.tournaments[0]).sort()).toEqual(['entryPrice', 'frequencyLabel', 'name', 'product', 'productLabel', 'rebuyLabel', 'rewardLabel', 'scopeLabel']);
   });
 
   it('never carries the fee, split or cash cost through', () => {
@@ -333,8 +333,8 @@ describe('Model shape and guards', () => {
       participants: 250, participantBasis: 'count',
       tournaments: [{ id: 'a', name: 'A', entryPrice: 5, eventsPerMonth: 1, participationMode: 'shared' }],
     });
-    expect(legacy.tournaments[0].basis).toBe('count');
-    expect(legacy.tournaments[0].participants).toBe(250);
+    expect(legacy.core.tournaments[0].basis).toBe('count');
+    expect(legacy.core.tournaments[0].participants).toBe(250);
   });
 
   it('migrates a per-type override too', () => {
@@ -342,7 +342,7 @@ describe('Model shape and guards', () => {
       participants: 250, participantBasis: 'count',
       tournaments: [{ id: 'a', name: 'A', entryPrice: 5, eventsPerMonth: 1, participationMode: 'custom', participantsCustom: 40 }],
     });
-    expect(legacy.tournaments[0].participants).toBe(40);
+    expect(legacy.core.tournaments[0].participants).toBe(40);
   });
 
   it('renames the old standard split to recapture', () => {
@@ -390,11 +390,20 @@ describe('A waived licence keeps the revenue split', () => {
   });
 });
 
+// A mini-games deal: Lucra's catalog on the customer's app, the product the
+// ladder's published anchors describe. Core stays off.
+const miniDeal = (o = {}) => {
+  const opts = Object.assign({}, o), mini = opts.mini || {}; delete opts.mini;
+  return base(Object.assign({
+    includeTournaments: false, includeH2H: false, customerType: 'app',
+    termYears: 1, annualFees: [120000, 0, 0, 0, 0], post: { operator: 90, lucra: 10 },
+    mini: Object.assign({ on: true, tournamentsOn: true, h2hOn: true }, mini),
+  }, opts));
+};
+
 describe('The configuration recommender', () => {
   const { TPrecommend, TPengCurve, TPrecPrizeShare, TP_BANDS } = calc;
-  const deal = (o = {}) => base(Object.assign({
-    includeH2H: true, termYears: 1, annualFees: [120000, 0, 0, 0, 0], post: { operator: 90, lucra: 10 },
-  }, o));
+  const deal = miniDeal;
 
   it('scales engagement down as the base grows, anchored on the reference deals', () => {
     expect(TPengCurve(100000)).toBe(15);
@@ -453,6 +462,29 @@ describe('The configuration recommender', () => {
 
   it('refuses to recommend without a base', () => {
     expect(TPrecommend(deal(), 0).ok).toBe(false);
+  });
+
+  it('recommends for mini games by default when they are in the deal, else core', () => {
+    expect(TPrecommend(deal(), 1000000).product).toBe('mini');
+    expect(TPrecommend(base({ includeH2H: true, mau: 5000 }), 5000).product).toBe('core');
+  });
+
+  it('has no benchmark for core: it tests the deal as entered and says so', () => {
+    const core = base({ includeH2H: true, termYears: 1, annualFees: [120000, 0, 0, 0, 0], post: { operator: 90, lucra: 10 }, mau: 5000 });
+    const r = TPrecommend(core, 5000);
+    expect(r.product).toBe('core');
+    expect(r.noBenchmark).toBe(true);
+    expect(r.tried).toHaveLength(1);
+    expect(r.chosen.step.key).toBe('entered');
+    expect(r.chosen.step.basis).toMatch(/No published benchmark for in-venue play/);
+    // The candidate is the deal's own numbers, not a ladder step's.
+    const s = TPstate(core);
+    expect(r.chosen.cfg).toBeNull();
+    expect(r.chosen.state.core.h2h.engagement).toBe(s.core.h2h.engagement);
+    expect(r.chosen.state.core.h2h.feeRate).toBe(s.core.h2h.feeRate);
+    expect(r.chosen.state.core.tournaments.map((t) => t.entryPrice)).toEqual(s.core.tournaments.map((t) => t.entryPrice));
+    // A product can be asked for explicitly.
+    expect(TPrecommend(miniDeal({ includeTournaments: true, includeH2H: true, mau: 5000 }), 5000, { product: 'core' }).product).toBe('core');
   });
 });
 
@@ -539,8 +571,9 @@ describe('Head-to-head credits the licence at the same share', () => {
 
   it('retires a licence that tournaments alone could not', () => {
     const s = base({ includeH2H: true, mau: 100000, annualFees: [60000] });
-    const alone = TPcalculate(s);            // no head-to-head inputs passed
-    const together = TPcalculate(s, cfg);
+    const alone = TPcalculate(base({ includeH2H: false, mau: 100000, annualFees: [60000] }));
+    // Core head-to-head runs on the deal's own inputs; cfg drives mini games only.
+    const together = TPcalculate(s);
     expect(alone.includesH2H).toBe(false);
     expect(alone.payoffMonth).toBeNull();
     expect(together.payoffMonth).not.toBeNull();
@@ -683,7 +716,8 @@ describe('Seasonality', () => {
 
 describe('The recommender verdict and its levers', () => {
   const { TPrecommend, TPrecLevers, TPrewardCostRatio } = calc;
-  const deal = (o = {}) => base(Object.assign({
+  const deal = miniDeal;
+  const coreDeal = (o = {}) => base(Object.assign({
     includeH2H: true, termYears: 1, annualFees: [120000, 0, 0, 0, 0], post: { operator: 90, lucra: 10 },
   }, o));
 
@@ -709,17 +743,20 @@ describe('The recommender verdict and its levers', () => {
   });
 
   it('takes the reward cost ratio from the deal, else from the tournaments, and never assumes a discount', () => {
-    expect(TPrewardCostRatio(TPstate(deal()))).toBeCloseTo(200 / 500, 9);
-    expect(TPrewardCostRatio(TPstate(deal({ rewardCostRatio: 25 })))).toBeCloseTo(0.25, 9);
-    expect(TPrewardCostRatio(TPstate(deal({ rewardCostRatio: '' })))).toBeCloseTo(0.4, 9);
+    expect(TPrewardCostRatio(TPstate(coreDeal()))).toBeCloseTo(200 / 500, 9);
+    expect(TPrewardCostRatio(TPstate(coreDeal({ rewardCostRatio: 25 })))).toBeCloseTo(0.25, 9);
+    expect(TPrewardCostRatio(TPstate(coreDeal({ rewardCostRatio: '' })))).toBeCloseTo(0.4, 9);
     // A deal with only money prizes has no in-kind ratio to draw on: full cost.
-    expect(TPrewardCostRatio(TPstate(deal({ tournaments: [{ id: 'c', name: 'C', entryPrice: 10, eventsPerMonth: 1, basis: 'count', participants: 100, isCash: true, cashPrizeAmount: 300 }] })))).toBe(1);
+    expect(TPrewardCostRatio(TPstate(coreDeal({ tournaments: [{ id: 'c', name: 'C', entryPrice: 10, eventsPerMonth: 1, basis: 'count', participants: 100, isCash: true, cashPrizeAmount: 300 }] })))).toBe(1);
+    // A product's own list can be asked for; mini games with none entered is full cost.
+    expect(TPrewardCostRatio(TPstate(deal()), 'mini')).toBe(1);
   });
 
   it('tries the tournament programme first, then the take fee, and locations only for a multi-site deal', () => {
-    const r = TPrecommend(deal(), 3000);
+    // The venue's reward cost ratio is entered on the deal, so the in-kind lever exists.
+    const r = TPrecommend(deal({ rewardCostRatio: 40 }), 3000);
     expect(r.cleared).toBe(false);
-    const levers = TPrecLevers(deal(), 3000, r.chosen.step);
+    const levers = TPrecLevers(deal({ rewardCostRatio: 40 }), 3000, r.chosen.step);
     const keys = levers.map((l) => l.key);
     expect(keys).not.toContain('locations');
     // Within the ones that do not clear, the commercial order holds.
@@ -735,14 +772,23 @@ describe('The recommender verdict and its levers', () => {
     expect(levers[0].key).toBe('take-fee'); // the one that clears leads
   });
 
-  it('offers another location only when the customer already has more than one', () => {
-    const multi = deal({ termYears: 2, annualFees: [120000, 120000, 0, 0, 0], locations: [1, 2, 2, 2, 2] });
+  it('offers another location only when a core customer already has more than one', () => {
+    const multi = coreDeal({ termYears: 2, annualFees: [120000, 120000, 0, 0, 0], locations: [1, 2, 2, 2, 2], mau: 1500 });
     const r = TPrecommend(multi, 1500);
+    expect(r.product).toBe('core');
     const levers = TPrecLevers(multi, 1500, r.chosen.step);
     const loc = levers.find((l) => l.key === 'locations');
     expect(loc).toBeTruthy();
     expect(loc.apply.locations).toEqual([1, 3]);
     expect(loc.gapAfter).toBeLessThan(loc.gapBefore);
+    // With a stated schedule the lever adds an opening in the last year instead.
+    const stated = coreDeal({ termYears: 2, annualFees: [120000, 120000, 0, 0, 0], openings: [{ month: 1, add: 1 }, { month: 14, add: 1 }], mau: 1500 });
+    const lever = TPrecLevers(stated, 1500, TPrecommend(stated, 1500).chosen.step).find((l) => l.key === 'locations');
+    expect(lever.apply.openings).toEqual([{ month: 1, add: 1 }, { month: 14, add: 1 }, { month: 13, add: 1 }]);
+    expect(lever.detail).toContain('1 → 2 becomes 1 → 3');
+    // Mini games never get a locations lever, whatever the venues do.
+    const miniMulti = deal({ termYears: 2, annualFees: [120000, 120000, 0, 0, 0], locations: [1, 2, 2, 2, 2], customerType: 'both' });
+    expect(TPrecLevers(miniMulti, 1500, TPrecommend(miniMulti, 1500).chosen.step).map((l) => l.key)).not.toContain('locations');
   });
 
   it('returns no levers for a deal that already clears', () => {
@@ -767,19 +813,149 @@ describe('The recommender verdict and its levers', () => {
 
     // Programme levers are patches to the deal that survive a change of base.
     const events = TPrecLevers(deal(), 3000, r.chosen.step).find((l) => l.key === 'events');
-    const patched = deal({ recAdjust: Object.assign({}, TPrecAdjust(TPstate(deal())), events.apply.adjust) });
-    expect(TPrecAdjust(TPstate(patched)).events).toBe(1);
-    expect(TPrecProgramme(TPstate(patched), 3000)[0].eventsPerMonth).toBe(5);
-    expect(TPrecProgramme(TPstate(patched), 9000)[0].eventsPerMonth).toBe(5);
-    expect(TPrecommend(patched, 3000).chosen.state.tournaments[0].eventsPerMonth).toBe(5);
+    expect(events.apply.product).toBe('mini');
+    const patched = deal({ mini: { recAdjust: Object.assign({}, TPrecAdjust(TPstate(deal()), 'mini'), events.apply.adjust) } });
+    expect(TPrecAdjust(TPstate(patched), 'mini').events).toBe(1);
+    expect(TPrecProgramme(TPstate(patched), 3000, 'mini')[0].eventsPerMonth).toBe(5);
+    expect(TPrecProgramme(TPstate(patched), 9000, 'mini')[0].eventsPerMonth).toBe(5);
+    expect(TPrecommend(patched, 3000).chosen.state.mini.tournaments[0].eventsPerMonth).toBe(5);
     // Prices double once; the reward-cost lever is offered once, at the venue's ratio.
-    const priced = deal({ recAdjust: { priceMult: 2 } });
+    const priced = deal({ mini: { recAdjust: { priceMult: 2 } } });
     const pr = TPrecommend(priced, 3000);
     const again = TPrecLevers(priced, 3000, pr.chosen.step).map((l) => l.key);
     expect(again).not.toContain('price');
-    const inKind = deal({ recAdjust: { rewardAtRatio: true }, rewardCostRatio: 30 });
-    const prog = TPrecProgramme(TPstate(inKind), 3000);
+    const inKind = deal({ mini: { recAdjust: { rewardAtRatio: true } }, rewardCostRatio: 30 });
+    const prog = TPrecProgramme(TPstate(inKind), 3000, 'mini');
     prog.forEach((t) => { expect(t.isCash).toBe(false); expect(t.customerCashCost).toBe(Math.round(t.rewardFaceValue * 0.3)); });
     expect(TPrecLevers(inKind, 3000, pr.chosen.step).map((l) => l.key)).not.toContain('reward-cost');
+  });
+});
+
+describe('Two products under one licence', () => {
+  const { TPlocations, TPopenings, TPschedule, TPscheduleStated, TPlocationsOpen, TPminiBase, TPprizeMultiplier, TPcustomerDefaults } = calc;
+  const t = { id: 'w', name: 'Weekly', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 };
+  const venue = (o = {}) => base(Object.assign({
+    customerType: 'venues', termYears: 2, annualFees: [60000, 60000], mau: 8000, locations: [1, 3],
+    includeH2H: false, tournaments: [t],
+  }, o));
+
+  it('migrates a v2 deal onto core and leaves mini games off', () => {
+    const s = TPstate({ includeTournaments: true, includeH2H: true, h2hReach: 5000, h2hMode: 'wagering', mau: 20000, tournaments: [t], recAdjust: { events: 2 } });
+    expect(s.core.on).toBe(true);
+    expect(s.core.tournamentsOn).toBe(true);
+    expect(s.core.h2hOn).toBe(true);
+    expect(s.core.h2h.reach).toBe(5000);
+    expect(s.core.h2h.mode).toBe('wagering');
+    expect(s.core.tournaments.map((x) => x.id)).toEqual(['w']);
+    expect(s.core.tournaments[0].scope).toBe('each');
+    expect(s.core.recAdjust.events).toBe(2);
+    expect(s.mini.on).toBe(false);
+    expect(s.tournaments).toBeUndefined();
+    expect(s.includeH2H).toBeUndefined();
+    expect(s.customerType).toBe('venues');
+  });
+
+  it('a stated opening schedule is the truth; the per-year spread is only the estimate', () => {
+    const spread = TPstate(venue());
+    expect(TPscheduleStated(spread)).toBe(false);
+    expect(TPschedule(spread)).toEqual([{ month: 1, add: 1, source: 'fact' }, { month: 13, add: 1, source: 'estimate' }, { month: 19, add: 1, source: 'estimate' }]);
+    expect(TPopenings(spread)).toEqual([1, 13, 19]);
+    const stated = TPstate(venue({ openings: [{ month: 1, add: 1 }, { month: 14, add: 2 }, { month: 22, add: 1 }] }));
+    expect(TPscheduleStated(stated)).toBe(true);
+    expect(TPopenings(stated)).toEqual([1, 14, 14, 22]);
+    expect(TPlocations(stated)).toEqual([1, 4]);
+    expect(TPlocationsOpen(stated, 13)).toBe(1);
+    expect(TPlocationsOpen(stated, 14)).toBe(3);
+    expect(TPlocationsOpen(stated, 24)).toBe(4);
+    // A schedule that forgets month one still starts with one location.
+    expect(TPschedule(TPstate(venue({ openings: [{ month: 14, add: 2 }] })))[0]).toEqual({ month: 1, add: 1, source: 'fact' });
+    // Openings past the term are ignored; zero-count entries are dropped.
+    expect(TPopenings(TPstate(venue({ openings: [{ month: 1, add: 1 }, { month: 30, add: 5 }, { month: 6, add: 0 }] })))).toEqual([1]);
+    // An app-only customer is one location whatever is entered.
+    expect(TPlocations(TPstate(venue({ customerType: 'app', locations: [1, 5], openings: [{ month: 1, add: 3 }] })))).toEqual([1, 1]);
+  });
+
+  it('a stated schedule changes when the volume lands, and the result says so', () => {
+    const spread = TPcalculate(venue());
+    const late = TPcalculate(venue({ openings: [{ month: 1, add: 1 }, { month: 22, add: 2 }] }));
+    // Two openings in month 22 contribute three months; the spread gave them 12 and 6.
+    expect(late.totalHandle).toBeLessThan(spread.totalHandle);
+    expect(late.scheduleStated).toBe(true);
+    expect(spread.scheduleStated).toBe(false);
+    expect(late.months[20].locationsOpen).toBe(1);
+    expect(late.months[21].locationsOpen).toBe(3);
+    expect(late.months[21].handle).toBeCloseTo(4000 * 3, 6);
+  });
+
+  it('a core tournament at every location funds its prize once per location open; one across the network funds it once', () => {
+    const each = TPcalculate(venue({ openings: [{ month: 1, add: 1 }, { month: 13, add: 2 }] }));
+    expect(each.months[0].prizeCost).toBe(800);
+    expect(each.months[12].prizeCost).toBe(800 * 3);
+    expect(each.months[12].detail[0].prizeMultiplier).toBe(3);
+    const network = TPcalculate(venue({ openings: [{ month: 1, add: 1 }, { month: 13, add: 2 }], tournaments: [Object.assign({}, t, { scope: 'network' })] }));
+    expect(network.months[12].prizeCost).toBe(800);
+    // Entries are the same either way: the players are the players.
+    expect(network.months[12].handle).toBeCloseTo(each.months[12].handle, 6);
+    expect(TPprizeMultiplier(TPstate(venue()), t, 24)).toBe(3);
+    expect(TPprizeMultiplier(TPstate(venue()), Object.assign({}, t, { scope: 'network' }), 24)).toBe(1);
+  });
+
+  it('mini games run on the whole base and never per location', () => {
+    const both = venue({
+      customerType: 'both', mini: { on: true, tournamentsOn: true, h2hOn: false, mauMode: 'derived', tournaments: [{ id: 'm', name: 'App weekly', entryPrice: 5, eventsPerMonth: 4, basis: 'mau', participantPct: 1, customerCashCost: 300, rewardFaceValue: 300 }] },
+    });
+    const s = TPstate(both);
+    expect(s.mini.tournaments[0].scope).toBe('network');
+    // Derived base is the venue base times locations open.
+    expect(TPminiBase(s, 1)).toBe(8000);
+    expect(TPminiBase(s, 24)).toBe(24000);
+    const r = TPcalculate(both);
+    const m1 = r.months[0].products, m24 = r.months[23].products;
+    expect(m1.mini.handle).toBeCloseTo(8000 * 0.01 * 5 * 4, 6);
+    expect(m24.mini.handle).toBeCloseTo(24000 * 0.01 * 5 * 4, 6);
+    // The prize is funded once a month, whatever the venues do.
+    expect(m24.mini.prizeCost).toBe(300 * 4);
+    expect(r.byProduct.core.handle).toBeGreaterThan(0);
+    expect(r.byProduct.mini.handle).toBeGreaterThan(0);
+    expect(r.byProduct.core.handle + r.byProduct.mini.handle).toBeCloseTo(r.totalHandle, 6);
+    // An entered app MAU replaces the derived one and stops growing with openings.
+    const entered = TPcalculate(base(Object.assign({}, both, { mini: Object.assign({}, both.mini, { mauMode: 'entered', mau: 50000 }) })));
+    expect(entered.months[0].products.mini.handle).toBeCloseTo(50000 * 0.01 * 5 * 4, 6);
+    expect(entered.months[23].products.mini.handle).toBeCloseTo(50000 * 0.01 * 5 * 4, 6);
+  });
+
+  it('core head-to-head runs per location on its own inputs; mini head-to-head runs on the app base', () => {
+    const s = venue({ includeH2H: true, core: { h2h: { engagement: 10, playsPerUser: 20, spendPerPlay: 2, feeRate: 10 } } });
+    const r = TPcalculate(s);
+    // 8,000 x 10% x 20 x $2 x 10% = $3,200 per location.
+    expect(r.months[0].products.core.h2hFee).toBeCloseTo(3200, 6);
+    expect(r.months[23].products.core.h2hFee).toBeCloseTo(3200 * 3, 6);
+    const app = base({ customerType: 'app', includeTournaments: false, includeH2H: false, mau: 100000, annualFees: [60000],
+      mini: { on: true, tournamentsOn: false, h2hOn: true, h2h: { engagement: 5, playsPerUser: 10, spendPerPlay: 1, feeRate: 20 } } });
+    const ra = TPcalculate(app);
+    expect(ra.months[0].products.mini.h2hFee).toBeCloseTo(100000 * 0.05 * 10 * 1 * 0.2, 6);
+    expect(ra.months[0].products.core.h2hFee).toBe(0);
+    // The Mini Game tab's config overrides the mini inputs, never the core ones.
+    const cfg = { engagement: 10, playsPerUser: 20, spendPerPlay: 2, feeRate: 10, rewardGames: 0, winRate: 0, redeemRate: 0, valuePerRedemption: 0 };
+    expect(TPcalculate(app, cfg).months[0].products.mini.h2hFee).toBeCloseTo(100000 * 0.1 * 20 * 2 * 0.1, 6);
+    expect(TPcalculate(s, cfg).months[0].products.core.h2hFee).toBeCloseTo(3200, 6);
+  });
+
+  it('a customer type sets defaults for the products and the location model', () => {
+    expect(TPcustomerDefaults('app')).toEqual({ core: false, mini: true, singleLocation: true });
+    expect(TPcustomerDefaults('venues')).toEqual({ core: true, mini: false, singleLocation: false });
+    expect(TPcustomerDefaults('both')).toEqual({ core: true, mini: true, singleLocation: false });
+    // A digital platform with its own game is core at a single location.
+    const digitalCore = base({ customerType: 'app', includeTournaments: true, includeH2H: true, mau: 40000, locations: [1, 4, 4, 4, 4], termYears: 2, annualFees: [60000, 60000] });
+    const r = TPcalculate(digitalCore);
+    expect(r.months[23].locationsOpen).toBe(1);
+    expect(r.months[23].prizeCost).toBe(800);
+    expect(r.months[0].products.core.h2hFee).toBeCloseTo(40000 * 0.1 * 20 * 2 * 0.1, 6);
+  });
+
+  it('needs at least one product with something in it, and a base for each product that uses one', () => {
+    expect(TPvalidate(base({ includeTournaments: false, includeH2H: false })).join(' ')).toMatch(/at least one product/i);
+    expect(TPvalidate(base({ includeTournaments: false, includeH2H: false, mini: { on: true, tournamentsOn: false, h2hOn: true }, mau: 0 })).join(' ')).toMatch(/app or site users/i);
+    expect(TPvalidate(base({ includeTournaments: false, includeH2H: false, customerType: 'app', mau: 50000, mini: { on: true, tournamentsOn: true, h2hOn: false, tournaments: [] } })).join(' ')).toMatch(/mini games/i);
   });
 });
