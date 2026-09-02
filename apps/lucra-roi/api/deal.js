@@ -11,6 +11,7 @@
 // link only opens for someone who can already open the calculator.
 
 const { createScenarioToken, parseScenarioToken } = require('../lib/scenario-token');
+const { requireSiteAuth } = require('../lib/site-auth');
 
 const TTL_DAYS = 14;
 const MAX_BODY_BYTES = 48 * 1024;
@@ -24,6 +25,7 @@ function allowedOrigin(req) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  if (!requireSiteAuth(req, res)) return;
   if (!process.env.SCENARIO_SECRET) return res.status(503).json({ error: 'Deal links are not configured' });
 
   if (req.method === 'GET') {

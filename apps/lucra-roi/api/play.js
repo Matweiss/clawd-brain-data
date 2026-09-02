@@ -3,7 +3,8 @@
 //
 // GET  /play?deal=tok                        the sandbox page (no deal data in the HTML)
 // POST /api/play  { action:'link', deal:{tp,mg}, days, pass, unlock }
-//                                             -> { ok, url, expiresInDays }   seller-side, same origin
+//                                             -> { ok, url, expiresInDays }   seller-side, site password, same origin; passcode required
+// POST /api/play  { action:'update', edit, deal:{tp,mg} }  seller-side, site password: save a new version to a link
 // POST /api/play  { action:'compute', deal:tok, pass, inputs }
 //                                             -> { ok, facts, outputs }        customer-side
 //
@@ -17,6 +18,9 @@ const { createScenarioToken, parseScenarioToken } = require('../lib/scenario-tok
 const E = require('../lib/revenue-engine');
 const { getStore } = require('../lib/sandbox-store');
 const notify = require('../lib/sandbox-notify');
+const { requireSiteAuth } = require('../lib/site-auth');
+
+const MIN_PASS = 4;
 
 const MAX_BODY_BYTES = 64 * 1024;
 const DAY = 24 * 60 * 60;
@@ -494,11 +498,15 @@ module.exports = async function handler(req, res) {
   try { body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch { return res.status(400).json({ error: 'Bad JSON' }); }
 
   if (body.action === 'link') {
+    // Seller side: behind the site password like the rest of the calculator.
+    if (!requireSiteAuth(req, res)) return;
     if (!allowedOrigin(req)) return res.status(403).json({ error: 'Origin not allowed' });
     const deal = body.deal;
     if (!deal || typeof deal !== 'object' || !deal.tp) return res.status(400).json({ error: 'Deal payload required' });
     const days = ALLOWED_DAYS.indexOf(Number(body.days)) >= 0 ? Number(body.days) : 7;
     const pass = String(body.pass || '').trim().slice(0, 40);
+    // Every customer link needs a passcode: the link alone never opens the model.
+    if (pass.length < MIN_PASS) return res.status(400).json({ error: 'A passcode of at least ' + MIN_PASS + ' characters is required. Give it to the customer on the call.' });
     const unlock = { addTournaments: body.unlock ? !!body.unlock.addTournaments : true };
     try {
       const sealed = sealDeal(deal.tp, deal.mg);
@@ -567,6 +575,7 @@ module.exports = async function handler(req, res) {
     // authorisation is the edit token the dashboard minted (kind
     // revenue-model with a sandboxId), which only the key-gated dashboard
     // can produce.
+    if (!requireSiteAuth(req, res)) return;
     if (!allowedOrigin(req)) return res.status(403).json({ error: 'Origin not allowed' });
     try {
       const parsed = parseScenarioToken(body.edit, process.env.SCENARIO_SECRET);

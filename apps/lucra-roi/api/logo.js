@@ -2,6 +2,7 @@
 // Accepts either ?url=https://... for a direct image URL, or ?domain=example.com
 // for resilient brand lookup. Returns a normalized image response so the browser
 // can draw it to canvas without CORS/hotlinking failures.
+const { requireSiteAuth } = require('../lib/site-auth');
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const dns = require('dns').promises;
@@ -135,6 +136,7 @@ async function fetchImage(url) {
 module.exports = async (req, res) => {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (!requireSiteAuth(req, res)) return;
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
 
   // Reject cross-origin requests from disallowed origins.

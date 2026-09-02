@@ -1,4 +1,5 @@
 const { createScenarioToken } = require('../lib/scenario-token');
+const { requireSiteAuth } = require('../lib/site-auth');
 
 const MAX_BODY_BYTES = 48 * 1024;
 
@@ -11,6 +12,7 @@ function allowedOrigin(req) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  if (!requireSiteAuth(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   if (!allowedOrigin(req)) return res.status(403).json({ error: 'Origin not allowed' });
   const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});

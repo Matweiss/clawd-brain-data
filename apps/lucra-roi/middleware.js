@@ -27,10 +27,12 @@ function safeEqual(a, b) {
 
 export default function middleware(req) {
   const url = new URL(req.url);
-  // Customer scenario pages are a separate, read-only public surface. The
-  // authenticated calculator, agreement generator, logo proxy, and scenario
-  // creation endpoint remain behind this gate.
+  // Customer surfaces have their own gates (a signed link plus a passcode) and
+  // stay open: the public scenario page and the sandbox page with its API.
+  // The functions themselves enforce the same password (lib/site-auth.js),
+  // so this edge check is the first line, not the only one.
   if (req.method === 'GET' && url.pathname === '/public') return;
+  if (url.pathname === '/play' || url.pathname === '/api/play') return;
   const expectedPass = process.env.SITE_PASSWORD;
   const expectedUser = process.env.SITE_USER || 'lucra';
 

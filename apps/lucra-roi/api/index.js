@@ -1,16 +1,14 @@
 // Serves the ROI calculator HTML.
 //
-// Auth is handled entirely by Edge middleware (middleware.js) which gates
-// all routes behind HTTP Basic Auth with fail-closed behavior. The previous
-// cookie-based auth layer in this file was redundant and has been removed
-// (P0-4: dual authentication consolidation).
-//
-// Verification: middleware.js matcher '/((?!_next/static|_vercel|favicon\\.ico).*)'
-// covers this route and all /api/* routes. The middleware returns 503 if
-// SITE_PASSWORD is not configured and 401 for invalid credentials.
+// Auth: HTTP Basic against SITE_PASSWORD, checked here and in every guarded
+// function through lib/site-auth.js (middleware.js does the same at the edge
+// when the platform runs it, but the functions do not rely on that). 503 if
+// SITE_PASSWORD is not configured, 401 for invalid credentials. The customer
+// sandbox (/play) and the public scenario page are the only open surfaces.
 
 const fs = require('fs');
 const path = require('path');
+const { requireSiteAuth } = require('../lib/site-auth');
 
 // Stamp the page with what it was built from, so "is this live?" can be
 // answered by looking at the footer rather than querying the deploy.
@@ -23,6 +21,7 @@ const html = fs
   .replace('__BUILD_DATE__', date);
 
 module.exports = async function handler(req, res) {
+  if (!requireSiteAuth(req, res, { html: true })) return;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.end(html);
 };

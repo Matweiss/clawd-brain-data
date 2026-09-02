@@ -1926,7 +1926,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <summary><span class="tp-fold-title">Customer sandbox link</span><span class="sn">A page the customer can play with: their own numbers unlocked, the licence and the split locked and never sent to their browser.</span></summary>
     <div class="inputs tp-three" style="margin:10px 0 0">
       <div class="input-group"><label class="input-label" for="tp-sandbox-days">Open for</label><select class="pf-input" id="tp-sandbox-days"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="14">14 days</option></select><div class="sn">The link stops working after this; make a new one any time.</div></div>
-      <div class="input-group"><label class="input-label" for="tp-sandbox-pass">Passcode</label><input class="pf-input" id="tp-sandbox-pass" type="text" placeholder="Optional · give it to them on the call" autocomplete="off"><div class="sn">Asked for before the page opens.</div></div>
+      <div class="input-group"><label class="input-label" for="tp-sandbox-pass">Passcode <span class="sn" style="display:inline">· required</span></label><div class="input-val"><input class="pf-input" id="tp-sandbox-pass" type="text" placeholder="Give it to them on the call" autocomplete="off" minlength="4"><button type="button" class="tp-add" id="tp-sandbox-suggest" onclick="TPsandboxSuggestPass()" title="Suggest a passcode">Suggest</button></div><div class="sn">Asked for before the page opens. The link alone never opens the model.</div></div>
       <div class="input-group"><label class="tp-check" style="margin-top:22px"><input type="checkbox" id="tp-sandbox-add" checked><span>They can add and remove tournaments</span></label><div class="sn">Prices, events, participation, prizes, the opening schedule and head-to-head engagement are always theirs to change.</div></div>
     </div>
     <div class="tp-actions"><button type="button" id="tp-sandbox-btn" onclick="TPsandboxLink(this)">Create sandbox link</button></div>
@@ -6336,11 +6336,25 @@ function TPapplyH2HSnapshot(mg) {
 
 /* The customer sandbox: same deal, same token crypto, a different page. The
    server keeps the terms and returns only customer-safe figures. */
+/* A passcode the seller can read out on a call: a word and four digits. */
+var TP_SANDBOX_WORDS = ['bear', 'eagle', 'tiger', 'falcon', 'maple', 'cedar', 'river', 'summit', 'harbor', 'canyon', 'meadow', 'comet', 'ember', 'lantern', 'orbit', 'pilot'];
+function TPsandboxSuggestPass() {
+  var buf = new Uint32Array(2);
+  if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(buf); else { buf[0] = Math.floor(Math.random() * 1e9); buf[1] = Math.floor(Math.random() * 1e9); }
+  var word = TP_SANDBOX_WORDS[buf[0] % TP_SANDBOX_WORDS.length], digits = String(1000 + (buf[1] % 9000));
+  var el = $('tp-sandbox-pass'); if (el) { el.value = word + '-' + digits; el.focus(); }
+  return word + '-' + digits;
+}
 async function TPsandboxLink(btn) {
+  var days = Number(($('tp-sandbox-days') || {}).value) || 7, pass = (($('tp-sandbox-pass') || {}).value || '').trim(),
+    add = !!(($('tp-sandbox-add') || {}).checked);
+  if (pass.length < 4) {
+    setButtonState(btn, 'Passcode needed', 2600);
+    var pel = $('tp-sandbox-pass'); if (pel) { pel.focus(); pel.setCustomValidity('A passcode of at least 4 characters is required'); pel.reportValidity(); pel.setCustomValidity(''); }
+    return null;
+  }
   setButtonBusy(btn, 'Creating link…');
   try {
-    var days = Number(($('tp-sandbox-days') || {}).value) || 7, pass = (($('tp-sandbox-pass') || {}).value || '').trim(),
-      add = !!(($('tp-sandbox-add') || {}).checked);
     var response = await fetch('/api/play', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'link', deal: { tp: TP, mg: TPh2hSnapshot() }, days: days, pass: pass, unlock: { addTournaments: add } })

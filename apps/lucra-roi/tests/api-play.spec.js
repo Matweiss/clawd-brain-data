@@ -24,9 +24,11 @@ const deal = () => E.TPstate({
 
 async function link(body, headers) {
   const r = res();
-  await handler({ method: 'POST', body: Object.assign({ action: 'link' }, body), headers: Object.assign({ host: 'roi.test', 'x-forwarded-proto': 'https' }, headers || {}) }, r);
+  // Every link carries a passcode now; tests that do not care use this one.
+  await handler({ method: 'POST', body: Object.assign({ action: 'link', pass: 'test-pass' }, body), headers: Object.assign({ host: 'roi.test', 'x-forwarded-proto': 'https' }, headers || {}) }, r);
   return r;
 }
+const PASS = 'test-pass';
 async function compute(tok, pass, inputs) {
   const r = res();
   await handler({ method: 'POST', body: { action: 'compute', deal: tok, pass, inputs }, headers: {} }, r);
@@ -58,7 +60,7 @@ describe('/api/play — the customer sandbox', () => {
     expect(bad.statusCode).toBe(400);
     expect(bad.body.error).toMatch(/Fix the deal first/);
     const dealLink = createScenarioToken({ kind: 'revenue-model', tp: deal() }, SECRET, { ttlSeconds: 3600 });
-    expect((await compute(dealLink, '', null)).body.error).toMatch(/Not a sandbox link/);
+    expect((await compute(dealLink, PASS, null)).body.error).toMatch(/Not a sandbox link/);
   });
 
   it('gates on the passcode and returns customer-safe facts and outputs, never the terms', async () => {
@@ -90,8 +92,8 @@ describe('/api/play — the customer sandbox', () => {
 
   it('applies only the customer\'s own facts and ignores everything else', async () => {
     const tok = tokenOf(await link({ deal: { tp: deal() } }));
-    const base = (await compute(tok, '', null)).body;
-    const edited = (await compute(tok, '', {
+    const base = (await compute(tok, PASS, null)).body;
+    const edited = (await compute(tok, PASS, {
       mau: 12000,
       openings: [{ month: 1, add: 1 }, { month: 14, add: 2 }, { month: 22, add: 2 }],
       core: { tournaments: [{ id: 't1', eventsPerMonth: 8, entryPrice: 12, scope: 'network' }, { id: 't2', prizeValue: 5000 }], h2h: { engagement: 15, feeRate: 25 } },
@@ -122,11 +124,11 @@ describe('/api/play — the customer sandbox', () => {
 
   it('honours the add-and-remove lock', async () => {
     const locked = tokenOf(await link({ deal: { tp: deal() }, unlock: { addTournaments: false } }));
-    const r = (await compute(locked, '', { core: { tournaments: [{ id: 'made-up', eventsPerMonth: 30 }] } })).body;
+    const r = (await compute(locked, PASS, { core: { tournaments: [{ id: 'made-up', eventsPerMonth: 30 }] } })).body;
     expect(r.facts.unlock.addTournaments).toBe(false);
     expect(r.facts.core.tournaments.map((t) => t.id)).toEqual(['t1', 't2']);
     const open = tokenOf(await link({ deal: { tp: deal() } }));
-    const added = (await compute(open, '', { core: { tournaments: [{ id: 't1' }, { id: 'new', name: 'Third', eventsPerMonth: 2 }] } })).body;
+    const added = (await compute(open, PASS, { core: { tournaments: [{ id: 't1' }, { id: 'new', name: 'Third', eventsPerMonth: 2 }] } })).body;
     expect(added.facts.core.tournaments.map((t) => t.name)).toEqual(['Weekly open', 'Third']);
   });
 

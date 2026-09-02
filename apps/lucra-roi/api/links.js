@@ -6,14 +6,15 @@
 // POST /api/links { action:'reopen', key, id }    -> { ok }
 // POST /api/links { action:'remove', key, id }    -> { ok }
 //
-// The calculator is reachable without a login, so the dashboard has its own
-// key: SANDBOX_ADMIN_KEY, entered once per browser and kept in
-// sessionStorage. Without the key set, the page says so and refuses everything.
+// The dashboard sits behind the site password like the calculator. An
+// optional second gate, SANDBOX_ADMIN_KEY, is asked for once per browser and
+// kept in sessionStorage when it is set.
 
 const { timingSafeEqual } = require('node:crypto');
 const { getStore, credentials } = require('../lib/sandbox-store');
 const notify = require('../lib/sandbox-notify');
 const { createScenarioToken } = require('../lib/scenario-token');
+const { requireSiteAuth } = require('../lib/site-auth');
 const play = require('./play');
 
 const EDIT_TTL_SECONDS = 24 * 60 * 60;
@@ -89,7 +90,7 @@ details{margin-top:4px}summary{cursor:pointer;color:var(--text2);font-size:12px}
 <div id="main" hidden></div>
 </div>
 <script>
-var $=function(id){return document.getElementById(id)}, KEY='', TIMER=null;
+var $=function(id){return document.getElementById(id)}, KEY='', TIMER=null, NEEDS_KEY=__NEEDS_KEY__;
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function when(t){ if(!t) return '—'; var d=new Date(t); return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}); }
 function ago(t){ if(!t) return ''; var s=Math.max(0,(Date.now()-t)/1000); if(s<60) return 'just now'; if(s<3600) return Math.round(s/60)+' min ago'; if(s<86400) return Math.round(s/3600)+' h ago'; return Math.round(s/86400)+' d ago'; }
@@ -131,7 +132,7 @@ function render(d){
 }
 function load(){
   return api({action:'list'}).then(function(d){ $('gate').hidden=true; $('main').hidden=false; $('refresh').hidden=false; $('signout').hidden=false; render(d); })
-    .catch(function(e){ $('gate').hidden=false; $('main').hidden=true; $('gate-err').textContent=e.message; try{sessionStorage.removeItem('sbx-key')}catch(x){} });
+    .catch(function(e){ if(NEEDS_KEY){ $('gate').hidden=false; $('main').hidden=true; $('gate-err').textContent=e.message; try{sessionStorage.removeItem('sbx-key')}catch(x){} } else { $('main').hidden=false; $('main').innerHTML='<div class="notice">'+esc(e.message)+'</div>'; } });
 }
 $('enter').onclick=function(){ KEY=$('key').value; try{sessionStorage.setItem('sbx-key',KEY)}catch(x){} load(); };
 $('key').addEventListener('keydown',function(e){ if(e.key==='Enter') $('enter').click(); });
@@ -149,7 +150,7 @@ $('main').addEventListener('click',function(e){
   api({action:b.dataset.act,id:b.dataset.id}).then(load).catch(function(err){ b.disabled=false; alert(err.message); });
 });
 try{ KEY=sessionStorage.getItem('sbx-key')||''; }catch(x){}
-if(KEY) load(); else $('key').focus();
+if(!NEEDS_KEY){ $('gate').hidden=true; load(); } else if(KEY) load(); else $('key').focus();
 TIMER=setInterval(function(){ if(KEY&&!$('main').hidden) load(); },60000);
 </script></body></html>`;
 }
@@ -159,22 +160,21 @@ module.exports = async function handler(req, res) {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
 
   if (req.method === 'GET') {
+    if (!requireSiteAuth(req, res, { html: true })) return;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    if (!process.env.SANDBOX_ADMIN_KEY) {
-      return res.status(503).end('<!doctype html><title>Sandbox links</title><style>body{font:15px system-ui;background:#0a0a0b;color:#f5f5f5;padding:40px}code{color:#8AE91A}</style><h1>Dashboard not configured</h1><p>Set <code>SANDBOX_ADMIN_KEY</code> on the Vercel project to open the sandbox links dashboard.</p>');
-    }
-    return res.status(200).end(page());
+    return res.status(200).end(page().replace('__NEEDS_KEY__', process.env.SANDBOX_ADMIN_KEY ? 'true' : 'false'));
   }
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'GET or POST only' });
+  if (!requireSiteAuth(req, res)) return;
   if (!allowedOrigin(req)) return res.status(403).json({ error: 'Origin not allowed' });
   const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
   if (Buffer.byteLength(raw, 'utf8') > MAX_BODY_BYTES) return res.status(413).json({ error: 'Request too large' });
   let body;
   try { body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch { return res.status(400).json({ error: 'Bad JSON' }); }
 
-  if (!process.env.SANDBOX_ADMIN_KEY) return res.status(503).json({ error: 'Dashboard not configured: set SANDBOX_ADMIN_KEY' });
-  if (!keyMatches(body.key)) return res.status(401).json({ error: 'That key is not right' });
+  // The optional second gate.
+  if (process.env.SANDBOX_ADMIN_KEY && !keyMatches(body.key)) return res.status(401).json({ error: 'That key is not right' });
 
   const store = getStore();
   try {

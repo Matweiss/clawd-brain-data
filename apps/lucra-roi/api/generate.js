@@ -7,6 +7,7 @@
 //
 // Auth: mat.weiss@lucrasports.com OAuth (refresh token) — env vars in Vercel:
 //   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN / AGREEMENT_FOLDER_ID
+const { requireSiteAuth } = require('../lib/site-auth');
 
 const ALLOWED_TEMPLATES = {
   trackman: '1bq7dy1Feb2VHZo7TvQJGYoWVrRh2_ViXCI1gvU__nJ4',
@@ -138,6 +139,7 @@ async function getAccessToken(env) {
 module.exports = async (req, res) => {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (!requireSiteAuth(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   // Reject cross-origin requests from disallowed origins.

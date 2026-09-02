@@ -1650,20 +1650,29 @@ test('the seller edits a customer\'s sandbox from the dashboard and the customer
   await openTab(page);
   await setBaseDeal(page, { termYears: 3, fees: [78000, 102000, 126000], payoffBasis: 'annual', shortfall: 'cash', mau: 6000 });
   await page.evaluate(() => { TP.dealName = 'Loco Bear'; TP.presenter = 'Mat'; TPsave(); TPrender(); document.getElementById('tp-sandbox-fold').open = true; });
+  // A passcode is required; without one the button refuses and nothing is sent.
+  await page.locator('#tp-sandbox-pass').fill('');
+  await page.locator('#tp-sandbox-btn').click();
+  await expect(page.locator('#tp-sandbox-btn')).toContainText('Passcode needed');
+  await expect(page.locator('#tp-sandbox-out')).toBeHidden();
+  await page.locator('#tp-sandbox-suggest').click();
+  const suggested = await page.locator('#tp-sandbox-pass').inputValue();
+  expect(suggested).toMatch(/^[a-z]+-\d{4}$/);
   await page.locator('#tp-sandbox-btn').click();
   await expect(page.locator('#tp-sandbox-out')).toBeVisible();
   const url = await page.locator('#tp-sandbox-out input').inputValue();
   await expect(page.locator('#tp-sandbox-cowork')).toBeHidden();
 
-  // The customer opens it and changes their base; it is kept for them.
+  // The customer opens it with the passcode and changes their base; it is kept for them.
   const customer = await page.context().browser().newContext();
+  const open = async (p) => { await p.goto(url); await p.locator('#pass').fill(suggested); await p.locator('#gate button').click(); };
   const cp = await customer.newPage();
-  await cp.goto(url);
+  await open(cp);
   await expect(cp.locator('#model h1')).toHaveText('Loco Bear');
   await cp.locator('#inputs input[type="number"]').first().fill('9000');
   await cp.waitForTimeout(500);
   const cp2 = await customer.newPage();
-  await cp2.goto(url);
+  await open(cp2);
   await expect(cp2.locator('#inputs input[type="number"]').first()).toHaveValue('9000');
   await cp2.close();
 
@@ -1695,7 +1704,7 @@ test('the seller edits a customer\'s sandbox from the dashboard and the customer
   await expect(cp.locator('#inputs .tour .head input').nth(1)).toHaveValue('Seller special');
   // And a fresh visit is the seller's version too.
   const cp3 = await customer.newPage();
-  await cp3.goto(url);
+  await open(cp3);
   await expect(cp3.locator('#inputs input[type="number"]').first()).toHaveValue('10000');
   await expect(cp3.locator('.banner')).toContainText('This is their latest version');
   await expect(dp.locator('#main')).toBeVisible();

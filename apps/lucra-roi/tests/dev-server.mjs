@@ -11,6 +11,9 @@ process.env.SCENARIO_SECRET = process.env.SCENARIO_SECRET || 'playwright-secret-
 // The link registry runs in memory here so the dashboard can be exercised.
 process.env.SANDBOX_STORE = process.env.SANDBOX_STORE || 'memory';
 process.env.SANDBOX_ADMIN_KEY = process.env.SANDBOX_ADMIN_KEY || 'playwright-dashboard-key';
+// The site password is checked inside each function; off here so the suite
+// drives the app without a Basic Auth prompt. lib/site-auth has its own tests.
+process.env.SITE_AUTH = process.env.SITE_AUTH || 'off';
 const playHandler = require('../api/play.js');
 const linksHandler = require('../api/links.js');
 const dealHandler = require('../api/deal.js');

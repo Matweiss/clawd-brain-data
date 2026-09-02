@@ -26,9 +26,10 @@ const deal = () => E.TPstate({
 const HEADERS = { host: 'roi.test', 'x-forwarded-proto': 'https' };
 async function link(body) {
   const r = res();
-  await play({ method: 'POST', body: Object.assign({ action: 'link' }, body), headers: HEADERS }, r);
+  await play({ method: 'POST', body: Object.assign({ action: 'link', pass: 'test-pass' }, body), headers: HEADERS }, r);
   return r;
 }
+const PASS = 'test-pass';
 async function compute(tok, pass, inputs) {
   const r = res();
   await play({ method: 'POST', body: { action: 'compute', deal: tok, pass, inputs }, headers: HEADERS }, r);
@@ -111,9 +112,9 @@ describe('The sandbox link registry', () => {
   it('closes a link immediately, reopens it, and removes it from the list', async () => {
     const made = await link({ deal: { tp: deal() } });
     const tok = tokenOf(made), id = made.body.id;
-    expect((await compute(tok, '', null)).statusCode).toBe(200);
+    expect((await compute(tok, PASS, null)).statusCode).toBe(200);
     expect((await dash({ action: 'revoke', id })).body.ok).toBe(true);
-    const closed = await compute(tok, '', null);
+    const closed = await compute(tok, PASS, null);
     expect(closed.statusCode).toBe(410);
     expect(closed.body.error).toMatch(/closed by the person who sent it/);
     const pageClosed = await pageGet(tok);
@@ -121,12 +122,12 @@ describe('The sandbox link registry', () => {
     expect(pageClosed.body).toContain('closed by the person who sent it');
     expect((await dash({ action: 'list' })).body.links[0].status).toBe('closed');
     expect((await dash({ action: 'reopen', id })).body.ok).toBe(true);
-    expect((await compute(tok, '', null)).statusCode).toBe(200);
+    expect((await compute(tok, PASS, null)).statusCode).toBe(200);
     expect((await pageGet(tok)).statusCode).toBe(200);
     expect((await dash({ action: 'remove', id })).body.ok).toBe(true);
     expect((await dash({ action: 'list' })).body.links).toEqual([]);
     // A removed link is unknown to the registry, so it works until it expires and is not tracked.
-    expect((await compute(tok, '', null)).statusCode).toBe(200);
+    expect((await compute(tok, PASS, null)).statusCode).toBe(200);
     expect((await dash({ action: 'revoke', id })).body.ok).toBe(false);
   });
 
@@ -139,14 +140,15 @@ describe('The sandbox link registry', () => {
     expect(cross.statusCode).toBe(403);
     const bad = await dash({ action: 'revoke', id: '../x' });
     expect(bad.statusCode).toBe(400);
+    // Without the optional second key, the site password alone opens it (off in this suite).
     delete process.env.SANDBOX_ADMIN_KEY;
     const none = res();
     await links({ method: 'POST', body: { action: 'list', key: '' }, headers: HEADERS }, none);
-    expect(none.statusCode).toBe(503);
+    expect(none.statusCode).toBe(200);
     const page = res();
     await links({ method: 'GET', headers: HEADERS }, page);
-    expect(page.statusCode).toBe(503);
-    expect(page.body).toContain('SANDBOX_ADMIN_KEY');
+    expect(page.statusCode).toBe(200);
+    expect(page.body).toContain('NEEDS_KEY=false');
     process.env.SANDBOX_ADMIN_KEY = KEY;
     const ok = res();
     await links({ method: 'GET', headers: HEADERS }, ok);
@@ -160,7 +162,7 @@ describe('The sandbox link registry', () => {
     const made = await link({ deal: { tp: deal() } });
     expect(made.statusCode).toBe(200);
     expect(made.body.tracked).toBe(false);
-    expect((await compute(tokenOf(made), '', null)).statusCode).toBe(200);
+    expect((await compute(tokenOf(made), PASS, null)).statusCode).toBe(200);
     const list = await dash({ action: 'list' });
     expect(list.body.store).toBe(false);
     expect(list.body.links).toEqual([]);
@@ -175,7 +177,7 @@ describe('The sandbox link registry', () => {
     process.env.KV_REST_API_URL = 'https://kv.test'; process.env.KV_REST_API_TOKEN = 't';
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('redis down'));
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect((await compute(tok, '', null)).statusCode).toBe(200);
+    expect((await compute(tok, PASS, null)).statusCode).toBe(200);
     expect((await pageGet(tok)).statusCode).toBe(200);
     const list = await dash({ action: 'list' });
     expect(list.statusCode).toBe(502);
@@ -229,12 +231,12 @@ describe('Co-working a customer\'s sandbox', () => {
 
   it('keeps the customer\'s own changes for their next visit', async () => {
     const tok = tokenOf(await link({ deal: { tp: deal() } }));
-    const first = (await compute(tok, '', null)).body;
+    const first = (await compute(tok, PASS, null)).body;
     expect(first.facts.version).toBe(1);
     expect(first.facts.mau).toBe(6000);
-    await compute(tok, '', { mau: 9000, core: { tournaments: [{ id: 't1', eventsPerMonth: 8 }] } });
+    await compute(tok, PASS, { mau: 9000, core: { tournaments: [{ id: 't1', eventsPerMonth: 8 }] } });
     // A fresh load (inputs null) comes back where they left off.
-    const again = (await compute(tok, '', null)).body;
+    const again = (await compute(tok, PASS, null)).body;
     expect(again.facts.mau).toBe(9000);
     expect(again.facts.core.tournaments[0].eventsPerMonth).toBe(8);
     expect(again.facts.version).toBe(1);
@@ -244,7 +246,7 @@ describe('Co-working a customer\'s sandbox', () => {
   it('lets the seller open the customer\'s current model, save changes, and the customer sees them', async () => {
     const made = await link({ deal: { tp: deal() } });
     const tok = tokenOf(made), id = made.body.id;
-    await compute(tok, '', { mau: 9000 });
+    await compute(tok, PASS, { mau: 9000 });
     // The dashboard mints an edit link carrying the customer's inputs on top of the deal.
     const edit = await dash({ action: 'edit', id });
     expect(edit.statusCode).toBe(200);
@@ -265,18 +267,18 @@ describe('Co-working a customer\'s sandbox', () => {
     expect(saved.body.status).toBe('open');
     // The customer's page, still open on version 1, sends its stale inputs: it is rebased, not honoured.
     const staleR = res();
-    await play({ method: 'POST', body: { action: 'compute', deal: tok, pass: '', inputs: { mau: 9000 }, version: 1 }, headers: HEADERS }, staleR);
+    await play({ method: 'POST', body: { action: 'compute', deal: tok, pass: PASS, inputs: { mau: 9000 }, version: 1 }, headers: HEADERS }, staleR);
     expect(staleR.body.facts.rebased).toBe(true);
     expect(staleR.body.facts.version).toBe(2);
     expect(staleR.body.facts.mau).toBe(10000);
     expect(staleR.body.facts.core.tournaments.map((t) => t.name)).toContain('Seller special');
     expect(staleR.body.facts.updatedBy).toBe('seller');
     // A fresh visit gets the seller's version outright.
-    const fresh = (await compute(tok, '', null)).body;
+    const fresh = (await compute(tok, PASS, null)).body;
     expect(fresh.facts.mau).toBe(10000);
     expect(fresh.facts.version).toBe(2);
     // And from there the customer can edit again on top of it.
-    const edited = (await compute(tok, '', { mau: 11000 })).body;
+    const edited = (await compute(tok, PASS, { mau: 11000 })).body;
     expect(edited.facts.mau).toBe(11000);
     expect(edited.facts.rebased).toBe(false);
     const [l] = (await dash({ action: 'list' })).body.links;
@@ -301,7 +303,7 @@ describe('Co-working a customer\'s sandbox', () => {
 describe('The customer page outputs', () => {
   it('carry the split as it applies to the customer, by year and by month, never Lucra\'s', async () => {
     const tok = tokenOf(await link({ deal: { tp: deal() } }));
-    const { outputs: o } = (await compute(tok, '', null)).body;
+    const { outputs: o } = (await compute(tok, PASS, null)).body;
     expect(o.rates).toEqual({ licenceSharePct: 50, yourSharePct: 45, yourSharePostPct: 90 });
     expect(o.years).toHaveLength(3);
     expect(o.monthly).toHaveLength(36);
