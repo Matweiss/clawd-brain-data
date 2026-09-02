@@ -1,0 +1,185 @@
+// The sandbox link registry: which links exist, whether each is still open,
+// and what the customer has done with it. Backed by Redis over the Upstash
+// REST API (what Vercel's Marketplace Redis and Vercel KV both expose), with
+// no client library so the function ships with no dependencies. Without the
+// env vars the store is disabled and the sandbox keeps working statelessly:
+// links still open until they expire, there is just nothing to look at.
+//
+// Keys
+//   sbx:link:<id>   hash, one per link (see fields below)
+//   sbx:links       sorted set, id scored by creation time, for listing
+//
+// Every write is fire-and-forget from the caller's point of view: a store
+// failure must never break a customer's page.
+
+const KEEP_AFTER_EXPIRY_MS = 90 * 24 * 60 * 60 * 1000;
+
+function env(name) { return process.env[name] || ''; }
+
+function credentials() {
+  const url = env('KV_REST_API_URL') || env('UPSTASH_REDIS_REST_URL') || env('SANDBOX_REDIS_URL');
+  const token = env('KV_REST_API_TOKEN') || env('UPSTASH_REDIS_REST_TOKEN') || env('SANDBOX_REDIS_TOKEN');
+  return url && token ? { url: url.replace(/\/+$/, ''), token } : null;
+}
+
+/* One Redis command over REST. Upstash answers { result } or { error }. */
+function redisClient(creds) {
+  async function command(args) {
+    const r = await fetch(creds.url, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + creds.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(args.map((a) => String(a))),
+    });
+    const body = await r.json();
+    if (body.error) throw new Error(body.error);
+    return body.result;
+  }
+  async function pipeline(commands) {
+    const r = await fetch(creds.url + '/pipeline', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + creds.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(commands.map((c) => c.map((a) => String(a)))),
+    });
+    const body = await r.json();
+    if (!Array.isArray(body)) throw new Error(body.error || 'Bad pipeline reply');
+    return body.map((x) => x.result);
+  }
+  return { command, pipeline };
+}
+
+/* Flat [k, v, k, v] to an object, numbers restored where they matter. */
+const NUMERIC = ['createdAt', 'exp', 'days', 'term', 'opens', 'edits', 'badPass', 'firstOpen', 'lastOpen', 'lastEdit', 'lastBadPass', 'revokedAt', 'notifiedAt'];
+function unflatten(flat) {
+  if (!flat || !flat.length) return null;
+  const out = {};
+  for (let i = 0; i < flat.length; i += 2) out[flat[i]] = flat[i + 1];
+  NUMERIC.forEach((k) => { if (out[k] !== undefined) out[k] = Number(out[k]) || 0; });
+  ['pass', 'unlockAdd', 'revoked'].forEach((k) => { out[k] = out[k] === '1' || out[k] === 'true'; });
+  if (out.lastInputs) { try { out.lastInputs = JSON.parse(out.lastInputs); } catch { out.lastInputs = null; } }
+  return out;
+}
+
+function flatten(obj) {
+  const out = [];
+  Object.keys(obj).forEach((k) => {
+    let v = obj[k];
+    if (v === undefined || v === null) return;
+    if (typeof v === 'boolean') v = v ? '1' : '0';
+    else if (typeof v === 'object') v = JSON.stringify(v);
+    out.push(k, String(v));
+  });
+  return out;
+}
+
+function makeId() {
+  const { randomBytes } = require('node:crypto');
+  return randomBytes(8).toString('hex');
+}
+
+/* The store API. `redis` is anything with command/pipeline; tests pass a
+   memory implementation. */
+function createStore(redis, opts) {
+  const now = (opts && opts.now) || (() => Date.now());
+  const key = (id) => 'sbx:link:' + id;
+  const ttlFor = (exp) => Math.max(60, Math.round((exp + KEEP_AFTER_EXPIRY_MS - now()) / 1000));
+
+  return {
+    enabled: true,
+    makeId,
+    async create(link) {
+      const rec = Object.assign({ opens: 0, edits: 0, badPass: 0, revoked: false }, link);
+      await redis.pipeline([
+        ['HSET', key(link.id)].concat(flatten(rec)),
+        ['EXPIRE', key(link.id), ttlFor(link.exp)],
+        ['ZADD', 'sbx:links', link.createdAt, link.id],
+      ]);
+      return rec;
+    },
+    async get(id) {
+      if (!id) return null;
+      return unflatten(await redis.command(['HGETALL', key(id)]));
+    },
+    async list() {
+      const ids = await redis.command(['ZREVRANGE', 'sbx:links', 0, 199]);
+      if (!ids || !ids.length) return [];
+      const rows = await redis.pipeline(ids.map((id) => ['HGETALL', key(id)]));
+      const out = [], gone = [];
+      rows.forEach((flat, i) => { const rec = unflatten(flat); if (rec) out.push(rec); else gone.push(ids[i]); });
+      // Hashes past their keep-window have expired; drop them from the index.
+      if (gone.length) await redis.command(['ZREM', 'sbx:links'].concat(gone)).catch(() => {});
+      return out;
+    },
+    /* A customer opened the page (inputs null) or recomputed with an edit. */
+    async touch(id, event, data) {
+      const t = now(), cmds = [];
+      if (event === 'open') {
+        cmds.push(['HINCRBY', key(id), 'opens', 1], ['HSET', key(id), 'lastOpen', t], ['HSETNX', key(id), 'firstOpen', t]);
+      } else if (event === 'edit') {
+        cmds.push(['HINCRBY', key(id), 'edits', 1], ['HSET', key(id), 'lastEdit', t, 'lastInputs', JSON.stringify(data || {})]);
+      } else if (event === 'badPass') {
+        cmds.push(['HINCRBY', key(id), 'badPass', 1], ['HSET', key(id), 'lastBadPass', t]);
+      } else if (event === 'notified') {
+        cmds.push(['HSET', key(id), 'notifiedAt', t]);
+      } else return null;
+      // Only touch links that exist: HINCRBY on a missing key would recreate it.
+      const exists = await redis.command(['EXISTS', key(id)]);
+      if (!Number(exists)) return null;
+      await redis.pipeline(cmds);
+      return t;
+    },
+    async revoke(id, on) {
+      const exists = await redis.command(['EXISTS', key(id)]);
+      if (!Number(exists)) return false;
+      await redis.command(['HSET', key(id), 'revoked', on === false ? '0' : '1', 'revokedAt', on === false ? 0 : now()]);
+      return true;
+    },
+    async remove(id) {
+      await redis.pipeline([['DEL', key(id)], ['ZREM', 'sbx:links', id]]);
+      return true;
+    },
+  };
+}
+
+/* An in-memory Redis good enough for the commands above; tests and the dev
+   server use it so the dashboard can be exercised without a network. */
+function createMemoryRedis() {
+  const hashes = new Map(), zset = new Map();
+  async function command(args) {
+    const [op, k, ...rest] = args.map((a) => String(a));
+    switch (op) {
+      case 'HSET': { const h = hashes.get(k) || {}; for (let i = 0; i < rest.length; i += 2) h[rest[i]] = rest[i + 1]; hashes.set(k, h); return rest.length / 2; }
+      case 'HSETNX': { const h = hashes.get(k) || {}; if (h[rest[0]] !== undefined) return 0; h[rest[0]] = rest[1]; hashes.set(k, h); return 1; }
+      case 'HINCRBY': { const h = hashes.get(k) || {}; h[rest[0]] = String((Number(h[rest[0]]) || 0) + Number(rest[1])); hashes.set(k, h); return Number(h[rest[0]]); }
+      case 'HGETALL': { const h = hashes.get(k); return h ? Object.keys(h).flatMap((f) => [f, h[f]]) : []; }
+      case 'EXISTS': return hashes.has(k) ? 1 : 0;
+      case 'EXPIRE': return hashes.has(k) ? 1 : 0;
+      case 'DEL': hashes.delete(k); return 1;
+      case 'ZADD': zset.set(rest[1], Number(rest[0])); return 1;
+      case 'ZREM': rest.forEach((m) => zset.delete(m)); return rest.length;
+      case 'ZREVRANGE': return [...zset.entries()].sort((a, b) => b[1] - a[1]).map((e) => e[0]).slice(Number(rest[0]), Number(rest[1]) + 1);
+      default: throw new Error('Unsupported in memory redis: ' + op);
+    }
+  }
+  return { command, pipeline: (cmds) => Promise.all(cmds.map(command)), _hashes: hashes };
+}
+
+const DISABLED = {
+  enabled: false, makeId,
+  async create() { return null; }, async get() { return null; }, async list() { return []; },
+  async touch() { return null; }, async revoke() { return false; }, async remove() { return false; },
+};
+
+let memorySingleton = null;
+/* The store for this process: Redis when configured, the shared memory store
+   when SANDBOX_STORE=memory (dev server, tests), otherwise disabled. */
+function getStore() {
+  const creds = credentials();
+  if (creds) return createStore(redisClient(creds));
+  if (env('SANDBOX_STORE') === 'memory') {
+    if (!memorySingleton) memorySingleton = createStore(createMemoryRedis());
+    return memorySingleton;
+  }
+  return DISABLED;
+}
+
+module.exports = { getStore, createStore, createMemoryRedis, redisClient, credentials, makeId, KEEP_AFTER_EXPIRY_MS, _resetMemory() { memorySingleton = null; } };

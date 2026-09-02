@@ -15,6 +15,8 @@
 
 const { createScenarioToken, parseScenarioToken } = require('../lib/scenario-token');
 const E = require('../lib/revenue-engine');
+const { getStore } = require('../lib/sandbox-store');
+const notify = require('../lib/sandbox-notify');
 
 const MAX_BODY_BYTES = 64 * 1024;
 const DAY = 24 * 60 * 60;
@@ -136,6 +138,20 @@ function facts(s, meta) {
     rampOn: !!s.rampOn, rampStartPct: num(s.rampStartPct, 0, 100), rampMonths: num(s.rampMonths, 1),
     core: product('core'), mini: product('mini'),
     unlock: meta.unlock, expiresAt: meta.exp,
+  };
+}
+
+/* What the dashboard keeps of a customer's latest scenario: their facts and
+   the headline figures, small enough to sit in one hash field. */
+function scenarioSummary(f, o) {
+  const tour = (t) => ({ name: t.name, entryPrice: t.entryPrice, eventsPerMonth: t.eventsPerMonth, basis: t.basis, participants: t.participants, participantPct: t.participantPct, prizeCost: t.prizeCost, scope: t.scope });
+  const h2h = (h) => (h ? { engagement: h.engagement, playsPerUser: h.playsPerUser, spendPerPlay: h.spendPerPlay, reach: h.reach } : null);
+  return {
+    mau: f.mau, miniMau: f.miniMau, locations: f.locations, schedule: f.schedule, scheduleStated: f.scheduleStated, rampOn: f.rampOn,
+    core: f.core.on ? { tournaments: f.core.tournaments.map(tour), h2h: h2h(f.core.h2h) } : null,
+    mini: f.mini.on ? { tournaments: f.mini.tournaments.map(tour), h2h: h2h(f.mini.h2h) } : null,
+    revenueYear: o.errors && o.errors.length ? null : o.revenueYear, operatorYear: o.errors && o.errors.length ? null : o.operatorYear,
+    payoffMonth: o.errors && o.errors.length ? null : o.payoffMonth,
   };
 }
 
@@ -306,6 +322,39 @@ if(!needsPass){ load(); } else { $('pass').focus(); }
 </script></body></html>`;
 }
 
+async function isRevoked(id) {
+  if (!id) return false;
+  const store = getStore();
+  if (!store.enabled) return false;
+  try { const link = await store.get(id); return !!(link && link.revoked); }
+  catch (error) { console.error('sandbox store', error && error.message); return false; }
+}
+
+/* Record what a customer did. Awaited before the response goes out (a
+   serverless function may be frozen the moment it answers), but capped so a
+   slow store can only delay a page, never break it. A first open also sends
+   the seller an email, once. */
+const LOG_BUDGET_MS = 2500;
+function logActivity(id, event, data, req) {
+  if (!id) return Promise.resolve();
+  const store = getStore();
+  if (!store.enabled) return Promise.resolve();
+  const work = (async () => {
+    const link = await store.get(id);
+    if (!link) return;
+    await store.touch(id, event, data);
+    if (event === 'open' && !link.firstOpen && !link.notifiedAt && notify.configured()) {
+      const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
+      const proto = (req.headers && req.headers['x-forwarded-proto']) || 'https';
+      const result = await notify.sendFirstOpen(link, { dashboardUrl: host ? `${proto}://${host}/links` : '' });
+      if (result.sent) await store.touch(id, 'notified');
+      else console.error('sandbox notify', result.reason);
+    }
+  })().catch((error) => console.error('sandbox store', error && error.message));
+  const budget = new Promise((resolve) => { const t = setTimeout(resolve, LOG_BUDGET_MS); if (t.unref) t.unref(); });
+  return Promise.race([work, budget]);
+}
+
 function verify(token, pass) {
   const parsed = parseScenarioToken(token, process.env.SCENARIO_SECRET);
   const data = parsed.data || {};
@@ -325,7 +374,11 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     let needsPass = false;
-    try { const parsed = parseScenarioToken(req.query && req.query.deal, process.env.SCENARIO_SECRET); needsPass = !!(parsed.data && parsed.data.pass); }
+    try {
+      const parsed = parseScenarioToken(req.query && req.query.deal, process.env.SCENARIO_SECRET);
+      needsPass = !!(parsed.data && parsed.data.pass);
+      if (await isRevoked(parsed.data && parsed.data.id)) throw new Error('The link was closed by the person who sent it');
+    }
     catch (error) { return res.status(400).end(`<!doctype html><title>Link unavailable</title><style>body{font:15px system-ui;background:#071a33;color:#eff6fb;padding:40px}</style><h1>This link is no longer open</h1><p>${esc(error && error.message || 'Link unavailable')}. Ask the person who sent it for a new one.</p>`); }
     return res.status(200).end(page().replace('__NEEDS_PASS__', needsPass ? 'true' : 'false'));
   }
@@ -347,27 +400,45 @@ module.exports = async function handler(req, res) {
       const sealed = sealDeal(deal.tp, deal.mg);
       const errors = E.TPvalidate(sealed);
       if (errors.length) return res.status(400).json({ error: 'Fix the deal first: ' + errors[0] });
-      const payload = { kind: 'revenue-sandbox', tp: sealed, pass: pass || '', unlock, savedAt: new Date().toISOString() };
+      const store = getStore(), id = store.makeId(), createdAt = Date.now(), exp = createdAt + days * DAY * 1000;
+      const payload = { kind: 'revenue-sandbox', id, tp: sealed, pass: pass || '', unlock, savedAt: new Date(createdAt).toISOString() };
       const token = createScenarioToken(payload, process.env.SCENARIO_SECRET, { ttlSeconds: days * DAY });
       const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
       const proto = (req.headers && req.headers['x-forwarded-proto']) || (/^(127\.0\.0\.1|localhost)(:|$)/.test(host) ? 'http' : 'https');
-      return res.status(200).json({ ok: true, url: `${proto}://${host}/play?deal=${encodeURIComponent(token)}`, expiresInDays: days, passcode: !!pass });
+      // The registry is what the dashboard reads. Its failure never blocks a link.
+      let tracked = false;
+      if (store.enabled) {
+        try {
+          await store.create({ id, dealName: String(sealed.dealName || '').slice(0, 120), presenter: String(sealed.presenter || '').slice(0, 120),
+            presenterEmail: String(sealed.presenterEmail || '').slice(0, 200), createdAt, exp, days, pass: !!pass, unlockAdd: !!unlock.addTournaments,
+            customerType: sealed.customerType, term: E.TPterm(sealed) });
+          tracked = true;
+        } catch (error) { console.error('sandbox store', error && error.message); }
+      }
+      return res.status(200).json({ ok: true, id, url: `${proto}://${host}/play?deal=${encodeURIComponent(token)}`, expiresInDays: days, passcode: !!pass, tracked, dashboard: `${proto}://${host}/links` });
     } catch (error) {
       return res.status(400).json({ error: String(error && error.message || error) });
     }
   }
 
   if (body.action === 'compute') {
+    let linkId = null;
     try {
+      // The passcode check happens inside verify; a wrong one is still logged.
+      try { const peek = parseScenarioToken(body.deal, process.env.SCENARIO_SECRET); linkId = (peek.data && peek.data.id) || null; } catch { linkId = null; }
+      if (await isRevoked(linkId)) return res.status(410).json({ error: 'The link was closed by the person who sent it' });
       const v = verify(body.deal, body.pass);
       const meta = { unlock: v.data.unlock || { addTournaments: true }, exp: v.exp };
       const s = applyInputs(v.data.tp, body.inputs, meta.unlock);
-      return res.status(200).json({ ok: true, facts: facts(s, meta), outputs: outputs(s) });
+      const f = facts(s, meta), o = outputs(s);
+      await logActivity(linkId, body.inputs ? 'edit' : 'open', body.inputs ? scenarioSummary(f, o) : null, req);
+      return res.status(200).json({ ok: true, facts: f, outputs: o });
     } catch (error) {
+      if (/passcode/i.test(String(error && error.message))) await logActivity(linkId, 'badPass', null, req);
       return res.status(400).json({ error: String(error && error.message || error) });
     }
   }
   return res.status(400).json({ error: 'Unknown action' });
 };
 
-module.exports._internals = { applyInputs, facts, outputs, sealDeal };
+module.exports._internals = { applyInputs, facts, outputs, sealDeal, scenarioSummary };

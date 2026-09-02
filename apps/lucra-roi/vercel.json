@@ -28,6 +28,8 @@
     { "src": "/api/deal", "dest": "/api/deal.js" },
     { "src": "/play", "dest": "/api/play.js" },
     { "src": "/api/play", "dest": "/api/play.js" },
+    { "src": "/links", "dest": "/api/links.js" },
+    { "src": "/api/links", "dest": "/api/links.js" },
     { "src": "/api/generate", "dest": "/api/generate.js" },
     { "src": "/api/logo", "dest": "/api/logo.js" },
     { "src": "/(.*)", "dest": "/api/index.js" }

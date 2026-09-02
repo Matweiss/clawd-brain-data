@@ -1585,5 +1585,42 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await cp.locator('#inputs button', { hasText: 'Add a tournament' }).first().click();
   await expect(cp.locator('#inputs .tour')).toHaveCount(2);
   await expect(cp.locator('#res-err')).toBeHidden();
+
+  // The seller's dashboard saw all of it: the wrong passcode, the open, the edits.
+  await expect(page.locator('#tp-sandbox-note')).toContainText('recorded on the links dashboard');
+  await expect(page.locator('#tp-sandbox-manage')).toHaveAttribute('href', '/links');
+  const dp = await page.context().newPage();
+  await dp.goto('/links');
+  await expect(dp.locator('#gate')).toBeVisible();
+  await dp.locator('#key').fill('wrong');
+  await dp.locator('#enter').click();
+  await expect(dp.locator('#gate-err')).toContainText('not right');
+  await dp.locator('#key').fill('playwright-dashboard-key');
+  await dp.locator('#enter').click();
+  await expect(dp.locator('#main')).toBeVisible();
+  const row = dp.locator('#main tbody tr').filter({ hasText: 'Fairway Social' }).first();
+  await expect(row).toBeVisible();
+  await expect(row.locator('.pill')).toHaveText('open');
+  await expect(row).toContainText('1 wrong attempt');
+  await expect(row.locator('td').nth(5)).toContainText('1');
+  await expect(row.locator('td').nth(5)).toContainText('first');
+  const edits = Number((await row.locator('td').nth(6).innerText()).split('\n')[0]);
+  expect(edits).toBeGreaterThanOrEqual(2);
+  await row.locator('summary').click();
+  await expect(row.locator('.scenario')).toContainText('Users per location: 16,000');
+  await expect(row.locator('.scenario')).toContainText('(months given)');
+  const dashText = await dp.locator('#main').innerText();
+  expect(dashText).not.toMatch(/55|\$60,000|credit/);
+  // Close it: the customer's next recompute is refused and the page will not open again.
+  dp.once('dialog', (d) => d.accept());
+  await row.locator('button[data-act="revoke"]').click();
+  await expect(dp.locator('#main tbody tr').filter({ hasText: 'Fairway Social' }).first().locator('.pill')).toHaveText('closed');
+  await cp.locator('#inputs input[type="number"]').first().fill('17000');
+  await expect(cp.locator('#res-err')).toContainText('closed by the person who sent it');
+  const cp2 = await customer.newPage();
+  const closedResponse = await cp2.goto(url);
+  expect(closedResponse.status()).toBe(400);
+  await expect(cp2.locator('h1')).toHaveText('This link is no longer open');
   await customer.close();
+  await dp.close();
 });

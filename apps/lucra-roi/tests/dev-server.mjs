@@ -8,7 +8,11 @@ import { createRequire } from 'node:module';
 // through the same handler production uses, with a test secret.
 const require = createRequire(import.meta.url);
 process.env.SCENARIO_SECRET = process.env.SCENARIO_SECRET || 'playwright-secret-that-is-long-enough-for-aes-256';
+// The link registry runs in memory here so the dashboard can be exercised.
+process.env.SANDBOX_STORE = process.env.SANDBOX_STORE || 'memory';
+process.env.SANDBOX_ADMIN_KEY = process.env.SANDBOX_ADMIN_KEY || 'playwright-dashboard-key';
 const playHandler = require('../api/play.js');
+const linksHandler = require('../api/links.js');
 
 function shim(req, res, body, query) {
   const out = {
@@ -32,7 +36,8 @@ const contentTypes = {
 
 http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`), urlPath = url.pathname;
-  if (urlPath === '/play' || urlPath === '/api/play') {
+  if (urlPath === '/play' || urlPath === '/api/play' || urlPath === '/links' || urlPath === '/api/links') {
+    const handler = urlPath.endsWith('links') ? linksHandler : playHandler;
     let raw = '';
     req.on('data', (c) => { raw += c; });
     req.on('end', () => {
@@ -40,7 +45,7 @@ http.createServer((req, res) => {
       try { body = raw ? JSON.parse(raw) : {}; } catch { body = {}; }
       const query = Object.fromEntries(url.searchParams.entries());
       const s = shim(req, res, body, query);
-      Promise.resolve(playHandler(s.req, s.res)).catch((e) => { res.statusCode = 500; res.end(String(e)); });
+      Promise.resolve(handler(s.req, s.res)).catch((e) => { res.statusCode = 500; res.end(String(e)); });
     });
     return;
   }
