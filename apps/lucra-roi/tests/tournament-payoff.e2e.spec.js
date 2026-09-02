@@ -276,7 +276,9 @@ test('a multi-year term adds a per-year table and a year column', async ({ page 
   await page.locator('#tp-term').selectOption('2');
   await expect(page.locator('#tp-fees .input-group')).toHaveCount(2);
   await expect(page.locator('#tp-years')).toBeVisible();
-  await expect(page.locator('#tp-table tbody tr')).toHaveCount(24);
+  await expect(page.locator('#tp-table tbody tr:not(.tp-subtotal):not(.tp-total)')).toHaveCount(24);
+  await expect(page.locator('#tp-table tbody tr.tp-subtotal')).toHaveCount(2);
+  await expect(page.locator('#tp-table tbody tr.tp-total')).toHaveCount(1);
   await expect(page.locator('#tp-basis-row')).toBeVisible();
 });
 
@@ -319,6 +321,115 @@ test('the results say the licence is retired from the licence share alone, never
   // A free licence has nothing to retire, so the box goes too.
   await page.locator('#tp-free').check();
   await expect(box).toBeHidden();
+});
+
+test('the tables total each year and the term, and say what the operator makes year by year', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [78000, 102000, 126000], payoffBasis: 'annual', shortfall: 'cash', mau: 8000 });
+  await page.evaluate(() => {
+    TP.splitMode = 'custom'; TP.custom = { credit: 50, operator: 45, lucra: 5 }; TP.post = { operator: 90, lucra: 10 };
+    TP.core.tournaments[0].participants = 500; TP.core.tournaments[0].customerCashCost = 250;
+    TPsave(); TPrenderControls(); TPrender();
+  });
+  const r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  const totals = await page.evaluate(() => TPyearTotals(TPcalculate(TP, TPCconfig())));
+  // Monthly table: 36 month rows, a subtotal after each year's month 12, a term total at the bottom.
+  const rows = page.locator('#tp-table tbody tr');
+  await expect(rows).toHaveCount(36 + 3 + 1);
+  await expect(page.locator('#tp-table tbody tr.tp-subtotal')).toHaveCount(3);
+  await expect(page.locator('#tp-table tbody tr.tp-total')).toHaveCount(1);
+  await expect(rows.nth(12)).toHaveClass(/tp-subtotal/);
+  await expect(rows.nth(12)).toContainText('Year 1');
+  await expect(rows.nth(25)).toContainText('Year 2');
+  await expect(rows.nth(38)).toContainText('Year 3');
+  await expect(rows.nth(39)).toHaveClass(/tp-total/);
+  await expect(rows.nth(39)).toContainText('Term');
+  const money = (v) => (v < 0 ? '-$' : '$') + Math.abs(Math.round(v)).toLocaleString('en-US');
+  await expect(rows.nth(12)).toContainText(money(totals[0].toOperator));
+  await expect(rows.nth(39)).toContainText(money(r.totalOperator));
+  await expect(rows.nth(39)).toContainText(money(r.totalSplitBase));
+  // The operator's share is its own column, gross and then after prizes, with a running total.
+  const head = page.locator('#tp-table thead');
+  await expect(head).toContainText('Operator share (45% then 90%)');
+  await expect(head).toContainText('To operator, after prizes');
+  await expect(head).toContainText('Operator, cumulative');
+  // Month 13's running total is year 1 plus month 13.
+  const cells13 = rows.nth(13).locator('td');
+  const headers = await head.locator('th').allInnerTexts();
+  const cumIdx = headers.findIndex((h) => /operator, cumulative/i.test(h));
+  expect(cumIdx).toBeGreaterThan(0);
+  await expect(cells13.nth(cumIdx)).toHaveText(money(totals[0].toOperator + r.months[12].toOperator));
+  // The operator table: each year, the running total, and the term.
+  const op = page.locator('#tp-operator');
+  await expect(op).toBeVisible();
+  await expect(op).toContainText('What the operator makes');
+  const opRows = op.locator('tbody tr');
+  await expect(opRows).toHaveCount(4);
+  for (let y = 0; y < 3; y++) {
+    await expect(opRows.nth(y)).toContainText(money(totals[y].toOperator));
+    await expect(opRows.nth(y)).toContainText(money(totals[y].cumulative.toOperator));
+  }
+  await expect(opRows.nth(3)).toContainText('Term total');
+  await expect(opRows.nth(3)).toContainText(money(r.totalOperator));
+  // Year 3's fee outruns the activity share on this deal, so that year alone carries a cash true-up.
+  expect(totals[0].trueUp).toBe(0);
+  expect(totals[2].trueUp).toBeGreaterThan(0);
+  await expect(op.locator('thead')).toContainText('Cash true-up');
+  const opHeaders = await op.locator('thead th').allInnerTexts();
+  const tuIdx = opHeaders.findIndex((h) => /cash true-up/i.test(h));
+  await expect(opRows.nth(0).locator('td').nth(tuIdx)).toHaveText('—');
+  await expect(opRows.nth(2).locator('td').nth(tuIdx)).toHaveText(money(totals[2].trueUp));
+  await expect(opRows.nth(2).locator('td').nth(tuIdx + 1)).toHaveText(money(totals[2].cumulative.operatorAfterTrueUp));
+  // Drop the volume until every year needs a cash true-up: it is read against what the operator has made.
+  await page.evaluate(() => { TP.core.tournaments[0].participants = 50; TP.core.tournaments[0].customerCashCost = 50; TPsave(); TPrender(); });
+  const short = await page.evaluate(() => { const rr = TPcalculate(TP, TPCconfig()); return { r: rr, t: TPyearTotals(rr) }; });
+  expect(short.r.trueUpTotal).toBeGreaterThan(0);
+  await expect(op.locator('thead')).toContainText('Cash true-up');
+  await expect(op.locator('thead')).toContainText('Cumulative, after true-ups');
+  await expect(op.locator('tbody tr').nth(2)).toContainText(money(short.t[2].cumulative.operatorAfterTrueUp));
+  await expect(op.locator('tbody tr').nth(3)).toContainText(money(short.r.totalOperator - short.r.trueUpTotal));
+  // A loss prints as a loss: nothing clamps money at zero.
+  await page.evaluate(() => { TP.core.tournaments[0].customerCashCost = 5000; TPsave(); TPrender(); });
+  const loss = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
+  expect(loss.months[0].toOperator).toBeLessThan(0);
+  await expect(page.locator('#tp-table tbody tr').first().locator('td.tp-neg').first()).toHaveText(money(loss.months[0].toOperator));
+  await expect(op.locator('tbody tr').nth(3)).toContainText(money(loss.totalOperator));
+  expect(await page.evaluate(() => TPmoney(-1234.4))).toBe('-$1,234');
+  await page.evaluate(() => { TP.core.tournaments[0].customerCashCost = 50; TPsave(); TPrender(); });
+  // The brief carries the running total and the term line.
+  const brief = await page.evaluate(() => TPbrief());
+  expect(brief).toMatch(/Year 1: .* · operator cumulative [\d.]+ \(\$[\d,]+\)/);
+  expect(brief).toMatch(/Term: revenue generated [\d.]+ \(\$[\d,]+\) · operator earns [\d.]+ \(\$[\d,]+\) after prize funding of [\d.]+ \(\$[\d,]+\) · less cash true-ups of [\d.]+ \(\$[\d,]+\) leaves -?[\d.]+ \(-?\$[\d,]+\)/);
+  // Customer view hides the operator table with the rest of the licence detail.
+  await page.evaluate(() => { TP.customerMode = true; TPsave(); TPrender(); });
+  await expect(op).toBeHidden();
+  await expect(page.locator('#tp-table tbody tr.tp-total')).toHaveCount(0);
+});
+
+test('the combined model reads the partner and the base from the deal card instead of keeping its own', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 3, fees: [78000, 102000, 126000], mau: 6000 });
+  await expect(page.locator('#tpc-mau')).toHaveCount(0);
+  await expect(page.locator('#tpc-name')).toHaveCount(0);
+  const strip = page.locator('#tpc-from-deal');
+  await expect(strip).toContainText('Fairway Social');
+  await expect(strip).toContainText('6,000');
+  await expect(strip).toContainText('3 years');
+  await page.locator('#tp-deal-name').fill('Loco Bear');
+  await page.locator('#tp-partner-site').fill('locobear.com');
+  await expect(strip).toContainText('Loco Bear');
+  await expect(strip).toContainText('locobear.com');
+  await page.locator('#tp-mau').fill('8000');
+  await expect(strip).toContainText('8,000');
+  await expect(strip).toContainText('Users per location');
+  await page.evaluate(() => { TP.openings = [{ month: 1, add: 1 }, { month: 14, add: 1 }, { month: 22, add: 2 }]; TPsave(); TPrenderControls(); TPrender(); });
+  await expect(strip).toContainText('1 → 4 → 4');
+  // The combined one-pager still labels itself from the deal name.
+  await stubPrint(page);
+  await page.evaluate(() => TPCprint());
+  const html = await page.evaluate(() => window.__printHTML);
+  expect(html).toContain('Loco Bear');
+  expect(html).toContain('8,000');
 });
 
 test('the break-even map renders a grid and hides on a free licence', async ({ page }) => {

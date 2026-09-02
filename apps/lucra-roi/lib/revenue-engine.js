@@ -789,6 +789,39 @@ function TPcalculate(input, cfg, factor) {
   };
 }
 
+/* The term summed by contract year, with running totals, so a table can print
+   what the operator makes in a year, what they have made so far, and what is
+   left of that after any cash true-up or balance due. Every figure is a sum of
+   the monthly rows TPcalculate already produced. */
+function TPyearTotals(r) {
+  if (!r || r.errors.length) return [];
+  var keys = ['participants', 'handle', 'prizeCost', 'h2hFee', 'h2hVolume', 'splitBase', 'sponsorCredit', 'upfrontCredit',
+      'licenseFromShare', 'licenseFromOperator', 'toLicense', 'operatorGross', 'toOperator', 'toLucra'],
+    out = [], cum = { operatorGross: 0, toOperator: 0, toLucra: 0, toLicense: 0, splitBase: 0, prizeCost: 0, trueUp: 0 };
+  for (var y = 1; y <= r.termYears; y++) {
+    var ms = r.months.filter(function (m) { return m.year === y; }), yr = r.years[y - 1] || {}, row = { year: y, months: ms.length };
+    keys.forEach(function (k) { row[k] = ms.reduce(function (a, m) { return a + (m[k] || 0); }, 0); });
+    row.participantsAvg = ms.length ? row.participants / ms.length : 0;
+    row.cumulativeLicense = ms.length ? ms[ms.length - 1].cumulativeLicense : 0;
+    row.locationsOpen = ms.length ? ms[ms.length - 1].locationsOpen : 1;
+    row.fee = yr.fee || 0; row.trueUp = yr.trueUp || 0; row.closing = yr.closing || 0; row.clearMonth = yr.clearMonth === undefined ? null : yr.clearMonth;
+    // The balance still owed at the end of the last year, when it is not trued up.
+    row.balanceDue = y === r.termYears ? r.balanceDue : 0;
+    cum.operatorGross += row.operatorGross; cum.toOperator += row.toOperator; cum.toLucra += row.toLucra;
+    cum.toLicense += row.toLicense; cum.splitBase += row.splitBase; cum.prizeCost += row.prizeCost; cum.trueUp += row.trueUp;
+    row.cumulative = {
+      operatorGross: cum.operatorGross, toOperator: cum.toOperator, toLucra: cum.toLucra, toLicense: cum.toLicense,
+      splitBase: cum.splitBase, prizeCost: cum.prizeCost, trueUp: cum.trueUp,
+      // What the operator has made so far once every cash true-up to date, and
+      // any balance due at term end, is taken out of it.
+      operatorAfterTrueUp: cum.toOperator - cum.trueUp - row.balanceDue
+    };
+    row.operatorAfterTrueUp = row.toOperator - row.trueUp - row.balanceDue;
+    out.push(row);
+  }
+  return out;
+}
+
 function TPCcase(cfg, factor) {
   var f = factor === undefined ? 1 : TPnum(factor, 0),
     s = TPstate(cfg.tournament),
@@ -939,7 +972,8 @@ function TPcustomerProjection(input) {
 /* ---- pitches ----
    Plain-language summaries of each product on its own. Written to the
    lucra-model-onepager vocabulary rules, so no blocked betting jargon. */
-function TPmoney0(n) { return '$' + Math.round(TPnum(n, 0)).toLocaleString(); }
+/* Money never clamps: a loss prints as a loss. */
+function TPmoney0(n) { var v = Math.round(TPnum(n)); return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString(); }
 
 function TPpitchH2H(input, cfg) {
   var s = TPstate(input), h = TPh2h(s, cfg, 1);
@@ -1372,4 +1406,4 @@ function TPrecLevers(input, mau, step, opts) {
 }
 
 /* TP-PURE-END */
-module.exports = { TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPupfront, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments, TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear, TP_PRODUCTS, TP_PRODUCT_DEFAULTS, TP_H2H_DEFAULTS, TP_DEFAULT_TOURNAMENTS, TP_DEFAULT_MINI_TOURNAMENTS, TPproduct, TPproductOn, TPtournamentsOn, TPh2hOn, TPanyTournaments, TPanyH2H, TPtournamentsOf, TPallTournaments, TPcustomerDefaults, TPsingleLocation, TPyearCounts, TPscheduleFromYears, TPschedule, TPscheduleStated, TPlocationsOpen, TPminiEntered, TPproductBase, TPproductFactor, TPavgProductFactor, TPminiBase, TPprizeMultiplier, TPh2hInputs, TPprimaryTournament, TPrecCoreStep, TPrecProduct };
+module.exports = { TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPupfront, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments, TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear, TP_PRODUCTS, TP_PRODUCT_DEFAULTS, TP_H2H_DEFAULTS, TP_DEFAULT_TOURNAMENTS, TP_DEFAULT_MINI_TOURNAMENTS, TPproduct, TPproductOn, TPtournamentsOn, TPh2hOn, TPanyTournaments, TPanyH2H, TPtournamentsOf, TPallTournaments, TPcustomerDefaults, TPsingleLocation, TPyearCounts, TPscheduleFromYears, TPschedule, TPscheduleStated, TPlocationsOpen, TPminiEntered, TPproductBase, TPproductFactor, TPavgProductFactor, TPminiBase, TPprizeMultiplier, TPh2hInputs, TPprimaryTournament, TPrecCoreStep, TPrecProduct, TPyearTotals };

@@ -3,7 +3,7 @@ import calc from './calc-functions.js';
 
 const {
   TPcalculate, TPvalidate, TPcustomerProjection, TPstate, TPsplitRates,
-  TPrampFactor, TPavgRamp, TPreach, TPtypeParticipants, TPentriesPerEvent, TP_DEFAULTS,
+  TPrampFactor, TPavgRamp, TPreach, TPtypeParticipants, TPentriesPerEvent, TP_DEFAULTS, TPyearTotals,
 } = calc;
 
 // One tournament: 100 participants, no rebuys, $10 entry, 4 events, $200 cash
@@ -215,6 +215,53 @@ describe('The licence is retired from the licence share alone', () => {
     expect(f.fromOperator).toBe(0);
     expect(r.years[0].credited).toBeCloseTo(r.years[0].activity + 25000, 6);
     expect(f.fromShare + f.fromSponsors + f.fromUpfront).toBeCloseTo(r.cumulativeLicense, 6);
+  });
+
+  it('sums the term by year with running totals for what the operator makes', () => {
+    const r = TPcalculate(bear());
+    const t = TPyearTotals(r);
+    expect(t).toHaveLength(3);
+    let cum = 0;
+    t.forEach((y, i) => {
+      const ms = r.months.filter((m) => m.year === y.year);
+      expect(ms).toHaveLength(12);
+      expect(y.splitBase).toBeCloseTo(ms.reduce((a, m) => a + m.splitBase, 0), 6);
+      expect(y.operatorGross).toBeCloseTo(ms.reduce((a, m) => a + m.operatorGross, 0), 6);
+      expect(y.toOperator).toBeCloseTo(y.operatorGross - y.prizeCost, 6);
+      cum += y.toOperator;
+      expect(y.cumulative.toOperator).toBeCloseTo(cum, 6);
+      expect(y.licenseFromOperator).toBe(0);
+      expect(y.cumulativeLicense).toBe(ms[11].cumulativeLicense);
+      expect(y.fee).toBe([78000, 102000, 126000][i]);
+    });
+    expect(t[2].cumulative.toOperator).toBeCloseTo(r.totalOperator, 6);
+    expect(t[2].cumulative.splitBase).toBeCloseTo(r.totalSplitBase, 6);
+    expect(t[2].cumulative.prizeCost).toBeCloseTo(r.totalPrizeCost, 6);
+    expect(TPyearTotals({ errors: ['x'] })).toEqual([]);
+  });
+
+  it('reads a true-up or balance due against what the operator has made so far', () => {
+    const small = { id: 't', name: 'Weekly', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 50, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 100, customerCashCost: 50 };
+    // Annual basis, cash shortfall: every year is trued up in cash.
+    const cash = TPyearTotals(TPcalculate(bear({ tournaments: [small] })));
+    cash.forEach((y) => {
+      expect(y.trueUp).toBeGreaterThan(0);
+      expect(y.balanceDue).toBe(0);
+      expect(y.operatorAfterTrueUp).toBeCloseTo(y.toOperator - y.trueUp, 6);
+    });
+    expect(cash[2].cumulative.trueUp).toBeCloseTo(cash[0].trueUp + cash[1].trueUp + cash[2].trueUp, 6);
+    expect(cash[2].cumulative.operatorAfterTrueUp).toBeCloseTo(cash[2].cumulative.toOperator - cash[2].cumulative.trueUp, 6);
+    // Whole-term basis with no true-up: the shortfall is a balance due in the last year only.
+    const r = TPcalculate(bear({ tournaments: [small], payoffBasis: 'term', shortfall: 'roll' }));
+    const due = TPyearTotals(r);
+    expect(r.balanceDue).toBeGreaterThan(0);
+    expect(due[0].balanceDue).toBe(0);
+    expect(due[2].balanceDue).toBe(r.balanceDue);
+    expect(due[2].cumulative.operatorAfterTrueUp).toBeCloseTo(r.totalOperator - r.balanceDue, 6);
+    // Negative economics stay negative: nothing clamps the cumulative.
+    const dear = TPyearTotals(TPcalculate(bear({ tournaments: [Object.assign({}, small, { customerCashCost: 5000 })] })));
+    expect(dear[0].toOperator).toBeLessThan(0);
+    expect(dear[2].cumulative.operatorAfterTrueUp).toBeLessThan(dear[2].cumulative.toOperator);
   });
 
   it('a cash true-up is settled separately, never taken from the operator share', () => {

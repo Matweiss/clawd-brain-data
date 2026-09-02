@@ -145,12 +145,11 @@ function outputs(s) {
   const cfg = miniCfg(s), r = E.TPcalculate(s, cfg), term = E.TPterm(s);
   if (r.errors.length) return { errors: r.errors };
   const cases = E.TPCcases(cfg).map((c) => ({ key: c.key, label: c.label, note: c.note, revenueYear: c.result.annualRevenueGenerated, operatorYear: c.result.operatorNet * 12, payoffMonth: c.result.tournamentResult.payoffMonth }));
-  const years = [];
-  for (let y = 1; y <= term; y++) {
-    const ms = r.months.filter((m) => m.year === y), sum = (k) => ms.reduce((a, m) => a + (m[k] || 0), 0), yr = (r.years || [])[y - 1] || {};
-    years.push({ year: y, revenue: sum('splitBase'), entries: sum('handle'), fee: sum('h2hFee'), prize: sum('prizeCost'), operator: sum('toOperator'),
-      licenceFee: r.free ? 0 : (yr.fee || 0), retired: r.free ? 0 : (yr.credited || 0), locations: ms.length ? ms[ms.length - 1].locationsOpen : 1 });
-  }
+  const years = E.TPyearTotals(r).map((y) => ({
+    year: y.year, revenue: y.splitBase, entries: y.handle, fee: y.h2hFee, prize: y.prizeCost, operator: y.toOperator,
+    operatorCumulative: y.cumulative.toOperator, settle: y.trueUp + y.balanceDue, operatorAfterSettle: y.cumulative.operatorAfterTrueUp,
+    licenceFee: r.free ? 0 : y.fee, retired: r.free ? 0 : ((r.years || [])[y.year - 1] || {}).credited || 0, locations: y.locationsOpen,
+  }));
   return {
     errors: [], term, free: r.free, payoffMonth: r.payoffMonth, balanceDue: r.balanceDue, licenceTotal: r.totalContract,
     // Where the retired licence came from. Your share never funds it, so licenceFromYou is zero by construction.
@@ -160,6 +159,7 @@ function outputs(s) {
     prizeYear: r.totalPrizeCost / term, operatorYear: r.totalOperator / term, rewardValueYear: r.totalRewardValue / term,
     byProduct: { core: { revenueYear: r.byProduct.core.splitBase / term, on: r.byProduct.core.on }, mini: { revenueYear: r.byProduct.mini.splitBase / term, on: r.byProduct.mini.on } },
     months: r.months.map((m) => ({ month: m.month, revenue: m.splitBase, operator: m.toOperator, locationsOpen: m.locationsOpen })),
+    operatorTotal: r.totalOperator, settleTotal: r.trueUpTotal + r.balanceDue,
     cases, years,
   };
 }
@@ -177,7 +177,7 @@ function page() {
 input,select{width:100%;background:#061527;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:14px var(--mono)}input:focus{outline:2px solid var(--green);outline-offset:1px}
 .tour{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--panel2)}.tour .head{display:flex;justify-content:space-between;gap:10px;align-items:center}.tour .head input{font:600 14px Inter,system-ui,sans-serif;max-width:60%}
 button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 12px;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}button.primary{background:var(--green);color:#0b1a06;border-color:var(--green)}button.ghost{color:var(--muted)}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 8px;border-top:1px solid var(--line);text-align:right;font-family:var(--mono)}th:first-child,td:first-child{text-align:left;font-family:Inter,system-ui,sans-serif}thead th{color:var(--muted);font:600 11px Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em;border-top:0}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 8px;border-top:1px solid var(--line);text-align:right;font-family:var(--mono)}th:first-child,td:first-child{text-align:left;font-family:Inter,system-ui,sans-serif}thead th{color:var(--muted);font:600 11px Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em;border-top:0}tr.total td{font-weight:700;border-top:2px solid var(--green);background:rgba(138,233,26,.06)}
 .cases{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.case{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2)}.case.mid{border-color:var(--green)}.case span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.case strong{display:block;font:750 18px var(--mono);margin-top:4px}.case small{color:var(--muted);font-size:11px}
 .err{border:1px solid var(--red);color:var(--red);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px}.note{color:var(--muted);font-size:12px;margin-top:8px}.keep{border:1px solid rgba(138,233,26,.4);background:rgba(138,233,26,.08);border-radius:12px;padding:12px 14px;margin:14px 0 6px;display:flex;flex-direction:column;gap:4px}.keep strong{color:var(--green);font-size:15px}.keep span{color:var(--muted);font-size:13px}
 .gate{max-width:420px;margin:60px auto;text-align:center}.gate input{text-align:center;font-size:18px;letter-spacing:.2em}
@@ -188,7 +188,7 @@ footer{margin-top:26px;color:var(--muted);font-size:12px;border-top:1px solid va
 <script>
 var TOKEN = new URLSearchParams(location.search).get('deal') || '', PASS = '', FACTS = null, OUT = null, INPUTS = null, timer = null, needsPass = __NEEDS_PASS__;
 function $(id){return document.getElementById(id)}
-function money(n){return '$'+Math.round(Number(n)||0).toLocaleString()}
+function money(n){var v=Math.round(Number(n)||0);return (v<0?'-$':'$')+Math.abs(v).toLocaleString()}
 function num(n){return Math.round(Number(n)||0).toLocaleString()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function openIt(ev){ if(ev)ev.preventDefault(); PASS=$('pass')?$('pass').value:''; load(); return false; }
@@ -293,7 +293,12 @@ function renderResults(){
   h+='<div class="cases">'+o.cases.map(function(c){return '<div class="case'+(c.key==='expected'?' mid':'')+'"><span>'+esc(c.label)+'</span><strong>'+money(c.revenueYear)+'</strong><small>'+esc(c.note)+' · you earn '+money(c.operatorYear)+'</small></div>'}).join('')+'</div>';
   var max=Math.max.apply(null,o.months.map(function(m){return Math.abs(m.revenue)}).concat([1]));
   h+='<div class="hint">Revenue generated by month</div><div class="bars">'+o.months.map(function(m){return '<i style="height:'+Math.max(2,Math.round(m.revenue/max*88))+'px" title="Month '+m.month+': '+money(m.revenue)+(m.locationsOpen>1?' · '+m.locationsOpen+' locations':'')+'"></i>'}).join('')+'</div><div class="axis"><span>Month 1</span><span>Month '+o.months.length+'</span></div>';
-  h+='<table><thead><tr><th>Year</th>'+(f.single?'':'<th>Locations</th>')+'<th>Revenue generated</th><th>You earn</th>'+(o.free?'':'<th>Licence retired</th>')+'</tr></thead><tbody>'+o.years.map(function(y){return '<tr><td>Year '+y.year+'</td>'+(f.single?'':'<td>'+y.locations+'</td>')+'<td>'+money(y.revenue)+'</td><td'+(y.operator<0?' style="color:var(--red)"':'')+'>'+money(y.operator)+'</td>'+(o.free?'':'<td>'+money(y.retired)+'</td>')+'</tr>'}).join('')+'</tbody></table>';
+  var settle=o.settleTotal>0, multi=o.years.length>1;
+  h+='<table><thead><tr><th>Year</th>'+(f.single?'':'<th>Locations</th>')+'<th>Revenue generated</th><th>You earn</th>'+(multi?'<th>You earn, cumulative</th>':'')+(o.free?'':'<th>Licence retired</th>')+(settle?'<th>Settled at year end</th><th>Cumulative, after settling</th>':'')+'</tr></thead><tbody>'+
+    o.years.map(function(y){return '<tr><td>Year '+y.year+'</td>'+(f.single?'':'<td>'+y.locations+'</td>')+'<td>'+money(y.revenue)+'</td><td'+(y.operator<0?' style="color:var(--red)"':'')+'>'+money(y.operator)+'</td>'+(multi?'<td>'+money(y.operatorCumulative)+'</td>':'')+(o.free?'':'<td>'+money(y.retired)+'</td>')+(settle?'<td>'+(y.settle>0?money(y.settle):'—')+'</td><td'+(y.operatorAfterSettle<0?' style="color:var(--red)"':'')+'>'+money(y.operatorAfterSettle)+'</td>':'')+'</tr>'}).join('')+
+    (multi?'<tr class="total"><td>Term</td>'+(f.single?'':'<td></td>')+'<td>'+money(o.years.reduce(function(a,y){return a+y.revenue},0))+'</td><td'+(o.operatorTotal<0?' style="color:var(--red)"':'')+'>'+money(o.operatorTotal)+'</td><td>'+money(o.operatorTotal)+'</td>'+(o.free?'':'<td>'+money(o.years.reduce(function(a,y){return a+y.retired},0))+'</td>')+(settle?'<td>'+money(o.settleTotal)+'</td><td'+(o.operatorTotal-o.settleTotal<0?' style="color:var(--red)"':'')+'>'+money(o.operatorTotal-o.settleTotal)+'</td>':'')+'</tr>':'')+
+    '</tbody></table>';
+  if(settle) h+='<div class="note">Settled at year end is what the licence still needed after the activity share, paid separately. It is shown against what you have earned so far so the two can be read together; it is never taken out of your share of the pool.</div>';
   if(o.rewardValueYear>0) h+='<div class="note">Reward games add about '+money(o.rewardValueYear)+' a year of value to your venue through redeemed visits. That is a benefit, not revenue, so it is kept out of every figure above.</div>';
   $('results').innerHTML=h;
 }
