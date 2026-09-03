@@ -1673,9 +1673,13 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await cp.locator('#gate button').click();
   await expect(cp.locator('#model h1')).toHaveText('Fairway Social');
   await expect(cp.locator('#model')).toContainText('Prepared by Mat');
-  await expect(cp.locator('#results')).toContainText('Revenue generated / yr');
-  await expect(cp.locator('#results')).toContainText('You earn / yr');
-  await expect(cp.locator('#results')).toContainText('Licence retired by activity');
+  // The headline numbers sit in a bar that stays on screen; no side column.
+  await expect(cp.locator('#bar')).toContainText('Revenue generated / yr');
+  await expect(cp.locator('#bar')).toContainText('You earn / yr');
+  await expect(cp.locator('#bar')).toContainText('Licence retired by activity');
+  expect(await cp.locator('#bar').evaluate((el) => getComputedStyle(el).position)).toBe('sticky');
+  expect(await cp.locator('#results').evaluate((el) => el.textContent)).not.toContain('What the model says');
+  expect(await cp.evaluate(() => { const a = document.getElementById('inputs').getBoundingClientRect(), b = document.getElementById('results').getBoundingClientRect(); return b.top >= a.bottom && Math.abs(a.left - b.left) < 2; })).toBe(true);
   await expect(cp.locator('#term .keep')).toContainText('The licence is retired out of the licence share alone. Your share is never diverted to it.');
   await expect(cp.locator('#term .keep .rows b.zero')).toHaveText('$0');
   const text = await cp.locator('#model').innerText();
@@ -1720,7 +1724,7 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await expect(cp.locator('#scen .sc.on')).toContainText('A second location');
   await expect(cp.locator('#sched .row')).toHaveCount(2);
   await expect(cp.locator('#sched .row').nth(1).locator('input').first()).toHaveValue('13');
-  await expect(cp.locator('#results')).toContainText('$180,000 over the term');
+  await expect(cp.locator('#bar')).toContainText('$180,000 over the term');
   await cp.locator('#scen input[data-which="B-second"]').fill('20');
   await expect(cp.locator('#sched .row').nth(1).locator('input').first()).toHaveValue('20');
   await expect(cp.locator('#scen .sc.on')).toContainText('A second location');
@@ -1738,10 +1742,10 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await yearInputs.nth(2).fill('5');
   await expect(cp.locator('#scen .sc.on')).toHaveCount(0);
   // Their numbers move the model; the licence does not move.
-  const before = await cp.locator('#results .tile strong').first().innerText();
+  const before = await cp.locator('#bar .tile strong').first().innerText();
   await cp.locator('#inputs input[type="number"]').first().fill('16000');
-  await expect(cp.locator('#results .tile strong').first()).not.toHaveText(before);
-  await expect(cp.locator('#results')).toContainText('$180,000 over the term');
+  await expect(cp.locator('#bar .tile strong').first()).not.toHaveText(before);
+  await expect(cp.locator('#bar')).toContainText('$180,000 over the term');
   // Exact months, and a new tournament.
   await cp.locator('#sched button', { hasText: 'Set the exact months' }).click();
   await expect(cp.locator('#sched .row')).toHaveCount(5);
