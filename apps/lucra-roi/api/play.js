@@ -113,6 +113,31 @@ function applyInputs(base, inputs, unlock) {
   return E.TPstate(s);
 }
 
+/* Location scenarios the customer can flip between: A keeps what opens in
+   month one for the whole term; B adds a second location; C a second and a
+   third. The months are theirs to set; the defaults sit at the start of years
+   two and three, or inside a shorter term. */
+function scenarioMonthsFrom(inputs, s) {
+  const total = E.TPterm(s) * 12, m = (inputs && inputs.scenarioMonths) || {};
+  const given = (v) => v !== undefined && v !== null && v !== '' && Number.isFinite(Number(v));
+  const second = given(m.second) ? Math.round(num(m.second, 2, total)) : (total >= 24 ? 13 : Math.min(total, 7));
+  const third = given(m.third) ? Math.round(num(m.third, 2, total)) : (total >= 36 ? 25 : Math.min(total, second + 6));
+  return { second, third: Math.max(third, second) };
+}
+function scenarioSet(s, months) {
+  const sched = E.TPschedule(s), start = Math.max(1, (sched.find((o) => o.month === 1) || {}).add || 1);
+  const first = { month: 1, add: start };
+  return [
+    { key: 'A', label: start === 1 ? 'This location only' : 'The ' + start + ' locations opening first', note: 'Nothing else opens for the whole term', openings: [first] },
+    { key: 'B', label: 'A second location', note: 'One more opens in month ' + months.second, openings: [first, { month: months.second, add: 1 }] },
+    { key: 'C', label: 'A second and a third', note: 'Month ' + months.second + ' and month ' + months.third, openings: [first, { month: months.second, add: 1 }, { month: months.third, add: 1 }] },
+  ];
+}
+function sameOpenings(a, b) {
+  const norm = (list) => list.filter((o) => o.add > 0).map((o) => o.month + ':' + o.add).sort().join(',');
+  return norm(a) === norm(b);
+}
+
 function miniCfg(s) {
   const h = s.mini.h2h;
   return { engagement: h.engagement, playsPerUser: h.playsPerUser, spendPerPlay: h.spendPerPlay, feeRate: h.feeRate,
@@ -162,9 +187,25 @@ function scenarioSummary(f, o) {
 /* Customer-safe outputs. The seller asked for the licence share and the
    operator's share to be printed as percentages on the customer page, so they
    are here by name; Lucra's own percentage and Lucra's earnings never are. */
-function outputs(s) {
+function outputs(s, opts) {
   const cfg = miniCfg(s), r = E.TPcalculate(s, cfg), term = E.TPterm(s);
   if (r.errors.length) return { errors: r.errors };
+  // The location scenarios, each the same deal with only the openings changed.
+  let scenarios = [];
+  if (!E.TPsingleLocation(s) && E.TPproductOn(s, 'core')) {
+    const months = (opts && opts.scenarioMonths) || scenarioMonthsFrom(null, s), current = E.TPschedule(s);
+    scenarios = scenarioSet(s, months).map((sc) => {
+      const v = E.TPstate(s); v.openings = sc.openings.map((o) => ({ month: o.month, add: o.add }));
+      const rv = E.TPcalculate(v, miniCfg(v));
+      if (rv.errors.length) return Object.assign({}, sc, { error: rv.errors[0] });
+      return Object.assign({}, sc, {
+        active: sameOpenings(current, sc.openings), locations: E.TPlocations(v),
+        revenueYear: rv.totalSplitBase / term, operatorYear: rv.totalOperator / term, operatorTotal: rv.totalOperator,
+        settleTotal: rv.trueUpTotal + rv.balanceDue, operatorAfterSettleTotal: rv.totalOperator - rv.trueUpTotal - rv.balanceDue,
+        payoffMonth: rv.payoffMonth, balanceDue: rv.balanceDue, prizeTotal: rv.totalPrizeCost,
+      });
+    });
+  }
   const allCases = E.TPCcases(cfg), mid = allCases[1].result, hh = mid.h2h || {};
   const cases = allCases.map((c) => ({ key: c.key, label: c.label, note: c.note, revenueYear: c.result.annualRevenueGenerated, operatorYear: c.result.operatorNet * 12, payoffMonth: c.result.tournamentResult.payoffMonth }));
   const rates = E.TPsplitRates(s), pct = (x) => Math.round(x * 1000) / 10;
@@ -213,7 +254,7 @@ function outputs(s) {
       rewardValue: mid.rewardValue || 0, rewardRedemptions: hh.rewardRedemptions || 0,
       tournamentParticipants: mid.tournamentParticipants || 0, tournamentShare: mid.tournamentShare || 0, combinedShare: mid.combinedShare || 0,
     },
-    cases, years,
+    cases, years, scenarios,
   };
 }
 
@@ -234,6 +275,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 8px;b
 .cases{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.case{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2)}.case.mid{border-color:var(--green)}.case span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.case strong{display:block;font:750 18px var(--mono);margin-top:4px}.case small{color:var(--muted);font-size:11px}
 .err{border:1px solid var(--red);color:var(--red);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px}.note{color:var(--muted);font-size:12px;margin-top:8px}.keep{border:1px solid rgba(138,233,26,.4);background:rgba(138,233,26,.08);border-radius:12px;padding:12px 14px;margin:14px 0 6px;display:flex;flex-direction:column;gap:4px}.keep strong{color:var(--green);font-size:15px}.keep span{color:var(--muted);font-size:13px}
 .gate{max-width:420px;margin:60px auto;text-align:center}.gate input{text-align:center;font-size:18px;letter-spacing:.2em}
+.scen{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 4px}@media(max-width:600px){.scen{grid-template-columns:1fr}}
+.scen .sc{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2);display:flex;flex-direction:column;gap:4px}.scen .sc.on{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}.scen .sc .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.scen .sc .k b{color:var(--green);margin-right:6px}.scen .sc .t{font-weight:650;font-size:13px}.scen .sc .v{font:750 16px var(--mono);margin-top:2px}.scen .sc .v.bad{color:var(--red)}.scen .sc small{color:var(--muted);font-size:11px}.scen .sc .when{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted);margin-top:2px}.scen .sc .when input{width:64px;padding:3px 6px;font-size:12px}.scen .sc button{margin-top:6px;padding:6px 10px;font-size:12px}
 .sched{margin:6px 0}.sched .row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin:6px 0}.chip{display:inline-block;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;margin:3px 4px 3px 0;color:var(--muted)}.chip.est{border-color:var(--amber)}
 .full{margin-top:18px}.section{margin-top:18px}.section h3{margin:0 0 4px;font-size:14px}.section .hint{margin-bottom:8px}
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.tablewrap table{min-width:640px}.tablewrap th,.tablewrap td{white-space:nowrap}tr.sub td{background:rgba(255,255,255,.04);font-weight:600;border-top:1px solid var(--line)}td.neg{color:var(--red)}td.zero{color:var(--green)}
@@ -257,7 +300,7 @@ async function load(){
 }
 function inputsFromFacts(f){
   var tp=function(k){ return f[k].tournaments.map(function(t){ return {id:t.id,name:t.name,entryPrice:t.entryPrice,eventsPerMonth:t.eventsPerMonth,basis:t.basis,participants:t.participants,participantPct:t.participantPct,rebuys:t.rebuys,prizeValue:t.prizeValue,prizeCost:t.prizeCost,pool:t.pool,scope:t.scope}; }); };
-  return { mau:f.mau, miniMau:f.miniMau, locations:f.locations.slice(), openings:f.scheduleStated?f.schedule.map(function(o){return {month:o.month,add:o.add}}):null, rampOn:f.rampOn, rampStartPct:f.rampStartPct, rampMonths:f.rampMonths,
+  return { mau:f.mau, miniMau:f.miniMau, locations:f.locations.slice(), openings:f.scheduleStated?f.schedule.map(function(o){return {month:o.month,add:o.add}}):null, rampOn:f.rampOn, rampStartPct:f.rampStartPct, rampMonths:f.rampMonths, scenarioMonths:Object.assign({},f.scenarioMonths||{}),
     core:{tournaments:tp('core'),h2h:f.core.h2h?Object.assign({},f.core.h2h):null}, mini:{tournaments:tp('mini'),h2h:f.mini.h2h?Object.assign({},f.mini.h2h):null} };
 }
 function schedule(){ clearTimeout(timer); timer=setTimeout(recompute,250); }
@@ -295,7 +338,8 @@ function renderInputs(){
   if(f.mini.on&&!f.single) h+='<label><b>Users on your app or site</b><input type="number" min="0" step="100" placeholder="'+num(f.miniBaseMonth1)+' from your venues" value="'+(I.miniMau||'')+'" oninput="set(\\'miniMau\\',this.value,true)"><span>Leave blank to follow your venues as they open.</span></label>';
   h+='</div>';
   if(!f.single){
-    h+='<h2 style="margin-top:14px">Locations</h2><div class="hint">How many locations are running at the end of each contract year, or the exact months they open.</div><div class="f">';
+    h+='<h2 style="margin-top:14px">Locations</h2><div class="hint">Three quick scenarios, side by side. Pick one, or set the locations yourself below.</div><div id="scen"></div>';
+    h+='<div class="hint" style="margin-top:10px">Or set how many locations are running at the end of each contract year, or the exact months they open.</div><div class="f">';
     for(var y=0;y<f.term;y++) h+='<label><b>Year '+(y+1)+'</b><input type="number" min="1" step="1" value="'+(I.locations[y]||1)+'" oninput="setLoc('+y+',this.value)"></label>';
     h+='</div><div id="sched"></div>';
   }
@@ -333,7 +377,44 @@ function renderInputs(){
   $('inputs').innerHTML=h;
   if(!f.single) renderSchedule();
 }
+function renderScenarios(){
+  var el=$('scen'); if(!el) return; var o=OUT, I=INPUTS, list=(o&&o.scenarios)||[];
+  if(!list.length){ el.innerHTML=''; return; }
+  var term=FACTS.term, total=term*12;
+  var ae=document.activeElement, focused=ae&&ae.closest&&ae.closest('#scen')?ae.getAttribute('data-which'):null;
+  el.innerHTML='<div class="scen">'+list.map(function(sc){
+    var owed=sc.settleTotal>0, earn=owed?sc.operatorAfterSettleTotal:sc.operatorTotal;
+    var when = sc.key==='B' ? '<div class="when">opens in month <input type="number" min="2" max="'+total+'" step="1" value="'+I.scenarioMonths.second+'" data-which="B-second" oninput="setScenarioMonth(\\'second\\',this.value)"></div>'
+      : sc.key==='C' ? '<div class="when">months <input type="number" min="2" max="'+total+'" step="1" value="'+I.scenarioMonths.second+'" data-which="C-second" oninput="setScenarioMonth(\\'second\\',this.value)"> and <input type="number" min="2" max="'+total+'" step="1" value="'+I.scenarioMonths.third+'" data-which="C-third" oninput="setScenarioMonth(\\'third\\',this.value)"></div>'
+      : '<div class="when">'+esc(sc.note)+'</div>';
+    if(sc.error) return '<div class="sc"><div class="k"><b>'+sc.key+'</b>'+esc(sc.label)+'</div><small>'+esc(sc.error)+'</small></div>';
+    return '<div class="sc'+(sc.active?' on':'')+'"><div class="k"><b>'+sc.key+'</b>'+(sc.active?'in use':'')+'</div><div class="t">'+esc(sc.label)+'</div>'+when+
+      '<div class="v'+(earn<0?' bad':'')+'">'+money(earn)+'</div><small>you earn over the '+term+'-year term'+(owed?', after the true-up':'')+'</small>'+
+      '<small>'+money(sc.revenueYear)+' revenue / yr · '+(sc.payoffMonth!=null?'licence retired month '+(Math.round(sc.payoffMonth*10)/10).toFixed(1):(sc.balanceDue>0?money(sc.balanceDue)+' left at term end':'licence settled year by year'))+'</small>'+
+      '<small>'+sc.locations.join(' → ')+' locations by year</small>'+
+      (sc.active?'':'<button type="button" onclick="useScenario(\\''+sc.key+'\\')">Use this</button>')+'</div>';
+  }).join('')+'</div>';
+  if(focused){ var back=el.querySelector('input[data-which="'+focused+'"]'); if(back) back.focus(); }
+}
+function useScenario(key){
+  var sc=(OUT.scenarios||[]).filter(function(x){return x.key===key})[0]; if(!sc) return;
+  INPUTS.openings=sc.openings.map(function(o){return {month:o.month,add:o.add}});
+  INPUTS.scenario=key;
+  renderSchedule(); schedule();
+}
+function setScenarioMonth(which,v){
+  var total=FACTS.term*12, n=Math.max(2,Math.min(total,Math.round(Number(v)||2)));
+  INPUTS.scenarioMonths[which]=n;
+  // If a scenario is in use, the model follows the new month too.
+  var active=(OUT.scenarios||[]).filter(function(x){return x.active})[0];
+  if(active&&active.key!=='A'){
+    var first=active.openings[0], m=INPUTS.scenarioMonths;
+    INPUTS.openings=active.key==='B'?[first,{month:m.second,add:1}]:[first,{month:m.second,add:1},{month:m.third,add:1}];
+  }
+  schedule();
+}
 function renderSchedule(){
+  renderScenarios();
   var el=$('sched'); if(!el) return; var f=FACTS, I=INPUTS, h='';
   if(I.openings){
     h+='<div class="hint">The months your locations open. Contract month 1 is the first month of the agreement.</div><div class="sched">';
@@ -566,7 +647,9 @@ module.exports = async function handler(req, res) {
         inputs = live.inputs;
       }
       const s = applyInputs(base, inputs, meta.unlock);
-      const f = facts(s, meta), o = outputs(s);
+      const scenarioMonths = scenarioMonthsFrom(inputs, s);
+      const f = facts(s, meta), o = outputs(s, { scenarioMonths });
+      f.scenarioMonths = scenarioMonths;
       if (live) {
         f.version = live.version; f.updatedAt = live.updatedAt; f.updatedBy = live.updatedBy; f.rebased = rebased;
         if (body.inputs && !rebased) await store_saveInputs(linkId, body.inputs);

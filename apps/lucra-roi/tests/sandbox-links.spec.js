@@ -350,6 +350,50 @@ describe('The customer page outputs', () => {
   });
 });
 
+describe('Location scenarios on the customer page', () => {
+  it('offers this-location-only, a second, and a second and third, with the months theirs to set', async () => {
+    const tok = tokenOf(await link({ deal: { tp: deal() } }));
+    const base = (await compute(tok, PASS, null)).body;
+    const sc = base.outputs.scenarios;
+    expect(sc.map((x) => x.key)).toEqual(['A', 'B', 'C']);
+    expect(base.facts.scenarioMonths).toEqual({ second: 13, third: 25 });
+    expect(sc[0].openings).toEqual([{ month: 1, add: 1 }]);
+    expect(sc[1].openings).toEqual([{ month: 1, add: 1 }, { month: 13, add: 1 }]);
+    expect(sc[2].openings).toEqual([{ month: 1, add: 1 }, { month: 13, add: 1 }, { month: 25, add: 1 }]);
+    expect(sc[0].locations).toEqual([1, 1, 1]);
+    expect(sc[1].locations).toEqual([1, 2, 2]);
+    expect(sc[2].locations).toEqual([1, 2, 3]);
+    // The deal as sent (1 → 2 → 4, spread) matches none of them.
+    expect(sc.some((x) => x.active)).toBe(false);
+    // More locations, more revenue; each figure is the same deal recomputed.
+    expect(sc[1].revenueYear).toBeGreaterThan(sc[0].revenueYear);
+    expect(sc[2].revenueYear).toBeGreaterThan(sc[1].revenueYear);
+    const one = E.TPstate(deal()); one.openings = [{ month: 1, add: 1 }];
+    const r1 = E.TPcalculate(one);
+    expect(sc[0].operatorTotal).toBeCloseTo(r1.totalOperator, 3);
+    expect(sc[0].operatorAfterSettleTotal).toBeCloseTo(r1.totalOperator - r1.trueUpTotal - r1.balanceDue, 3);
+    // Using B: the customer's openings become B's, and B is the one in use.
+    const usedB = (await compute(tok, PASS, { openings: sc[1].openings })).body;
+    expect(usedB.outputs.scenarios[1].active).toBe(true);
+    expect(usedB.facts.locations).toEqual([1, 2, 2]);
+    expect(usedB.outputs.revenueYear).toBeCloseTo(sc[1].revenueYear, 3);
+    // Their own months.
+    const later = (await compute(tok, PASS, { openings: [{ month: 1, add: 1 }, { month: 20, add: 1 }], scenarioMonths: { second: 20, third: 30 } })).body;
+    expect(later.facts.scenarioMonths).toEqual({ second: 20, third: 30 });
+    expect(later.outputs.scenarios[1].note).toBe('One more opens in month 20');
+    expect(later.outputs.scenarios[1].active).toBe(true);
+    expect(later.outputs.scenarios[2].openings[2]).toEqual({ month: 30, add: 1 });
+    // Out-of-range months are clamped to the term; third never precedes second.
+    const odd = (await compute(tok, PASS, { scenarioMonths: { second: 99, third: 3 } })).body;
+    expect(odd.facts.scenarioMonths).toEqual({ second: 36, third: 36 });
+    // An app-only customer has no locations, so no scenarios.
+    const appDeal = E.TPstate(Object.assign(deal(), { customerType: 'app', mau: 50000, mini: { on: true, tournamentsOn: true, h2hOn: false, mauMode: 'entered', mau: 50000, tournaments: JSON.parse(JSON.stringify(E.TP_DEFAULT_MINI_TOURNAMENTS)) }, core: { on: false } }));
+    const app = tokenOf(await link({ deal: { tp: appDeal } }));
+    const appOut = (await compute(app, PASS, null)).body;
+    expect(appOut.outputs.scenarios).toEqual([]);
+  });
+});
+
 describe('The store over the Redis REST protocol', () => {
   it('speaks Upstash pipelines and reads hashes back', async () => {
     const sent = [];

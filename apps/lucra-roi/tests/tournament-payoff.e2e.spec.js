@@ -1595,6 +1595,34 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   expect(html).not.toContain('"credit"');
   expect(html).not.toContain('lucra');
 
+  // Three location scenarios, side by side; picking one sets the openings, and its month is theirs.
+  await expect(cp.locator('#scen .sc')).toHaveCount(3);
+  await expect(cp.locator('#scen .sc.on')).toHaveCount(0);
+  await expect(cp.locator('#scen .sc').nth(0)).toContainText('This location only');
+  await expect(cp.locator('#scen .sc').nth(1)).toContainText('A second location');
+  await expect(cp.locator('#scen .sc').nth(2)).toContainText('A second and a third');
+  await cp.locator('#scen .sc').nth(1).locator('button').click();
+  await expect(cp.locator('#scen .sc.on')).toHaveCount(1);
+  await expect(cp.locator('#scen .sc.on')).toContainText('A second location');
+  await expect(cp.locator('#sched .row')).toHaveCount(2);
+  await expect(cp.locator('#sched .row').nth(1).locator('input').first()).toHaveValue('13');
+  await expect(cp.locator('#results')).toContainText('$180,000 over the term');
+  await cp.locator('#scen input[data-which="B-second"]').fill('20');
+  await expect(cp.locator('#sched .row').nth(1).locator('input').first()).toHaveValue('20');
+  await expect(cp.locator('#scen .sc.on')).toContainText('A second location');
+  await cp.locator('#scen .sc').nth(0).locator('button').click();
+  await expect(cp.locator('#scen .sc.on')).toContainText('This location only');
+  const soloFacts = await cp.evaluate(() => FACTS.locations);
+  expect(soloFacts).toEqual([1, 1, 1]);
+  // Back to the proposal's own counts per year: no scenario in use.
+  await cp.locator('#sched button', { hasText: 'Back to counts per year' }).click();
+  await expect(cp.locator('#sched button', { hasText: 'Set the exact months' })).toBeVisible();
+  // One location all term still reads as scenario A; their own counts (1 → 3 → 5) match none.
+  await expect(cp.locator('#scen .sc.on')).toContainText('This location only');
+  const yearInputs = cp.locator('#inputs .f').nth(1).locator('input[type="number"]');
+  await yearInputs.nth(1).fill('3');
+  await yearInputs.nth(2).fill('5');
+  await expect(cp.locator('#scen .sc.on')).toHaveCount(0);
   // Their numbers move the model; the licence does not move.
   const before = await cp.locator('#results .tile strong').first().innerText();
   await cp.locator('#inputs input[type="number"]').first().fill('16000');
