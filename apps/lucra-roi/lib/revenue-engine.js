@@ -127,8 +127,22 @@ function TPfees(s) {
   return out;
 }
 
+/* What a reward tournament costs the operator per event. Three ways to say
+   it: a dollar amount, a percentage of the reward's face value (the dollars
+   follow the face value), or sponsored, where a named sponsor carries it and
+   the operator's cost is zero. A cash tournament always costs its prize. */
+function TPprizeCost(t) {
+  if (!t) return 0;
+  if (t.isCash) return TPnum(t.cashPrizeAmount, 0);
+  if (t.costMode === 'sponsored') return 0;
+  if (t.costMode === 'pct') return TPnum(t.rewardFaceValue, 0) * TPnum(t.costPct, 0, 1000) / 100;
+  return TPnum(t.customerCashCost, 0);
+}
+function TPsponsored(t) { return !!t && !t.isCash && t.costMode === 'sponsored'; }
+
 function TPtournamentNorm(t, shared) {
-  var c = Object.assign({ basis: 'count', participants: 0, participantPct: 0, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, scope: 'each' }, t);
+  var c = Object.assign({ basis: 'count', participants: 0, participantPct: 0, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, scope: 'each', costMode: 'amount', costPct: 0, sponsorName: '' }, t);
+  if (['amount', 'pct', 'sponsored'].indexOf(c.costMode) < 0) c.costMode = 'amount';
   if (t && t.basis === undefined && shared) {
     var wasCustom = t.participationMode === 'custom';
     c.basis = shared.basis;
@@ -685,7 +699,7 @@ function TPcalculate(input, cfg, factor) {
           entriesPerEvent = TPentriesPerEvent(s, t, month, k),
           tHandle = entriesPerEvent * TPnum(t.entryPrice, 0) * events,
           mult = TPprizeMultiplier(s, t, month, k),
-          tPrize = TPnum(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0) * events * mult;
+          tPrize = TPprizeCost(t) * events * mult;
         pm.handle += tHandle;
         pm.prizeCost += tPrize;
         pm.participants += typeParticipants;
@@ -1171,7 +1185,7 @@ function TPrewardCostRatio(s, key) {
   var face = 0, cost = 0, list = key ? TPproduct(s, key).tournaments : TPallTournaments(s);
   list.forEach(function (t) {
     if (t.isCash) return;
-    face += TPnum(t.rewardFaceValue, 0); cost += TPnum(t.customerCashCost, 0);
+    face += TPnum(t.rewardFaceValue, 0); cost += TPprizeCost(t);
   });
   return face > 0 ? Math.max(0, Math.min(1, cost / face)) : 1;
 }
@@ -1195,7 +1209,7 @@ function TPrecProgramme(base, mau, key) {
       c.customerCashCost = Math.round(TPnum(c.customerCashCost, 0) * a.priceMult);
       c.cashPrizeAmount = Math.round(TPnum(c.cashPrizeAmount, 0) * a.priceMult);
     }
-    if (a.rewardAtRatio) { c.isCash = false; c.customerCashCost = Math.round(TPnum(c.rewardFaceValue, 0) * ratio); }
+    if (a.rewardAtRatio) { c.isCash = false; c.costMode = 'amount'; c.customerCashCost = Math.round(TPnum(c.rewardFaceValue, 0) * ratio); }
     return c;
   });
 }
@@ -1410,4 +1424,4 @@ function TPrecLevers(input, mau, step, opts) {
 }
 
 /* TP-PURE-END */
-module.exports = { TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPupfront, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments, TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear, TP_PRODUCTS, TP_PRODUCT_DEFAULTS, TP_H2H_DEFAULTS, TP_DEFAULT_TOURNAMENTS, TP_DEFAULT_MINI_TOURNAMENTS, TPproduct, TPproductOn, TPtournamentsOn, TPh2hOn, TPanyTournaments, TPanyH2H, TPtournamentsOf, TPallTournaments, TPcustomerDefaults, TPsingleLocation, TPyearCounts, TPscheduleFromYears, TPschedule, TPscheduleStated, TPlocationsOpen, TPminiEntered, TPproductBase, TPproductFactor, TPavgProductFactor, TPminiBase, TPprizeMultiplier, TPh2hInputs, TPprimaryTournament, TPrecCoreStep, TPrecProduct, TPyearTotals };
+module.exports = { TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPupfront, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments, TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear, TP_PRODUCTS, TP_PRODUCT_DEFAULTS, TP_H2H_DEFAULTS, TP_DEFAULT_TOURNAMENTS, TP_DEFAULT_MINI_TOURNAMENTS, TPproduct, TPproductOn, TPtournamentsOn, TPh2hOn, TPanyTournaments, TPanyH2H, TPtournamentsOf, TPallTournaments, TPcustomerDefaults, TPsingleLocation, TPyearCounts, TPscheduleFromYears, TPschedule, TPscheduleStated, TPlocationsOpen, TPminiEntered, TPproductBase, TPproductFactor, TPavgProductFactor, TPminiBase, TPprizeMultiplier, TPh2hInputs, TPprimaryTournament, TPrecCoreStep, TPrecProduct, TPyearTotals, TPprizeCost, TPsponsored };

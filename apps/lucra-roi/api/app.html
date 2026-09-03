@@ -560,6 +560,13 @@ body.tp-customer .tp-strip{border-color:var(--green-border);background:rgba(23,6
 #beyond .by-picker{margin:0 0 16px}.by-product{display:none}
 .tp-fold-summary{font-size:12px;color:var(--text3)}
 .tp-chart-wrap{margin-top:8px}
+.tp-chart-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.tp-chart-size{display:flex;align-items:center;gap:4px;margin-top:22px}
+.tp-chart-size .sn{margin-right:4px}
+.tp-chart-size button{background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:2px 9px;font:700 11px var(--font);cursor:pointer}
+.tp-chart-size button.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.tp-chart-wrap.size-compact .tp-ch-title{font-size:10px}.tp-chart-wrap.size-compact .tp-ch-tick{font-size:8px}.tp-chart-wrap.size-compact .tp-ch-label{font-size:9px}
+.tp-chart-wrap.size-large .tp-ch-title{font-size:16px}.tp-chart-wrap.size-large .tp-ch-tick{font-size:13.5px}.tp-chart-wrap.size-large .tp-ch-label{font-size:15px}.tp-chart-wrap.size-large .tp-ch-legend{font-size:14px}.tp-chart-wrap.size-large .tp-ch-line{stroke-width:2.7}.tp-chart-wrap.size-large .tp-ch-line.main{stroke-width:4}
 .tp-ch-box{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 6px 4px}
 .tp-ch{width:100%;height:auto;display:block;font-family:var(--font)}
 .tp-ch-title{fill:var(--text2);font-size:12px;font-weight:600}
@@ -678,6 +685,14 @@ table.tp-heat td.miss{background:var(--amber-bg);color:var(--amber)}
 .tpc-from-deal .tpc-from-note button{background:none;border:0;padding:0;color:var(--green);font:inherit;cursor:pointer;text-decoration:underline}
 .tp-months td.tp-zero{color:var(--green)}
 .tp-months td.tp-neg{color:var(--red)}
+.tp-tour-actions{display:flex;gap:6px;align-items:center}
+.tp-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tp-chip{background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:999px;padding:2px 9px;font:600 11px var(--font);cursor:pointer}
+.tp-chip.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.tp-chip:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+.tp-cost-switch{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 6px}
+.tp-cost-switch button{background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:5px 10px;font:600 12px var(--font);cursor:pointer}
+.tp-cost-switch button.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
 .tp-cowork{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding:12px 14px;border:1px solid var(--green-border);background:var(--green-bg);border-radius:var(--radius)}
 .tp-cowork[hidden]{display:none}
 .tp-cowork strong{color:var(--green)}
@@ -1758,8 +1773,9 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="inputs" style="margin-bottom:0">
       <div class="input-group"><label class="input-label" for="tp-deal-name">Deal / customer name</label><input class="pf-input" id="tp-deal-name" type="text" placeholder="Venue or group name" oninput="TPset('dealName',this.value)"><div class="sn">Customer fact · labels both exports</div></div>
       <div class="input-group"><label class="input-label" for="tp-partner-site">Partner website</label><input class="pf-input" id="tp-partner-site" type="text" placeholder="example.com" oninput="TPset('partnerSite',this.value)"><div class="sn">Customer fact · the one-pager pulls brand colour from it</div></div>
-      <div class="input-group"><label class="input-label" for="tp-presenter">Presented by</label><input class="pf-input" id="tp-presenter" type="text" placeholder="Who is presenting the page" oninput="TPset('presenter',this.value)"><div class="sn">Goes on the one-pager as the contact</div></div>
-      <div class="input-group"><label class="input-label" for="tp-presenter-email">Presenter email</label><input class="pf-input" id="tp-presenter-email" type="text" placeholder="name@lucrasports.com" oninput="TPset('presenterEmail',this.value)"><div class="sn">Goes on the one-pager as the contact</div></div>
+      <div class="input-group"><label class="input-label" for="tp-presenter-select">Presented by</label><select class="pf-input" id="tp-presenter-select" onchange="TPsetPresenter(this.value)"></select><div class="sn">Goes on the one-pager and the customer's page as the contact</div></div>
+      <div class="input-group" id="tp-presenter-other" hidden><label class="input-label" for="tp-presenter">Presenter name</label><input class="pf-input" id="tp-presenter" type="text" placeholder="Name" oninput="TPset('presenter',this.value)"><div class="sn">Someone not on the list</div></div>
+      <div class="input-group" id="tp-presenter-email-group" hidden><label class="input-label" for="tp-presenter-email">Presenter email</label><input class="pf-input" id="tp-presenter-email" type="text" placeholder="name@playlucra.com" oninput="TPset('presenterEmail',this.value)"><div class="sn">Goes on the one-pager as the contact</div></div>
       <div class="input-group" id="tp-term-block"><label class="input-label" for="tp-term">Contract term</label><select class="pf-input" id="tp-term" onchange="TPsetTerm(this.value)"><option value="1">1 year</option><option value="2">2 years</option><option value="3">3 years</option><option value="4">4 years</option><option value="5">5 years</option></select><div class="sn">Customer fact</div></div>
     </div>
     <div id="tp-licence-block">
@@ -3775,8 +3791,22 @@ function TPfees(s) {
   return out;
 }
 
+/* What a reward tournament costs the operator per event. Three ways to say
+   it: a dollar amount, a percentage of the reward's face value (the dollars
+   follow the face value), or sponsored, where a named sponsor carries it and
+   the operator's cost is zero. A cash tournament always costs its prize. */
+function TPprizeCost(t) {
+  if (!t) return 0;
+  if (t.isCash) return TPnum(t.cashPrizeAmount, 0);
+  if (t.costMode === 'sponsored') return 0;
+  if (t.costMode === 'pct') return TPnum(t.rewardFaceValue, 0) * TPnum(t.costPct, 0, 1000) / 100;
+  return TPnum(t.customerCashCost, 0);
+}
+function TPsponsored(t) { return !!t && !t.isCash && t.costMode === 'sponsored'; }
+
 function TPtournamentNorm(t, shared) {
-  var c = Object.assign({ basis: 'count', participants: 0, participantPct: 0, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, scope: 'each' }, t);
+  var c = Object.assign({ basis: 'count', participants: 0, participantPct: 0, rebuyMode: 'avg', rebuys: 0, rebuyPct: 0, scope: 'each', costMode: 'amount', costPct: 0, sponsorName: '' }, t);
+  if (['amount', 'pct', 'sponsored'].indexOf(c.costMode) < 0) c.costMode = 'amount';
   if (t && t.basis === undefined && shared) {
     var wasCustom = t.participationMode === 'custom';
     c.basis = shared.basis;
@@ -4333,7 +4363,7 @@ function TPcalculate(input, cfg, factor) {
           entriesPerEvent = TPentriesPerEvent(s, t, month, k),
           tHandle = entriesPerEvent * TPnum(t.entryPrice, 0) * events,
           mult = TPprizeMultiplier(s, t, month, k),
-          tPrize = TPnum(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0) * events * mult;
+          tPrize = TPprizeCost(t) * events * mult;
         pm.handle += tHandle;
         pm.prizeCost += tPrize;
         pm.participants += typeParticipants;
@@ -4819,7 +4849,7 @@ function TPrewardCostRatio(s, key) {
   var face = 0, cost = 0, list = key ? TPproduct(s, key).tournaments : TPallTournaments(s);
   list.forEach(function (t) {
     if (t.isCash) return;
-    face += TPnum(t.rewardFaceValue, 0); cost += TPnum(t.customerCashCost, 0);
+    face += TPnum(t.rewardFaceValue, 0); cost += TPprizeCost(t);
   });
   return face > 0 ? Math.max(0, Math.min(1, cost / face)) : 1;
 }
@@ -4843,7 +4873,7 @@ function TPrecProgramme(base, mau, key) {
       c.customerCashCost = Math.round(TPnum(c.customerCashCost, 0) * a.priceMult);
       c.cashPrizeAmount = Math.round(TPnum(c.cashPrizeAmount, 0) * a.priceMult);
     }
-    if (a.rewardAtRatio) { c.isCash = false; c.customerCashCost = Math.round(TPnum(c.rewardFaceValue, 0) * ratio); }
+    if (a.rewardAtRatio) { c.isCash = false; c.costMode = 'amount'; c.customerCashCost = Math.round(TPnum(c.rewardFaceValue, 0) * ratio); }
     return c;
   });
 }
@@ -5113,6 +5143,49 @@ function TPcalendarMonth(contractMonth) {
 }
 function TPproductLabel(k) { return k === 'mini' ? 'Mini games' : 'Core'; }
 
+/* Who presents. Picking a name fills the email; "Other" opens both fields. */
+var TP_PRESENTERS = [
+  { name: 'Mat Weiss', email: 'Mat.Weiss@playlucra.com' },
+  { name: 'Phil Probert', email: 'Phil@playlucra.com' },
+  { name: 'Brian Fagan', email: 'Brian@playlucra.com' },
+  { name: 'Jack Meyer', email: 'Jack@playlucra.com' },
+  { name: 'Nick Johnson', email: 'Nick@playlucra.com' },
+  { name: 'Dylan Robbins', email: 'Dylan@playlucra.com' }
+];
+function TPpresenterMatch() {
+  var name = String(TP.presenter || '').trim().toLowerCase(), email = String(TP.presenterEmail || '').trim().toLowerCase();
+  for (var i = 0; i < TP_PRESENTERS.length; i++) {
+    var p = TP_PRESENTERS[i];
+    if ((name && p.name.toLowerCase() === name) || (email && p.email.toLowerCase() === email)) return i;
+  }
+  return -1;
+}
+function TPrenderPresenter() {
+  var sel = $('tp-presenter-select'); if (!sel) return;
+  var idx = TPpresenterMatch(), other = idx < 0 && (TP.presenter || TP.presenterEmail);
+  sel.innerHTML = '<option value="">Choose…</option>' + TP_PRESENTERS.map(function (p, i) { return '<option value="' + i + '">' + TPesc(p.name) + '</option>'; }).join('') + '<option value="other">Other…</option>';
+  sel.value = idx >= 0 ? String(idx) : (other || TP_PRESENTER_OTHER ? 'other' : '');
+  var showOther = sel.value === 'other';
+  $('tp-presenter-other').hidden = !showOther; $('tp-presenter-email-group').hidden = !showOther;
+  // A roster pick with the email drifted: put it back in step.
+  if (idx >= 0 && (TP.presenter !== TP_PRESENTERS[idx].name || TP.presenterEmail !== TP_PRESENTERS[idx].email)) {
+    TP.presenter = TP_PRESENTERS[idx].name; TP.presenterEmail = TP_PRESENTERS[idx].email; TPsave();
+  }
+}
+var TP_PRESENTER_OTHER = false;
+function TPsetPresenter(value) {
+  if (value === 'other') {
+    TP_PRESENTER_OTHER = true;
+    if (TPpresenterMatch() >= 0) { TP.presenter = ''; TP.presenterEmail = ''; }
+  } else if (value === '') {
+    TP_PRESENTER_OTHER = false; TP.presenter = ''; TP.presenterEmail = '';
+  } else {
+    TP_PRESENTER_OTHER = false;
+    var p = TP_PRESENTERS[Number(value)]; if (p) { TP.presenter = p.name; TP.presenterEmail = p.email; }
+  }
+  TPsave(); TPrenderControls(); TPrender();
+  if (value === 'other') { var el = $('tp-presenter'); if (el) el.focus(); }
+}
 function TPset(path, value) {
   var parts = path.split('.'), target = TP;
   if (path === 'rewardCostRatio') { TP.rewardCostRatio = value === '' ? '' : TPnum(value, 0, 100); TPsave(); TPrecRun(); return; }
@@ -5450,8 +5523,30 @@ function TPtourRebuyMode(key, i, mode) {
 
 function TPtour(key, i, field, value) {
   var t = TP[key].tournaments[i]; if (!t) return;
-  t[field] = field === 'name' ? value : TPnum(value, 0);
-  TPsave(); TPtourReadout(key, i); TPrender();
+  t[field] = (field === 'name' || field === 'sponsorName') ? value : TPnum(value, 0);
+  TPsave(); TPtourReadout(key, i); TPtourChipsSync(key, i); TPrender();
+}
+/* The note under the cost field: the dollars a percentage works out to, or
+   the share a dollar amount is, so the maths can be checked at a glance. */
+function TPtourCostNote(t, key, single) {
+  var where = key === 'core' && !single ? (t.scope === 'network' ? ', once' : ', at each location') : '', face = TPnum(t.rewardFaceValue, 0);
+  if (t.costMode === 'pct') return 'Customer fact · ' + TPmoney(TPprizeCost(t)) + ' per event at a ' + TPmoney(face) + ' reward, funded out of the operator share' + where;
+  return 'Customer fact · funded out of the operator share' + where + (face > 0 ? ' · ' + Math.round(TPnum(t.customerCashCost, 0) / face * 100) + '% of the reward value' : '');
+}
+/* While a value is typed, keep the preset chips and the cost note honest
+   without re-rendering the card (which would take the focus away). */
+function TPtourChipsSync(key, i) {
+  var t = TP[key].tournaments[i], row = document.querySelector('.tp-tour[data-product="' + key + '"][data-tour="' + i + '"]');
+  if (!t || !row) return;
+  var note = $(TPtourId(key, 'tp-costnote', i)); if (note && !t.isCash && t.costMode !== 'sponsored') note.textContent = TPtourCostNote(t, key, TPsingleLocation(TPstate(TP)));
+  row.querySelectorAll('.tp-chips').forEach(function (group) {
+    var field = /Entry price/.test(group.getAttribute('aria-label') || '') ? 'entryPrice' : 'eventsPerMonth';
+    group.querySelectorAll('.tp-chip').forEach(function (b) {
+      var v = Number((b.getAttribute('onclick') || '').match(/,(\d+(?:\.\d+)?)\)$/)[1]);
+      var on = Math.abs(TPnum(t[field], 0) - v) < 1e-9;
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+    });
+  });
 }
 function TPtourReadout(key, i) {
   var t = TP[key].tournaments[i], row = document.querySelector('.tp-tour[data-product="' + key + '"][data-tour="' + i + '"]');
@@ -5460,10 +5555,41 @@ function TPtourReadout(key, i) {
   var st = TPstate(TP), entries = TPentriesPerEvent(st, t, 1, key),
     handle = entries * TPnum(t.entryPrice, 0) * TPnum(t.eventsPerMonth, 0),
     mult = TPprizeMultiplier(st, t, 1, key),
-    prize = TPnum(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0) * TPnum(t.eventsPerMonth, 0) * mult;
+    prize = TPprizeCost(t) * TPnum(t.eventsPerMonth, 0) * mult;
   el.textContent = 'Month 1: ' + Math.round(TPtypeParticipants(st, t, 1, key)).toLocaleString() + ' participants, ' +
     Math.round(entries).toLocaleString() + ' entries per event, ' + TPmoney(handle) + ' of entries' +
-    (TP.customerMode ? '' : ' against ' + TPmoney(prize) + ' of prize funding' + (mult > 1 ? ' across ' + mult + ' locations' : '')) + '.';
+    (TP.customerMode ? '' : (TPsponsored(t) ? ' · prizes sponsored' + (t.sponsorName ? ' by ' + t.sponsorName : '') + ', no prize funding' : ' against ' + TPmoney(prize) + ' of prize funding' + (mult > 1 ? ' across ' + mult + ' locations' : ''))) + '.';
+}
+/* Preset chips beside a field. The chip whose value the field holds is lit;
+   anything else reads as custom. */
+var TP_PRICE_CHIPS = [1, 5, 10, 15, 20, 25, 50, 75, 100];
+var TP_FREQ_CHIPS = [30, 4, 2, 1];
+var TP_FREQ_LABELS = { 30: 'Daily', 4: 'Weekly', 2: 'Twice a month', 1: 'Monthly' };
+function TPchips(values, current, label, onclickPrefix, aria) {
+  return '<div class="tp-chips" role="group" aria-label="' + escAttr(aria || 'Presets') + '">' + values.map(function (v) {
+    var on = Math.abs(TPnum(current, 0) - v) < 1e-9;
+    return '<button type="button" class="tp-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="' + onclickPrefix + v + ')">' + TPesc(label(v)) + '</button>';
+  }).join('') + '</div>';
+}
+function TPtourChip(key, i, field, value) {
+  var t = TP[key].tournaments[i]; if (!t) return;
+  t[field] = TPnum(value, 0);
+  TPsave(); TPrenderTournaments(); TPrender();
+}
+function TPtourCostMode(key, i, mode) {
+  var t = TP[key].tournaments[i]; if (!t) return;
+  var face = TPnum(t.rewardFaceValue, 0), was = t.costMode || 'amount';
+  t.costMode = mode;
+  // Carry the same dollars across when switching between dollars and percent.
+  if (mode === 'pct' && was !== 'pct' && face > 0) t.costPct = Math.round(TPnum(t.customerCashCost, 0) / face * 1000) / 10;
+  if (mode === 'amount' && was === 'pct') t.customerCashCost = Math.round(face * TPnum(t.costPct, 0) / 100);
+  TPsave(); TPrenderTournaments(); TPrender();
+}
+function TPduplicateTournament(key, i) {
+  var t = TP[key].tournaments[i]; if (!t) return;
+  var copy = Object.assign({}, JSON.parse(JSON.stringify(t)), { id: 't' + Date.now(), name: (t.name || 'Tournament') + ' (copy)' });
+  TP[key].tournaments.splice(i + 1, 0, copy);
+  TPsave(); TPrenderTournaments(); TPrender();
 }
 function TPtourCash(key, i, checked) {
   var t = TP[key].tournaments[i]; if (!t) return;
@@ -5535,6 +5661,7 @@ function TPrenderControls() {
   Object.keys(fields).forEach(function (id) {
     var el = $(id); if (el && document.activeElement !== el) el.value = TP[fields[id]];
   });
+  TPrenderPresenter();
   var activeRates = TPsplitRates(TPstate(TP));
   [['tp-split-credit', 'credit'], ['tp-split-operator', 'operator'], ['tp-split-lucra', 'lucra']].forEach(function (x) {
     var el = $(x[0]); if (el && document.activeElement !== el) el.value = Math.round(activeRates[x[1]] * 1000) / 10;
@@ -5720,17 +5847,20 @@ function TPrenderTournamentList(key) {
       entries = TPentriesPerEvent(st, t, 1, key),
       handle = entries * TPnum(t.entryPrice, 0) * TPnum(t.eventsPerMonth, 0),
       mult = TPprizeMultiplier(st, t, 1, key),
-      prize = TPnum(cash ? t.cashPrizeAmount : t.customerCashCost, 0) * TPnum(t.eventsPerMonth, 0) * mult,
+      prize = TPprizeCost(t) * TPnum(t.eventsPerMonth, 0) * mult, sponsored = TPsponsored(t), byPct = !cash && t.costMode === 'pct',
       id = function (base) { return TPtourId(key, base, i); },
       baseLabel = key === 'mini' ? 'app users' : (single ? 'users' : 'users per location');
     return '<div class="tp-tour" data-product="' + key + '" data-tour="' + i + '">' +
       '<div class="tp-tour-head">' +
       '<input class="pf-input tp-tour-name" type="text" value="' + escAttr(t.name) + '" aria-label="Tournament name" oninput="TPtour(' + q + i + ',\'name\',this.value)">' +
-      '<button type="button" class="tp-remove" onclick="TPremoveTournament(' + q + i + ')" aria-label="Remove ' + escAttr(t.name) + '">Remove</button>' +
+      '<div class="tp-tour-actions"><button type="button" class="tp-add tp-duplicate" onclick="TPduplicateTournament(' + q + i + ')" aria-label="Duplicate ' + escAttr(t.name) + '">Duplicate</button>' +
+      '<button type="button" class="tp-remove" onclick="TPremoveTournament(' + q + i + ')" aria-label="Remove ' + escAttr(t.name) + '">Remove</button></div>' +
       '</div>' +
       '<div class="inputs tp-tour-grid">' +
-      '<div class="input-group"><label class="input-label" for="' + id('tp-price') + '">Entry price</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="' + id('tp-price') + '" type="number" min="0" step="1" value="' + TPnum(t.entryPrice, 0) + '" oninput="TPtour(' + q + i + ',\'entryPrice\',this.value)"></div><div class="sn">Customer fact</div></div>' +
-      '<div class="input-group"><label class="input-label" for="' + id('tp-events') + '">Tournaments per month</label><input class="pf-input" id="' + id('tp-events') + '" type="number" min="0" step="1" value="' + TPnum(t.eventsPerMonth, 0) + '" oninput="TPtour(' + q + i + ',\'eventsPerMonth\',this.value)"><div class="sn">Customer fact' + (key === 'core' && !single ? (network ? ' · one across all locations' : ' · at each location') : '') + '</div></div>' +
+      '<div class="input-group"><label class="input-label" for="' + id('tp-price') + '">Entry price</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="' + id('tp-price') + '" type="number" min="0" step="1" value="' + TPnum(t.entryPrice, 0) + '" oninput="TPtour(' + q + i + ',\'entryPrice\',this.value)"></div>' +
+        TPchips(TP_PRICE_CHIPS, TPnum(t.entryPrice, 0), function (v) { return '$' + v; }, 'TPtourChip(' + q + i + ',\'entryPrice\',', 'Entry price presets') + '<div class="sn">Customer fact · pick a preset or type any price</div></div>' +
+      '<div class="input-group"><label class="input-label" for="' + id('tp-events') + '">Tournaments per month</label><input class="pf-input" id="' + id('tp-events') + '" type="number" min="0" step="1" value="' + TPnum(t.eventsPerMonth, 0) + '" oninput="TPtour(' + q + i + ',\'eventsPerMonth\',this.value)">' +
+        TPchips(TP_FREQ_CHIPS, TPnum(t.eventsPerMonth, 0), function (v) { return TP_FREQ_LABELS[v] + ' · ' + v; }, 'TPtourChip(' + q + i + ',\'eventsPerMonth\',', 'Frequency presets') + '<div class="sn">Customer fact' + (key === 'core' && !single ? (network ? ' · one across all locations' : ' · at each location') : '') + '</div></div>' +
       '</div>' +
 
       (key === 'core' && !single
@@ -5767,10 +5897,21 @@ function TPrenderTournamentList(key) {
       (cash
         ? '<div class="input-group"><label class="input-label" for="' + id('tp-cashprize') + '">Cash prize amount</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="' + id('tp-cashprize') + '" type="number" min="0" step="25" value="' + TPnum(t.cashPrizeAmount, 0) + '" oninput="TPtour(' + q + i + ',\'cashPrizeAmount\',this.value)"></div><div class="sn">Customer fact · shown to players and deducted from revenue' + (mult > 1 ? ', at each location' : '') + '</div></div>'
         : '<div class="input-group"><label class="input-label" for="' + id('tp-face') + '">Reward face value</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="' + id('tp-face') + '" type="number" min="0" step="25" value="' + TPnum(t.rewardFaceValue, 0) + '" oninput="TPtour(' + q + i + ',\'rewardFaceValue\',this.value)"></div><div class="sn">Customer fact · advertised to players, not a cost</div></div>' +
-          '<div class="input-group tp-internal"><label class="input-label" for="' + id('tp-cost') + '">Customer cash cost</label><div class="input-val"><span class="vp">$</span><input class="pf-input" id="' + id('tp-cost') + '" type="number" min="0" step="25" value="' + TPnum(t.customerCashCost, 0) + '" oninput="TPtour(' + q + i + ',\'customerCashCost\',this.value)"></div><div class="sn">Customer fact · funded out of the operator share' + (key === 'core' && !single ? (network ? ', once' : ', at each location') : '') + '</div></div>')
+          '<div class="input-group tp-internal"><span class="input-label">What it costs the customer</span>' +
+          '<div class="tp-cost-switch" role="group" aria-label="Cost basis for ' + escAttr(t.name) + '">' +
+          '<button type="button" data-cost="amount" aria-pressed="' + (!byPct && !sponsored) + '"' + (!byPct && !sponsored ? ' class="on"' : '') + ' onclick="TPtourCostMode(' + q + i + ',\'amount\')">Dollars</button>' +
+          '<button type="button" data-cost="pct" aria-pressed="' + byPct + '"' + (byPct ? ' class="on"' : '') + ' onclick="TPtourCostMode(' + q + i + ',\'pct\')">% of reward value</button>' +
+          '<button type="button" data-cost="sponsored" aria-pressed="' + sponsored + '"' + (sponsored ? ' class="on"' : '') + ' onclick="TPtourCostMode(' + q + i + ',\'sponsored\')">Sponsored</button>' +
+          '</div>' +
+          (sponsored
+            ? '<input class="pf-input" id="' + id('tp-sponsor') + '" type="text" placeholder="Sponsor name (optional)" value="' + escAttr(t.sponsorName || '') + '" oninput="TPtour(' + q + i + ',\'sponsorName\',this.value)" aria-label="Sponsor name"><div class="sn">Customer fact · the sponsor carries the prize; no cost to the customer' + (t.sponsorName ? '' : '. Named on the one-pager only if you enter a name') + '</div>'
+            : byPct
+              ? '<div class="input-val"><input class="pf-input" id="' + id('tp-cost') + '" type="number" min="0" step="5" value="' + TPnum(t.costPct, 0) + '" oninput="TPtour(' + q + i + ',\'costPct\',this.value)"><span class="vp">%</span></div><div class="sn" id="' + id('tp-costnote') + '">' + TPtourCostNote(t, key, single) + '</div>'
+              : '<div class="input-val"><span class="vp">$</span><input class="pf-input" id="' + id('tp-cost') + '" type="number" min="0" step="25" value="' + TPnum(t.customerCashCost, 0) + '" oninput="TPtour(' + q + i + ',\'customerCashCost\',this.value)"></div><div class="sn" id="' + id('tp-costnote') + '">' + TPtourCostNote(t, key, single) + '</div>') +
+          '</div>')
       + '</div>' +
       '<div class="sn tp-tour-readout">Month 1: ' + Math.round(resolved).toLocaleString() + ' participants, ' + Math.round(entries).toLocaleString() + ' entries per event, ' + TPmoney(handle) + ' of entries' +
-      (TP.customerMode ? '' : ' against ' + TPmoney(prize) + ' of prize funding' + (mult > 1 ? ' across ' + mult + ' locations' : '')) + '.</div>' +
+      (TP.customerMode ? '' : (sponsored ? ' · prizes sponsored' + (t.sponsorName ? ' by ' + TPesc(t.sponsorName) : '') + ', no prize funding' : ' against ' + TPmoney(prize) + ' of prize funding' + (mult > 1 ? ' across ' + mult + ' locations' : ''))) + '.</div>' +
       (prize > handle ? '<div class="tp-tour-warn" role="status">Prize funding exceeds this tournament\'s entries in month 1. Entries are still split in full; the operator carries the shortfall out of their own share.</div>' : '') +
       '</div>';
   }).join('') || '<div class="sn">No ' + TPproductLabel(key).toLowerCase() + ' tournament types yet. Add one to model the deal.</div>';
@@ -5815,6 +5956,44 @@ function TPrenderLicenceSource(r) {
       return '<div class="tp-source-row' + (x.zero ? ' zero' : '') + '"><span>' + TPesc(x.label) + '</span><b>' + TPesc(x.value) + '</b></div>';
     }).join('') + '</div>' +
     '<div class="tp-source-note">' + TPesc(t.detail) + '</div>';
+}
+
+/* The "what you earn" rows every surface prints: the results tab, the brief,
+   the one-pager and the customer's page. One definition of each column. */
+function TPearnRows(r) {
+  var totals = TPyearTotals(r), rows = totals.map(function (y) {
+    var yr = (r.years || [])[y.year - 1] || {};
+    return {
+      year: y.year, locations: y.locationsOpen, revenue: y.splitBase,
+      retired: r.free ? 0 : (yr.credited || 0), fee: r.free ? 0 : (y.fee || 0),
+      share: y.operatorGross, prize: y.prizeCost, settled: y.trueUp + y.balanceDue,
+      earn: y.operatorAfterTrueUp, cumulative: y.cumulative.operatorAfterTrueUp
+    };
+  });
+  var sum = function (k) { return rows.reduce(function (a, x) { return a + x[k]; }, 0); };
+  return {
+    rows: rows,
+    owed: rows.some(function (x) { return x.settled > 0; }),
+    term: { year: 'Term', locations: '', revenue: sum('revenue'), retired: sum('retired'), fee: sum('fee'), share: sum('share'), prize: sum('prize'), settled: sum('settled'), earn: sum('earn'), cumulative: sum('earn') }
+  };
+}
+function TPearnHead(o) {
+  var who = o.who || 'You', your = who === 'You' ? 'Your share' : who + ' share', earns = who === 'You' ? 'You earn' : who + ' earns';
+  return ['Year', 'Revenue generated']
+    .concat(o.free ? [] : ['Retired by activity' + (o.licPct !== null && o.licPct !== undefined ? ' (' + o.licPct + '%)' : ''), 'Licence fee'])
+    .concat([your + ' (' + o.share + ')', 'Prize funding'])
+    .concat(o.free ? [] : ['Settled directly'])
+    .concat([earns])
+    .concat(o.multi ? [earns + ', cumulative'] : []);
+}
+function TPearnRowHtml(y, o) {
+  var cell = function (v, cls) { return '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + v + '</td>'; };
+  return '<tr' + (o.cls ? ' class="' + o.cls + '"' : '') + '>' + cell(TPesc(o.label)) + cell(TPmoney(y.revenue)) +
+    (o.free ? '' : cell(TPmoney(y.retired)) + cell(TPmoney(y.fee))) +
+    cell(TPmoney(y.share)) + cell(TPmoney(y.prize)) +
+    (o.free ? '' : cell(y.settled > 0 ? TPmoney(y.settled) : '—')) +
+    cell(TPmoney(y.earn), y.earn < 0 ? 'tp-neg' : '') +
+    (o.multi ? cell(TPmoney(y.cumulative), y.cumulative < 0 ? 'tp-neg' : '') : '') + '</tr>';
 }
 
 function TPrenderResults(r) {
@@ -5914,25 +6093,21 @@ function TPrenderResults(r) {
   // of it, what is left, and the running total; then that running total with
   // any cash true-up or balance due taken out of it, so a shortfall on the
   // licence is read against what they have already earned.
+  // What the operator makes, year by year, in the one-pager's column order: a
+  // waterfall from revenue to what is left. "Earns" is net of prizes and of
+  // anything settled directly (a cash true-up, or a balance due at term end).
   var opHost = $('tp-operator');
   if (opHost) {
-    var owed = r.trueUpTotal > 0 || r.balanceDue > 0, last = totals[totals.length - 1] || {},
-      ohead = ['Year', 'Revenue generated', 'Operator share (' + opLabel + ')', 'Prize funding', 'Operator earns, after prizes', 'Operator, cumulative']
-        .concat(owed ? [r.balanceDue > 0 ? 'Cash true-up / balance due' : 'Cash true-up', 'Cumulative, after true-ups'] : []);
+    var rows = TPearnRows(r), last = rows.rows[rows.rows.length - 1] || {}, credPct = Math.round(rates.credit * 1000) / 10;
     opHost.hidden = false;
     opHost.innerHTML = '<div class="pf-section-title">What the operator makes</div>' +
-      '<div class="sn">Their share of the pool is theirs from month one; the licence is retired out of the licence share, not this. Prize funding comes out of this share.' +
-      (owed ? ' Where a year falls short on the licence, the cash true-up' + (r.balanceDue > 0 ? ' or balance due' : '') + ' is shown against what they have earned so far.' : '') + '</div>' +
-      '<div class="tp-table-wrap"><table class="tp-months tp-operator-table"><thead><tr>' + ohead.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
-      totals.map(function (y) {
-        var neg = y.toOperator < 0, negCum = y.cumulative.operatorAfterTrueUp < 0;
-        return '<tr><td>Year ' + y.year + '</td><td>' + TPmoney(y.splitBase) + '</td><td>' + TPmoney(y.operatorGross) + '</td><td>' + TPmoney(y.prizeCost) +
-          '</td><td' + (neg ? ' class="tp-neg"' : '') + '>' + TPmoney(y.toOperator) + '</td><td>' + TPmoney(y.cumulative.toOperator) + '</td>' +
-          (owed ? '<td>' + (y.trueUp + y.balanceDue > 0 ? TPmoney(y.trueUp + y.balanceDue) : '—') + '</td><td' + (negCum ? ' class="tp-neg"' : '') + '>' + TPmoney(y.cumulative.operatorAfterTrueUp) + '</td>' : '') + '</tr>';
-      }).join('') +
-      (totals.length > 1 ? '<tr class="tp-total"><td>Term total</td><td>' + TPmoney(last.cumulative.splitBase) + '</td><td>' + TPmoney(last.cumulative.operatorGross) + '</td><td>' + TPmoney(last.cumulative.prizeCost) +
-        '</td><td' + (last.cumulative.toOperator < 0 ? ' class="tp-neg"' : '') + '>' + TPmoney(last.cumulative.toOperator) + '</td><td>' + TPmoney(last.cumulative.toOperator) + '</td>' +
-        (owed ? '<td>' + TPmoney(last.cumulative.trueUp + r.balanceDue) + '</td><td' + (last.cumulative.operatorAfterTrueUp < 0 ? ' class="tp-neg"' : '') + '>' + TPmoney(last.cumulative.operatorAfterTrueUp) + '</td>' : '') + '</tr>' : '') +
+      '<div class="sn">Their share of the pool is theirs from month one; the licence is retired out of the licence share, not this. Prize funding comes out of their share.' +
+      (rows.owed ? ' Where a year falls short on the licence, the difference is settled directly and shown against that year.' : '') + '</div>' +
+      '<div class="tp-table-wrap"><table class="tp-months tp-operator-table"><thead><tr>' +
+      TPearnHead({ licPct: r.recapturing ? credPct : null, share: opLabel, who: 'Operator', free: r.free, multi: r.termYears > 1, single: TPsingleLocation(TPstate(TP)) }).map(function (h) { return '<th>' + h + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      rows.rows.map(function (y) { return TPearnRowHtml(y, { free: r.free, multi: r.termYears > 1, label: 'Year ' + y.year + (y.locations > 1 || !TPsingleLocation(TPstate(TP)) ? ' · ' + y.locations + ' location' + (y.locations === 1 ? '' : 's') : '') }); }).join('') +
+      (rows.rows.length > 1 ? TPearnRowHtml(rows.term, { free: r.free, multi: true, label: 'Term', cls: 'tp-total' }) : '') +
       '</tbody></table></div>';
   }
 
@@ -6041,7 +6216,7 @@ function TPrenderCustomer() {
 var TP_PROV_LABELS = { fact: 'Customer fact', system: 'Customer system', measured: 'Lucra-measured', estimate: 'Estimate' };
 var TP_PROV_BY_ID = [
   [/^tp-(mini-)?(part|rebuys|rebuypct)-\d+$/, 'estimate'],
-  [/^tp-(mini-)?(price|events|tname|name|prize|face|cost|cash|cashprize)-\d+$/, 'fact'],
+  [/^tp-(mini-)?(price|events|tname|name|prize|face|cost|cash|cashprize|sponsor)-\d+$/, 'fact'],
   [/^tp-(loc|fee|open-month|open-add)-\d+$/, 'fact'],
   [/^tp-mini-mau(-mode)?$/, 'system'],
   [/^tp-h2h-reach(-core)?$/, 'system'],
@@ -6050,7 +6225,7 @@ var TP_PROV_BY_ID = [
   [/^tp-sp-/, 'fact'],
   [/^tpc-name$/, 'fact'],
   [/^tp-(split|post)-/, 'fact'],
-  [/^tp-(term|deal-name|partner-site|presenter|presenter-email|upfront-mode|upfront-value|h2h-reach|reward-ratio)$/, 'fact'],
+  [/^tp-(term|deal-name|partner-site|presenter|presenter-select|presenter-email|upfront-mode|upfront-value|h2h-reach|reward-ratio)$/, 'fact'],
   [/^tp-(mau|tpc-mau)$/, 'system'],
   [/^tp-(ramp-start-pct|ramp-months|decay-rate|season-start|retarget)$/, 'estimate'],
   [/^tp-season-m-?\d+$/, 'estimate'],
@@ -6189,7 +6364,7 @@ function TPrecRun() {
   if (onT) {
     st[rec.product].tournaments.forEach(function (t) {
       var part = t.basis === 'mau' ? t.participantPct + '% of the base' : Math.round(TPnum(t.participants, 0)).toLocaleString() + ' participants' + (core && !TPsingleLocation(st) ? ' per location' : '');
-      rows += TPrecRow(t.name, '$' + t.entryPrice + ' entry, ' + t.eventsPerMonth + 'x a month, ' + part + ', ' + money(t.isCash ? t.cashPrizeAmount : t.customerCashCost) + ' prize' +
+      rows += TPrecRow(t.name, '$' + t.entryPrice + ' entry, ' + t.eventsPerMonth + 'x a month, ' + part + ', ' + (TPsponsored(t) ? 'sponsored' : money(TPprizeCost(t))) + ' prize' +
         (core && !TPsingleLocation(st) ? (t.scope === 'network' ? ', one across all locations' : ', at each location') : ''),
         core ? 'As entered on the deal' : B.participation.source);
     });
@@ -6606,12 +6781,35 @@ function TPfmtK(v) {
   return '$' + Math.round(v);
 }
 
+/* Chart size is a viewing preference, not part of the deal: it lives in this
+   browser only. The chart is drawn to the width of its column, so browser
+   font-size settings do not reach inside it; this does. */
+var TP_CHART_SIZES = { compact: 0.8, standard: 1, large: 1.35 };
+var TP_CHART_SIZE_KEY = 'lucra-tp-chart-size';
+function TPchartSize() {
+  try { var v = localStorage.getItem(TP_CHART_SIZE_KEY); if (TP_CHART_SIZES[v]) return v; } catch (e) { /* ignore */ }
+  return 'standard';
+}
+function TPsetChartSize(v) {
+  if (!TP_CHART_SIZES[v]) return;
+  try { localStorage.setItem(TP_CHART_SIZE_KEY, v); } catch (e) { /* ignore */ }
+  TPrender();
+}
+function TPchartSizeControl(id) {
+  var cur = TPchartSize();
+  return '<div class="tp-chart-size" role="group" aria-label="Chart size" id="' + id + '"><span class="sn">Chart size</span>' +
+    [['compact', 'S'], ['standard', 'M'], ['large', 'L']].map(function (x) {
+      return '<button type="button" data-size="' + x[0] + '" aria-pressed="' + (cur === x[0]) + '"' + (cur === x[0] ? ' class="on"' : '') + ' onclick="TPsetChartSize(\'' + x[0] + '\')" title="' + x[0] + '">' + x[1] + '</button>';
+    }).join('') + '</div>';
+}
+
 function TPrenderChart(r) {
   var host = $('tp-chart'); if (!host) return;
   if (r.errors.length || !r.months.length) { host.innerHTML = ''; return; }
   var cases = TPCcases(TPCconfig()), st = TPstate(TP), d = TPchartData(r, cases, st),
-    W = 860, padL = 56, padR = 96, top = 18, gap = 34,
-    hA = d.internal && !d.free ? 200 : 0, hB = 150, H = top + hA + (hA ? gap : 0) + hB + 30,
+    size = TPchartSize(), f = TP_CHART_SIZES[size],
+    W = 860, padL = Math.round(56 * f), padR = Math.round(96 * f), top = Math.round(18 * f), gap = Math.round(34 * f),
+    hA = d.internal && !d.free ? Math.round(200 * f) : 0, hB = Math.round(150 * f), H = top + hA + (hA ? gap : 0) + hB + Math.round(30 * f),
     x = function (m) { return padL + (m - 1) / Math.max(1, d.n - 1) * (W - padL - padR); },
     esc = TPesc, svg = [];
 
@@ -6697,7 +6895,8 @@ function TPrenderChart(r) {
     d.stack.map(function (sr) { return '<span><i style="background:' + sr.colour + '"></i>' + esc(sr.label) + '</span>'; }).join('') +
     '</div>';
 
-  host.innerHTML = '<div class="pf-section-title" style="margin-top:22px">Payoff and revenue over the term</div>' +
+  host.className = 'tp-chart-wrap size-' + size;
+  host.innerHTML = '<div class="tp-chart-head"><div class="pf-section-title" style="margin-top:22px">Payoff and revenue over the term</div>' + TPchartSizeControl('tp-chart-size') + '</div>' +
     '<div class="tp-ch-box"><svg class="tp-ch" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Cumulative licence retired by case, and monthly revenue generated by product">' +
     svg.join('') + '</svg><div class="tp-ch-tip" id="tp-ch-tip" hidden></div></div>' + legend +
     '<div class="sn">The monthly table below is the same data as a table.</div>';
@@ -6833,9 +7032,8 @@ function TPbrief() {
   }
   push();
   push('DISCLOSURE');
-  push('  Show revenue generated. Never print the split percentages or Lucra\'s share.');
-  push('  The by-year block prints operator earnings beside revenue generated at the partner\'s request;');
-  push('  a reader can recover the operator\'s rate from that pair, so print it knowingly.');
+  push('  Show revenue generated. Print the licence share and the partner\'s share as percentages only where the WHAT YOU EARN table names them; never print Lucra\'s share or Lucra\'s earnings.');
+  push('  The by-year table prints what the partner earns beside revenue generated at the partner\'s request.');
   push();
   push('HERO  (two lines; the second carries the foil. Say the offer, not the product.)');
   push('  Offer: ' + money(totalYear) + ' of revenue generated a year on the partner\'s own user base.');
@@ -6932,14 +7130,16 @@ function TPbrief() {
 
   // The contract by year, what activity retires of it each year, and what the
   // operator earns each year. Printed at the partner's request; see DISCLOSURE.
-  var byYear = TPbriefYears(r, st), totals = TPyearTotals(r), owed = r.trueUpTotal > 0 || r.balanceDue > 0;
-  push('LICENCE AND EARNINGS BY YEAR  (one row per contract year)');
+  var byYear = TPbriefYears(r, st), earn = TPearnRows(r), credPct = Math.round(rates.credit * 1000) / 10,
+    opPct = Math.round(rates.operator * 1000) / 10, postPct = Math.round(rates.postOperator * 1000) / 10,
+    shareLabel = r.recapturing && Math.abs(postPct - opPct) > 0.05 ? opPct + '% then ' + postPct + '%' : (r.recapturing ? opPct : postPct) + '%';
+  push('THE LICENCE, YEAR BY YEAR  (the contract and what retires it)');
   push('  Contract: ' + (r.free ? 'licence waived' : n(r.totalContract) + ' over ' + term + ' year' + (term === 1 ? '' : 's') +
     (byYear.stepped ? ', stepped ' + byYear.fees.map(function (f) { return Math.round(f); }).join(' / ') : ', flat ' + Math.round(byYear.fees[0]) + ' a year') +
     (r.annualBasis ? '. Each year\'s fee is retired within that year; the balance resets at every step.' : '. Retired as one balance across the whole term, so early years can retire later years\' fees.')) +
     '  [customer fact]');
   if (!r.free && r.recapturing) {
-    push('  Funded from: the licence share of the pool alone. Nothing from the operator\'s share goes to the licence: it is theirs from month one and steps up once the licence is cleared.  [customer fact] [highlight]');
+    push('  Funded from: the licence share of the pool alone (' + credPct + '% of every pool until the year\'s fee is cleared). Nothing from the operator\'s share goes to the licence: it is theirs from month one and steps up once the licence is cleared.  [customer fact] [highlight]');
   }
   byYear.rows.forEach(function (y) {
     push('  Year ' + y.year + ':' +
@@ -6947,21 +7147,28 @@ function TPbrief() {
         (r.recapturing ? ' (from the licence share ' + n(y.activity) + ', from the operator\'s share ' + n(y.fromOperator) + ')' : '') +
         (y.sponsor > 0 || y.upfront > 0 ? ' (of which' + (y.upfront > 0 ? ' paid at signing ' + n(y.upfront) : '') + (y.sponsor > 0 && y.upfront > 0 ? ',' : '') + (y.sponsor > 0 ? ' sponsors ' + n(y.sponsor) : '') + ')' : '') +
         (y.closing > 0 && y.year === term ? ' · ' + n(y.closing) + ' outstanding' : '')) +
-      ' · revenue generated ' + n(y.revenue) +
-      ' · operator earns ' + n(y.operator) +
-      (showT ? ' after prize funding' + (y.prize > 0 ? ' of ' + n(y.prize) : '') : '') +
-      (term > 1 ? ' · operator cumulative ' + n((totals[y.year - 1] || {}).cumulative ? totals[y.year - 1].cumulative.toOperator : y.operator) : '') +
       '  [derived from: the monthly result summed by year]');
   });
-  if (term > 1 && totals.length) {
-    var lastT = totals[totals.length - 1];
-    push('  Term: revenue generated ' + n(lastT.cumulative.splitBase) + ' · operator earns ' + n(lastT.cumulative.toOperator) +
-      (showT ? ' after prize funding of ' + n(lastT.cumulative.prizeCost) : '') +
-      (owed ? ' · less ' + (r.balanceDue > 0 ? 'balance due' : 'cash true-ups') + ' of ' + n(lastT.cumulative.trueUp + r.balanceDue) + ' leaves ' + n(lastT.cumulative.operatorAfterTrueUp) : '') +
-      '  [derived from: the year rows summed]');
-  }
   if (!r.free) push('  Retired by activity is what the licence earns back from play and sponsors each year; the fee is what it costs.' +
     (r.recapturing ? ' It is taken from the licence share only, never from the operator\'s share.' : ''));
+  push();
+
+  // The table every one-pager carries: a waterfall from revenue to what the
+  // partner keeps. "You earn" is net of prizes and of anything settled
+  // directly, so the same number never appears under two names.
+  push('WHAT YOU EARN, YEAR BY YEAR  (a table, one row per contract year plus a Term row; print it as a table, columns in this order)');
+  push('  Columns: ' + TPearnHead({ licPct: r.recapturing ? credPct : null, share: shareLabel, who: 'You', free: r.free, multi: term > 1, single: TPsingleLocation(st) }).join(' | '));
+  earn.rows.forEach(function (y) {
+    push('  Year ' + y.year + (TPsingleLocation(st) ? '' : ' · ' + y.locations + ' location' + (y.locations === 1 ? '' : 's')) + ' | ' +
+      [n(y.revenue)].concat(r.free ? [] : [n(y.retired), n(y.fee)]).concat([n(y.share), n(y.prize)]).concat(r.free ? [] : [y.settled > 0 ? n(y.settled) : '—']).concat([n(y.earn)]).concat(term > 1 ? [n(y.cumulative)] : []).join(' | ') +
+      '  [derived from: the monthly result summed by year]');
+  });
+  if (term > 1) {
+    push('  Term | ' + [n(earn.term.revenue)].concat(r.free ? [] : [n(earn.term.retired), n(earn.term.fee)]).concat([n(earn.term.share), n(earn.term.prize)]).concat(r.free ? [] : [earn.term.settled > 0 ? n(earn.term.settled) : '—']).concat([n(earn.term.earn), n(earn.term.cumulative)]).join(' | ') + '  [derived from: the year rows summed]');
+  }
+  push('  You earn = your share of the pool, less the prizes you fund' + (r.free ? '' : ', less anything settled directly') + '. Cumulative is the running total of that.' +
+    (earn.owed ? ' Settled directly is what the licence still needed after the licence share in that year, paid separately; it is never taken out of your share of the pool.' : ''));
+  push('  Print this table in full, in this order, with the headings above. It is the visual the page is built around.  [highlight]');
   push();
 
   push('SENSITIVITY  (three rows, low case first; participation scales' +
@@ -6984,6 +7191,10 @@ function TPbrief() {
       '% win rate and a ' + round2(h.rewardWins > 0 ? h.rewardRedemptions / h.rewardWins * 100 : 0) + '% redemption rate are planning assumptions.');
   }
   if (showT) push('  Participation per event is a planning assumption. Entry prices and prize funding are the partner\'s own figures.');
+  if (showT) {
+    var sponsoredList = TPallTournaments(st).filter(TPsponsored);
+    if (sponsoredList.length) push('  Sponsored prizes: ' + sponsoredList.map(function (t) { return t.name + ' (' + (t.sponsorName ? 'sponsored by ' + t.sponsorName : 'sponsored') + ')'; }).join(', ') + '. The reward is advertised at face value; the sponsor carries it, so it is not part of the partner\'s prize funding.  [customer fact]');
+  }
   var locs = TPlocations(st), grows = locs[locs.length - 1] > 1;
   if (grows) push('  Locations: ' + locs.join(' -> ') + ' across the contract years  [customer fact]. The base is one location; ' +
     'new openings are spread through the year they open. Volume averages ' + (Math.round(TPavgVolume(st) * 100) / 100) +
@@ -7362,6 +7573,24 @@ function TPCprint() {
       card('Your prize funding / mo', TPmoney(m1.prizeCost || 0), '') +
       '</div>';
     html += '<p class="tp-print-note">' + TPesc(TPpitchTournaments(TP, TPCconfig())) + '</p>';
+  }
+
+  // What they earn, year by year: the table every one-pager carries.
+  if (!tr.errors.length) {
+    var earn = TPearnRows(tr), prRates = TPsplitRates(st), credPct = Math.round(prRates.credit * 1000) / 10,
+      opPct = Math.round(prRates.operator * 1000) / 10, postPct = Math.round(prRates.postOperator * 1000) / 10,
+      shareLabel = tr.recapturing && Math.abs(postPct - opPct) > 0.05 ? opPct + '% then ' + postPct + '%' : (tr.recapturing ? opPct : postPct) + '%',
+      single = TPsingleLocation(st);
+    html += '<h2 style="font-size:15px;margin:20px 0 8px">What you earn, year by year</h2>';
+    html += '<table class="tp-months tp-operator-table"><thead><tr>' +
+      TPearnHead({ licPct: tr.recapturing ? credPct : null, share: shareLabel, who: 'You', free: tr.free, multi: tr.termYears > 1, single: single }).map(function (h) { return '<th>' + h + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      earn.rows.map(function (y) { return TPearnRowHtml(y, { free: tr.free, multi: tr.termYears > 1, label: 'Year ' + y.year + (single ? '' : ' · ' + y.locations + ' location' + (y.locations === 1 ? '' : 's')) }); }).join('') +
+      (earn.rows.length > 1 ? TPearnRowHtml(earn.term, { free: tr.free, multi: true, label: 'Term', cls: 'tp-total' }) : '') +
+      '</tbody></table>';
+    html += '<p class="tp-print-note">You earn is your share of the pool, less the prizes you fund' + (tr.free ? '' : ', less anything settled directly') + '.' +
+      (earn.owed ? ' Settled directly is what the licence still needed after the licence share in that year, paid separately; it is never taken out of your share.' : '') +
+      (tr.recapturing ? ' The licence is retired out of the licence share alone; your share is yours from month one.' : '') + '</p>';
   }
 
   html += '<h2 style="font-size:15px;margin:20px 0 8px">Combined, across three cases</h2>';

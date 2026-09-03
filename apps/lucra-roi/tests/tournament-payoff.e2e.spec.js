@@ -311,7 +311,7 @@ test('the results say the licence is retired from the licence share alone, never
   // The brief carries it as a highlighted line and on every year row.
   const brief = await page.evaluate(() => TPbrief());
   expect(brief).toMatch(/Foil: the \$306,000 licence is paid down by activity out of the licence share alone, with \$[\d,]+ settled in cash at year end\. Your share is yours from month one\./);
-  expect(brief).toContain("Funded from: the licence share of the pool alone. Nothing from the operator's share goes to the licence: it is theirs from month one and steps up once the licence is cleared.  [customer fact] [highlight]");
+  expect(brief).toContain("Funded from: the licence share of the pool alone (50% of every pool until the year's fee is cleared). Nothing from the operator's share goes to the licence: it is theirs from month one and steps up once the licence is cleared.  [customer fact] [highlight]");
   expect(brief).toMatch(/Year 1: licence fee 78000 \(\$78,000\) · retired by activity [\d.]+ \(\$[\d,]+\) \(from the licence share [\d.]+ \(\$[\d,]+\), from the operator's share 0 \(\$0\)\)/);
   expect(brief).toContain('It is taken from the licence share only, never from the operator\'s share.');
   // Customer view keeps the box out, as it keeps every licence figure out.
@@ -359,47 +359,59 @@ test('the tables total each year and the term, and say what the operator makes y
   const cumIdx = headers.findIndex((h) => /operator, cumulative/i.test(h));
   expect(cumIdx).toBeGreaterThan(0);
   await expect(cells13.nth(cumIdx)).toHaveText(money(totals[0].toOperator + r.months[12].toOperator));
-  // The operator table: each year, the running total, and the term.
+  // The operator table, in the one-pager's order: revenue, retired, fee, share, prizes, settled, earns (net), cumulative.
   const op = page.locator('#tp-operator');
   await expect(op).toBeVisible();
   await expect(op).toContainText('What the operator makes');
+  const opHeaders = await op.locator('thead th').allInnerTexts();
+  expect(opHeaders.map((h) => h.toLowerCase())).toEqual(['year', 'revenue generated', 'retired by activity (50%)', 'licence fee', 'operator share (45% then 90%)', 'prize funding', 'settled directly', 'operator earns', 'operator earns, cumulative']);
   const opRows = op.locator('tbody tr');
   await expect(opRows).toHaveCount(4);
+  const earnRows = await page.evaluate(() => TPearnRows(TPcalculate(TP, TPCconfig())));
   for (let y = 0; y < 3; y++) {
-    await expect(opRows.nth(y)).toContainText(money(totals[y].toOperator));
-    await expect(opRows.nth(y)).toContainText(money(totals[y].cumulative.toOperator));
+    const cells = opRows.nth(y).locator('td');
+    await expect(cells.nth(0)).toHaveText('Year ' + (y + 1) + ' · 1 location');
+    await expect(cells.nth(1)).toHaveText(money(totals[y].splitBase));
+    await expect(cells.nth(2)).toHaveText(money(r.years[y].credited));
+    await expect(cells.nth(3)).toHaveText(money(r.years[y].fee));
+    await expect(cells.nth(4)).toHaveText(money(totals[y].operatorGross));
+    await expect(cells.nth(5)).toHaveText(money(totals[y].prizeCost));
+    await expect(cells.nth(6)).toHaveText(totals[y].trueUp + totals[y].balanceDue > 0 ? money(totals[y].trueUp + totals[y].balanceDue) : '—');
+    // Earns is net of prizes and of what is settled directly; cumulative runs on that.
+    await expect(cells.nth(7)).toHaveText(money(totals[y].operatorAfterTrueUp));
+    await expect(cells.nth(8)).toHaveText(money(totals[y].cumulative.operatorAfterTrueUp));
+    expect(earnRows.rows[y].earn).toBeCloseTo(totals[y].toOperator - totals[y].trueUp - totals[y].balanceDue, 6);
   }
-  await expect(opRows.nth(3)).toContainText('Term total');
-  await expect(opRows.nth(3)).toContainText(money(r.totalOperator));
-  // Year 3's fee outruns the activity share on this deal, so that year alone carries a cash true-up.
+  await expect(opRows.nth(3)).toContainText('Term');
+  await expect(opRows.nth(3).locator('td').nth(7)).toHaveText(money(r.totalOperator - r.trueUpTotal - r.balanceDue));
+  // Year 3's fee outruns the activity share on this deal, so that year alone is settled directly.
   expect(totals[0].trueUp).toBe(0);
   expect(totals[2].trueUp).toBeGreaterThan(0);
-  await expect(op.locator('thead')).toContainText('Cash true-up');
-  const opHeaders = await op.locator('thead th').allInnerTexts();
-  const tuIdx = opHeaders.findIndex((h) => /cash true-up/i.test(h));
-  await expect(opRows.nth(0).locator('td').nth(tuIdx)).toHaveText('—');
-  await expect(opRows.nth(2).locator('td').nth(tuIdx)).toHaveText(money(totals[2].trueUp));
-  await expect(opRows.nth(2).locator('td').nth(tuIdx + 1)).toHaveText(money(totals[2].cumulative.operatorAfterTrueUp));
-  // Drop the volume until every year needs a cash true-up: it is read against what the operator has made.
+  await expect(opRows.nth(0).locator('td').nth(6)).toHaveText('—');
+  await expect(opRows.nth(2).locator('td').nth(6)).toHaveText(money(totals[2].trueUp));
+  // Drop the volume until every year needs settling: earns falls by exactly that.
   await page.evaluate(() => { TP.core.tournaments[0].participants = 50; TP.core.tournaments[0].customerCashCost = 50; TPsave(); TPrender(); });
   const short = await page.evaluate(() => { const rr = TPcalculate(TP, TPCconfig()); return { r: rr, t: TPyearTotals(rr) }; });
   expect(short.r.trueUpTotal).toBeGreaterThan(0);
-  await expect(op.locator('thead')).toContainText('Cash true-up');
-  await expect(op.locator('thead')).toContainText('Cumulative, after true-ups');
-  await expect(op.locator('tbody tr').nth(2)).toContainText(money(short.t[2].cumulative.operatorAfterTrueUp));
-  await expect(op.locator('tbody tr').nth(3)).toContainText(money(short.r.totalOperator - short.r.trueUpTotal));
+  await expect(op.locator('tbody tr').nth(2).locator('td').nth(8)).toHaveText(money(short.t[2].cumulative.operatorAfterTrueUp));
+  await expect(op.locator('tbody tr').nth(3).locator('td').nth(7)).toHaveText(money(short.r.totalOperator - short.r.trueUpTotal));
   // A loss prints as a loss: nothing clamps money at zero.
   await page.evaluate(() => { TP.core.tournaments[0].customerCashCost = 5000; TPsave(); TPrender(); });
   const loss = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
   expect(loss.months[0].toOperator).toBeLessThan(0);
   await expect(page.locator('#tp-table tbody tr').first().locator('td.tp-neg').first()).toHaveText(money(loss.months[0].toOperator));
-  await expect(op.locator('tbody tr').nth(3)).toContainText(money(loss.totalOperator));
+  await expect(op.locator('tbody tr').nth(3).locator('td').nth(7)).toHaveText(money(loss.totalOperator - loss.trueUpTotal - loss.balanceDue));
   expect(await page.evaluate(() => TPmoney(-1234.4))).toBe('-$1,234');
   await page.evaluate(() => { TP.core.tournaments[0].customerCashCost = 50; TPsave(); TPrender(); });
-  // The brief carries the running total and the term line.
+  // The brief carries the same table, row by row, with the same definitions.
   const brief = await page.evaluate(() => TPbrief());
-  expect(brief).toMatch(/Year 1: .* · operator cumulative [\d.]+ \(\$[\d,]+\)/);
-  expect(brief).toMatch(/Term: revenue generated [\d.]+ \(\$[\d,]+\) · operator earns [\d.]+ \(\$[\d,]+\) after prize funding of [\d.]+ \(\$[\d,]+\) · less cash true-ups of [\d.]+ \(\$[\d,]+\) leaves -?[\d.]+ \(-?\$[\d,]+\)/);
+  const earnBlock = brief.slice(brief.indexOf('WHAT YOU EARN, YEAR BY YEAR'), brief.indexOf('SENSITIVITY'));
+  expect(earnBlock).toContain('Columns: Year | Revenue generated | Retired by activity (50%) | Licence fee | Your share (45% then 90%) | Prize funding | Settled directly | You earn | You earn, cumulative');
+  const briefRows = await page.evaluate(() => TPearnRows(TPcalculate(TP, TPCconfig())));
+  const n = (v) => Math.round(v * 100) / 100 + ' (' + (v < 0 ? '-$' : '$') + Math.abs(Math.round(v)).toLocaleString('en-US') + ')';
+  expect(earnBlock).toContain('Year 1 · 1 location | ' + [n(briefRows.rows[0].revenue), n(briefRows.rows[0].retired), n(briefRows.rows[0].fee), n(briefRows.rows[0].share), n(briefRows.rows[0].prize), briefRows.rows[0].settled > 0 ? n(briefRows.rows[0].settled) : '—', n(briefRows.rows[0].earn), n(briefRows.rows[0].cumulative)].join(' | '));
+  expect(earnBlock).toContain('Term | ' + n(briefRows.term.revenue));
+  expect(earnBlock).toContain('Print this table in full, in this order, with the headings above.');
   // Customer view hides the operator table with the rest of the licence detail.
   await page.evaluate(() => { TP.customerMode = true; TPsave(); TPrender(); });
   await expect(op).toBeHidden();
@@ -430,6 +442,95 @@ test('the combined model reads the partner and the base from the deal card inste
   const html = await page.evaluate(() => window.__printHTML);
   expect(html).toContain('Loco Bear');
   expect(html).toContain('8,000');
+});
+
+test('the presenter is picked from the roster and fills the email, with a way to add someone else', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, {});
+  const sel = page.locator('#tp-presenter-select');
+  await expect(sel).toBeVisible();
+  await expect(page.locator('#tp-presenter-other')).toBeHidden();
+  const names = await sel.locator('option').allInnerTexts();
+  expect(names).toEqual(['Choose…', 'Mat Weiss', 'Phil Probert', 'Brian Fagan', 'Jack Meyer', 'Nick Johnson', 'Dylan Robbins', 'Other…']);
+  await sel.selectOption({ label: 'Phil Probert' });
+  expect(await page.evaluate(() => [TP.presenter, TP.presenterEmail])).toEqual(['Phil Probert', 'Phil@playlucra.com']);
+  await sel.selectOption({ label: 'Mat Weiss' });
+  expect(await page.evaluate(() => [TP.presenter, TP.presenterEmail])).toEqual(['Mat Weiss', 'Mat.Weiss@playlucra.com']);
+  const brief = await page.evaluate(() => TPbrief());
+  expect(brief).toContain('  Mat Weiss · Mat.Weiss@playlucra.com');
+  // Someone not on the list.
+  await sel.selectOption('other');
+  await expect(page.locator('#tp-presenter-other')).toBeVisible();
+  await expect(page.locator('#tp-presenter-email-group')).toBeVisible();
+  await page.locator('#tp-presenter').fill('Sam Rivera');
+  await page.locator('#tp-presenter-email').fill('sam@playlucra.com');
+  expect(await page.evaluate(() => [TP.presenter, TP.presenterEmail])).toEqual(['Sam Rivera', 'sam@playlucra.com']);
+  await expect(sel).toHaveValue('other');
+  // A saved deal that names a roster member comes back on the roster, email in step.
+  await page.evaluate(() => { TP.presenter = 'Jack Meyer'; TP.presenterEmail = 'old@example.com'; TPsave(); TPrenderControls(); });
+  await expect(sel).toHaveValue('3');
+  expect(await page.evaluate(() => TP.presenterEmail)).toBe('Jack@playlucra.com');
+});
+
+test('tournaments duplicate, take preset prices and frequencies, and cost a percentage or nothing when sponsored', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 40000 });
+  const list = page.locator('#tp-tournaments-list-core');
+  await expect(list.locator('.tp-tour')).toHaveCount(1);
+  // Duplicate lands right below with the same numbers.
+  await list.locator('.tp-duplicate').first().click();
+  await expect(list.locator('.tp-tour')).toHaveCount(2);
+  await expect(list.locator('.tp-tour').nth(1).locator('.tp-tour-name')).toHaveValue('Weekly open (copy)');
+  expect(await page.evaluate(() => [TP.core.tournaments[1].entryPrice, TP.core.tournaments[1].customerCashCost, TP.core.tournaments[0].id !== TP.core.tournaments[1].id])).toEqual([10, 200, true]);
+  // Chips set the field and light up; a typed value reads as custom.
+  const first = list.locator('.tp-tour').first();
+  await first.locator('.tp-chips').first().locator('button', { hasText: '$25' }).click();
+  await expect(page.locator('#tp-price-0')).toHaveValue('25');
+  await expect(list.locator('.tp-tour').first().locator('.tp-chip.on').first()).toHaveText('$25');
+  await list.locator('.tp-tour').first().locator('.tp-chips').nth(1).locator('button', { hasText: 'Daily' }).click();
+  await expect(page.locator('#tp-events-0')).toHaveValue('30');
+  await page.locator('#tp-events-0').fill('6');
+  await expect(list.locator('.tp-tour').first().locator('.tp-chips').nth(1).locator('.tp-chip.on')).toHaveCount(0);
+  await page.locator('#tp-events-0').fill('4');
+  // Cost as a share of the reward value: the dollars follow the face value, and show for checking.
+  const costSwitch = list.locator('.tp-tour').first().locator('.tp-cost-switch');
+  await costSwitch.locator('button[data-cost="pct"]').click();
+  expect(await page.evaluate(() => [TP.core.tournaments[0].costMode, TP.core.tournaments[0].costPct])).toEqual(['pct', 40]);
+  await expect(list.locator('.tp-tour').first()).toContainText('$200 per event at a $500 reward');
+  await page.locator('#tp-face-0').fill('1000');
+  await expect(list.locator('.tp-tour').first()).toContainText('$400 per event at a $1,000 reward');
+  // 400 x 4 for this one, plus the duplicate's 200 x 4.
+  expect(await page.evaluate(() => TPcalculate(TP, TPCconfig()).months[0].prizeCost)).toBe(400 * 4 + 200 * 4);
+  // Back to dollars keeps the same amount.
+  await costSwitch.locator('button[data-cost="amount"]').click();
+  await expect(page.locator('#tp-cost-0')).toHaveValue('400');
+  // Sponsored: no cost to the customer, a name that reaches the brief.
+  await costSwitch.locator('button[data-cost="sponsored"]').click();
+  await page.locator('#tp-sponsor-0').fill('Coors Light');
+  expect(await page.evaluate(() => TPcalculate(TP, TPCconfig()).months[0].prizeCost)).toBe(200 * 4);
+  await expect(list.locator('.tp-tour').first()).toContainText('prizes sponsored by Coors Light, no prize funding');
+  const brief = await page.evaluate(() => TPbrief());
+  expect(brief).toContain('Sponsored prizes: Weekly open (sponsored by Coors Light).');
+  // The customer summary and one-pager keep the reward at face value.
+  await page.evaluate(() => { TP.core.tournaments.splice(1, 1); TPsave(); TPrenderTournaments(); TPrender(); });
+  expect(await page.evaluate(() => TPcalculate(TP, TPCconfig()).totalPrizeCost)).toBe(0);
+});
+
+test('the chart has a size control that is remembered in this browser', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { fee: 40000 });
+  const ctl = page.locator('#tp-chart-size');
+  await expect(ctl).toBeVisible();
+  await expect(ctl.locator('button.on')).toHaveText('M');
+  const before = await page.locator('#tp-chart svg').getAttribute('viewBox');
+  await ctl.locator('button[data-size="large"]').click();
+  await expect(page.locator('#tp-chart')).toHaveClass(/size-large/);
+  const after = await page.locator('#tp-chart svg').getAttribute('viewBox');
+  expect(Number(after.split(' ')[3])).toBeGreaterThan(Number(before.split(' ')[3]));
+  await page.reload();
+  await page.locator('.tabs button', { hasText: 'Revenue Model' }).click();
+  await expect(page.locator('#tp-chart-size button.on')).toHaveText('L');
+  await page.locator('#tp-chart-size button[data-size="standard"]').click();
 });
 
 test('the break-even map renders a grid and hides on a free licence', async ({ page }) => {
@@ -1252,17 +1353,18 @@ test('the brief states the contract by year, what activity retires, and what the
   await setBaseDeal(page, { termYears: 3, fees: [40000, 60000, 80000, 80000, 80000], includeH2H: true, mau: 100000 });
   await page.evaluate(() => { TPCsetMau(100000); MG.eng = 10; MG.plays = 20; MG.wager = 2; MG.rake = 10; MGsync(); MGu(); TPrender(); });
   const brief = await page.evaluate(() => TPbrief());
-  const block = brief.slice(brief.indexOf('LICENCE AND EARNINGS BY YEAR'), brief.indexOf('SENSITIVITY'));
+  const block = brief.slice(brief.indexOf('THE LICENCE, YEAR BY YEAR'), brief.indexOf('WHAT YOU EARN, YEAR BY YEAR'));
   expect(block).toContain('stepped 40000 / 60000 / 80000');
   expect(block).toContain('180000 ($180,000) over 3 years');
   for (const y of [1, 2, 3]) {
     expect(block).toMatch(new RegExp('Year ' + y + ': licence fee \\d+ \\(\\$[\\d,]+\\) · retired by activity \\d+'));
-    expect(block).toMatch(new RegExp('Year ' + y + ':.*operator earns \\d+ \\(\\$[\\d,]+\\) after prize funding'));
   }
-  // The rows reconcile with the engine, year by year.
+  // The earnings table reconciles with the engine, year by year: earns is net of prizes and settling.
   const r = await page.evaluate(() => TPcalculate(TP, TPCconfig()));
-  const y2op = r.months.filter((m) => m.year === 2).reduce((a, m) => a + m.toOperator, 0);
-  expect(block).toContain('operator earns ' + Math.round(y2op * 100) / 100 + ' (');
+  const earn = brief.slice(brief.indexOf('WHAT YOU EARN, YEAR BY YEAR'), brief.indexOf('SENSITIVITY'));
+  const y2 = await page.evaluate(() => TPyearTotals(TPcalculate(TP, TPCconfig()))[1]);
+  expect(earn).toMatch(new RegExp('Year 2 · 1 location \\| ' + Math.round(y2.splitBase * 100) / 100 + ' \\('));
+  expect(earn).toContain('| ' + Math.round(y2.operatorAfterTrueUp * 100) / 100 + ' (');
   // Lucra's per-year share stays behind the internal line.
   const printable = brief.slice(0, brief.indexOf('INTERNAL — DO NOT PRINT'));
   expect(printable).not.toMatch(/Lucra share \d/);
@@ -1271,7 +1373,8 @@ test('the brief states the contract by year, what activity retires, and what the
   await page.locator('#tp-free').check();
   const waived = await page.evaluate(() => TPbrief());
   expect(waived).toContain('Contract: licence waived');
-  expect(waived).toMatch(/Year 1: licence waived · revenue generated/);
+  expect(waived).toMatch(/Year 1: licence waived/);
+  expect(waived).toContain('Columns: Year | Revenue generated | Your share (');
 });
 
 test('the recommender names the lever that closes a gap and applies it', async ({ page }) => {
@@ -1584,8 +1687,11 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await expect(cp.locator('#term')).toContainText('Licence payoff over the term');
   await expect(cp.locator('#term .bars.pay i')).toHaveCount(36);
   await expect(cp.locator('#term .keep .rows div')).toHaveCount(5);
-  await expect(cp.locator('#term .keep')).toContainText('You earn after the true-up');
+  await expect(cp.locator('#term .keep')).toContainText('You earn over the term');
+  await expect(cp.locator('#term .keep')).toContainText('Settled directly');
   await expect(cp.locator('#term')).toContainText('What you make');
+  const makeHeaders = (await cp.locator('#term table').nth(1).locator('thead th').allInnerTexts()).map((h) => h.toLowerCase());
+  expect(makeHeaders).toEqual(['year', 'revenue generated', 'retired by activity (' + pc(rates.credit) + ')', 'licence fee', 'your share (' + pc(rates.operator) + ' then ' + pc(rates.postOperator) + ')', 'prize funding', 'settled directly', 'you earn', 'you earn, cumulative']);
   await expect(cp.locator('#term')).toContainText('Month by month');
   const tables = cp.locator('#term table');
   await expect(tables).toHaveCount(3);

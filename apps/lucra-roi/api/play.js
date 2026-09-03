@@ -95,7 +95,10 @@ function applyInputs(base, inputs, unlock) {
           c.rewardFaceValue = v; c.cashPrizeAmount = v;
           if (c.isCash) c.customerCashCost = v;
         }
-        if (t.prizeCost !== undefined && !c.isCash) c.customerCashCost = num(t.prizeCost, 0, 1000000);
+        if (t.prizeCost !== undefined && !c.isCash) { c.customerCashCost = num(t.prizeCost, 0, 1000000); if (t.costMode === undefined) c.costMode = 'amount'; }
+        if (!c.isCash && (t.costMode === 'amount' || t.costMode === 'pct' || t.costMode === 'sponsored')) c.costMode = t.costMode;
+        if (t.costPct !== undefined && !c.isCash) c.costPct = num(t.costPct, 0, 1000);
+        if (typeof t.sponsorName === 'string') c.sponsorName = t.sponsorName.slice(0, 60);
         if (k === 'core' && !single && (t.scope === 'each' || t.scope === 'network')) c.scope = t.scope;
         return c;
       }).filter(Boolean);
@@ -150,7 +153,8 @@ function facts(s, meta) {
   const tour = (t, k) => ({
     id: t.id, name: t.name, entryPrice: num(t.entryPrice, 0), eventsPerMonth: num(t.eventsPerMonth, 0), basis: t.basis,
     participants: num(t.participants, 0), participantPct: num(t.participantPct, 0), rebuys: num(t.rebuys, 0),
-    prizeValue: num(t.isCash ? t.cashPrizeAmount : t.rewardFaceValue, 0), prizeCost: num(t.isCash ? t.cashPrizeAmount : t.customerCashCost, 0), pool: !!t.isCash,
+    prizeValue: num(t.isCash ? t.cashPrizeAmount : t.rewardFaceValue, 0), prizeCost: E.TPprizeCost(t), pool: !!t.isCash,
+    costMode: t.isCash ? 'amount' : (t.costMode || 'amount'), costPct: num(t.costPct, 0), sponsorName: E.TPsponsored(t) ? String(t.sponsorName || '') : '',
     scope: k === 'core' ? (t.scope === 'network' ? 'network' : 'each') : 'network',
   });
   const product = (k) => ({
@@ -173,7 +177,7 @@ function facts(s, meta) {
 /* What the dashboard keeps of a customer's latest scenario: their facts and
    the headline figures, small enough to sit in one hash field. */
 function scenarioSummary(f, o) {
-  const tour = (t) => ({ name: t.name, entryPrice: t.entryPrice, eventsPerMonth: t.eventsPerMonth, basis: t.basis, participants: t.participants, participantPct: t.participantPct, prizeCost: t.prizeCost, scope: t.scope });
+  const tour = (t) => ({ name: t.name, entryPrice: t.entryPrice, eventsPerMonth: t.eventsPerMonth, basis: t.basis, participants: t.participants, participantPct: t.participantPct, prizeCost: t.prizeCost, costMode: t.costMode, sponsorName: t.sponsorName, scope: t.scope });
   const h2h = (h) => (h ? { engagement: h.engagement, playsPerUser: h.playsPerUser, spendPerPlay: h.spendPerPlay, reach: h.reach } : null);
   return {
     mau: f.mau, miniMau: f.miniMau, locations: f.locations, schedule: f.schedule, scheduleStated: f.scheduleStated, rampOn: f.rampOn,
@@ -277,13 +281,15 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 8px;b
 .gate{max-width:420px;margin:60px auto;text-align:center}.gate input{text-align:center;font-size:18px;letter-spacing:.2em}
 .scen{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 4px}@media(max-width:600px){.scen{grid-template-columns:1fr}}
 .scen .sc{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2);display:flex;flex-direction:column;gap:4px}.scen .sc.on{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}.scen .sc .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.scen .sc .k b{color:var(--green);margin-right:6px}.scen .sc .t{font-weight:650;font-size:13px}.scen .sc .v{font:750 16px var(--mono);margin-top:2px}.scen .sc .v.bad{color:var(--red)}.scen .sc small{color:var(--muted);font-size:11px}.scen .sc .when{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted);margin-top:2px}.scen .sc .when input{width:64px;padding:3px 6px;font-size:12px}.scen .sc button{margin-top:6px;padding:6px 10px;font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.chip{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:2px 8px;font:600 11px Inter,system-ui,sans-serif;cursor:pointer}.chip.on{border-color:var(--green);color:var(--green);background:rgba(138,233,26,.1)}
 .sched{margin:6px 0}.sched .row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin:6px 0}.chip{display:inline-block;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;margin:3px 4px 3px 0;color:var(--muted)}.chip.est{border-color:var(--amber)}
 .full{margin-top:18px}.section{margin-top:18px}.section h3{margin:0 0 4px;font-size:14px}.section .hint{margin-bottom:8px}
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.tablewrap table{min-width:640px}.tablewrap th,.tablewrap td{white-space:nowrap}tr.sub td{background:rgba(255,255,255,.04);font-weight:600;border-top:1px solid var(--line)}td.neg{color:var(--red)}td.zero{color:var(--green)}
 .keep .rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:6px}.keep .rows div{display:flex;flex-direction:column}.keep .rows span{font-size:11px}.keep .rows b{font:700 15px var(--mono);color:var(--text)}.keep .rows b.zero{color:var(--green)}.keep .rows b.neg{color:var(--red)}
 .banner{border:1px solid var(--blue);background:rgba(111,177,255,.1);border-radius:10px;padding:10px 12px;margin:14px 0 0;font-size:13px;color:var(--text)}.banner b{color:var(--blue)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}.stat{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:10px}.stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}.stat strong{display:block;font:750 18px var(--mono);margin-top:4px}.stat small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
-.bars{display:flex;align-items:flex-end;gap:2px;height:90px;margin:8px 0 2px}.bars i{flex:1;background:var(--green);border-radius:2px 2px 0 0;min-width:2px;opacity:.85}.bars i.neg{background:var(--red)}.bars.pay i{background:var(--blue)}.bars.pay i.done{background:var(--green)}.bars.pay i.ys{border-left:1px solid var(--line)}.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}
+.bars{display:flex;align-items:flex-end;gap:2px;height:90px;margin:8px 0 2px}body.size-compact .bars{height:64px}body.size-large .bars{height:150px}body.size-large .tile strong{font-size:26px}body.size-large table{font-size:14px}
+.sizer{display:inline-flex;align-items:center;gap:4px;margin-left:8px;vertical-align:middle}.sizer button{padding:1px 7px;font-size:11px}.sizer button.on{border-color:var(--green);color:var(--green)}.bars i{flex:1;background:var(--green);border-radius:2px 2px 0 0;min-width:2px;opacity:.85}.bars i.neg{background:var(--red)}.bars.pay i{background:var(--blue)}.bars.pay i.done{background:var(--green)}.bars.pay i.ys{border-left:1px solid var(--line)}.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}
 footer{margin-top:26px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
 </style></head><body><main class="wrap" id="app"><div class="gate" id="gate"><div class="brand">LUCRA · REVENUE MODEL</div><h1>Your model</h1><p class="sub" style="margin:auto">Enter the passcode you were given to open it.</p><form onsubmit="return openIt(event)"><p><input id="pass" type="password" autocomplete="off" placeholder="Passcode"></p><p><button class="primary" type="submit">Open</button></p><div class="err" id="gate-err" hidden></div></form></div><div id="model" hidden></div></main>
 <script>
@@ -299,7 +305,7 @@ async function load(){
   catch(e){ var g=$('gate-err'); g.hidden=false; g.textContent=e.message; if(!needsPass){ $('gate').querySelector('form').hidden=true; } }
 }
 function inputsFromFacts(f){
-  var tp=function(k){ return f[k].tournaments.map(function(t){ return {id:t.id,name:t.name,entryPrice:t.entryPrice,eventsPerMonth:t.eventsPerMonth,basis:t.basis,participants:t.participants,participantPct:t.participantPct,rebuys:t.rebuys,prizeValue:t.prizeValue,prizeCost:t.prizeCost,pool:t.pool,scope:t.scope}; }); };
+  var tp=function(k){ return f[k].tournaments.map(function(t){ return {id:t.id,name:t.name,entryPrice:t.entryPrice,eventsPerMonth:t.eventsPerMonth,basis:t.basis,participants:t.participants,participantPct:t.participantPct,rebuys:t.rebuys,prizeValue:t.prizeValue,prizeCost:t.prizeCost,costMode:t.costMode||'amount',costPct:t.costPct||0,sponsorName:t.sponsorName||'',pool:t.pool,scope:t.scope}; }); };
   return { mau:f.mau, miniMau:f.miniMau, locations:f.locations.slice(), openings:f.scheduleStated?f.schedule.map(function(o){return {month:o.month,add:o.add}}):null, rampOn:f.rampOn, rampStartPct:f.rampStartPct, rampMonths:f.rampMonths, scenarioMonths:Object.assign({},f.scenarioMonths||{}),
     core:{tournaments:tp('core'),h2h:f.core.h2h?Object.assign({},f.core.h2h):null}, mini:{tournaments:tp('mini'),h2h:f.mini.h2h?Object.assign({},f.mini.h2h):null} };
 }
@@ -311,7 +317,10 @@ async function recompute(){
   catch(e){ var el=$('res-err'); if(el){el.hidden=false; el.textContent=e.message;} }
 }
 function set(path,v,isNum){ var parts=path.split('.'),o=INPUTS; for(var i=0;i<parts.length-1;i++){o=o[parts[i]]} o[parts[parts.length-1]]=isNum?Number(v):v; schedule(); }
-function setT(k,i,key,v){ INPUTS[k].tournaments[i][key]=(key==='name'||key==='scope'||key==='basis')?v:Number(v); if(key==='basis'||key==='scope'){renderInputs()} schedule(); }
+function setT(k,i,key,v){ INPUTS[k].tournaments[i][key]=(key==='name'||key==='scope'||key==='basis'||key==='costMode'||key==='sponsorName')?v:Number(v); if(key==='basis'||key==='scope'||key==='costMode'){renderInputs()} schedule(); }
+function chip(k,i,key,v){ setT(k,i,key,v); renderInputs(); }
+var PRICE_CHIPS=[1,5,10,15,20,25,50,75,100], FREQ_CHIPS=[[30,'Daily'],[4,'Weekly'],[2,'Twice a month'],[1,'Monthly']];
+function chips(k,i,key,cur,list,label){ return '<div class="chips">'+list.map(function(x){ var v=Array.isArray(x)?x[0]:x, l=Array.isArray(x)?x[1]+' · '+v:label(v); return '<button type="button" class="chip'+(Number(cur)===v?' on':'')+'" onclick="chip(\\''+k+'\\','+i+',\\''+key+'\\','+v+')">'+esc(l)+'</button>'; }).join('')+'</div>'; }
 function addT(k){ var t=INPUTS[k].tournaments[0]||{entryPrice:5,eventsPerMonth:4,basis:'count',participants:50,participantPct:1,rebuys:0,prizeValue:100,prizeCost:100,pool:false,scope:'each'}; INPUTS[k].tournaments.push(Object.assign({},t,{id:'new'+Date.now(),name:'New tournament'})); renderInputs(); schedule(); }
 function removeT(k,i){ INPUTS[k].tournaments.splice(i,1); renderInputs(); schedule(); }
 function setLoc(i,v){ INPUTS.locations[i]=Math.max(1,Math.round(Number(v)||1)); INPUTS.openings=null; schedule(); }
@@ -353,14 +362,17 @@ function renderInputs(){
       I[k].tournaments.forEach(function(t,i){
         var byPct=t.basis==='mau';
         h+='<div class="tour"><div class="head"><input type="text" value="'+esc(t.name)+'" oninput="setT(\\''+k+'\\','+i+',\\'name\\',this.value)" aria-label="Tournament name">'+(f.unlock.addTournaments?'<button class="ghost" type="button" onclick="removeT(\\''+k+'\\','+i+')">Remove</button>':'')+'</div><div class="f">'+
-          '<label><b>Entry price</b><input type="number" min="0" step="1" value="'+t.entryPrice+'" oninput="setT(\\''+k+'\\','+i+',\\'entryPrice\\',this.value)"></label>'+
-          '<label><b>Times a month</b><input type="number" min="0" step="1" value="'+t.eventsPerMonth+'" oninput="setT(\\''+k+'\\','+i+',\\'eventsPerMonth\\',this.value)"></label>'+
+          '<label><b>Entry price</b><input type="number" min="0" step="1" value="'+t.entryPrice+'" oninput="setT(\\''+k+'\\','+i+',\\'entryPrice\\',this.value)">'+chips(k,i,'entryPrice',t.entryPrice,PRICE_CHIPS,function(v){return '$'+v})+'</label>'+
+          '<label><b>Times a month</b><input type="number" min="0" step="1" value="'+t.eventsPerMonth+'" oninput="setT(\\''+k+'\\','+i+',\\'eventsPerMonth\\',this.value)">'+chips(k,i,'eventsPerMonth',t.eventsPerMonth,FREQ_CHIPS)+'</label>'+
           '<label><b>Participation</b><select onchange="setT(\\''+k+'\\','+i+',\\'basis\\',this.value)"><option value="count"'+(byPct?'':' selected')+'>A count per event</option><option value="mau"'+(byPct?' selected':'')+'>A share of users</option></select></label>'+
           (byPct?'<label><b>Participants, % of users</b><input type="number" min="0" step="0.25" value="'+t.participantPct+'" oninput="setT(\\''+k+'\\','+i+',\\'participantPct\\',this.value)"></label>'
                 :'<label><b>Participants per event'+(k==='core'&&!f.single?', per location':'')+'</b><input type="number" min="0" step="5" value="'+t.participants+'" oninput="setT(\\''+k+'\\','+i+',\\'participants\\',this.value)"></label>')+
           '<label><b>Extra entries per participant</b><input type="number" min="0" step="0.25" value="'+t.rebuys+'" oninput="setT(\\''+k+'\\','+i+',\\'rebuys\\',this.value)"></label>'+
           '<label><b>'+(t.pool?'Prize pool':'Reward value to players')+'</b><input type="number" min="0" step="25" value="'+t.prizeValue+'" oninput="setT(\\''+k+'\\','+i+',\\'prizeValue\\',this.value)"></label>'+
-          (t.pool?'':'<label><b>What the reward costs you</b><input type="number" min="0" step="25" value="'+t.prizeCost+'" oninput="setT(\\''+k+'\\','+i+',\\'prizeCost\\',this.value)"></label>')+
+          (t.pool?'':'<label><b>What the reward costs you</b><select onchange="setT(\\''+k+'\\','+i+',\\'costMode\\',this.value)"><option value="amount"'+(t.costMode==='amount'?' selected':'')+'>A dollar amount</option><option value="pct"'+(t.costMode==='pct'?' selected':'')+'>A share of the reward value</option><option value="sponsored"'+(t.costMode==='sponsored'?' selected':'')+'>Sponsored · no cost to you</option></select></label>'+
+            (t.costMode==='sponsored'?'<label><b>Sponsor (optional)</b><input type="text" maxlength="60" value="'+esc(t.sponsorName||'')+'" oninput="setT(\\''+k+'\\','+i+',\\'sponsorName\\',this.value)"><span>Named on the page if you enter it.</span></label>'
+             :t.costMode==='pct'?'<label><b>Cost, % of reward value</b><input type="number" min="0" step="5" value="'+t.costPct+'" oninput="setT(\\''+k+'\\','+i+',\\'costPct\\',this.value)"><span>'+money(t.prizeValue*(t.costPct||0)/100)+' per event at a '+money(t.prizeValue)+' reward.</span></label>'
+             :'<label><b>Cost per event</b><input type="number" min="0" step="25" value="'+t.prizeCost+'" oninput="setT(\\''+k+'\\','+i+',\\'prizeCost\\',this.value)">'+(t.prizeValue>0?'<span>'+Math.round((t.prizeCost||0)/t.prizeValue*100)+'% of the reward value.</span>':'')+'</label>'))+
           (k==='core'&&!f.single?'<label><b>Where it runs</b><select onchange="setT(\\''+k+'\\','+i+',\\'scope\\',this.value)"><option value="each"'+(t.scope!=='network'?' selected':'')+'>At every location</option><option value="network"'+(t.scope==='network'?' selected':'')+'>One across all locations</option></select></label>':'')+
           '</div></div>';
       });
@@ -425,6 +437,11 @@ function renderSchedule(){
   }
   el.innerHTML=h;
 }
+var SIZE_KEY='sbx-chart-size';
+function chartSize(){ try{ var v=localStorage.getItem(SIZE_KEY); if(v==='compact'||v==='large') return v; }catch(e){} return 'standard'; }
+function setChartSize(v){ try{ localStorage.setItem(SIZE_KEY,v); }catch(e){} applyChartSize(); renderResults(); }
+function applyChartSize(){ document.body.className='size-'+chartSize(); }
+function sizer(){ var cur=chartSize(); return '<span class="sizer" role="group" aria-label="Chart size">'+[['compact','S'],['standard','M'],['large','L']].map(function(x){return '<button type="button" class="'+(cur===x[0]?'on':'')+'" onclick="setChartSize(\\''+x[0]+'\\')" title="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</span>'; }
 function pctS(v){ return (Math.round(v*10)/10)+'%'; }
 function shareLabel(o){ var r=o.rates; return o.recapturing&&Math.abs(r.yourSharePostPct-r.yourSharePct)>0.05 ? pctS(r.yourSharePct)+' then '+pctS(r.yourSharePostPct) : pctS(r.yourSharePct); }
 function renderResults(){
@@ -446,21 +463,21 @@ function renderResults(){
   h+='<div class="cases">'+o.cases.map(function(c){return '<div class="case'+(c.key==='expected'?' mid':'')+'"><span>'+esc(c.label)+'</span><strong>'+money(c.revenueYear)+'</strong><small>'+esc(c.note)+' · you earn '+money(c.operatorYear)+'</small></div>'}).join('')+'</div>';
   if(c.includeH2H&&c.includeTournaments) h+='<div class="note">A player can take part in both, so the two audiences are not netted against each other: at the expected case about '+(Math.round(c.combinedShare*100)/100)+'% of the base is active across both.</div>';
   var max=Math.max.apply(null,o.months.map(function(m){return Math.abs(m.revenue)}).concat([1]));
-  h+='<div class="hint" style="margin-top:12px">Revenue generated by month</div><div class="bars">'+o.months.map(function(m){return '<i style="height:'+Math.max(2,Math.round(m.revenue/max*88))+'px" title="Month '+m.month+': '+money(m.revenue)+(m.locationsOpen>1?' · '+m.locationsOpen+' locations':'')+'"></i>'}).join('')+'</div><div class="axis"><span>Month 1</span><span>Month '+o.months.length+'</span></div>';
+  h+='<div class="hint" style="margin-top:12px">Revenue generated by month'+sizer()+'</div><div class="bars">'+o.months.map(function(m){return '<i style="height:'+Math.max(2,Math.round(m.revenue/max*88))+'px" title="Month '+m.month+': '+money(m.revenue)+(m.locationsOpen>1?' · '+m.locationsOpen+' locations':'')+'"></i>'}).join('')+'</div><div class="axis"><span>Month 1</span><span>Month '+o.months.length+'</span></div>';
   if(o.rewardValueYear>0) h+='<div class="note">Reward games add about '+money(o.rewardValueYear)+' a year of value to your venue through redeemed visits. That is a benefit, not revenue, so it is kept out of every figure above.</div>';
   $('results').innerHTML=h;
   renderTerm();
 }
 function renderTerm(){
   var o=OUT, f=FACTS, r=o.rates, multi=o.years.length>1, settle=o.settleTotal>0, single=f.single, h='';
-  var yourLabel='Your share ('+shareLabel(o)+')', licLabel='To licence share ('+pctS(r.licenceSharePct)+')', settleLabel=o.balanceDue>0?'True-up / balance due':'True-up, settled at year end';
+  var yourLabel='Your share ('+shareLabel(o)+')', licLabel='To licence share ('+pctS(r.licenceSharePct)+')', settleLabel='Settled directly';
   h+='<h2>Results over the term</h2><div class="hint">The licence, what retires it, and what you make: by year and by month.</div>';
   if(!o.free&&o.recapturing){
     var total=o.licenceFromShare+o.licenceFromYou+o.licenceFromSigning;
     h+='<div class="keep"><strong>The licence is retired out of the licence share alone. Your share is never diverted to it.</strong>'+
       '<span>'+pctS(r.licenceSharePct)+' of every pool goes to the licence until that year\\'s fee is cleared; your '+pctS(r.yourSharePct)+' is yours from month one'+(Math.abs(r.yourSharePostPct-r.yourSharePct)>0.05?', stepping up to '+pctS(r.yourSharePostPct)+' once it is':'')+'.'+(settle?' Where a year falls short, the difference is settled separately at year end and shown here against what you have earned.':'')+'</span>'+
       '<div class="rows"><div><span>From the licence share</span><b>'+money(o.licenceFromShare)+'</b></div><div><span>From your share</span><b class="zero">'+money(o.licenceFromYou)+'</b></div>'+(o.licenceFromSigning>0?'<div><span>Signing and sponsors</span><b>'+money(o.licenceFromSigning)+'</b></div>':'')+'<div><span>Retired, total</span><b>'+money(total)+'</b></div>'+
-      '<div><span>'+settleLabel+'</span><b>'+(settle?money(o.settleTotal):'$0')+'</b></div><div><span>You earn after the true-up</span><b class="'+(o.operatorAfterSettleTotal<0?'neg':'')+'">'+money(o.operatorAfterSettleTotal)+'</b><small class="hint" style="margin:2px 0 0">'+money(o.operatorTotal)+' earned over the term'+(settle?', less '+money(o.settleTotal):'')+'</small></div></div></div>';
+      '<div><span>'+settleLabel+'</span><b>'+(settle?money(o.settleTotal):'$0')+'</b></div><div><span>You earn over the term</span><b class="'+(o.operatorAfterSettleTotal<0?'neg':'')+'">'+money(o.operatorAfterSettleTotal)+'</b><small class="hint" style="margin:2px 0 0">'+money(o.operatorTotal)+' after prizes'+(settle?', less '+money(o.settleTotal)+' settled directly':'')+'</small></div></div></div>';
   }
   // Payoff over the term: the licence retired month by month against the contract.
   if(!o.free){
@@ -474,13 +491,17 @@ function renderTerm(){
     }
     h+='</div>';
   }
-  // What you make, by year: the seller's column order.
-  h+='<div class="section"><h3>What you make</h3><div class="hint">Your share of the pool is yours from month one; the licence is retired out of the licence share, not this. Prize funding comes out of your share.'+(settle?' Where a year falls short on the licence, the true-up is read against what you have earned so far.':'')+'</div>';
-  h+='<div class="tablewrap"><table><thead><tr><th>Year</th>'+(single?'':'<th>Locations</th>')+'<th>Revenue generated</th>'+(o.free?'':'<th>'+licLabel+'</th>')+(settle?'<th>'+settleLabel+'</th>':'')+'<th>'+yourLabel+'</th><th>Prize funding</th><th>You earn, after prizes</th>'+(multi?'<th>You earn, cumulative</th>':'')+(settle?'<th>Cumulative, after the true-up</th>':'')+'</tr></thead><tbody>'+
-    o.years.map(function(y){return '<tr><td>Year '+y.year+'</td>'+(single?'':'<td>'+y.locations+'</td>')+'<td>'+money(y.revenue)+'</td>'+(o.free?'':'<td>'+money(y.toLicence)+'</td>')+(settle?'<td>'+(y.settle>0?money(y.settle):'—')+'</td>':'')+'<td>'+money(y.yourShare)+'</td><td>'+money(y.prize)+'</td><td'+(y.operator<0?' class="neg"':'')+'>'+money(y.operator)+'</td>'+(multi?'<td>'+money(y.operatorCumulative)+'</td>':'')+(settle?'<td'+(y.operatorAfterSettle<0?' class="neg"':'')+'>'+money(y.operatorAfterSettle)+'</td>':'')+'</tr>'}).join('')+
-    (multi?'<tr class="total"><td>Term</td>'+(single?'':'<td></td>')+'<td>'+money(o.revenueTotal)+'</td>'+(o.free?'':'<td>'+money(o.toLicenceTotal)+'</td>')+(settle?'<td>'+money(o.settleTotal)+'</td>':'')+'<td>'+money(o.yourShareTotal)+'</td><td>'+money(o.prizeTotal)+'</td><td'+(o.operatorTotal<0?' class="neg"':'')+'>'+money(o.operatorTotal)+'</td><td>'+money(o.operatorTotal)+'</td>'+(settle?'<td'+(o.operatorAfterSettleTotal<0?' class="neg"':'')+'>'+money(o.operatorAfterSettleTotal)+'</td>':'')+'</tr>':'')+
-    '</tbody></table></div>';
-  if(settle) h+='<div class="note">The true-up is what the licence still needed after the licence share, settled separately at year end. It is never taken out of your share of the pool; it is shown beside it so both can be read together.</div>';
+  // What you make, by year: the one-pager's column order. "You earn" is net
+  // of prizes and of anything settled directly, the same on every surface.
+  var retLabel='Retired by activity'+(o.free||!o.recapturing?'':' ('+pctS(r.licenceSharePct)+')');
+  h+='<div class="section"><h3>What you make</h3><div class="hint">Your share of the pool is yours from month one; the licence is retired out of the licence share, not this. Prize funding comes out of your share.'+(settle?' Where a year falls short on the licence, the difference is settled directly and shown against that year.':'')+'</div>';
+  var eh=['Year','Revenue generated'].concat(o.free?[]:[retLabel,'Licence fee']).concat([yourLabel,'Prize funding']).concat(o.free?[]:['Settled directly']).concat(['You earn']).concat(multi?['You earn, cumulative']:[]);
+  var er=function(label,y,cls){ return '<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td>'+money(y.revenue)+'</td>'+(o.free?'':'<td>'+money(y.retired)+'</td><td>'+money(y.licenceFee)+'</td>')+'<td>'+money(y.yourShare)+'</td><td>'+money(y.prize)+'</td>'+(o.free?'':'<td>'+(y.settle>0?money(y.settle):'—')+'</td>')+'<td'+(y.earn<0?' class="neg"':'')+'>'+money(y.earn)+'</td>'+(multi?'<td'+(y.cumulative<0?' class="neg"':'')+'>'+money(y.cumulative)+'</td>':'')+'</tr>'; };
+  var termRow={revenue:o.revenueTotal,retired:o.years.reduce(function(a,y){return a+y.retired},0),licenceFee:o.years.reduce(function(a,y){return a+y.licenceFee},0),yourShare:o.yourShareTotal,prize:o.prizeTotal,settle:o.settleTotal,earn:o.operatorAfterSettleTotal,cumulative:o.operatorAfterSettleTotal};
+  h+='<div class="tablewrap"><table><thead><tr>'+eh.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr></thead><tbody>'+
+    o.years.map(function(y){ return er('Year '+y.year+(single?'':' · '+y.locations+' location'+(y.locations===1?'':'s')),{revenue:y.revenue,retired:y.retired,licenceFee:y.licenceFee,yourShare:y.yourShare,prize:y.prize,settle:y.settle,earn:y.operatorYearAfterSettle,cumulative:y.operatorAfterSettle}); }).join('')+
+    (multi?er('Term',termRow,'total'):'')+'</tbody></table></div>';
+  h+='<div class="note">You earn is your share of the pool, less the prizes you fund'+(o.free?'':', less anything settled directly')+'.'+(settle?' Settled directly is what the licence still needed after the licence share in that year, paid separately; it is never taken out of your share of the pool.':'')+'</div>';
   h+='</div>';
   // Month by month: the break-even map.
   var h2h=o.feeYear>0||o.monthly.some(function(m){return m.fee>0});
@@ -495,6 +516,7 @@ function renderTerm(){
     '<div class="tablewrap"><table><thead><tr>'+(multi?'<th>Year</th>':'')+'<th>Month</th>'+(single?'':'<th>Locations</th>')+'<th>Participants</th><th>Entries</th>'+(h2h?'<th>Head-to-head fee</th>':'')+'<th>Revenue generated</th>'+(o.free?'':'<th>'+licLabel+'</th><th>Licence, cumulative</th>')+'<th>'+yourLabel+'</th><th>Prize funding</th><th>You earn, after prizes</th><th>You earn, cumulative</th></tr></thead><tbody>'+body+'</tbody></table></div></div>';
   $('term').innerHTML=h;
 }
+applyChartSize();
 if(!needsPass){ load(); } else { $('pass').focus(); }
 </script></body></html>`;
 }

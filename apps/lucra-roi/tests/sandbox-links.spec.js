@@ -350,6 +350,36 @@ describe('The customer page outputs', () => {
   });
 });
 
+describe('Prize cost on the customer page', () => {
+  it('accepts dollars, a share of the reward value, or sponsored, and never counts a sponsored prize as their funding', async () => {
+    const tok = tokenOf(await link({ deal: { tp: deal() } }));
+    const base = (await compute(tok, PASS, null)).body;
+    const t0 = base.facts.core.tournaments[0];
+    expect(t0.costMode).toBe('amount');
+    expect(t0.prizeCost).toBe(200);
+    const pct = (await compute(tok, PASS, { core: { tournaments: [{ id: 't1', costMode: 'pct', costPct: 25 }, { id: 't2' }] } })).body;
+    expect(pct.facts.core.tournaments[0].costMode).toBe('pct');
+    expect(pct.facts.core.tournaments[0].prizeCost).toBe(500 * 0.25);
+    const sponsored = (await compute(tok, PASS, { core: { tournaments: [{ id: 't1', costMode: 'sponsored', sponsorName: 'Coors Light' }, { id: 't2', costMode: 'sponsored' }] } })).body;
+    expect(sponsored.facts.core.tournaments[0].sponsorName).toBe('Coors Light');
+    expect(sponsored.facts.core.tournaments[0].prizeCost).toBe(0);
+    // t2 is a cash tournament: its prize is its cost whatever is asked, so only t1's funding disappears.
+    expect(sponsored.facts.core.tournaments[1].costMode).toBe('amount');
+    expect(sponsored.facts.core.tournaments[1].prizeCost).toBe(1000);
+    expect(sponsored.outputs.prizeYear).toBeLessThan(base.outputs.prizeYear);
+    expect(sponsored.outputs.operatorYear).toBeGreaterThan(base.outputs.operatorYear);
+    // Typing a dollar figure puts it back on dollars.
+    const dollars = (await compute(tok, PASS, { core: { tournaments: [{ id: 't1', prizeCost: 120 }, { id: 't2' }] } })).body;
+    expect(dollars.facts.core.tournaments[0].costMode).toBe('amount');
+    expect(dollars.facts.core.tournaments[0].prizeCost).toBe(120);
+    // The dashboard's last-scenario summary says so.
+    await compute(tok, PASS, { core: { tournaments: [{ id: 't1', costMode: 'sponsored', sponsorName: 'Coors Light' }, { id: 't2' }] } });
+    const [l] = (await dash({ action: 'list' })).body.links;
+    expect(l.lastInputs.core.tournaments[0].costMode).toBe('sponsored');
+    expect(l.lastInputs.core.tournaments[0].sponsorName).toBe('Coors Light');
+  });
+});
+
 describe('Location scenarios on the customer page', () => {
   it('offers this-location-only, a second, and a second and third, with the months theirs to set', async () => {
     const tok = tokenOf(await link({ deal: { tp: deal() } }));

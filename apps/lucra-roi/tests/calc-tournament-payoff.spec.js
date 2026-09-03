@@ -3,7 +3,7 @@ import calc from './calc-functions.js';
 
 const {
   TPcalculate, TPvalidate, TPcustomerProjection, TPstate, TPsplitRates,
-  TPrampFactor, TPavgRamp, TPreach, TPtypeParticipants, TPentriesPerEvent, TP_DEFAULTS, TPyearTotals,
+  TPrampFactor, TPavgRamp, TPreach, TPtypeParticipants, TPentriesPerEvent, TP_DEFAULTS, TPyearTotals, TPprizeCost, TPsponsored,
 } = calc;
 
 // One tournament: 100 participants, no rebuys, $10 entry, 4 events, $200 cash
@@ -158,6 +158,40 @@ describe('The split is taken on gross entries', () => {
     expect(dear.toLicense).toBe(cheap.toLicense);
     expect(dear.toLucra).toBe(cheap.toLucra);
     expect(dear.toOperator).toBe(cheap.toOperator - 2000);
+  });
+});
+
+describe('What a reward costs the operator', () => {
+  const t = (o) => Object.assign({ id: 't', name: 'Open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200 }, o);
+
+  it('is a dollar amount, a share of the reward value, or nothing when sponsored', () => {
+    expect(TPprizeCost(t({}))).toBe(200);
+    expect(TPprizeCost(t({ costMode: 'amount', customerCashCost: 150 }))).toBe(150);
+    expect(TPprizeCost(t({ costMode: 'pct', costPct: 30 }))).toBe(150);
+    expect(TPprizeCost(t({ costMode: 'pct', costPct: 30, rewardFaceValue: 1000 }))).toBe(300);
+    expect(TPprizeCost(t({ costMode: 'sponsored', customerCashCost: 200, sponsorName: 'Coors' }))).toBe(0);
+    expect(TPsponsored(t({ costMode: 'sponsored' }))).toBe(true);
+    expect(TPsponsored(t({ costMode: 'pct' }))).toBe(false);
+    // A cash tournament always costs its prize, whatever the mode says.
+    expect(TPprizeCost(t({ isCash: true, cashPrizeAmount: 400, costMode: 'sponsored' }))).toBe(400);
+    expect(TPsponsored(t({ isCash: true, costMode: 'sponsored' }))).toBe(false);
+    expect(TPprizeCost(null)).toBe(0);
+  });
+
+  it('normalises the mode and flows through the monthly prize funding', () => {
+    const s = TPstate(base({ tournaments: [t({ costMode: 'bogus' })] }));
+    expect(s.core.tournaments[0].costMode).toBe('amount');
+    expect(s.core.tournaments[0].costPct).toBe(0);
+    expect(s.core.tournaments[0].sponsorName).toBe('');
+    const pct = TPcalculate(base({ annualFees: [1e6], tournaments: [t({ costMode: 'pct', costPct: 30 })] })).months[0];
+    expect(pct.prizeCost).toBe(150 * 4);
+    const sponsored = TPcalculate(base({ annualFees: [1e6], tournaments: [t({ costMode: 'sponsored' })] })).months[0];
+    expect(sponsored.prizeCost).toBe(0);
+    // The pool and the licence credit are untouched either way; only the operator's net moves.
+    const plain = TPcalculate(base({ annualFees: [1e6], tournaments: [t({})] })).months[0];
+    expect(sponsored.splitBase).toBe(plain.splitBase);
+    expect(sponsored.toLicense).toBe(plain.toLicense);
+    expect(sponsored.toOperator).toBe(plain.toOperator + plain.prizeCost);
   });
 });
 
