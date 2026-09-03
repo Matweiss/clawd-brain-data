@@ -122,6 +122,31 @@ describe('/api/play — the customer sandbox', () => {
     expect(edited.outputs.operatorYear).toBeCloseTo(r.totalOperator / 3, 3);
   });
 
+  it('carries the programme at a glance and head-to-head in short, and lets the customer drive every tournament from one participation figure', async () => {
+    const tok = tokenOf(await link({ deal: { tp: deal() } }));
+    const base = (await compute(tok, PASS, null)).body;
+    expect(base.facts.core.participation).toEqual({ on: false, basis: 'mau', pct: 3, count: 100 });
+    expect(base.outputs.programme.rows.map((r) => r.name)).toEqual(['Weekly open', 'Monthly headline']);
+    const row = base.outputs.programme.rows[0];
+    ['cadence', 'eventsPerMonth', 'entryPrice', 'participants', 'entriesPerEvent', 'prizeValue', 'prizeCost', 'marginPerEvent', 'entriesMonthNetwork', 'prizeMonthNetwork'].forEach((k) => expect(row, k).toHaveProperty(k));
+    expect(row.cadence).toBe('Weekly');
+    expect(base.outputs.programme.total.marginMonthNetwork).toBeCloseTo(base.outputs.programme.total.entriesMonthNetwork - base.outputs.programme.total.prizeMonthNetwork, 6);
+    expect(base.outputs.h2hShort).toHaveLength(1);
+    const hs = base.outputs.h2hShort[0];
+    expect(hs.product).toBe('core'); expect(hs.engagement).toBe(10); expect(hs.paid).toBe(true);
+    expect(hs.playsPerPlayer).toBeCloseTo(20, 6); expect(hs.entryPerPlay).toBeCloseTo(2, 6);
+    expect(JSON.stringify(hs)).not.toMatch(/feeRate|rake|17\.5/);
+    // One figure for every tournament, with one exception kept on its own number.
+    const uni = (await compute(tok, PASS, { core: { participation: { on: true, basis: 'mau', pct: 4 }, tournaments: [{ id: 't1' }, { id: 't2', own: true, basis: 'count', participants: 30 }] } })).body;
+    expect(uni.facts.core.participation.on).toBe(true);
+    expect(uni.facts.core.tournaments[0].basis).toBe('mau'); expect(uni.facts.core.tournaments[0].participantPct).toBe(4); expect(uni.facts.core.tournaments[0].own).toBe(false);
+    expect(uni.facts.core.tournaments[1].basis).toBe('count'); expect(uni.facts.core.tournaments[1].participants).toBe(30); expect(uni.facts.core.tournaments[1].own).toBe(true);
+    expect(uni.outputs.programme.rows[0].follows).toBe(true);
+    expect(uni.outputs.programme.rows[0].participants).toBeCloseTo(320, 6);
+    expect(uni.outputs.programme.rows[1].follows).toBe(false);
+    expect(JSON.stringify(uni.body || uni)).not.toMatch(BLOCKED);
+  });
+
   it('honours the add-and-remove lock', async () => {
     const locked = tokenOf(await link({ deal: { tp: deal() }, unlock: { addTournaments: false } }));
     const r = (await compute(locked, PASS, { core: { tournaments: [{ id: 'made-up', eventsPerMonth: 30 }] } })).body;

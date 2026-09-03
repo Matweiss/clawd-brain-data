@@ -1605,6 +1605,72 @@ test('a core tournament runs at every location or once across the network, and m
   await expect(page.locator('#tp-customer-cards')).toContainText('Across the app');
 });
 
+test('one participation figure drives every tournament, and the programme at a glance reads it back', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, { termYears: 2, fees: [60000, 60000, 0, 0, 0], mau: 8000, includeH2H: true });
+  await page.locator('#tp-loc-1').fill('2');
+  await page.evaluate(() => { TPaddTournament('core'); });
+  const list = page.locator('#tp-tournaments-list-core');
+  // Off by default: every card keeps its own participation controls.
+  await expect(list.locator('#tp-universal-on-core')).not.toBeChecked();
+  await expect(list.locator('.tp-tour .tp-participation-switch')).toHaveCount(2);
+  await list.locator('#tp-universal-on-core').check();
+  // Seeded from the first tournament (a count of 100), so nothing jumps.
+  await expect(list.locator('#tp-universal-count-core')).toHaveValue('100');
+  await expect(list.locator('.tp-tour .tp-participation-switch')).toHaveCount(0);
+  await expect(list.locator('.tp-tour .tp-follows')).toHaveCount(2);
+  let s = await page.evaluate(() => TPstate(TP));
+  expect(s.core.tournaments.map((t) => t.participants)).toEqual([100, 100]);
+  // Switch to a share and type: both move; then one keeps its own number.
+  await list.locator('.tp-universal .tp-participation-switch button').nth(1).click();
+  await list.locator('#tp-universal-pct-core').fill('5');
+  s = await page.evaluate(() => TPstate(TP));
+  expect(s.core.tournaments.map((t) => t.participantPct)).toEqual([5, 5]);
+  expect(s.core.tournaments.map((t) => t.basis)).toEqual(['mau', 'mau']);
+  await list.locator('.tp-tour').nth(1).locator('input[id^="tp-own"]').check();
+  await expect(list.locator('.tp-tour').nth(1).locator('.tp-participation-switch')).toBeVisible();
+  await list.locator('.tp-tour').nth(1).locator('input[id^="tp-part"]').fill('2');
+  s = await page.evaluate(() => TPstate(TP));
+  expect(s.core.tournaments.map((t) => t.participantPct)).toEqual([5, 2]);
+  expect(s.core.tournaments[1].own).toBe(true);
+  await expect(list.locator('.tp-universal')).toContainText('Applies to 1 of 2 tournaments');
+  // The case band scales the shared figure like any other.
+  const cases = await page.evaluate(() => TPCcases(TPCconfig()).map((c) => c.result.annualRevenueGenerated));
+  expect(cases[0]).toBeLessThan(cases[1]); expect(cases[1]).toBeLessThan(cases[2]);
+
+  // The programme at a glance: cadence, cost, participation, margin, per tournament; head-to-head in short.
+  const prog = page.locator('#tp-programme');
+  await expect(prog).toBeVisible();
+  await expect(prog).toContainText('Programme at a glance');
+  await expect(prog.locator('.tp-programme-table tbody tr')).toHaveCount(3);
+  const first = prog.locator('.tp-programme-table tbody tr').first();
+  await expect(first).toContainText('Weekly · 4 a month');
+  await expect(first).toContainText('5% of users per location ≈ 400');
+  await expect(first).toContainText('$200');
+  await expect(first).toContainText('At every location (2)');
+  await expect(prog.locator('.tp-programme-table tr.tp-total')).toContainText('Margin a month');
+  await expect(prog.locator('.tp-h2h-short')).toContainText('Matchups per player');
+  await expect(prog.locator('.tp-h2h-short')).toContainText('Take fee');
+  // Copy gives the same table as text, and the brief carries both blocks.
+  const text = await page.evaluate(() => TPprogrammeText({ who: 'You' }) + '\n' + TPh2hSummaryText({ customer: true }));
+  expect(text).toContain('Columns: Tournament | Cadence | Entry | Participation');
+  expect(text).toContain('Weekly open | Weekly · 4 a month | $10 | 5% of users per location ≈ 400');
+  expect(text).toContain('HEAD-TO-HEAD · IN YOUR VENUES');
+  expect(text).not.toMatch(/take fee/i);
+  const brief = await page.evaluate(() => TPbrief());
+  expect(brief).toContain('PROGRAMME AT A GLANCE');
+  expect(brief).toContain('HEAD-TO-HEAD, IN SHORT');
+  expect(brief).toContain('In short: About');
+  // A subsidised tournament shows a negative margin, in red, never clamped.
+  await page.evaluate(() => { TP.core.tournaments[0].customerCashCost = 9000; TPsave(); TPrender(); });
+  await expect(prog.locator('.tp-programme-table tbody tr').first().locator('td.tp-neg')).toContainText('-$');
+  // Customer view keeps the block (without the take fee) and hides the copy button.
+  await page.locator('#tp-customer-mode').check();
+  await expect(prog.locator('.tp-h2h-short')).not.toContainText('Take fee');
+  await expect(prog.locator('button')).toBeHidden();
+  await page.locator('#tp-customer-mode').uncheck();
+});
+
 test('a deal saved before the split migrates onto core with the head-to-head numbers it had', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => {
@@ -1690,7 +1756,8 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   expect(text.toLowerCase()).toContain('to licence share (' + pc(rates.credit) + ')');
   expect(text.toLowerCase()).toContain('your share (' + pc(rates.operator) + ' then ' + pc(rates.postOperator) + ')');
   expect(text).not.toMatch(/Lucra['’]s share|split/);
-  expect(text).not.toContain(pc(rates.lucra) + ' ');
+  // (Head-to-head engagement is a customer input and may print as a bare percentage; the split never does.)
+  expect(text).not.toMatch(new RegExp('\\(' + pc(rates.lucra) + '\\)|' + pc(rates.lucra) + ' (then|of the pool|share)'));
   expect(text).not.toContain('(' + pc(rates.postLucra) + ')');
   // The combined model, the payoff over the term, what they make, and the month-by-month map.
   await expect(cp.locator('#results')).toContainText('Combined revenue model');
@@ -1705,10 +1772,11 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   const makeHeaders = (await cp.locator('#term table').nth(1).locator('thead th').allInnerTexts()).map((h) => h.toLowerCase());
   expect(makeHeaders).toEqual(['year', 'revenue generated', 'retired by activity (' + pc(rates.credit) + ')', 'licence fee', 'your share (' + pc(rates.operator) + ' then ' + pc(rates.postOperator) + ')', 'prize funding', 'settled directly', 'you earn', 'you earn, cumulative']);
   await expect(cp.locator('#term')).toContainText('Month by month');
+  // Licence by year, what you make, the programme at a glance, head-to-head in short, month by month.
   const tables = cp.locator('#term table');
-  await expect(tables).toHaveCount(3);
-  await expect(tables.nth(2).locator('tbody tr')).toHaveCount(36 + 3 + 1);
-  await expect(tables.nth(2).locator('tbody tr.total')).toContainText('Term');
+  await expect(tables).toHaveCount(5);
+  await expect(tables.nth(4).locator('tbody tr')).toHaveCount(36 + 3 + 1);
+  await expect(tables.nth(4).locator('tbody tr.total')).toContainText('Term');
   const html = await cp.content();
   expect(html).not.toContain('"credit"');
   expect(html).not.toContain('lucra');
@@ -1749,8 +1817,22 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   // Exact months, and a new tournament.
   await cp.locator('#sched button', { hasText: 'Set the exact months' }).click();
   await expect(cp.locator('#sched .row')).toHaveCount(5);
+  // One participation figure for every tournament, on their side too; the programme table reads it back.
+  await cp.locator('#inputs .tour.uni input[type="checkbox"]').first().check();
+  await expect(cp.locator('#inputs .tour.uni select')).toBeVisible();
+  await cp.locator('#inputs .tour.uni select').selectOption('mau');
+  await cp.locator('#inputs .tour.uni input[type="number"]').fill('6');
+  await expect(cp.locator('#inputs .tour').nth(1)).toContainText('6% of users, set above for every tournament');
+  await expect.poll(async () => cp.evaluate(() => FACTS.core.tournaments.map((t) => t.basis + ':' + t.participantPct).join(','))).toMatch(/^(mau:6,?)+$/);
+  await expect(cp.locator('#term')).toContainText('Your programme at a glance');
+  await expect(cp.locator('#term')).toContainText('Head-to-head, in short');
+  await expect(cp.locator('#term table.h2s')).toContainText('Matchups per player');
+  expect(await cp.locator('#term').evaluate((el) => el.textContent)).not.toMatch(/take fee|rake/i);
+  await cp.locator('#inputs .tour').nth(1).locator('label.row input[type="checkbox"]').check();
+  await expect(cp.locator('#inputs .tour').nth(1).locator('input[type="number"]').nth(2)).toBeVisible();
+  await cp.locator('#inputs .tour.uni input[type="checkbox"]').first().uncheck();
   await cp.locator('#inputs button', { hasText: 'Add a tournament' }).first().click();
-  await expect(cp.locator('#inputs .tour')).toHaveCount(2);
+  await expect(cp.locator('#inputs .tour:not(.uni)')).toHaveCount(2);
   await expect(cp.locator('#res-err')).toBeHidden();
 
   // The seller's dashboard saw all of it: the wrong passcode, the open, the edits.

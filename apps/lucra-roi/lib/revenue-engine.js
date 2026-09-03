@@ -29,7 +29,11 @@ var TP_PRODUCT_DEFAULTS = {
   // events a month, an entry-price multiplier, and whether prizes are in-kind at
   // the venue's cost ratio. They travel with the product so the recommender
   // rebuilds the same programme when the base changes.
-  recAdjust: { events: 0, priceMult: 1, rewardAtRatio: false }
+  recAdjust: { events: 0, priceMult: 1, rewardAtRatio: false },
+  // One participation figure for every tournament of the product. Off by
+  // default so saved deals keep their per-tournament numbers; when on, every
+  // tournament without `own: true` takes this basis and figure.
+  participation: { on: false, basis: 'mau', pct: 3, count: 100 }
 };
 
 var TP_DEFAULT_TOURNAMENTS = [
@@ -154,11 +158,23 @@ function TPtournamentNorm(t, shared) {
   return c;
 }
 
+/* The universal participation, applied to every tournament that follows it. */
+function TPapplyParticipation(p) {
+  var u = p.participation;
+  p.tournaments.forEach(function (c) {
+    c.own = !!c.own;
+    if (u && u.on && !c.own) { c.basis = u.basis; c.participantPct = u.pct; c.participants = u.count; }
+  });
+  return p;
+}
 function TPproductNorm(src, shared) {
   var p = Object.assign({}, TP_PRODUCT_DEFAULTS, src || {});
   p.h2h = Object.assign({}, TP_H2H_DEFAULTS, (src && src.h2h) || {});
   p.recAdjust = Object.assign({}, TP_PRODUCT_DEFAULTS.recAdjust, (src && src.recAdjust) || {});
+  var u = Object.assign({}, TP_PRODUCT_DEFAULTS.participation, (src && src.participation) || {});
+  p.participation = { on: !!u.on, basis: u.basis === 'count' ? 'count' : 'mau', pct: TPnum(u.pct, 0), count: TPnum(u.count, 0) };
   p.tournaments = (Array.isArray(p.tournaments) ? p.tournaments : []).map(function (t) { return TPtournamentNorm(t, shared); });
+  TPapplyParticipation(p);
   p.on = !!p.on; p.tournamentsOn = p.tournamentsOn !== false; p.h2hOn = !!p.h2hOn;
   return p;
 }
@@ -202,6 +218,7 @@ function TPstate(s) {
     legacy.h2h = Object.assign({}, out.core.h2h, src.h2hMode !== undefined ? { mode: src.h2hMode } : {}, src.h2hReach !== undefined ? { reach: TPnum(src.h2hReach, 0) } : {});
   }
   Object.assign(out.core, legacy);
+  TPapplyParticipation(out.core);
   if (out.mini.mauMode !== 'entered') out.mini.mauMode = 'derived';
   out.mini.mau = TPnum(out.mini.mau, 0);
   // Mini games have no locations: every tournament is one across the base.
@@ -896,6 +913,7 @@ function TPCcases(cfg) {
 function TPscaled(input, participationFactor, priceFactor) {
   var s = TPstate(input), p = TPnum(participationFactor, 0), q = priceFactor === undefined ? 1 : TPnum(priceFactor, 0);
   TP_PRODUCTS.forEach(function (k) {
+    s[k].participation = Object.assign({}, s[k].participation, { pct: TPnum(s[k].participation.pct, 0) * p, count: TPnum(s[k].participation.count, 0) * p });
     s[k].tournaments = s[k].tournaments.map(function (t) {
       var c = Object.assign({}, t);
       c.participants = TPnum(c.participants, 0) * p;
@@ -905,6 +923,48 @@ function TPscaled(input, participationFactor, priceFactor) {
     });
   });
   return s;
+}
+/* Whether a tournament takes the product's universal participation. */
+function TPtourFollows(s, key, t) { var u = TPproduct(s, key).participation; return !!(u && u.on) && !(t && t.own); }
+
+/* The programme at a glance: one row per tournament in scope, at full volume
+   (no ramp, no decay, no season), the way it reads on a one-pager. Core rows
+   that run at every location are per location, with the network figure at the
+   locations open by the end of the term; a network-wide or mini-games row is
+   funded once. Cadence, cost and participation in one place. */
+function TPcadenceLabel(n) {
+  var e = TPnum(n, 0);
+  if (e === 30) return 'Daily'; if (e === 4) return 'Weekly'; if (e === 2) return 'Twice a month'; if (e === 1) return 'Monthly';
+  return e === 0 ? 'Not scheduled' : e + ' a month';
+}
+function TPprogrammeRows(input) {
+  var s = TPstate(input), term = TPterm(s), locs = Math.max(1, TPlocationsOpen(s, term * 12)), single = TPsingleLocation(s), rows = [];
+  TP_PRODUCTS.forEach(function (k) {
+    if (!TPtournamentsOn(s, k)) return;
+    var base = TPproductBase(s, k), p = TPproduct(s, k);
+    p.tournaments.forEach(function (t) {
+      var byMau = t.basis === 'mau', pct = TPnum(t.participantPct, 0), count = TPnum(t.participants, 0),
+        participants = byMau ? base * pct / 100 : count,
+        entries = participants + (t.rebuyMode === 'pct' ? participants * TPnum(t.rebuyPct, 0) / 100 : participants * TPnum(t.rebuys, 0)),
+        events = TPnum(t.eventsPerMonth, 0), price = TPnum(t.entryPrice, 0),
+        perLocation = k === 'core' && !single && t.scope !== 'network', mult = perLocation ? locs : 1,
+        entriesValue = entries * price, cost = TPprizeCost(t), value = t.isCash ? TPnum(t.cashPrizeAmount, 0) : TPnum(t.rewardFaceValue, 0);
+      rows.push({
+        product: k, name: t.name || '', cadence: TPcadenceLabel(events), eventsPerMonth: events, entryPrice: price,
+        basis: byMau ? 'mau' : 'count', participantPct: pct, participantCount: count, participants: participants, follows: TPtourFollows(s, k, t),
+        entriesPerEvent: entries, entriesValuePerEvent: entriesValue,
+        prizeValue: value, prizeCost: cost, isCash: !!t.isCash, costMode: t.isCash ? 'pool' : t.costMode, costPct: TPnum(t.costPct, 0), sponsorName: t.sponsorName || '', sponsored: TPsponsored(t),
+        marginPerEvent: entriesValue - cost,
+        scope: k === 'mini' ? 'app' : (t.scope === 'network' ? 'network' : 'each'), perLocation: perLocation, locations: mult,
+        entriesMonth: entriesValue * events, prizeMonth: cost * events,
+        entriesMonthNetwork: entriesValue * events * mult, prizeMonthNetwork: cost * events * mult,
+      });
+    });
+  });
+  var total = rows.reduce(function (a, r) { a.entriesMonthNetwork += r.entriesMonthNetwork; a.prizeMonthNetwork += r.prizeMonthNetwork; a.eventsPerMonth += r.eventsPerMonth * r.locations; return a; },
+    { entriesMonthNetwork: 0, prizeMonthNetwork: 0, eventsPerMonth: 0 });
+  total.marginMonthNetwork = total.entriesMonthNetwork - total.prizeMonthNetwork;
+  return { rows: rows, total: total, locations: locs, single: single, term: term };
 }
 
 /* The primary tournament, for the map and the pitch: the first of the first
@@ -1424,4 +1484,4 @@ function TPrecLevers(input, mau, step, opts) {
 }
 
 /* TP-PURE-END */
-module.exports = { TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPupfront, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments, TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear, TP_PRODUCTS, TP_PRODUCT_DEFAULTS, TP_H2H_DEFAULTS, TP_DEFAULT_TOURNAMENTS, TP_DEFAULT_MINI_TOURNAMENTS, TPproduct, TPproductOn, TPtournamentsOn, TPh2hOn, TPanyTournaments, TPanyH2H, TPtournamentsOf, TPallTournaments, TPcustomerDefaults, TPsingleLocation, TPyearCounts, TPscheduleFromYears, TPschedule, TPscheduleStated, TPlocationsOpen, TPminiEntered, TPproductBase, TPproductFactor, TPavgProductFactor, TPminiBase, TPprizeMultiplier, TPh2hInputs, TPprimaryTournament, TPrecCoreStep, TPrecProduct, TPyearTotals, TPprizeCost, TPsponsored };
+module.exports = { TPnum, TPstate, TPsplitRates, TPvalidate, TPcalculate, TPcustomerProjection, TPterm, TPfees, TPrampFactor, TPtypeParticipants, TPentriesPerEvent, TPheatMap, TPscaled, TPCcase, TPCcases, TP_DEFAULTS, TP_SPLITS, TP_MAX_YEARS, TPreach, TPavgRamp, TPlocations, TPopenings, TPvolumeFactor, TPavgVolume, TP_SEASONS, TPseasonProfile, TPseasonFactor, TPdecayFactor, TPaudienceFactor, TPavgAudience, TPsponsorsInMonth, TPupfront, TPmonthlyH2H, TPh2h, TPpitchH2H, TPpitchTournaments, TP_BANDS, TPengCurve, TPrecSteps, TPrecTournaments, TPrecCandidate, TPrecPrizeShare, TPrecMeasure, TPrecommend, TPrewardCostRatio, TPrecLevers, TPrecAdjust, TPrecProgramme, TPrecStepFor, TPrecGapOf, TPrecPasses, TPrecGapYear, TP_PRODUCTS, TP_PRODUCT_DEFAULTS, TP_H2H_DEFAULTS, TP_DEFAULT_TOURNAMENTS, TP_DEFAULT_MINI_TOURNAMENTS, TPproduct, TPproductOn, TPtournamentsOn, TPh2hOn, TPanyTournaments, TPanyH2H, TPtournamentsOf, TPallTournaments, TPcustomerDefaults, TPsingleLocation, TPyearCounts, TPscheduleFromYears, TPschedule, TPscheduleStated, TPlocationsOpen, TPminiEntered, TPproductBase, TPproductFactor, TPavgProductFactor, TPminiBase, TPprizeMultiplier, TPh2hInputs, TPprimaryTournament, TPrecCoreStep, TPrecProduct, TPyearTotals, TPprizeCost, TPsponsored, TPtourFollows, TPcadenceLabel, TPprogrammeRows };

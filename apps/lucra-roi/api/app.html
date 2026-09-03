@@ -698,6 +698,8 @@ table.tp-heat td.miss{background:var(--amber-bg);color:var(--amber)}
 .tp-cowork strong{color:var(--green)}
 .tp-months tr.tp-subtotal td{background:var(--surface2);font-weight:600;border-top:1px solid var(--border)}
 .tp-months tr.tp-total td{background:var(--green-bg);font-weight:700;color:var(--text);border-top:2px solid var(--green-border)}
+.tp-universal{border:1px dashed var(--border);border-radius:var(--radius);padding:10px 14px;margin:8px 0 12px}.tp-universal .tp-row{margin-top:8px}.tp-follows{margin:6px 0 2px;color:var(--text2)}
+.tp-h2h-short{margin-top:14px}.tp-h2h-short-title{font-weight:700;font-size:13px;margin-bottom:6px}table.tp-h2h-short-table{width:100%;table-layout:fixed}table.tp-h2h-short-table td:first-child{color:var(--text2);width:34%}table.tp-months.tp-h2h-short-table td{text-align:left;white-space:normal;overflow-wrap:anywhere}.tp-programme-table td:first-child{white-space:nowrap}
 .tp-operator{margin:22px 0 4px}
 .tp-operator[hidden]{display:none}
 .tp-operator .pf-section-title{margin-top:0}
@@ -755,6 +757,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 .tp-print-badge{border:1px solid #111;border-radius:4px;padding:4px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
 .tp-print-badge.internal{background:#111;color:#fff}
 .tp-print-note{font-size:11.5px;line-height:1.6;margin:10px 0 0;color:#333}
+.tp-print-programme{margin:8px 0 4px}.tp-print-programme .tp-table-wrap{overflow:visible}.tp-print-programme table{font-size:10.5px;width:100%}.tp-print-programme .sn,.tp-print-programme .tp-h2h-short-title{color:#333}.tp-print-programme .tp-h2h-short{margin:8px 0 12px}
 .tp-print-foot{margin-top:20px;padding-top:12px;border-top:1px solid #ccc;font-size:11px;color:#555}
 
 @media print{
@@ -1985,6 +1988,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="tp-chart-wrap" id="tp-chart"></div>
     <div class="tp-table-wrap" id="tp-years" hidden></div>
     <div class="tp-operator" id="tp-operator" hidden></div>
+    <div class="tp-operator tp-programme" id="tp-programme" hidden></div>
     <div class="tp-heat-wrap tp-internal"><div class="pf-section-title" style="margin-top:26px">Break-even map</div>
       <div class="tp-heat-controls">
         <label class="tp-check"><input type="checkbox" id="tp-heat-h2h" onchange="TPtoggle('heatH2H',this.checked)"><span>Show head-to-head volume</span></label>
@@ -3693,7 +3697,11 @@ var TP_PRODUCT_DEFAULTS = {
   // events a month, an entry-price multiplier, and whether prizes are in-kind at
   // the venue's cost ratio. They travel with the product so the recommender
   // rebuilds the same programme when the base changes.
-  recAdjust: { events: 0, priceMult: 1, rewardAtRatio: false }
+  recAdjust: { events: 0, priceMult: 1, rewardAtRatio: false },
+  // One participation figure for every tournament of the product. Off by
+  // default so saved deals keep their per-tournament numbers; when on, every
+  // tournament without `own: true` takes this basis and figure.
+  participation: { on: false, basis: 'mau', pct: 3, count: 100 }
 };
 
 var TP_DEFAULT_TOURNAMENTS = [
@@ -3818,11 +3826,23 @@ function TPtournamentNorm(t, shared) {
   return c;
 }
 
+/* The universal participation, applied to every tournament that follows it. */
+function TPapplyParticipation(p) {
+  var u = p.participation;
+  p.tournaments.forEach(function (c) {
+    c.own = !!c.own;
+    if (u && u.on && !c.own) { c.basis = u.basis; c.participantPct = u.pct; c.participants = u.count; }
+  });
+  return p;
+}
 function TPproductNorm(src, shared) {
   var p = Object.assign({}, TP_PRODUCT_DEFAULTS, src || {});
   p.h2h = Object.assign({}, TP_H2H_DEFAULTS, (src && src.h2h) || {});
   p.recAdjust = Object.assign({}, TP_PRODUCT_DEFAULTS.recAdjust, (src && src.recAdjust) || {});
+  var u = Object.assign({}, TP_PRODUCT_DEFAULTS.participation, (src && src.participation) || {});
+  p.participation = { on: !!u.on, basis: u.basis === 'count' ? 'count' : 'mau', pct: TPnum(u.pct, 0), count: TPnum(u.count, 0) };
   p.tournaments = (Array.isArray(p.tournaments) ? p.tournaments : []).map(function (t) { return TPtournamentNorm(t, shared); });
+  TPapplyParticipation(p);
   p.on = !!p.on; p.tournamentsOn = p.tournamentsOn !== false; p.h2hOn = !!p.h2hOn;
   return p;
 }
@@ -3866,6 +3886,7 @@ function TPstate(s) {
     legacy.h2h = Object.assign({}, out.core.h2h, src.h2hMode !== undefined ? { mode: src.h2hMode } : {}, src.h2hReach !== undefined ? { reach: TPnum(src.h2hReach, 0) } : {});
   }
   Object.assign(out.core, legacy);
+  TPapplyParticipation(out.core);
   if (out.mini.mauMode !== 'entered') out.mini.mauMode = 'derived';
   out.mini.mau = TPnum(out.mini.mau, 0);
   // Mini games have no locations: every tournament is one across the base.
@@ -4560,6 +4581,7 @@ function TPCcases(cfg) {
 function TPscaled(input, participationFactor, priceFactor) {
   var s = TPstate(input), p = TPnum(participationFactor, 0), q = priceFactor === undefined ? 1 : TPnum(priceFactor, 0);
   TP_PRODUCTS.forEach(function (k) {
+    s[k].participation = Object.assign({}, s[k].participation, { pct: TPnum(s[k].participation.pct, 0) * p, count: TPnum(s[k].participation.count, 0) * p });
     s[k].tournaments = s[k].tournaments.map(function (t) {
       var c = Object.assign({}, t);
       c.participants = TPnum(c.participants, 0) * p;
@@ -4569,6 +4591,48 @@ function TPscaled(input, participationFactor, priceFactor) {
     });
   });
   return s;
+}
+/* Whether a tournament takes the product's universal participation. */
+function TPtourFollows(s, key, t) { var u = TPproduct(s, key).participation; return !!(u && u.on) && !(t && t.own); }
+
+/* The programme at a glance: one row per tournament in scope, at full volume
+   (no ramp, no decay, no season), the way it reads on a one-pager. Core rows
+   that run at every location are per location, with the network figure at the
+   locations open by the end of the term; a network-wide or mini-games row is
+   funded once. Cadence, cost and participation in one place. */
+function TPcadenceLabel(n) {
+  var e = TPnum(n, 0);
+  if (e === 30) return 'Daily'; if (e === 4) return 'Weekly'; if (e === 2) return 'Twice a month'; if (e === 1) return 'Monthly';
+  return e === 0 ? 'Not scheduled' : e + ' a month';
+}
+function TPprogrammeRows(input) {
+  var s = TPstate(input), term = TPterm(s), locs = Math.max(1, TPlocationsOpen(s, term * 12)), single = TPsingleLocation(s), rows = [];
+  TP_PRODUCTS.forEach(function (k) {
+    if (!TPtournamentsOn(s, k)) return;
+    var base = TPproductBase(s, k), p = TPproduct(s, k);
+    p.tournaments.forEach(function (t) {
+      var byMau = t.basis === 'mau', pct = TPnum(t.participantPct, 0), count = TPnum(t.participants, 0),
+        participants = byMau ? base * pct / 100 : count,
+        entries = participants + (t.rebuyMode === 'pct' ? participants * TPnum(t.rebuyPct, 0) / 100 : participants * TPnum(t.rebuys, 0)),
+        events = TPnum(t.eventsPerMonth, 0), price = TPnum(t.entryPrice, 0),
+        perLocation = k === 'core' && !single && t.scope !== 'network', mult = perLocation ? locs : 1,
+        entriesValue = entries * price, cost = TPprizeCost(t), value = t.isCash ? TPnum(t.cashPrizeAmount, 0) : TPnum(t.rewardFaceValue, 0);
+      rows.push({
+        product: k, name: t.name || '', cadence: TPcadenceLabel(events), eventsPerMonth: events, entryPrice: price,
+        basis: byMau ? 'mau' : 'count', participantPct: pct, participantCount: count, participants: participants, follows: TPtourFollows(s, k, t),
+        entriesPerEvent: entries, entriesValuePerEvent: entriesValue,
+        prizeValue: value, prizeCost: cost, isCash: !!t.isCash, costMode: t.isCash ? 'pool' : t.costMode, costPct: TPnum(t.costPct, 0), sponsorName: t.sponsorName || '', sponsored: TPsponsored(t),
+        marginPerEvent: entriesValue - cost,
+        scope: k === 'mini' ? 'app' : (t.scope === 'network' ? 'network' : 'each'), perLocation: perLocation, locations: mult,
+        entriesMonth: entriesValue * events, prizeMonth: cost * events,
+        entriesMonthNetwork: entriesValue * events * mult, prizeMonthNetwork: cost * events * mult,
+      });
+    });
+  });
+  var total = rows.reduce(function (a, r) { a.entriesMonthNetwork += r.entriesMonthNetwork; a.prizeMonthNetwork += r.prizeMonthNetwork; a.eventsPerMonth += r.eventsPerMonth * r.locations; return a; },
+    { entriesMonthNetwork: 0, prizeMonthNetwork: 0, eventsPerMonth: 0 });
+  total.marginMonthNetwork = total.entriesMonthNetwork - total.prizeMonthNetwork;
+  return { rows: rows, total: total, locations: locs, single: single, term: term };
 }
 
 /* The primary tournament, for the map and the pitch: the first of the first
@@ -5552,7 +5616,8 @@ function TPtourReadout(key, i) {
   var t = TP[key].tournaments[i], row = document.querySelector('.tp-tour[data-product="' + key + '"][data-tour="' + i + '"]');
   if (!t || !row) return;
   var el = row.querySelector('.tp-tour-readout'); if (!el) return;
-  var st = TPstate(TP), entries = TPentriesPerEvent(st, t, 1, key),
+  var st = TPstate(TP); t = TPproduct(st, key).tournaments[i] || t;
+  var entries = TPentriesPerEvent(st, t, 1, key),
     handle = entries * TPnum(t.entryPrice, 0) * TPnum(t.eventsPerMonth, 0),
     mult = TPprizeMultiplier(st, t, 1, key),
     prize = TPprizeCost(t) * TPnum(t.eventsPerMonth, 0) * mult;
@@ -5838,10 +5903,66 @@ function TPrenderTournaments() {
    rows carry a product prefix. */
 function TPtourId(key, base, i) { return (key === 'mini' ? base.replace(/^tp-/, 'tp-mini-') : base) + '-' + i; }
 
+/* One participation figure for every tournament of a product. When it is on,
+   each tournament card shows the shared figure locked, with an "own number"
+   switch for the exceptions. */
+function TPparticipationControl(key, st, single) {
+  var u = TPproduct(st, key).participation, q = "'" + key + "'", byMau = u.basis !== 'count',
+    baseLabel = key === 'mini' ? 'app users' : (single ? 'users' : 'users per location'),
+    base = TPproductBase(st, key), n = TP[key].tournaments.length, own = TP[key].tournaments.filter(function (t) { return t.own; }).length,
+    resolved = byMau ? base * TPnum(u.pct, 0) / 100 : TPnum(u.count, 0);
+  return '<div class="tp-universal" id="tp-universal-' + key + '">' +
+    '<label class="tp-check"><input type="checkbox" id="tp-universal-on-' + key + '"' + (u.on ? ' checked' : '') + ' onchange="TPpartToggle(' + q + ',this.checked)"><span>Same participation for every tournament</span></label>' +
+    (u.on
+      ? '<div class="tp-row"><span class="input-label">Participation, all tournaments</span>' +
+        '<div class="tp-participation-switch" role="group" aria-label="Universal participation basis">' +
+        '<button type="button" aria-pressed="' + (!byMau) + '"' + (!byMau ? ' class="on"' : '') + ' onclick="TPpartBasis(' + q + ',\'count\')">Entries<span>A participant count per event' + (key === 'core' && !single ? ', per location' : '') + '</span></button>' +
+        '<button type="button" aria-pressed="' + byMau + '"' + (byMau ? ' class="on"' : '') + ' onclick="TPpartBasis(' + q + ',\'mau\')">% of users<span>Share of ' + baseLabel + '</span></button>' +
+        '</div></div>' +
+        '<div class="inputs tp-tour-grid">' + (byMau
+          ? '<div class="input-group"><label class="input-label" for="tp-universal-pct-' + key + '">Participants, % of ' + baseLabel + '</label><div class="input-val"><input class="pf-input" id="tp-universal-pct-' + key + '" type="number" min="0" step="0.25" value="' + TPnum(u.pct, 0) + '" oninput="TPpart(' + q + ',\'pct\',this.value)"><span class="vp">%</span></div><div class="sn" id="tp-universal-note-' + key + '">Estimated · about ' + Math.round(resolved).toLocaleString() + ' per event' + (key === 'core' && !single ? ' per location' : '') + ' at full volume</div></div>'
+          : '<div class="input-group"><label class="input-label" for="tp-universal-count-' + key + '">Participants per event' + (key === 'core' && !single ? ', per location' : '') + '</label><input class="pf-input" id="tp-universal-count-' + key + '" type="number" min="0" step="5" value="' + TPnum(u.count, 0) + '" oninput="TPpart(' + q + ',\'count\',this.value)"><div class="sn" id="tp-universal-note-' + key + '">Estimated · at full volume</div></div>') +
+        '</div>' +
+        '<div class="sn">Applies to ' + (n - own) + ' of ' + n + ' tournament' + (n === 1 ? '' : 's') + '. Switch any tournament to its own number below.</div>'
+      : '<div class="sn">Off: each tournament keeps its own participation below. Turn on to drive them all from one figure.</div>') +
+    '</div>';
+}
+function TPpartToggle(key, on) {
+  var u = TP[key].participation = Object.assign({}, TP_PRODUCT_DEFAULTS.participation, TP[key].participation || {});
+  u.on = !!on;
+  if (u.on) {
+    // Start from the first tournament so nothing jumps when it is switched on.
+    var first = TP[key].tournaments[0];
+    if (first && !TP[key]._participationSeeded) { u.basis = first.basis === 'mau' ? 'mau' : 'count'; u.pct = TPnum(first.participantPct, u.pct); u.count = TPnum(first.participants, u.count); TP[key]._participationSeeded = true; }
+  }
+  TPsave(); TPrenderTournaments(); TPrender();
+}
+function TPpartBasis(key, basis) {
+  var u = TP[key].participation = Object.assign({}, TP_PRODUCT_DEFAULTS.participation, TP[key].participation || {});
+  u.basis = basis === 'count' ? 'count' : 'mau';
+  TPsave(); TPrenderTournaments(); TPrender();
+}
+function TPpart(key, field, value) {
+  var u = TP[key].participation = Object.assign({}, TP_PRODUCT_DEFAULTS.participation, TP[key].participation || {});
+  u[field] = TPnum(value, 0);
+  TPsave();
+  var st = TPstate(TP), note = $('tp-universal-note-' + key), single = TPsingleLocation(st);
+  if (note && field === 'pct') note.textContent = 'Estimated · about ' + Math.round(TPproductBase(st, key) * u.pct / 100).toLocaleString() + ' per event' + (key === 'core' && !single ? ' per location' : '') + ' at full volume';
+  TPrefreshReadouts(); TPrender();
+}
+function TPtourOwn(key, i, own) {
+  var t = TP[key].tournaments[i]; if (!t) return;
+  t.own = !!own;
+  if (t.own) { var u = TPproduct(TPstate(TP), key).participation; t.basis = u.basis; t.participantPct = u.pct; t.participants = u.count; }
+  TPsave(); TPrenderTournaments(); TPrender();
+}
+
 function TPrenderTournamentList(key) {
   var host = $('tp-tournaments-list-' + key); if (!host) return;
-  var st = TPstate(TP), single = TPsingleLocation(st), q = "'" + key + "',";
-  host.innerHTML = TP[key].tournaments.map(function (t, i) {
+  var st = TPstate(TP), single = TPsingleLocation(st), q = "'" + key + "',", universal = TPproduct(st, key).participation.on;
+  host.innerHTML = TPparticipationControl(key, st, single) + TP[key].tournaments.map(function (t, i) {
+    var follows = universal && !t.own, nt = TPproduct(st, key).tournaments[i] || t;
+    if (follows) t = nt;
     var cash = !!t.isCash, byMau = t.basis === 'mau', pct = t.rebuyMode === 'pct', network = t.scope === 'network',
       resolved = TPtypeParticipants(st, t, 1, key),
       entries = TPentriesPerEvent(st, t, 1, key),
@@ -5871,6 +5992,13 @@ function TPrenderTournamentList(key) {
           '</div></div>'
         : '') +
 
+      (universal
+        ? '<label class="tp-check"><input type="checkbox" id="' + id('tp-own') + '"' + (t.own ? ' checked' : '') + ' onchange="TPtourOwn(' + q + i + ',this.checked)"><span>Its own participation</span></label>'
+        : '') +
+      (follows
+        ? '<div class="sn tp-follows">Participation: ' + (byMau ? TPnum(t.participantPct, 0) + '% of ' + baseLabel : Math.round(TPnum(t.participants, 0)).toLocaleString() + ' per event' + (key === 'core' && !single ? ' per location' : '')) + ' · the figure set for every tournament above.</div>'
+        : '') +
+      (follows ? '' :
       '<div class="tp-row"><span class="input-label">Participation</span>' +
       '<div class="tp-participation-switch" role="group" aria-label="Participation basis for ' + escAttr(t.name) + '">' +
       '<button type="button" data-participation="count" aria-pressed="' + (!byMau) + '"' + (!byMau ? ' class="on"' : '') + ' onclick="TPtourBasis(' + q + i + ',\'count\')">Entries<span>A participant count per event' + (key === 'core' && !single ? ', per location' : '') + '</span></button>' +
@@ -5879,7 +6007,7 @@ function TPrenderTournamentList(key) {
       '<div class="inputs tp-tour-grid">' + (byMau
         ? '<div class="input-group"><label class="input-label" for="' + id('tp-part') + '">Participants, % of ' + baseLabel + '</label><div class="input-val"><input class="pf-input" id="' + id('tp-part') + '" type="number" min="0" step="0.25" value="' + TPnum(t.participantPct, 0) + '" oninput="TPtour(' + q + i + ',\'participantPct\',this.value)"><span class="vp">%</span></div><div class="sn">Estimated · at full volume</div></div>'
         : '<div class="input-group"><label class="input-label" for="' + id('tp-part') + '">Participants per event' + (key === 'core' && !single ? ', per location' : '') + '</label><input class="pf-input" id="' + id('tp-part') + '" type="number" min="0" step="5" value="' + TPnum(t.participants, 0) + '" oninput="TPtour(' + q + i + ',\'participants\',this.value)"><div class="sn">Estimated · at full volume</div></div>')
-      + '</div>' +
+      + '</div>') +
 
       '<div class="tp-row"><span class="input-label">Rebuys</span>' +
       '<div class="tp-rebuy-switch" role="group" aria-label="Rebuy basis for ' + escAttr(t.name) + '">' +
@@ -5994,6 +6122,102 @@ function TPearnRowHtml(y, o) {
     (o.free ? '' : cell(y.settled > 0 ? TPmoney(y.settled) : '—')) +
     cell(TPmoney(y.earn), y.earn < 0 ? 'tp-neg' : '') +
     (o.multi ? cell(TPmoney(y.cumulative), y.cumulative < 0 ? 'tp-neg' : '') : '') + '</tr>';
+}
+
+/* ---------- the programme at a glance ----------
+   One table of the tournaments in scope (cadence, cost, participation, what
+   each event returns) and a short block on head-to-head, for the results tab,
+   the brief, the one-pager print and the internal export. `customer` drops
+   anything the customer view must not carry (the take fee). */
+function TPprogrammeHead(o) {
+  return ['Tournament', 'Cadence', 'Entry', 'Participation', 'Entries / event', 'Reward', 'Costs you / event', 'Margin / event', 'Runs', 'Entries / mo', 'Prize funding / mo'];
+}
+function TPprogrammeCells(row, o) {
+  var who = o && o.who === 'Operator' ? 'operator' : 'you',
+    part = row.basis === 'mau'
+      ? (Math.round(row.participantPct * 100) / 100) + '% of ' + (row.product === 'mini' ? 'app users' : (o && o.single ? 'users' : 'users per location')) + ' ≈ ' + Math.round(row.participants).toLocaleString()
+      : Math.round(row.participantCount).toLocaleString() + ' per event' + (row.perLocation ? ' per location' : ''),
+    cost = row.sponsored ? 'Sponsored' + (row.sponsorName ? ' by ' + row.sponsorName : '') + ' · $0'
+      : row.costMode === 'pct' ? TPmoney(row.prizeCost) + ' (' + Math.round(row.costPct) + '% of value)' : TPmoney(row.prizeCost),
+    runs = row.scope === 'app' ? 'Across the app' : row.scope === 'network' ? 'One across all locations' : (o && o.single ? 'At the location' : 'At every location (' + row.locations + ')');
+  return [
+    TPesc(row.name), row.cadence + ' · ' + row.eventsPerMonth + ' a month', TPmoney(row.entryPrice), part,
+    Math.round(row.entriesPerEvent).toLocaleString() + ' · ' + TPmoney(row.entriesValuePerEvent),
+    (row.isCash ? 'Cash ' : '') + TPmoney(row.prizeValue), cost, TPmoney(row.marginPerEvent), runs,
+    TPmoney(row.entriesMonthNetwork), TPmoney(row.prizeMonthNetwork),
+  ];
+}
+function TPprogrammeHtml(o) {
+  var pr = TPprogrammeRows(TP); if (!pr.rows.length) return '';
+  var opts = Object.assign({ single: pr.single }, o || {}), head = TPprogrammeHead(opts), t = pr.total;
+  return '<div class="tp-table-wrap"><table class="tp-months tp-programme-table"><thead><tr>' + head.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    pr.rows.map(function (row) {
+      var cells = TPprogrammeCells(row, opts);
+      return '<tr>' + cells.map(function (c, i) { return '<td' + (i === 7 && row.marginPerEvent < 0 ? ' class="tp-neg"' : '') + '>' + c + '</td>'; }).join('') + '</tr>';
+    }).join('') +
+    '<tr class="tp-total"><td>All tournaments</td><td>' + Math.round(t.eventsPerMonth).toLocaleString() + ' events a month' + (pr.single ? '' : ' across ' + pr.locations + ' location' + (pr.locations === 1 ? '' : 's')) + '</td><td colspan="7">' +
+    'Margin a month: <strong' + (t.marginMonthNetwork < 0 ? ' class="tp-neg"' : '') + '>' + TPmoney(t.marginMonthNetwork) + '</strong> (entries less prize funding, at full volume)</td>' +
+    '<td>' + TPmoney(t.entriesMonthNetwork) + '</td><td>' + TPmoney(t.prizeMonthNetwork) + '</td></tr>' +
+    '</tbody></table></div>' +
+    '<div class="sn">At full volume: no launch ramp, no decay, no season. ' + (pr.single ? '' : 'Per-location rows are multiplied by the ' + pr.locations + ' location' + (pr.locations === 1 ? '' : 's') + ' open by the end of the term for the monthly columns. ') + 'Margin per event is entries less what the reward costs; a negative margin means that tournament is subsidised out of the rest.</div>';
+}
+/* Plain text of the same table, for the brief and the copy button. */
+function TPprogrammeText(o) {
+  var pr = TPprogrammeRows(TP); if (!pr.rows.length) return '';
+  var opts = Object.assign({ single: pr.single }, o || {}), strip = function (v) { return String(v).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"'); },
+    lines = ['Columns: ' + TPprogrammeHead(opts).join(' | ')];
+  pr.rows.forEach(function (row) { lines.push(TPprogrammeCells(row, opts).map(strip).join(' | ')); });
+  var t = pr.total;
+  lines.push('All tournaments: ' + Math.round(t.eventsPerMonth).toLocaleString() + ' events a month' + (pr.single ? '' : ' across ' + pr.locations + ' locations') + ' | entries ' + TPmoney(t.entriesMonthNetwork) + ' a month | prize funding ' + TPmoney(t.prizeMonthNetwork) + ' a month | margin ' + TPmoney(t.marginMonthNetwork) + ' a month, at full volume');
+  return lines.join('\n');
+}
+/* Head-to-head in short: who can play, how many do, what they play, what it
+   generates. Per product, from the same figures the case band uses. */
+function TPh2hSummary(key, o) {
+  var st = TPstate(TP); if (!TPh2hOn(st, key)) return null;
+  var cfg = TPCconfig(), h = TPh2h(st, cfg, 1, key), c = TPproduct(st, key).h2h, customer = !!(o && o.customer),
+    plays = h.engaged > 0 ? h.paidPlays / h.engaged : 0, entry = h.paidPlays > 0 ? h.paidVolume / h.paidPlays : 0, rows = [];
+  var multi = key === 'core' && !TPsingleLocation(st);
+  rows.push(['Who can play', Math.round(h.reach).toLocaleString() + (key === 'mini' ? ' app users' : (multi ? ' users per location' : ' users'))]);
+  rows.push(['Engagement', (Math.round(h.engagement * 100) / 100) + '% → about ' + Math.round(h.engaged).toLocaleString() + ' active players a month' + (multi ? ', averaged over the term as locations open' : '')]);
+  if (h.wagering) {
+    rows.push(['Matchups per player', (Math.round(plays * 100) / 100) + ' a month at ' + TPmoney(entry) + ' each']);
+    rows.push(['Paid-game volume', TPmoney(h.paidVolume) + ' a month']);
+    if (!customer) rows.push(['Take fee', (Math.round(h.feeRate * 100) / 100) + '% → ' + TPmoney(h.platformFee) + ' a month into the pool']);
+    else rows.push(['Into the pool', TPmoney(h.platformFee) + ' a month']);
+  }
+  if (h.rewards) {
+    rows.push(['Reward games', Math.round(h.rewardPlays).toLocaleString() + ' a month → ' + Math.round(h.rewardRedemptions).toLocaleString() + ' redemptions']);
+    rows.push(['Reward value', TPmoney(h.rewardValue) + ' a month of venue value, not revenue']);
+  }
+  var plain = 'About ' + Math.round(h.engaged).toLocaleString() + ' players' + (h.wagering ? ', ' + (Math.round(plays * 10) / 10) + ' matchups a month at ' + TPmoney(entry) + ' each, ' + TPmoney(h.paidVolume) + ' of paid volume a month' : '') + (h.rewards ? (h.wagering ? '; ' : ', ') + Math.round(h.rewardRedemptions).toLocaleString() + ' reward redemptions a month' : '') + '.';
+  return { key: key, title: key === 'mini' ? 'Head-to-head · mini games' : 'Head-to-head · ' + (TPsingleLocation(st) ? 'your game' : 'in your venues'), rows: rows, plain: plain, h: h };
+}
+function TPh2hSummaryHtml(o) {
+  return TP_PRODUCTS.map(function (k) { return TPh2hSummary(k, o); }).filter(Boolean).map(function (b) {
+    return '<div class="tp-h2h-short"><div class="tp-h2h-short-title">' + b.title + '</div><table class="tp-months tp-h2h-short-table"><tbody>' +
+      b.rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table><div class="sn">' + TPesc(b.plain) + '</div></div>';
+  }).join('');
+}
+function TPh2hSummaryText(o) {
+  return TP_PRODUCTS.map(function (k) { return TPh2hSummary(k, o); }).filter(Boolean).map(function (b) {
+    return [b.title.toUpperCase()].concat(b.rows.map(function (r) { return '  ' + r[0] + ': ' + r[1]; })).concat(['  In short: ' + b.plain]).join('\n');
+  }).join('\n');
+}
+function TPcopyProgramme(btn) {
+  var text = [TPprogrammeText() ? 'PROGRAMME AT A GLANCE\n' + TPprogrammeText() : '', TPh2hSummaryText()].filter(Boolean).join('\n\n');
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(function () { setButtonState(btn, 'Copied ✓', 2000, true); }, function () { setButtonState(btn, 'Copy failed', 2000); });
+}
+function TPrenderProgramme() {
+  var host = $('tp-programme'); if (!host) return;
+  var st = TPstate(TP), t = TPanyTournaments(st) ? TPprogrammeHtml({ who: 'Operator' }) : '', h = TPanyH2H(st) ? TPh2hSummaryHtml({ customer: !!TP.customerMode }) : '';
+  if (!t && !h) { host.hidden = true; host.innerHTML = ''; return; }
+  host.hidden = false;
+  host.innerHTML = '<div class="pf-section-title">Programme at a glance</div>' +
+    '<div class="sn">The tournaments as entered: cadence, what they cost, who takes part, and what each event returns. Copy it into the one-pager as it stands.</div>' +
+    t + h +
+    '<div class="tp-actions tp-internal"><button type="button" onclick="TPcopyProgramme(this)">Copy programme summary</button></div>';
 }
 
 function TPrenderResults(r) {
@@ -6268,6 +6492,7 @@ function TPrender() {
   TPapplyProvenance();
   TPrenderStrip(r);
   TPrenderResults(r);
+  TPrenderProgramme();
   TPrenderChart(r);
   TPrenderHeat(r);
   TPrenderFoldSummary();
@@ -6485,7 +6710,11 @@ function TPrecApply() {
     if (typeof MGsync === 'function') MGsync();
     if (typeof MGu === 'function') MGu();
   }
-  if (TPtournamentsOn(st, 'mini')) TP.mini.tournaments = c.state.mini.tournaments;
+  if (TPtournamentsOn(st, 'mini')) {
+    TP.mini.tournaments = c.state.mini.tournaments;
+    var uni = TP.mini.participation, recT = c.state.mini.tournaments[0];
+    if (uni && uni.on && recT) { uni.basis = recT.basis === 'count' ? 'count' : 'mau'; uni.pct = TPnum(recT.participantPct, uni.pct); uni.count = TPnum(recT.participants, uni.count); }
+  }
   if (!TPsingleLocation(st)) { TP.mini.mauMode = 'entered'; TP.mini.mau = rec.mau; }
   TPsave();
   TPrenderControls(); TPrenderTournaments(); TPsyncH2H(); TPrender();
@@ -7087,6 +7316,16 @@ function TPbrief() {
     push('  Entries generated     ' + n(avgEntries) + '   per month average  [derived from: sum over programmes of entries x entry price, averaged over ' + mCount + ' months]');
     push('  Your prize funding    ' + n(r.totalPrizeCost / mCount) + '   per month average  [highlight] [customer fact]');
     push();
+    push('PROGRAMME AT A GLANCE  (one table, print in full; cadence, cost and participation per tournament, at full volume)');
+    TPprogrammeText({ who: 'You' }).split('\n').forEach(function (l) { push('  ' + l); });
+    push('  [customer fact: cadence, entry, reward, what it costs you] [estimate: participation, entries, margin]');
+    push();
+  }
+  if (showH2H) {
+    push('HEAD-TO-HEAD, IN SHORT  (a small block under the head-to-head band; the "In short" line may print verbatim)');
+    TPh2hSummaryText({ customer: true }).split('\n').forEach(function (l) { push('  ' + l); });
+    push('  [estimate: engagement, matchups, volume] [the take fee is never printed]');
+    push();
   }
 
   push('HOW IT RUNS  (four numbered steps, mechanics not numbers; mark step 4 hot)');
@@ -7301,6 +7540,7 @@ function TPprintInternal() {
     '<div class="tp-print-progress">' + $('tp-progress').innerHTML + '</div>' +
     ($('tp-years') && !$('tp-years').hidden ? '<div class="tp-print-table">' + $('tp-years').innerHTML + '</div>' : '') +
     ($('tp-operator') && !$('tp-operator').hidden ? '<div class="tp-print-table tp-print-operator">' + $('tp-operator').innerHTML + '</div>' : '') +
+    ($('tp-programme') && !$('tp-programme').hidden ? '<div class="tp-print-table tp-print-operator">' + $('tp-programme').innerHTML + '</div>' : '') +
     '<div class="tp-print-table">' + $('tp-table').innerHTML + '</div>' +
     '<div class="tp-print-foot">Contains licence fee, revenue split and prize cost detail. Planning estimate only, not a guarantee, offer or contract. Not for customer distribution.</div>'
   );
@@ -7569,13 +7809,14 @@ function TPCprint() {
     html += '<p class="tp-print-note">' + TPesc(TPpitchH2H(TP, TPCconfig())) + '</p>';
   }
 
+  if (showH2H) {
+    // The same figures, in short, the way they read on a call.
+    html += '<div class="tp-print-programme">' + TPh2hSummaryHtml({ customer: true }) + '</div>';
+  }
+
   if (showT) {
-    html += '<h2 style="font-size:15px;margin:20px 0 8px">Tournaments</h2>';
-    var proj = TPcustomerProjection(TP).tournaments;
-    html += table(['Format', 'Entry', 'Rebuys', 'Frequency', 'Reward'], proj.map(function (t) {
-      return [TPesc(t.name), '$' + Math.round(t.entryPrice).toLocaleString(), TPesc(t.rebuyLabel),
-        TPesc(t.frequencyLabel), TPesc(t.rewardLabel)];
-    }));
+    html += '<h2 style="font-size:15px;margin:20px 0 8px">Tournaments · the programme at a glance</h2>';
+    html += '<div class="tp-print-programme">' + TPprogrammeHtml({ who: 'You' }) + '</div>';
     var m1 = tr.months[0] || {};
     html += '<div class="tp-print-cards" style="margin-top:12px">' +
       card('Participants / event, month 1', Math.round(m1.participants || 0).toLocaleString(), '') +

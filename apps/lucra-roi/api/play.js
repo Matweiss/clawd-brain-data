@@ -77,6 +77,13 @@ function applyInputs(base, inputs, unlock) {
   E.TP_PRODUCTS.forEach((k) => {
     const p = s[k], pin = inputs[k];
     if (!p.on || !pin || typeof pin !== 'object') return;
+    if (pin.participation && typeof pin.participation === 'object') {
+      const u = pin.participation;
+      if (u.on !== undefined) p.participation.on = !!u.on;
+      if (u.basis === 'count' || u.basis === 'mau') p.participation.basis = u.basis;
+      if (u.pct !== undefined) p.participation.pct = num(u.pct, 0, 100);
+      if (u.count !== undefined) p.participation.count = num(u.count, 0, 1000000);
+    }
     if (Array.isArray(pin.tournaments)) {
       const existing = p.tournaments;
       const next = pin.tournaments.slice(0, MAX_TOURNAMENTS).map((t, i) => {
@@ -100,6 +107,7 @@ function applyInputs(base, inputs, unlock) {
         if (t.costPct !== undefined && !c.isCash) c.costPct = num(t.costPct, 0, 1000);
         if (typeof t.sponsorName === 'string') c.sponsorName = t.sponsorName.slice(0, 60);
         if (k === 'core' && !single && (t.scope === 'each' || t.scope === 'network')) c.scope = t.scope;
+        if (t.own !== undefined) c.own = !!t.own;
         return c;
       }).filter(Boolean);
       // With add/remove unlocked the list is theirs, even empty (the model then
@@ -156,9 +164,11 @@ function facts(s, meta) {
     prizeValue: num(t.isCash ? t.cashPrizeAmount : t.rewardFaceValue, 0), prizeCost: E.TPprizeCost(t), pool: !!t.isCash,
     costMode: t.isCash ? 'amount' : (t.costMode || 'amount'), costPct: num(t.costPct, 0), sponsorName: E.TPsponsored(t) ? String(t.sponsorName || '') : '',
     scope: k === 'core' ? (t.scope === 'network' ? 'network' : 'each') : 'network',
+    own: !!t.own,
   });
   const product = (k) => ({
     on: E.TPproductOn(s, k), tournamentsOn: E.TPtournamentsOn(s, k), h2hOn: E.TPh2hOn(s, k),
+    participation: { on: !!s[k].participation.on, basis: s[k].participation.basis, pct: num(s[k].participation.pct, 0), count: num(s[k].participation.count, 0) },
     tournaments: E.TPproductOn(s, k) ? s[k].tournaments.map((t) => tour(t, k)) : [],
     h2h: E.TPh2hOn(s, k) ? { engagement: num(s[k].h2h.engagement, 0), playsPerUser: num(s[k].h2h.playsPerUser, 0), spendPerPlay: num(s[k].h2h.spendPerPlay, 0), reach: num(s[k].h2h.reach, 0), mode: s[k].h2h.mode } : null,
   });
@@ -236,8 +246,19 @@ function outputs(s, opts) {
       locationsOpen: m.locationsOpen, phase: m.split };
   });
   const funding = r.licenceFunding;
+  // The programme at a glance, and head-to-head in short: the same helpers the
+  // seller's page uses, without the take fee.
+  const pr = E.TPprogrammeRows(s);
+  const programme = { rows: pr.rows.map((x) => ({ product: x.product, name: x.name, cadence: x.cadence, eventsPerMonth: x.eventsPerMonth, entryPrice: x.entryPrice, basis: x.basis, participantPct: x.participantPct, participantCount: x.participantCount, participants: x.participants, follows: x.follows,
+      entriesPerEvent: x.entriesPerEvent, entriesValuePerEvent: x.entriesValuePerEvent, prizeValue: x.prizeValue, prizeCost: x.prizeCost, costMode: x.costMode, costPct: x.costPct, sponsorName: x.sponsorName, sponsored: x.sponsored,
+      marginPerEvent: x.marginPerEvent, scope: x.scope, perLocation: x.perLocation, locations: x.locations, entriesMonthNetwork: x.entriesMonthNetwork, prizeMonthNetwork: x.prizeMonthNetwork })),
+    total: pr.total, locations: pr.locations };
+  const h2hShort = E.TP_PRODUCTS.filter((k) => E.TPh2hOn(s, k)).map((k) => {
+    const h = E.TPh2h(s, cfg, 1, k), plays = h.engaged > 0 ? h.paidPlays / h.engaged : 0, entry = h.paidPlays > 0 ? h.paidVolume / h.paidPlays : 0;
+    return { product: k, reach: h.reach, engagement: h.engagement, engaged: h.engaged, paid: !!h.wagering, rewards: !!h.rewards, playsPerPlayer: plays, entryPerPlay: entry, paidVolume: h.paidVolume, intoPool: h.platformFee, rewardPlays: h.rewardPlays, rewardRedemptions: h.rewardRedemptions, rewardValue: h.rewardValue };
+  });
   return {
-    errors: [], term, free: r.free, payoffMonth: r.payoffMonth, balanceDue: r.balanceDue, licenceTotal: r.totalContract,
+    errors: [], term, free: r.free, programme, h2hShort, payoffMonth: r.payoffMonth, balanceDue: r.balanceDue, licenceTotal: r.totalContract,
     contract: { total: r.totalContract, fees: r.free ? [] : E.TPfees(s).slice(0, term), annual: !!r.annualBasis, waived: r.free },
     // Where the retired licence came from. Your share never funds it, so licenceFromYou is zero by construction.
     recapturing: !!r.recapturing, licenceFromShare: funding.fromShare, licenceFromYou: funding.fromOperator,
@@ -274,7 +295,7 @@ function page() {
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.tile{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:12px}.tile span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.tile strong{display:block;margin-top:6px;font:750 22px var(--mono)}.tile strong.bad{color:var(--red)}.tile small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
 .f{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:8px 0}label{display:block;font-size:12px;color:var(--muted)}label b{display:block;color:var(--text);font-weight:600;margin-bottom:4px;font-size:12px}
 input,select{width:100%;background:#061527;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:14px var(--mono)}input:focus{outline:2px solid var(--green);outline-offset:1px}
-.tour{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--panel2)}.tour .head{display:flex;justify-content:space-between;gap:10px;align-items:center}.tour .head input{font:600 14px Inter,system-ui,sans-serif;max-width:60%}
+.tour{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--panel2)}.tour.uni{border-style:dashed;background:transparent}.tour.uni .f{margin-top:6px}label.row{display:flex;align-items:center;gap:6px;color:var(--text);font-size:13px}label.row input[type=checkbox]{width:auto;margin:0}label.row b{margin:0}.tour .head{display:flex;justify-content:space-between;gap:10px;align-items:center}.tour .head input{font:600 14px Inter,system-ui,sans-serif;max-width:60%}
 button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 12px;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}button.primary{background:var(--green);color:#0b1a06;border-color:var(--green)}button.ghost{color:var(--muted)}
 table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 8px;border-top:1px solid var(--line);text-align:right;font-family:var(--mono)}th:first-child,td:first-child{text-align:left;font-family:Inter,system-ui,sans-serif}thead th{color:var(--muted);font:600 11px Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em;border-top:0}tr.total td{font-weight:700;border-top:2px solid var(--green);background:rgba(138,233,26,.06)}
 .cases{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.case{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2)}.case.mid{border-color:var(--green)}.case span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.case strong{display:block;font:750 18px var(--mono);margin-top:4px}.case small{color:var(--muted);font-size:11px}
@@ -285,7 +306,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 8px;b
 .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.chip{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:2px 8px;font:600 11px Inter,system-ui,sans-serif;cursor:pointer}.chip.on{border-color:var(--green);color:var(--green);background:rgba(138,233,26,.1)}
 .sched{margin:6px 0}.sched .row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin:6px 0}.chip{display:inline-block;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;margin:3px 4px 3px 0;color:var(--muted)}.chip.est{border-color:var(--amber)}
 .full{margin-top:18px}.section{margin-top:18px}.section h3{margin:0 0 4px;font-size:14px}.section .hint{margin-bottom:8px}
-.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.tablewrap table{min-width:640px}.tablewrap th,.tablewrap td{white-space:nowrap}tr.sub td{background:rgba(255,255,255,.04);font-weight:600;border-top:1px solid var(--line)}td.neg{color:var(--red)}td.zero{color:var(--green)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.tablewrap table{min-width:640px}.tablewrap table.h2s{min-width:0}table.h2s td{text-align:left;white-space:normal}table.h2s td:first-child{color:var(--muted);white-space:nowrap}.tablewrap th,.tablewrap td{white-space:nowrap}tr.sub td{background:rgba(255,255,255,.04);font-weight:600;border-top:1px solid var(--line)}td.neg{color:var(--red)}td.zero{color:var(--green)}
 .keep .rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:6px}.keep .rows div{display:flex;flex-direction:column}.keep .rows span{font-size:11px}.keep .rows b{font:700 15px var(--mono);color:var(--text)}.keep .rows b.zero{color:var(--green)}.keep .rows b.neg{color:var(--red)}
 .banner{border:1px solid var(--blue);background:rgba(111,177,255,.1);border-radius:10px;padding:10px 12px;margin:14px 0 0;font-size:13px;color:var(--text)}.banner b{color:var(--blue)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}.stat{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:10px}.stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}.stat strong{display:block;font:750 18px var(--mono);margin-top:4px}.stat small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
@@ -306,9 +327,10 @@ async function load(){
   catch(e){ var g=$('gate-err'); g.hidden=false; g.textContent=e.message; if(!needsPass){ $('gate').querySelector('form').hidden=true; } }
 }
 function inputsFromFacts(f){
-  var tp=function(k){ return f[k].tournaments.map(function(t){ return {id:t.id,name:t.name,entryPrice:t.entryPrice,eventsPerMonth:t.eventsPerMonth,basis:t.basis,participants:t.participants,participantPct:t.participantPct,rebuys:t.rebuys,prizeValue:t.prizeValue,prizeCost:t.prizeCost,costMode:t.costMode||'amount',costPct:t.costPct||0,sponsorName:t.sponsorName||'',pool:t.pool,scope:t.scope}; }); };
+  var tp=function(k){ return f[k].tournaments.map(function(t){ return {id:t.id,name:t.name,entryPrice:t.entryPrice,eventsPerMonth:t.eventsPerMonth,basis:t.basis,participants:t.participants,participantPct:t.participantPct,rebuys:t.rebuys,prizeValue:t.prizeValue,prizeCost:t.prizeCost,costMode:t.costMode||'amount',costPct:t.costPct||0,sponsorName:t.sponsorName||'',pool:t.pool,scope:t.scope,own:!!t.own}; }); };
+  var up=function(k){ var u=f[k].participation||{}; return {on:!!u.on,basis:u.basis==='count'?'count':'mau',pct:u.pct||0,count:u.count||0}; };
   return { mau:f.mau, miniMau:f.miniMau, locations:f.locations.slice(), openings:f.scheduleStated?f.schedule.map(function(o){return {month:o.month,add:o.add}}):null, rampOn:f.rampOn, rampStartPct:f.rampStartPct, rampMonths:f.rampMonths, scenarioMonths:Object.assign({},f.scenarioMonths||{}),
-    core:{tournaments:tp('core'),h2h:f.core.h2h?Object.assign({},f.core.h2h):null}, mini:{tournaments:tp('mini'),h2h:f.mini.h2h?Object.assign({},f.mini.h2h):null} };
+    core:{participation:up('core'),tournaments:tp('core'),h2h:f.core.h2h?Object.assign({},f.core.h2h):null}, mini:{participation:up('mini'),tournaments:tp('mini'),h2h:f.mini.h2h?Object.assign({},f.mini.h2h):null} };
 }
 function schedule(){ clearTimeout(timer); timer=setTimeout(recompute,250); }
 async function recompute(){
@@ -320,6 +342,8 @@ async function recompute(){
 function set(path,v,isNum){ var parts=path.split('.'),o=INPUTS; for(var i=0;i<parts.length-1;i++){o=o[parts[i]]} o[parts[parts.length-1]]=isNum?Number(v):v; schedule(); }
 function setT(k,i,key,v){ INPUTS[k].tournaments[i][key]=(key==='name'||key==='scope'||key==='basis'||key==='costMode'||key==='sponsorName')?v:Number(v); if(key==='basis'||key==='scope'||key==='costMode'){renderInputs()} schedule(); }
 function chip(k,i,key,v){ setT(k,i,key,v); renderInputs(); }
+function setU(k,key,v){ var u=INPUTS[k].participation=INPUTS[k].participation||{on:false,basis:'mau',pct:3,count:100}; if(key==='on'){ u.on=!!v; if(u.on){ var t=INPUTS[k].tournaments[0]; if(t&&!u.seeded){ u.basis=t.basis==='mau'?'mau':'count'; u.pct=t.participantPct||u.pct; u.count=t.participants||u.count; u.seeded=true; } } renderInputs(); } else if(key==='basis'){ u.basis=v==='count'?'count':'mau'; renderInputs(); } else { u[key]=Number(v); var note=(u.basis!=='count'?u.pct+'% of users':num(u.count)+' per event')+', set above for every tournament.'; document.querySelectorAll('.uni-note[data-k="'+k+'"]').forEach(function(el){ el.textContent=note; }); } schedule(); }
+function setOwn(k,i,v){ var t=INPUTS[k].tournaments[i], u=INPUTS[k].participation||{}; t.own=!!v; if(t.own){ t.basis=u.basis||t.basis; if(u.pct!==undefined) t.participantPct=u.pct; if(u.count!==undefined) t.participants=u.count; } renderInputs(); schedule(); }
 var PRICE_CHIPS=[1,5,10,15,20,25,50,75,100], FREQ_CHIPS=[[30,'Daily'],[4,'Weekly'],[2,'Twice a month'],[1,'Monthly']];
 function chips(k,i,key,cur,list,label){ return '<div class="chips">'+list.map(function(x){ var v=Array.isArray(x)?x[0]:x, l=Array.isArray(x)?x[1]+' · '+v:label(v); return '<button type="button" class="chip'+(Number(cur)===v?' on':'')+'" onclick="chip(\\''+k+'\\','+i+',\\''+key+'\\','+v+')">'+esc(l)+'</button>'; }).join('')+'</div>'; }
 function addT(k){ var t=INPUTS[k].tournaments[0]||{entryPrice:5,eventsPerMonth:4,basis:'count',participants:50,participantPct:1,rebuys:0,prizeValue:100,prizeCost:100,pool:false,scope:'each'}; INPUTS[k].tournaments.push(Object.assign({},t,{id:'new'+Date.now(),name:'New tournament'})); renderInputs(); schedule(); }
@@ -361,14 +385,23 @@ function renderInputs(){
     var title=k==='core'?(f.single?'Your game':'In your venues'):'On your app or site';
     if(p.tournamentsOn){
       h+='<h2 style="margin-top:14px">Tournaments · '+title+'</h2><div class="hint">'+(k==='core'&&!f.single?'Each tournament runs at every location, or once across all of them.':'One tournament across your whole base.')+'</div>';
+      var u=I[k].participation||{on:false,basis:'mau',pct:3,count:100}, uPct=u.basis!=='count';
+      h+='<div class="tour uni"><label class="row"><input type="checkbox"'+(u.on?' checked':'')+' onchange="setU(\\''+k+'\\',\\'on\\',this.checked)"> <b>Same participation for every tournament</b></label>'+
+        (u.on?'<div class="f"><label><b>Participation, all tournaments</b><select onchange="setU(\\''+k+'\\',\\'basis\\',this.value)"><option value="count"'+(uPct?'':' selected')+'>A count per event</option><option value="mau"'+(uPct?' selected':'')+'>A share of users</option></select></label>'+
+          (uPct?'<label><b>Participants, % of users</b><input type="number" min="0" step="0.25" value="'+u.pct+'" oninput="setU(\\''+k+'\\',\\'pct\\',this.value)"></label>'
+               :'<label><b>Participants per event'+(k==='core'&&!f.single?', per location':'')+'</b><input type="number" min="0" step="5" value="'+u.count+'" oninput="setU(\\''+k+'\\',\\'count\\',this.value)"></label>')+
+          '</div><span class="hint">Every tournament follows this figure unless you give it its own number.</span>'
+        :'<span class="hint">Off: each tournament keeps its own participation.</span>')+'</div>';
       I[k].tournaments.forEach(function(t,i){
-        var byPct=t.basis==='mau';
+        var byPct=t.basis==='mau', follows=u.on&&!t.own;
         h+='<div class="tour"><div class="head"><input type="text" value="'+esc(t.name)+'" oninput="setT(\\''+k+'\\','+i+',\\'name\\',this.value)" aria-label="Tournament name">'+(f.unlock.addTournaments?'<button class="ghost" type="button" onclick="removeT(\\''+k+'\\','+i+')">Remove</button>':'')+'</div><div class="f">'+
           '<label><b>Entry price</b><input type="number" min="0" step="1" value="'+t.entryPrice+'" oninput="setT(\\''+k+'\\','+i+',\\'entryPrice\\',this.value)">'+chips(k,i,'entryPrice',t.entryPrice,PRICE_CHIPS,function(v){return '$'+v})+'</label>'+
           '<label><b>Times a month</b><input type="number" min="0" step="1" value="'+t.eventsPerMonth+'" oninput="setT(\\''+k+'\\','+i+',\\'eventsPerMonth\\',this.value)">'+chips(k,i,'eventsPerMonth',t.eventsPerMonth,FREQ_CHIPS)+'</label>'+
-          '<label><b>Participation</b><select onchange="setT(\\''+k+'\\','+i+',\\'basis\\',this.value)"><option value="count"'+(byPct?'':' selected')+'>A count per event</option><option value="mau"'+(byPct?' selected':'')+'>A share of users</option></select></label>'+
+          (u.on?'<label><b>Participation</b><label class="row"><input type="checkbox"'+(t.own?' checked':'')+' onchange="setOwn(\\''+k+'\\','+i+',this.checked)"> Its own number</label>'+(follows?'<span class="uni-note" data-k="'+k+'">'+(uPct?u.pct+'% of users':num(u.count)+' per event')+', set above for every tournament.</span>':'')+'</label>':'')+
+          (follows?'':
+          '<label><b>'+(u.on?'Basis':'Participation')+'</b><select onchange="setT(\\''+k+'\\','+i+',\\'basis\\',this.value)"><option value="count"'+(byPct?'':' selected')+'>A count per event</option><option value="mau"'+(byPct?' selected':'')+'>A share of users</option></select></label>'+
           (byPct?'<label><b>Participants, % of users</b><input type="number" min="0" step="0.25" value="'+t.participantPct+'" oninput="setT(\\''+k+'\\','+i+',\\'participantPct\\',this.value)"></label>'
-                :'<label><b>Participants per event'+(k==='core'&&!f.single?', per location':'')+'</b><input type="number" min="0" step="5" value="'+t.participants+'" oninput="setT(\\''+k+'\\','+i+',\\'participants\\',this.value)"></label>')+
+                :'<label><b>Participants per event'+(k==='core'&&!f.single?', per location':'')+'</b><input type="number" min="0" step="5" value="'+t.participants+'" oninput="setT(\\''+k+'\\','+i+',\\'participants\\',this.value)"></label>'))+
           '<label><b>Extra entries per participant</b><input type="number" min="0" step="0.25" value="'+t.rebuys+'" oninput="setT(\\''+k+'\\','+i+',\\'rebuys\\',this.value)"></label>'+
           '<label><b>'+(t.pool?'Prize pool':'Reward value to players')+'</b><input type="number" min="0" step="25" value="'+t.prizeValue+'" oninput="setT(\\''+k+'\\','+i+',\\'prizeValue\\',this.value)"></label>'+
           (t.pool?'':'<label><b>What the reward costs you</b><select onchange="setT(\\''+k+'\\','+i+',\\'costMode\\',this.value)"><option value="amount"'+(t.costMode==='amount'?' selected':'')+'>A dollar amount</option><option value="pct"'+(t.costMode==='pct'?' selected':'')+'>A share of the reward value</option><option value="sponsored"'+(t.costMode==='sponsored'?' selected':'')+'>Sponsored · no cost to you</option></select></label>'+
@@ -508,6 +541,28 @@ function renderTerm(){
     (multi?er('Term',termRow,'total'):'')+'</tbody></table></div>';
   h+='<div class="note">You earn is your share of the pool, less the prizes you fund'+(o.free?'':', less anything settled directly')+'.'+(settle?' Settled directly is what the licence still needed after the licence share in that year, paid separately; it is never taken out of your share of the pool.':'')+'</div>';
   h+='</div>';
+  // The programme at a glance and head-to-head in short: the same rows the
+  // one-pager carries, so the customer can read their programme as a table.
+  if(o.programme&&o.programme.rows.length){
+    var pg=o.programme, tot=pg.total, baseLbl=function(x){return x.product==='mini'?'app users':(single?'users':'users per location')};
+    h+='<div class="section"><h3>Your programme at a glance</h3><div class="hint">Cadence, what each tournament costs you, who takes part, and what each event returns, at full volume.</div>'+
+      '<div class="tablewrap"><table><thead><tr><th>Tournament</th><th>Cadence</th><th>Entry</th><th>Participation</th><th>Entries / event</th><th>Reward</th><th>Costs you / event</th><th>Margin / event</th><th>Runs</th><th>Entries / mo</th><th>Prize funding / mo</th></tr></thead><tbody>'+
+      pg.rows.map(function(x){ var part=x.basis==='mau'?(Math.round(x.participantPct*100)/100)+'% of '+baseLbl(x)+' ≈ '+num(x.participants):num(x.participantCount)+' per event'+(x.perLocation?' per location':'');
+        var cost=x.sponsored?'Sponsored'+(x.sponsorName?' by '+esc(x.sponsorName):'')+' · $0':x.costMode==='pct'?money(x.prizeCost)+' ('+Math.round(x.costPct)+'% of value)':money(x.prizeCost);
+        var runs=x.scope==='app'?'Across the app':x.scope==='network'?'One across all locations':(single?'At the location':'At every location ('+x.locations+')');
+        return '<tr><td>'+esc(x.name)+'</td><td>'+esc(x.cadence)+' · '+x.eventsPerMonth+' a month</td><td>'+money(x.entryPrice)+'</td><td>'+part+'</td><td>'+num(x.entriesPerEvent)+' · '+money(x.entriesValuePerEvent)+'</td><td>'+money(x.prizeValue)+'</td><td>'+cost+'</td><td'+(x.marginPerEvent<0?' class="neg"':'')+'>'+money(x.marginPerEvent)+'</td><td>'+runs+'</td><td>'+money(x.entriesMonthNetwork)+'</td><td>'+money(x.prizeMonthNetwork)+'</td></tr>'; }).join('')+
+      '<tr class="total"><td>All tournaments</td><td>'+num(tot.eventsPerMonth)+' events a month'+(single?'':' across '+pg.locations+' location'+(pg.locations===1?'':'s'))+'</td><td colspan="7">Margin a month: <b'+(tot.marginMonthNetwork<0?' class="neg"':'')+'>'+money(tot.marginMonthNetwork)+'</b> (entries less prize funding)</td><td>'+money(tot.entriesMonthNetwork)+'</td><td>'+money(tot.prizeMonthNetwork)+'</td></tr>'+
+      '</tbody></table></div><div class="note">At full volume: no launch ramp, no decay, no season. Margin per event is entries less what the reward costs you; a negative margin means that tournament is carried by the rest.</div></div>';
+  }
+  if(o.h2hShort&&o.h2hShort.length){
+    h+='<div class="section"><h3>Head-to-head, in short</h3>'+o.h2hShort.map(function(x){
+      var multi=x.product==='core'&&!single;
+      var rows=[['Who can play',num(x.reach)+(x.product==='mini'?' app users':(multi?' users per location':' users'))],['Engagement',(Math.round(x.engagement*100)/100)+'% → about '+num(x.engaged)+' active players a month'+(multi?', averaged over the term as locations open':'')]];
+      if(x.paid){ rows.push(['Matchups per player',(Math.round(x.playsPerPlayer*100)/100)+' a month at '+money(x.entryPerPlay)+' each']); rows.push(['Paid-game volume',money(x.paidVolume)+' a month']); rows.push(['Into the pool',money(x.intoPool)+' a month']); }
+      if(x.rewards){ rows.push(['Reward games',num(x.rewardPlays)+' a month → '+num(x.rewardRedemptions)+' redemptions']); rows.push(['Reward value',money(x.rewardValue)+' a month of venue value, not revenue']); }
+      var plain='About '+num(x.engaged)+' players'+(x.paid?', '+(Math.round(x.playsPerPlayer*10)/10)+' matchups a month at '+money(x.entryPerPlay)+' each, '+money(x.paidVolume)+' of paid volume a month':'')+(x.rewards?(x.paid?'; ':', ')+num(x.rewardRedemptions)+' reward redemptions a month':'')+'.';
+      return '<div class="hint" style="margin-top:6px"><b>'+(x.product==='mini'?'On your app or site':(single?'Your game':'In your venues'))+'</b></div><div class="tablewrap"><table class="h2s"><tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>'}).join('')+'</tbody></table></div><div class="note">'+plain+'</div>'; }).join('')+'</div>';
+  }
   // Month by month: the break-even map.
   var h2h=o.feeYear>0||o.monthly.some(function(m){return m.fee>0});
   var cell=function(v,cls){return '<td'+(cls?' class="'+cls+'"':'')+'>'+v+'</td>'};

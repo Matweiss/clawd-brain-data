@@ -3,7 +3,7 @@ import calc from './calc-functions.js';
 
 const {
   TPcalculate, TPvalidate, TPcustomerProjection, TPstate, TPsplitRates,
-  TPrampFactor, TPavgRamp, TPreach, TPtypeParticipants, TPentriesPerEvent, TP_DEFAULTS, TPyearTotals, TPprizeCost, TPsponsored,
+  TPrampFactor, TPavgRamp, TPreach, TPtypeParticipants, TPentriesPerEvent, TP_DEFAULTS, TPyearTotals, TPprizeCost, TPsponsored, TPprogrammeRows, TPtourFollows, TPcadenceLabel, TPscaled,
 } = calc;
 
 // One tournament: 100 participants, no rebuys, $10 entry, 4 events, $200 cash
@@ -1106,3 +1106,76 @@ describe('Two products under one licence', () => {
     expect(TPvalidate(base({ includeTournaments: false, includeH2H: false, customerType: 'app', mau: 50000, mini: { on: true, tournamentsOn: true, h2hOn: false, tournaments: [] } })).join(' ')).toMatch(/mini games/i);
   });
 });
+
+describe('universal participation and the programme at a glance', () => {
+  const two = (o = {}) => base(Object.assign({
+    mau: 8000, locations: [1, 2, 2], termYears: 3, annualFees: [60000, 60000, 60000],
+    tournaments: [
+      { id: 'a', name: 'Weekly open', entryPrice: 10, eventsPerMonth: 4, basis: 'count', participants: 100, rebuyMode: 'avg', rebuys: 0, isCash: false, rewardFaceValue: 500, customerCashCost: 200, scope: 'each' },
+      { id: 'b', name: 'Monthly headline', entryPrice: 25, eventsPerMonth: 1, basis: 'mau', participantPct: 2, rebuyMode: 'avg', rebuys: 1, isCash: true, cashPrizeAmount: 1000, scope: 'network' },
+    ],
+  }, o));
+
+  it('is off by default, so a saved deal keeps every tournament\'s own figure', () => {
+    const s = TPstate(two());
+    expect(s.core.participation).toEqual({ on: false, basis: 'mau', pct: 3, count: 100 });
+    expect(s.core.tournaments[0].participants).toBe(100);
+    expect(s.core.tournaments[1].participantPct).toBe(2);
+    expect(TPtourFollows(s, 'core', s.core.tournaments[0])).toBe(false);
+  });
+
+  it('when on, every tournament without its own number takes the shared basis and figure', () => {
+    const s = TPstate(two({ core: { on: true, participation: { on: true, basis: 'mau', pct: 5, count: 0 } } }));
+    expect(s.core.tournaments[0].basis).toBe('mau');
+    expect(s.core.tournaments[0].participantPct).toBe(5);
+    expect(s.core.tournaments[1].participantPct).toBe(5);
+    expect(TPtourFollows(s, 'core', s.core.tournaments[0])).toBe(true);
+    // Month 1, one location: 5% of 8,000 = 400 participants each.
+    expect(TPtypeParticipants(s, s.core.tournaments[0], 1)).toBeCloseTo(400, 6);
+    // An exception keeps its own figure.
+    const own = two({ core: { on: true, participation: { on: true, basis: 'mau', pct: 5 } } });
+    own.tournaments[1].own = true;
+    const so = TPstate(own);
+    expect(so.core.tournaments[0].participantPct).toBe(5);
+    expect(so.core.tournaments[1].participantPct).toBe(2);
+    expect(TPtourFollows(so, 'core', so.core.tournaments[1])).toBe(false);
+  });
+
+  it('the case band and the map scale the shared figure, not only the tournaments', () => {
+    const s = two({ core: { on: true, participation: { on: true, basis: 'mau', pct: 4 } } });
+    const half = TPstate(TPscaled(s, 0.5, 1));
+    expect(half.core.participation.pct).toBe(2);
+    expect(half.core.tournaments[0].participantPct).toBe(2);
+    expect(TPcalculate(TPscaled(s, 0.5, 1)).totalHandle).toBeCloseTo(TPcalculate(s).totalHandle / 2, 3);
+  });
+
+  it('the programme rows carry cadence, cost, participation and margin per tournament, at full volume', () => {
+    const pr = TPprogrammeRows(two());
+    expect(pr.locations).toBe(2);
+    expect(pr.rows.map((r) => r.name)).toEqual(['Weekly open', 'Monthly headline']);
+    const [a, b] = pr.rows;
+    expect(a.cadence).toBe('Weekly'); expect(a.eventsPerMonth).toBe(4); expect(a.entryPrice).toBe(10);
+    expect(a.basis).toBe('count'); expect(a.participants).toBe(100); expect(a.entriesPerEvent).toBe(100); expect(a.entriesValuePerEvent).toBe(1000);
+    expect(a.prizeValue).toBe(500); expect(a.prizeCost).toBe(200); expect(a.marginPerEvent).toBe(800);
+    expect(a.scope).toBe('each'); expect(a.perLocation).toBe(true); expect(a.locations).toBe(2);
+    expect(a.entriesMonth).toBe(4000); expect(a.entriesMonthNetwork).toBe(8000); expect(a.prizeMonthNetwork).toBe(1600);
+    // 2% of 8,000 = 160, plus one rebuy each = 320 entries at $25; a cash prize is its own cost, funded once.
+    expect(b.cadence).toBe('Monthly'); expect(b.basis).toBe('mau'); expect(b.participants).toBeCloseTo(160, 6);
+    expect(b.entriesPerEvent).toBeCloseTo(320, 6); expect(b.entriesValuePerEvent).toBeCloseTo(8000, 6);
+    expect(b.isCash).toBe(true); expect(b.costMode).toBe('pool'); expect(b.prizeCost).toBe(1000); expect(b.marginPerEvent).toBeCloseTo(7000, 6);
+    expect(b.scope).toBe('network'); expect(b.perLocation).toBe(false); expect(b.locations).toBe(1);
+    expect(b.entriesMonthNetwork).toBeCloseTo(8000, 6); expect(b.prizeMonthNetwork).toBe(1000);
+    expect(pr.total.entriesMonthNetwork).toBeCloseTo(16000, 6);
+    expect(pr.total.prizeMonthNetwork).toBe(2600);
+    expect(pr.total.marginMonthNetwork).toBeCloseTo(13400, 6);
+    expect(pr.total.eventsPerMonth).toBe(9);
+    // A sponsored reward costs nothing and says so; a subsidised tournament shows a negative margin, never clamped.
+    const sp = two(); sp.tournaments[0].costMode = 'sponsored'; sp.tournaments[0].sponsorName = 'Acme';
+    const r0 = TPprogrammeRows(sp).rows[0];
+    expect(r0.sponsored).toBe(true); expect(r0.sponsorName).toBe('Acme'); expect(r0.prizeCost).toBe(0);
+    const loss = two(); loss.tournaments[0].customerCashCost = 5000;
+    expect(TPprogrammeRows(loss).rows[0].marginPerEvent).toBe(-4000);
+    expect(TPcadenceLabel(30)).toBe('Daily'); expect(TPcadenceLabel(2)).toBe('Twice a month'); expect(TPcadenceLabel(7)).toBe('7 a month'); expect(TPcadenceLabel(0)).toBe('Not scheduled');
+  });
+});
+
