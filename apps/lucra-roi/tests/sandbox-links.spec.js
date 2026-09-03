@@ -82,6 +82,9 @@ describe('The sandbox link registry', () => {
     ['78000', 'credit', '"custom"', 'annualFees', 'lucra'].forEach((k) => expect(json).not.toContain(k));
     expect(bear.days).toBe(7);
     expect(bear.term).toBe(3);
+    // The customer's link itself is kept (the sealed token, never the deal), so it can be shared again.
+    expect(bear.url).toBe(a.body.url);
+    expect(bear.url).toMatch(/^https:\/\/roi\.test\/play\?deal=v1\./);
   });
 
   it('counts opens, edits and wrong passcodes, and keeps the last scenario', async () => {

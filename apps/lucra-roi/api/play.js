@@ -687,20 +687,23 @@ module.exports = async function handler(req, res) {
       const token = createScenarioToken(payload, process.env.SCENARIO_SECRET, { ttlSeconds: days * DAY });
       const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
       const proto = (req.headers && req.headers['x-forwarded-proto']) || (/^(127\.0\.0\.1|localhost)(:|$)/.test(host) ? 'http' : 'https');
+      const url = `${proto}://${host}/play?deal=${encodeURIComponent(token)}`;
       // The registry is what the dashboard reads. Its failure never blocks a link.
+      // The link itself is kept there too, so the seller can share it again;
+      // it is the sealed token, never the deal in the clear.
       let tracked = false;
       if (store.enabled) {
         try {
           await store.create({ id, dealName: String(sealed.dealName || '').slice(0, 120), presenter: String(sealed.presenter || '').slice(0, 120),
             presenterEmail: String(sealed.presenterEmail || '').slice(0, 200), createdAt, exp, days, pass: !!pass, passcode: pass, unlockAdd: !!unlock.addTournaments,
-            customerType: sealed.customerType, term: E.TPterm(sealed) });
+            customerType: sealed.customerType, term: E.TPterm(sealed), url });
           // The live model: the seller can change it later from the dashboard,
           // and the customer's own inputs are kept beside it.
           await store.saveDeal(id, { tp: sealed, inputs: null, version: 1, updatedBy: 'seller', updatedAt: createdAt }, exp);
           tracked = true;
         } catch (error) { console.error('sandbox store', error && error.message); }
       }
-      return res.status(200).json({ ok: true, id, url: `${proto}://${host}/play?deal=${encodeURIComponent(token)}`, expiresInDays: days, passcode: !!pass, tracked, dashboard: `${proto}://${host}/links` });
+      return res.status(200).json({ ok: true, id, url, expiresInDays: days, passcode: !!pass, tracked, dashboard: `${proto}://${host}/links` });
     } catch (error) {
       return res.status(400).json({ error: String(error && error.message || error) });
     }

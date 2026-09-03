@@ -53,7 +53,7 @@ function page() {
 .wrap{max-width:1240px;margin:auto;padding:26px 20px 60px}
 header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 h1{margin:0;font-size:22px}h1 small{display:block;font-size:12px;color:var(--text3);font-weight:400;margin-top:2px}
-a{color:var(--green)}
+a{color:var(--green)}.mini-link{font-size:12px;margin-left:4px}
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 button,input,select{font:inherit}
 button{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer}
@@ -118,10 +118,11 @@ function render(d){
   if(d.store&&!d.notify) h+='<div class="notice">First-open emails are off: set <code>RESEND_API_KEY</code> (and <code>SANDBOX_NOTIFY_TO</code> or a presenter email on each deal) to get one when a customer first opens their link.</div>';
   h+='<div class="stats"><div class="stat"><span>Links</span><b>'+links.length+'</b></div><div class="stat"><span>Open now</span><b>'+open+'</b></div><div class="stat"><span>Opened by a customer</span><b>'+opened+'</b></div><div class="stat"><span>Edits, all links</span><b>'+links.reduce(function(a,l){return a+(l.edits||0)},0)+'</b></div></div>';
   if(!links.length){ h+='<div class="tablewrap"><div class="empty">No sandbox links yet. Create one from the Revenue Model tab.</div></div>'; $('main').innerHTML=h; return; }
-  h+='<div class="tablewrap"><table><thead><tr><th>Customer</th><th>Status</th><th>Created</th><th>Expires</th><th>Passcode</th><th>Opens</th><th>Edits</th><th>Last scenario</th><th></th></tr></thead><tbody>';
+  h+='<div class="tablewrap"><table><thead><tr><th>Customer</th><th>Status</th><th>Link</th><th>Created</th><th>Expires</th><th>Passcode</th><th>Opens</th><th>Edits</th><th>Last scenario</th><th></th></tr></thead><tbody>';
   links.forEach(function(l){
     h+='<tr><td><strong>'+esc(l.dealName||'Untitled deal')+'</strong><span class="sub">'+esc(l.presenter||'')+(l.customerType?' · '+esc(l.customerType):'')+(l.term?' · '+l.term+'-yr':'')+'</span></td>'+
       '<td><span class="pill '+l.status+'">'+l.status+'</span>'+(l.revokedAt?'<span class="sub">closed '+when(l.revokedAt)+'</span>':'')+'</td>'+
+      '<td style="white-space:nowrap">'+(l.url?'<button type="button" class="mini" data-act="copy" data-url="'+esc(l.url)+'" title="Copy the customer link to share it again">Copy link</button> <a href="'+esc(l.url)+'" target="_blank" rel="noopener" class="mini-link" title="Open the customer page in a new tab">Open</a>'+(l.status!=='open'?'<span class="sub">'+(l.status==='closed'?'closed: reopen to use it':'expired: make a new one')+'</span>':''):'<span class="sub">not kept for this link</span>')+'</td>'+
       '<td>'+when(l.createdAt)+'<span class="sub">'+ago(l.createdAt)+'</span></td>'+
       '<td>'+when(l.exp)+'<span class="sub">'+left(l.exp)+'</span></td>'+
       '<td>'+(l.passcode?'<code class="code">'+esc(l.passcode)+'</code>':(l.pass?'set when created':'none'))+' <button type="button" class="mini" data-act="passcode" data-id="'+esc(l.id)+'" title="Change the passcode; their link keeps working">Change</button>'+(l.passcodeAt?'<span class="sub">changed '+ago(l.passcodeAt)+'</span>':'')+(l.badPass?'<span class="sub" style="color:var(--amber)">'+l.badPass+' wrong attempt'+(l.badPass===1?'':'s')+'</span>':'')+'</td>'+
@@ -130,7 +131,7 @@ function render(d){
       '<td>'+(l.lastInputs?'<details><summary>'+money(l.lastInputs.revenueYear)+' / yr · they earn '+money(l.lastInputs.operatorYear)+'</summary><pre class="scenario">'+esc(scenario(l.lastInputs))+'</pre></details>':'<span class="sub">nothing changed yet</span>')+'</td>'+
       '<td style="white-space:nowrap"><button type="button" class="primary" data-act="edit" data-id="'+esc(l.id)+'" title="Open their current model in the calculator; Save changes there writes it back to this link">Edit their model</button> '+(l.status==='open'?'<button type="button" class="danger" data-act="revoke" data-id="'+esc(l.id)+'">Close now</button>':l.status==='closed'&&l.exp>now?'<button type="button" data-act="reopen" data-id="'+esc(l.id)+'">Reopen</button>':'')+' <button type="button" data-act="remove" data-id="'+esc(l.id)+'" title="Remove from this list">Remove</button></td></tr>';
   });
-  h+='</tbody></table></div><div class="foot"><strong>Change</strong> beside a passcode sets a new one on the spot; the customer keeps the same link. <strong>Edit their model</strong> opens what the customer currently sees in the calculator, in a new tab; <em>Save changes to their link</em> there writes it back, and they see it on their next visit or refresh. Closing a link stops it immediately, before its expiry. Removing only takes it off this list; a removed link that has not expired still opens. Records are kept for 90 days after a link expires.</div>';
+  h+='</tbody></table></div><div class="foot"><strong>Copy link</strong> gives you the customer\\'s own link again, the same one they have; send it with the passcode shown beside it. <strong>Change</strong> beside a passcode sets a new one on the spot; the customer keeps the same link. <strong>Edit their model</strong> opens what the customer currently sees in the calculator, in a new tab; <em>Save changes to their link</em> there writes it back, and they see it on their next visit or refresh. Closing a link stops it immediately, before its expiry. Removing only takes it off this list; a removed link that has not expired still opens. Records are kept for 90 days after a link expires.</div>';
   $('main').innerHTML=h;
 }
 function load(){
@@ -145,6 +146,12 @@ $('main').addEventListener('click',function(e){
   var b=e.target.closest('button[data-act]'); if(!b) return;
   if(b.dataset.act==='remove'&&!window.confirm('Remove this link from the list? It keeps working until it expires unless you close it first.')) return;
   b.disabled=true;
+  if(b.dataset.act==='copy'){
+    var url=b.dataset.url, done=function(ok){ b.disabled=false; var t=b.textContent; b.textContent=ok?'Copied ✓':'Copy failed'; setTimeout(function(){ b.textContent=t; },1800); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(function(){done(true)},function(){ window.prompt('Copy the customer link:',url); done(true); }); }
+    else { window.prompt('Copy the customer link:',url); done(true); }
+    return;
+  }
   if(b.dataset.act==='passcode'){
     var np=window.prompt('New passcode for this link (at least 4 characters). Their existing link keeps working with the new one.');
     if(np===null){ b.disabled=false; return; }

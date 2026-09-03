@@ -1851,13 +1851,20 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await expect(row).toBeVisible();
   await expect(row.locator('.pill')).toHaveText('open');
   await expect(row).toContainText('1 wrong attempt');
-  await expect(row.locator('td').nth(5)).toContainText('1');
-  await expect(row.locator('td').nth(5)).toContainText('first');
-  await expect(row.locator('td').nth(4).locator('code')).toHaveText('bear');
+  await expect(row.locator('td').nth(6)).toContainText('1');
+  await expect(row.locator('td').nth(6)).toContainText('first');
+  await expect(row.locator('td').nth(5).locator('code')).toHaveText('bear');
+  // The customer's own link is kept, to share again: Copy link puts it on the clipboard, Open opens it.
+  await expect(row.locator('button[data-act="copy"]')).toHaveAttribute('data-url', url);
+  await expect(row.locator('a.mini-link')).toHaveAttribute('href', url);
+  await dp.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await row.locator('button[data-act="copy"]').click();
+  await expect(row.locator('button[data-act="copy"]')).toHaveText('Copied ✓');
+  expect(await dp.evaluate(() => navigator.clipboard.readText())).toBe(url);
   // Change the passcode from the dashboard: the customer's page, still open, needs the new one from now on.
   dp.once('dialog', (d) => d.accept('otter-9001'));
   await row.locator('button[data-act="passcode"]').click();
-  await expect(dp.locator('#main tbody tr').filter({ hasText: 'Fairway Social' }).first().locator('td').nth(4).locator('code')).toHaveText('otter-9001');
+  await expect(dp.locator('#main tbody tr').filter({ hasText: 'Fairway Social' }).first().locator('td').nth(5).locator('code')).toHaveText('otter-9001');
   await cp.locator('#inputs input[type="number"]').first().fill('16500');
   await expect(cp.locator('#res-err')).toContainText('passcode is not right');
   const cpNew = await customer.newPage();
@@ -1873,7 +1880,7 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await cp.locator('#pass').fill('otter-9001');
   await cp.locator('#gate button').click();
   await expect(cp.locator('#model h1')).toHaveText('Fairway Social');
-  const edits = Number((await row.locator('td').nth(6).innerText()).split('\n')[0]);
+  const edits = Number((await row.locator('td').nth(7).innerText()).split('\n')[0]);
   expect(edits).toBeGreaterThanOrEqual(2);
   await row.locator('summary').click();
   await expect(row.locator('.scenario')).toContainText('Users per location: 16,000');
