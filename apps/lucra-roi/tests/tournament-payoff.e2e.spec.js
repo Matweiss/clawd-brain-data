@@ -1468,7 +1468,7 @@ test('a deal link is created through the API and restores the deal on open', asy
   await page.evaluate(() => { TPCsetMau(100000); MG.eng = 13; MG.rake = 11; MGsync(); MGu(); TPrender(); });
   await page.locator('#tp-loc-1').fill('4');
   const share = page.locator('#tp-share-btn');
-  await expect(share).toHaveText('Share deal link');
+  await expect(share).toHaveText('Team link (internal)');
   await share.click();
   await expect(share).toContainText(/Link (copied|ready)/);
   await expect(page.locator('#tp-share-out input')).toHaveValue('http://127.0.0.1/?deal=v1.stub');
@@ -1640,7 +1640,15 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await page.locator('#tp-loc-2').fill('5');
   await page.evaluate(() => { TP.presenter = 'Mat'; TP.splitMode = 'custom'; TP.custom = { credit: 55, operator: 35, lucra: 10 }; TPsave(); TPrender(); });
   const fold = page.locator('#tp-sandbox-fold');
-  await fold.locator('summary').click();
+  // The fold is open by default; the Customer link button beside the team
+  // link lands in it with a suggested passcode ready to overwrite.
+  await expect(fold).toHaveAttribute('open', '');
+  await page.evaluate(() => { document.getElementById('tp-sandbox-fold').open = false; });
+  await page.locator('#tp-customer-link-btn').click();
+  await expect(fold).toHaveAttribute('open', '');
+  await expect(page.locator('#tp-sandbox-pass')).toBeFocused();
+  expect(await page.locator('#tp-sandbox-pass').inputValue()).toMatch(/^[a-z]+-\d{4}$/);
+  await expect(page.locator('#tp-sandbox-btn')).toHaveText('Create customer link');
   await page.locator('#tp-sandbox-days').selectOption('7');
   await page.locator('#tp-sandbox-pass').fill('bear');
   await page.locator('#tp-sandbox-btn').click();

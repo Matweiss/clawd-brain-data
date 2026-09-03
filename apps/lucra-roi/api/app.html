@@ -1935,18 +1935,18 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   </div>
   <div class="tpc-grid" id="tpc-cases" aria-live="polite" style="margin-top:16px"></div>
   <div id="tpc-detail"></div>
-  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button><button type="button" id="tp-share-btn" onclick="TPshareDeal(this)">Share deal link</button></div>
-  <div class="sn">A deal link opens this configuration for anyone who can open the calculator. It is opaque and expires after 14 days.</div>
-  <div class="tp-share" id="tp-share-out" hidden><input class="pf-input" type="text" readonly aria-label="Deal link" onclick="this.select()"></div>
-  <details class="tp-fold tp-internal" id="tp-sandbox-fold">
-    <summary><span class="tp-fold-title">Customer sandbox link</span><span class="sn">A page the customer can play with: their own numbers unlocked, the licence and the split locked and never sent to their browser.</span></summary>
+  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button><button type="button" class="primary tp-internal" id="tp-customer-link-btn" onclick="TPcustomerLinkJump()">Customer link</button><button type="button" class="tp-internal" id="tp-share-btn" onclick="TPshareDeal(this)">Team link (internal)</button></div>
+  <div class="sn tp-internal"><strong>Customer link</strong>: the sandbox page below, behind a passcode; the licence and the split never reach their browser. <strong>Team link</strong>: opens this configuration in the calculator for anyone with the site password. Never send a team link to a customer. Both are opaque; the team link expires after 14 days.</div>
+  <div class="tp-share tp-internal" id="tp-share-out" hidden><input class="pf-input" type="text" readonly aria-label="Team link" onclick="this.select()"><div class="sn">Team link · opens the full calculator · site password required · not for customers.</div></div>
+  <details class="tp-fold tp-internal" id="tp-sandbox-fold" open>
+    <summary><span class="tp-fold-title">Customer link (sandbox)</span><span class="sn">A page the customer can play with: their own numbers unlocked, the licence and the split locked and never sent to their browser.</span></summary>
     <div class="inputs tp-three" style="margin:10px 0 0">
       <div class="input-group"><label class="input-label" for="tp-sandbox-days">Open for</label><select class="pf-input" id="tp-sandbox-days"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="14">14 days</option></select><div class="sn">The link stops working after this; make a new one any time.</div></div>
       <div class="input-group"><label class="input-label" for="tp-sandbox-pass">Passcode <span class="sn" style="display:inline">· required</span></label><div class="input-val"><input class="pf-input" id="tp-sandbox-pass" type="text" placeholder="Give it to them on the call" autocomplete="off" minlength="4"><button type="button" class="tp-add" id="tp-sandbox-suggest" onclick="TPsandboxSuggestPass()" title="Suggest a passcode">Suggest</button></div><div class="sn">Asked for before the page opens. The link alone never opens the model.</div></div>
       <div class="input-group"><label class="tp-check" style="margin-top:22px"><input type="checkbox" id="tp-sandbox-add" checked><span>They can add and remove tournaments</span></label><div class="sn">Prices, events, participation, prizes, the opening schedule and head-to-head engagement are always theirs to change.</div></div>
     </div>
-    <div class="tp-actions"><button type="button" id="tp-sandbox-btn" onclick="TPsandboxLink(this)">Create sandbox link</button></div>
-    <div class="tp-share" id="tp-sandbox-out" hidden><input class="pf-input" type="text" readonly aria-label="Sandbox link" onclick="this.select()"><div class="sn" id="tp-sandbox-note"></div></div>
+    <div class="tp-actions"><button type="button" class="primary" id="tp-sandbox-btn" onclick="TPsandboxLink(this)">Create customer link</button></div>
+    <div class="tp-share" id="tp-sandbox-out" hidden><input class="pf-input" type="text" readonly aria-label="Customer link" onclick="this.select()"><div class="sn" id="tp-sandbox-note"></div></div>
     <div class="tp-cowork" id="tp-sandbox-cowork" hidden>
       <div><strong id="tp-sandbox-cowork-title">Editing a customer's sandbox</strong><div class="sn" id="tp-sandbox-cowork-note"></div></div>
       <div class="tp-actions" style="margin:0"><button type="button" class="primary" id="tp-sandbox-save" onclick="TPsandboxUpdate(this)">Save changes to their link</button><button type="button" onclick="TPsandboxStopEditing()">Stop editing</button></div>
@@ -6520,6 +6520,16 @@ function TPsandboxSuggestPass() {
   var el = $('tp-sandbox-pass'); if (el) { el.value = word + '-' + digits; el.focus(); }
   return word + '-' + digits;
 }
+/* The "Customer link" button beside the team link: the link a customer gets
+   is the sandbox one, so this opens that fold and puts the cursor on the
+   passcode. */
+function TPcustomerLinkJump() {
+  var fold = $('tp-sandbox-fold'); if (!fold) return;
+  fold.open = true;
+  var pass = $('tp-sandbox-pass');
+  try { fold.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { fold.scrollIntoView(); }
+  if (pass) { if (!pass.value) TPsandboxSuggestPass(); pass.focus(); pass.select(); }
+}
 async function TPsandboxLink(btn) {
   var days = Number(($('tp-sandbox-days') || {}).value) || 7, pass = (($('tp-sandbox-pass') || {}).value || '').trim(),
     add = !!(($('tp-sandbox-add') || {}).checked);
@@ -6538,7 +6548,7 @@ async function TPsandboxLink(btn) {
     var box = $('tp-sandbox-out');
     if (box) {
       box.hidden = false; box.querySelector('input').value = data.url;
-      $('tp-sandbox-note').textContent = 'Open for ' + data.expiresInDays + ' day' + (data.expiresInDays === 1 ? '' : 's') + (data.passcode ? ' · passcode required' : ' · no passcode') + '. The customer sees their inputs and customer-safe results only.' +
+      $('tp-sandbox-note').textContent = 'Open for ' + data.expiresInDays + ' day' + (data.expiresInDays === 1 ? '' : 's') + (data.passcode ? ' · passcode required' : ' · no passcode') + '. This is the customer link: send this one. They see their inputs and customer-safe results only.' +
         (data.tracked ? ' Opens and edits are recorded on the links dashboard.' : ' No link registry is attached, so this one is not tracked; it simply expires.');
     }
     try { await navigator.clipboard.writeText(data.url); setButtonState(btn, 'Link copied ✓', 2600, true); }
