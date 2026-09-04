@@ -2,7 +2,7 @@
 // Copies a tokenized template Doc, fills the tokens, exports PDF + DOCX,
 // drops the filled Doc in the Drive folder, returns the viewer link + files.
 //
-// Body: { template: 'trackman'|'core'|'minigames', tokens: {"<literal token>": "<value>", ...}, clientName }
+// Body: { template: 'trackman'|'core'|'minigames'|'recapture', tokens: {"<literal token>": "<value>", ...}, clientName }
 // Templates are allowlisted server-side so the public endpoint can't be pointed at arbitrary docs.
 //
 // Auth: mat.weiss@lucrasports.com OAuth (refresh token) — env vars in Vercel:
@@ -14,6 +14,7 @@ const ALLOWED_TEMPLATES = {
   // Gamification Core/Mini Games use Mat's current tokenized agreement template.
   core: '1MAWYiinRZ_bLCrGcfEzU8wxJbzenDe4KmI_DiNhJo_I',
   minigames: '1MAWYiinRZ_bLCrGcfEzU8wxJbzenDe4KmI_DiNhJo_I',
+  recapture: '1JT6tqitfhffRSSHRXW-VQy0HBejlSsooieKKWhm74ZA',
 };
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const MAX_BODY_BYTES = 64 * 1024; // 64KB
@@ -40,6 +41,21 @@ const ALLOWED_TOKEN_KEYS = {
     '{{E_monthly}}', '{{F_monthly}}',
     '{{strat_imp_price}}', '{{growth_imp_price}}', '{{launch_imp_price}}',
     '{{Implementation_name}}', '{{NOTES}}',
+  ]),
+  recapture: new Set([
+    '{{CLIENT_LEGAL_NAME}}', '{{EFFECTIVE_DATE}}',
+    '{{CHK_A}}', '{{A_MONTHLY}}', '{{CHK_B}}', '{{B_MONTHLY}}',
+    '{{CHK_C}}', '{{C_MONTHLY}}', '{{CHK_D}}', '{{D_MONTHLY}}',
+    '{{CHK_E}}', '{{E_MONTHLY}}', '{{CHK_F}}', '{{F_MONTHLY}}',
+    '{{CHK_G}}', '{{STRATEGIC_FEE}}', '{{CHK_H}}', '{{GROWTH_FEE}}',
+    '{{CHK_I}}', '{{LAUNCH_FEE}}',
+    '{{YEAR_1_LICENSE_FEE}}', '{{IMPLEMENTATION_PACKAGE}}', '{{YEAR_1_NOTES}}', '{{YEAR_1_MINIMUM_DUE}}',
+    '{{YEAR_2_LICENSE_FEE}}', '{{YEAR_2_NOTES}}', '{{YEAR_2_MINIMUM_DUE}}',
+    '{{YEAR_3_LICENSE_FEE}}', '{{YEAR_3_NOTES}}', '{{YEAR_3_MINIMUM_DUE}}',
+    '{{LICENSE_TERM}}', '{{DELIVERY_DATE}}', '{{TOTAL_LICENSE_COMMITMENT}}',
+    '{{CLIENT_RECAP_PCT}}', '{{LUCRA_RECAP_PCT}}', '{{LICENSE_PCT}}',
+    '{{CLIENT_POST_PCT}}', '{{LUCRA_POST_PCT}}', '{{RENEWAL_ESCALATOR_PCT}}',
+    '{{KICKOFF_DATE}}', '{{GTM_DOLLARS}}',
   ]),
 };
 // minigames shares the same template & token set as core.
@@ -123,6 +139,23 @@ async function shareViewerByLink(docId, token) {
   if (!r.ok) throw new Error('Share failed: ' + (await r.text()).slice(0, 200));
 }
 
+// Recapture agreements are internal working documents. Both Lucra domains can
+// edit the generated copy, while the document remains undiscoverable and is not
+// shared publicly by link. Drive recommends creating permissions sequentially.
+async function shareRecaptureWithLucraDomains(docId, token) {
+  for (const domain of ['lucrasports.com', 'playlucra.com']) {
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${docId}/permissions?sendNotificationEmail=false&fields=id`,
+      {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'domain', domain, role: 'writer', allowFileDiscovery: false }),
+      }
+    );
+    if (!r.ok) throw new Error(`Share failed for ${domain}: ` + (await r.text()).slice(0, 200));
+  }
+}
+
 async function getAccessToken(env) {
   const body = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
@@ -198,9 +231,10 @@ module.exports = async (req, res) => {
     if (!copy.id) throw new Error('Copy failed: ' + JSON.stringify(copy));
     const docId = copy.id;
 
-    // 1b. Agreements are collaborative working documents: editable by link,
-    // while remaining excluded from public search/discovery.
-    await shareViewerByLink(docId, token);
+    // 1b. Preserve the existing customer-review sharing posture for current
+    // templates. Recapture copies are editable only inside Lucra's two domains.
+    if (d.template === 'recapture') await shareRecaptureWithLucraDomains(docId, token);
+    else await shareViewerByLink(docId, token);
 
     // 2. Fill tokens (each key is the literal token string in the doc)
     const requests = tokenKeys.map((k) => ({

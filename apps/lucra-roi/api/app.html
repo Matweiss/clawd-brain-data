@@ -862,9 +862,10 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 
 <div class="workflow-label">Workflows · primary tools first</div>
 <div class="tabs" role="tablist" aria-label="ROI Calculator sections">
-<button class="tab active" role="tab" aria-selected="true" aria-controls="roi" id="tab-roi" tabindex="0" onclick="T('roi',this)">Core ROI</button>
-<button class="tab" role="tab" aria-selected="false" aria-controls="gamification" id="tab-gamification" tabindex="-1" onclick="T('gamification',this)">Gamification</button>
-<button class="tab" role="tab" aria-selected="false" aria-controls="tournaments" id="tab-tournaments" tabindex="-1" onclick="T('tournaments',this)">Revenue Model</button>
+<button class="tab active" role="tab" aria-selected="true" aria-controls="tournaments" id="tab-tournaments" tabindex="0" onclick="T('tournaments',this)">Revenue Model</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="onepager" id="tab-onepager" tabindex="-1" onclick="T('onepager',this)">ROI One-Pager</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="gamification" id="tab-gamification" tabindex="-1" onclick="T('gamification',this)">Proposal Builder</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="roi" id="tab-roi" tabindex="-1" onclick="T('roi',this)">Core ROI</button>
 <button class="tab secondary-tool first-secondary" role="tab" aria-selected="false" aria-controls="minigame" id="tab-minigame" tabindex="-1" onclick="T('minigame',this)">More · Mini Game ROI</button>
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="beyond" id="tab-beyond" tabindex="-1" onclick="T('beyond',this)">Beyond Revenue</button>
 <button class="tab secondary-tool" role="tab" aria-selected="false" aria-controls="analytics" id="tab-analytics" tabindex="-1" onclick="T('analytics',this)">Investment Plans</button>
@@ -872,7 +873,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 </div>
 <label class="sr-only" for="mobile-workflow">Choose calculator</label>
 <select class="mobile-workflow-select" id="mobile-workflow" aria-label="Choose calculator" onchange="T(this.value)">
-  <option value="roi">Core ROI</option><option value="gamification">Gamification</option><option value="tournaments">Revenue Model</option><option value="minigame">Mini Game ROI</option><option value="beyond">Beyond Revenue</option><option value="analytics">Investment Plans</option><option value="brandarcade">Brand Arcade</option>
+  <option value="tournaments">Revenue Model</option><option value="onepager">ROI One-Pager</option><option value="gamification">Proposal Builder</option><option value="roi">Core ROI</option><option value="minigame">Mini Game ROI</option><option value="beyond">Beyond Revenue</option><option value="analytics">Investment Plans</option><option value="brandarcade">Brand Arcade</option>
 </select>
 
 <div class="sticky-summary" id="sticky-summary">
@@ -890,7 +891,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   <button class="jump-pill" onclick="jumpToSection('pitch')">Pitch</button>
 </div>
 
-<div id="roi" role="tabpanel" aria-labelledby="tab-roi">
+<div id="roi" role="tabpanel" aria-labelledby="tab-roi" style="display:none">
 <div class="pf-section" style="margin-bottom:14px">
 <div class="pf-section-title">Discovery — fill in customer answers</div>
 <div class="pf-row">
@@ -1491,10 +1492,71 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
 <p style="font-size:11px;color:var(--text3);margin-top:16px">Review Summary panel lands in commit 5. Direct PDF export in commit 6.</p>
 </div>
 
-<!-- ════════ TRACKMAN PARTNER TAB ════════ -->
+<!-- ════════ ROI ONE-PAGER TAB ════════ -->
+<div id="onepager" role="tabpanel" aria-labelledby="tab-onepager" style="display:none">
+  <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:16px;margin-bottom:20px">
+    <div class="workspace-eyebrow">Connected deliverable</div>
+    <h2 style="font:750 24px var(--display);margin:4px 0 6px">ROI One-Pager</h2>
+    <p style="color:var(--text2);font-size:13px;line-height:1.6;max-width:72ch">This view stays connected to the current Revenue Model. Finalize the economics there, then generate the customer-facing one-pager here without re-entering assumptions.</p>
+  </div>
+  <div class="grid grid4" id="op-metrics"></div>
+  <div class="card-section" style="margin-top:16px">
+    <div class="ct">Ready to generate</div>
+    <div id="op-summary" class="sn" style="margin:8px 0 14px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="preset on" type="button" onclick="TPCprint()">Generate ROI one-pager</button>
+      <button class="preset" type="button" onclick="TPcopyBrief(this)">Copy one-pager brief</button>
+      <button class="preset" type="button" onclick="T('tournaments')">Edit Revenue Model</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PROPOSAL BUILDER TAB ════════ -->
 <div id="gamification" role="tabpanel" aria-labelledby="tab-gamification" style="display:none">
   <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:14px;margin-bottom:20px;font-size:13px;line-height:1.6;color:var(--text2)">
-    <strong style="color:var(--green)">Gamification license</strong> — same offering &amp; pricing for Core and Mini Games; pick the agreement type, build the package, set the discount, and generate the signature-ready agreement.
+    <strong style="color:var(--green)">Proposal Builder</strong> — build the standard package agreement, or import the current Revenue Model into the multi-year revenue recapture order form.
+  </div>
+
+  <div class="section-label"><span class="dot" style="background:var(--cyan)"></span>Agreement template</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <button class="preset on" id="gm-doc-standard" onclick="GMdocType('standard',this)">Standard package</button>
+    <button class="preset" id="gm-doc-recapture" onclick="GMdocType('recapture',this)">Multi-year revenue recapture</button>
+  </div>
+  <div class="card-section" id="gm-recapture-panel" hidden style="margin-bottom:18px;border-color:var(--green-border)">
+    <div class="ct">Revenue recapture order form</div>
+    <p class="sn" style="margin:8px 0 12px">Import is one-way: it copies the current commercial terms from Revenue Model, then leaves every proposal field editable for final contract review.</p>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+      <button class="preset on" type="button" onclick="RPimportFromRevenueModel(false)">Import current Revenue Model</button>
+      <span class="sn" id="rp-import-status">Not imported yet.</span>
+    </div>
+    <div class="pg">
+      <label><span class="input-label">Client legal name</span><input class="pf-input" id="rp-client" type="text" placeholder="Acme Golf, Inc."></label>
+      <label><span class="input-label">Effective date</span><input class="pf-input" id="rp-effective" type="date"></label>
+      <label><span class="input-label">Delivery date</span><input class="pf-input" id="rp-delivery" type="date"></label>
+      <label><span class="input-label">Kickoff date</span><input class="pf-input" id="rp-kickoff" type="date"></label>
+    </div>
+    <div class="section-label" style="margin-top:14px"><span class="dot" style="background:var(--green)"></span>Annual licence schedule</div>
+    <div class="grid grid3">
+      <label><span class="input-label">Year 1 fee / minimum due</span><input class="pf-input" id="rp-year-1" type="number" min="0" step="1000"></label>
+      <label><span class="input-label">Year 2 fee / minimum due</span><input class="pf-input" id="rp-year-2" type="number" min="0" step="1000"></label>
+      <label><span class="input-label">Year 3 fee / minimum due</span><input class="pf-input" id="rp-year-3" type="number" min="0" step="1000"></label>
+      <label><span class="input-label">Year 1 notes</span><input class="pf-input" id="rp-notes-1" type="text" placeholder="Optional"></label>
+      <label><span class="input-label">Year 2 notes</span><input class="pf-input" id="rp-notes-2" type="text" placeholder="Optional"></label>
+      <label><span class="input-label">Year 3 notes</span><input class="pf-input" id="rp-notes-3" type="text" placeholder="Optional"></label>
+    </div>
+    <div class="section-label" style="margin-top:14px"><span class="dot" style="background:var(--purple)"></span>Contracted revenue split</div>
+    <div class="grid grid3">
+      <label><span class="input-label">To licence during payoff %</span><input class="pf-input" id="rp-license-pct" type="number" min="0" max="100"></label>
+      <label><span class="input-label">Client during payoff %</span><input class="pf-input" id="rp-client-recap" type="number" min="0" max="100"></label>
+      <label><span class="input-label">Lucra during payoff %</span><input class="pf-input" id="rp-lucra-recap" type="number" min="0" max="100"></label>
+      <label><span class="input-label">Client after payoff %</span><input class="pf-input" id="rp-client-post" type="number" min="0" max="100"></label>
+      <label><span class="input-label">Lucra after payoff %</span><input class="pf-input" id="rp-lucra-post" type="number" min="0" max="100"></label>
+      <label><span class="input-label">Renewal escalator %</span><input class="pf-input" id="rp-renewal" type="number" min="0" max="100" value="0"></label>
+      <label><span class="input-label">GTM dollars</span><input class="pf-input" id="rp-gtm" type="number" min="0" step="1000" value="0"></label>
+    </div>
+    <div id="rp-validation" class="warn" hidden style="margin-top:12px"></div>
+    <div style="margin-top:14px"><button id="rp-go" onclick="RPgenerate()" style="padding:11px 18px;border-radius:8px;border:none;background:var(--green);color:#0a0a0b;font-weight:600;font-family:var(--font);cursor:pointer;min-height:44px">Generate recapture agreement</button></div>
+    <div id="rp-result" style="margin-top:14px"></div>
   </div>
 
   <div class="section-label"><span class="dot" style="background:var(--green)"></span>Agreement type</div>
@@ -1717,7 +1779,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   </div>
 </div>
 
-<div id="tournaments" role="tabpanel" aria-labelledby="tab-tournaments" style="display:none">
+<div id="tournaments" role="tabpanel" aria-labelledby="tab-tournaments">
 <div class="dm-hero"><div><div class="workspace-eyebrow">Venue and app revenue</div><h2>Revenue Model</h2><p>Two products under one licence. Core is Lucra's competition layer on the customer's own game or venues, per location; mini games are Lucra's catalog on their app or site, universal to every user. Entries and platform fees from both retire the licence at the same share.</p></div><span class="badge">Tournaments</span></div>
 
 <div class="tp-view-switch" role="tablist" aria-label="Tournament payoff views">
@@ -1938,7 +2000,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   </div>
   <div class="tpc-grid" id="tpc-cases" aria-live="polite" style="margin-top:16px"></div>
   <div id="tpc-detail"></div>
-  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button><button type="button" class="primary tp-internal" id="tp-customer-link-btn" onclick="TPcustomerLinkJump()">Customer link</button><button type="button" class="tp-internal" id="tp-share-btn" onclick="TPshareDeal(this)">Team link (internal)</button></div>
+  <div class="tp-actions"><button type="button" class="primary" onclick="TPCprint()">Generate combined one-pager</button><button type="button" class="primary tp-internal" onclick="RPimportFromRevenueModel(true)">Import into Proposal Builder</button><button type="button" class="primary tp-internal" id="tp-customer-link-btn" onclick="TPcustomerLinkJump()">Customer link</button><button type="button" class="tp-internal" id="tp-share-btn" onclick="TPshareDeal(this)">Team link (internal)</button></div>
   <div class="sn tp-internal"><strong>Customer link</strong>: the sandbox page below, behind a passcode; the licence and the split never reach their browser. <strong>Team link</strong>: opens this configuration in the calculator for anyone with the site password. Never send a team link to a customer. Both are opaque; the team link expires after 14 days.</div>
   <div class="tp-share tp-internal" id="tp-share-out" hidden><input class="pf-input" type="text" readonly aria-label="Team link" onclick="this.select()"><div class="sn">Team link · opens the full calculator · site password required · not for customers.</div></div>
   <details class="tp-fold tp-internal" id="tp-sandbox-fold" open>
@@ -2210,7 +2272,7 @@ function discI(k,val){var v=parseFloat(val);if(val===''||isNaN(v)||v<0)return;V[
    Model as folds, and the two value models live inside Beyond Revenue behind a
    picker. Old links, the quick estimate and the mobile selector keep working. */
 var T_LEGACY={forecast:'tournaments',wagerbreakeven:'tournaments',freetoplay:'beyond',digitalmedia:'beyond'};
-var T_PANES=['roi','minigame','beyond','analytics','proposal','trackman','gamification','brandarcade','tournaments'];
+var T_PANES=['tournaments','onepager','gamification','roi','minigame','beyond','analytics','proposal','trackman','brandarcade'];
 function T(id,b){
   if(document.body.classList.contains('pres-mode')&&(id==='gamification'||id==='proposal'))id='roi';
   var legacy=T_LEGACY[id]?id:null;
@@ -2223,12 +2285,14 @@ function T(id,b){
   var mobile=$('mobile-workflow');if(mobile&&mobile.value!==id)mobile.value=id;
   if(id==='trackman')renderTM();
   if(id==='gamification')renderGM();
+  if(id==='onepager')OPinit();
   if(id==='brandarcade')BAinit();
   if(id==='beyond')BYinit(legacy);
   if(id==='tournaments'){TPinit();if(legacy)TPopenFold(legacy)}
   if(id==='minigame'&&typeof TPCrender==='function')TPCrender();
   U()
 }
+window.addEventListener('DOMContentLoaded',function(){if(!new URLSearchParams(location.search).get('deal'))T('tournaments')});
 /* Beyond Revenue: one tab, two products, one shown at a time. */
 var BY_KEY='lucra-beyond-v1',BY_PRODUCTS=['freetoplay','digitalmedia'];
 function BYpick(which,btn){
@@ -2434,7 +2498,8 @@ function TMagreement(){
   .catch(function(e){btn.disabled=false;btn.textContent='Generate agreement';res.innerHTML='<div class="warn">Request failed: '+e+'</div>';});
 }
 /* ════════ GAMIFICATION (Core / Mini Games) ════════ */
-var GM={tpl:'core',pkgs:{A:false,B:false,C:false,D:false,E:false,F:false},waived:{A:false,B:false,C:false,D:false,E:false,F:false},prices:{},impl:'',disc:0,discMode:'pct',implDisc:0,implDiscMode:'pct',term:2,notesTouched:false,lastAutoNotes:''};
+var GM={docType:'standard',tpl:'core',pkgs:{A:false,B:false,C:false,D:false,E:false,F:false},waived:{A:false,B:false,C:false,D:false,E:false,F:false},prices:{},impl:'',disc:0,discMode:'pct',implDisc:0,implDiscMode:'pct',term:2,notesTouched:false,lastAutoNotes:''};
+function GMdocType(type,b){GM.docType=type==='recapture'?'recapture':'standard';['gm-doc-standard','gm-doc-recapture'].forEach(function(id){var el=$(id);if(el)el.classList.toggle('on',id==='gm-doc-'+GM.docType)});var p=$('gm-recapture-panel');if(p)p.hidden=GM.docType!=='recapture';if(GM.docType==='recapture'&&b&&$('rp-client')&&!$('rp-client').value)RPimportFromRevenueModel(false)}
 var GM_PRICE={A:10000,B:10000,C:15000,D:5000,E:5000,F:5000};
 var GM_IMPL={G:30000,H:15000,I:10000};
 var GM_NAMES={A:'Recreational games + client-hosted tournaments',B:'User-generated competitions',C:'Gaming compliant wallet infrastructure',D:'Play-for-Rewards + loyalty',E:'Convert winnings to gift cards',F:'Marketing analytics / data insights'};
@@ -2461,6 +2526,54 @@ function GMautoNotes(d){var notes=[];if(d.waived.length)notes.push('Waived line 
 function GMsyncNotes(d){var el=$('gm-notes');if(!el)return;var auto=GMautoNotes(d);if(!GM.notesTouched||el.value===GM.lastAutoNotes){el.value=auto;GM.notesTouched=false;}GM.lastAutoNotes=auto;}
 function renderGM(){['A','B','C','D','E','F'].forEach(function(k){GMpriceLabel(k);var wb=$('gm-waive-'+k);if(wb)wb.classList.toggle('on',!!GM.waived[k]);var pb=$('gm-'+k);if(pb)pb.classList.toggle('on',!!GM.pkgs[k]);});var d=gmCompute();GMsyncNotes(d);$('gm-metrics').innerHTML='<div class="stat"><div class="label">Monthly license</div><div class="val">'+GMmoney(d.monthly)+'</div><div class="sub">'+(d.waived.length?'after waivers':(d.custom.length?'customized':'list'))+'</div></div>'+'<div class="stat"><div class="label">Annual license</div><div class="val">'+GMmoney(d.annual)+'</div><div class="sub">'+(d.listAnnual!==d.annual?'list '+GMmoney(d.listAnnual):'')+'</div></div>'+'<div class="stat"><div class="label">Amount due / yr</div><div class="val" style="color:var(--green)">'+GMmoney(d.amountDue)+'</div></div>'+'<div class="stat"><div class="label">'+(d.term>1?d.term+'-yr TCV':'TCV')+'</div><div class="val" style="color:var(--green)">'+GMmoney(d.tcv)+'</div><div class="sub">incl. impl</div></div>';var names={A:'A Recreational games',B:'B User-gen competitions',C:'C API wallet + risk',D:'D Play-for-Rewards',E:'E Gift cards',F:'F Marketing analytics'};var sel=[];for(var k in GM.pkgs)if(GM.pkgs[k])sel.push(names[k]+' ('+(GM.waived[k]?'<span style="text-decoration:line-through;color:var(--amber)">'+GMmoney(GMprice(k))+'/mo</span> waived':GMmoney(GMprice(k))+'/mo')+')');$('gm-summary').innerHTML='<div class="ct">'+(GM.tpl==='core'?'Core':'Mini Games')+' agreement summary</div>'+'<div class="cr"><span class="k">Selected</span><span class="v">'+(sel.length?sel.join(', '):'None')+'</span></div>'+'<div class="cr"><span class="k">Annual license</span><span class="v">'+GMmoney(d.annual)+'</span></div>'+(d.waived.length?'<div class="cr"><span class="k">Waived</span><span class="v" style="color:var(--amber)">'+d.waived.join('; ')+'</span></div>':'')+(d.custom.length?'<div class="cr"><span class="k">Custom pricing</span><span class="v" style="color:var(--amber)">'+d.custom.join('; ')+'</span></div>':'')+(d.discPct>0?'<div class="cr"><span class="k">Discount</span><span class="v" style="color:var(--amber)">'+d.discPct+'% (–'+GMmoney(d.discAmt)+')</span></div>':'')+'<div class="cr"><span class="k">Amount due / yr</span><span class="v" style="color:var(--green)">'+GMmoney(d.amountDue)+'</span></div>'+'<div class="cr"><span class="k">Implementation</span><span class="v">'+(d.implGross?(d.implWaived?'Waived':GMmoney(d.impl)+(d.implDiscPct>0?' ('+d.implDiscPct+'% off '+GMmoney(d.implGross)+')':'')):'None')+'</span></div>'+'<div class="cr"><span class="k">Term</span><span class="v">'+d.term+' year'+(d.term>1?'s':'')+'</span></div>'+'<div class="cr sep"><span class="k">'+d.term+'-yr TCV</span><span class="v" style="color:var(--green)">'+GMmoney(d.tcv)+'</span></div>';var clean={A:'recreational games & client-hosted tournaments',B:'user-generated competitions',C:'the gaming compliant wallet infrastructure + risk toolkit',D:'Play-for-Rewards + loyalty',E:'gift-card conversion',F:'marketing analytics & data insights'};var picked=[];for(var pk in GM.pkgs)if(GM.pkgs[pk])picked.push(clean[pk]+(GM.waived[pk]?' (waived)':''));var lbl=GM.tpl==='core'?'Core':'Mini Games';var body='Here\'s a summary of the proposed Lucra '+lbl+' agreement. It includes '+(picked.length?picked.join('; '):'the selected products')+'. '+'The annual license is '+GMmoney(d.annual)+(d.waived.length?' after waived line items':'')+(d.custom.length?' with custom product pricing applied':'')+(d.discPct>0?', and with a '+d.discPct+'% discount your price comes to '+GMmoney(d.amountDue)+'/year':' ('+GMmoney(d.amountDue)+'/year)')+'. '+'Implementation '+(d.implGross?(d.implWaived?'is fully waived':'is '+GMmoney(d.impl)+' one-time'+(d.implDiscPct>0?' ('+d.implDiscPct+'% off '+GMmoney(d.implGross)+')':'')):'is not included')+'. '+'Over a '+d.term+'-year term, total contract value is '+GMmoney(d.tcv)+'.';$('gm-pitch').innerHTML='<button class="cp-btn" onclick="CP(\'gm-pitch\')">Copy</button><strong>Proposal:</strong> "'+body+'"';var ae=$('gm-eff');if(ae&&!ae.value)ae.value=new Date().toISOString().slice(0,10);var gl=$('gm-golive');if(gl&&!gl.value){var g=new Date();g.setDate(g.getDate()+70);gl.value=g.toISOString().slice(0,10);}}
 function GMgenerate(){var d=gmCompute(),client=($('gm-client').value||'').trim();if(!client){alert('Enter the client / company name.');return;}var eff=agFmtDate($('gm-eff').value)||'____________',goLive=agFmtDate($('gm-golive').value)||'____________';var rsC=String(parseInt($('gm-rs-client').value)||0),rsL=String(parseInt($('gm-rs-lucra').value)||0);var lic=GMmoney(d.annual).replace('$',''),amt=GMmoney(d.amountDue).replace('$',''),disc=String(d.discPct),term=String(d.term);var selectedImpl=GM.impl==='waived'?'I':GM.impl;var implName=GM.impl==='waived'?'Waived':(selectedImpl==='G'?'Strategic':selectedImpl==='H'?'Growth':selectedImpl==='I'?'Launch':'None');var noteEl=$('gm-notes'),customNote=noteEl?(noteEl.value||''):GMautoNotes(d);var tokens={'{{CLIENT_NAME}}':client,'{{EFFECTIVE_DATE}}':eff,'{{LICENSE_FEE}}':lic,'{{DISCOUNT_PERCENTAGE}}':disc,'{{AMOUNT_DUE}}':amt,'{{CLIENT_REVENUE_SHARE}}':rsC,'{{LUCRA_REVENUE_SHARE}}':rsL,'{{LICENSE_TERM}}':term,'{{KICKOFF_DATE}}':goLive,'{{DELIVERY_DATE}}':goLive,'{{TARGET_DELIVERY_DATE}}':goLive,'{{DELIVERY_COST_REDUCTION_PERCENTAGE}}':'0','{{CHK_A}}':GMselToken('A'),'{{CHK_B}}':GMselToken('B'),'{{CHK_C}}':GMselToken('C'),'{{CHK_D}}':GMselToken('D'),'{{CHK_E}}':GMselToken('E'),'{{CHK_F}}':GMselToken('F'),'{{CHK_G}}':selectedImpl==='G'?'Yes':'','{{CHK_H}}':selectedImpl==='H'?'Yes':'','{{CHK_I}}':selectedImpl==='I'?(GM.impl==='waived'?'Waived':'Yes'):'','{{A_monthly}}':GMpriceToken('A'),'{{B_monthly}}':GMpriceToken('B'),'{{C_monthly}}':GMpriceToken('C'),'{{D_monthly_}}':GMpriceToken('D'),'{{E_monthly}}':GMpriceToken('E'),'{{F_monthly}}':GMpriceToken('F'),'{{strat_imp_price}}':GMmoney(GM_IMPL.G),'{{growth_imp_price}}':GMmoney(GM_IMPL.H),'{{launch_imp_price}}':GM.impl==='waived'?GMstrike(GMmoney(GM_IMPL.I)):GMmoney(GM_IMPL.I),'{{Implementation_name}}':implName,'{{NOTES}}':customNote||''};var payload={template:GM.tpl,clientName:client,tokens:tokens};var btn=$('gm-go'),res=$('gm-result');btn.disabled=true;btn.textContent='Generating…';res.innerHTML='';fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json()}).then(function(j){btn.disabled=false;btn.textContent='Generate agreement';if(!j.ok){res.innerHTML='<div class="warn">Error: '+(j.error||'failed')+'</div>';return;}function dl(b64,mime,fn){var bin=atob(b64),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([arr],{type:mime}));a.download=fn;document.body.appendChild(a);a.click();a.remove();}var safe=(j.name||'agreement').replace(/[^a-z0-9]+/gi,'-');res.innerHTML='<div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:12px;font-size:13px"><div style="color:var(--green);font-weight:600;margin-bottom:8px">✓ '+(GM.tpl==='core'?'Core':'Mini Games')+' agreement generated for '+client+'</div><a href="'+j.docUrl+'" target="_blank" style="color:var(--green);font-weight:500">Open Google Doc (view-only) ↗</a>'+(customNote?'<div style="color:var(--amber);margin-top:8px">'+customNote+'</div>':'')+'</div>';var bar=document.createElement('div');bar.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:10px';var bp=document.createElement('button');bp.textContent='Download PDF';bp.style.cssText='padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font);cursor:pointer';bp.onclick=function(){dl(j.pdf,'application/pdf',safe+'.pdf')};var bx=document.createElement('button');bx.textContent='Download DOCX';bx.style.cssText=bp.style.cssText;bx.onclick=function(){dl(j.docx,'application/vnd.openxmlformats-officedocument.wordprocessingml.document',safe+'.docx')};bar.appendChild(bp);bar.appendChild(bx);res.appendChild(bar);}).catch(function(e){btn.disabled=false;btn.textContent='Generate agreement';res.innerHTML='<div class="warn">Request failed: '+e+'</div>';});}
+
+function RPvalue(id){var el=$(id);return el?String(el.value||'').trim():''}
+function RPnumber(id){var n=Number(RPvalue(id));return isFinite(n)?n:0}
+function RPset(id,value){var el=$(id);if(el)el.value=value==null?'':value}
+function RPmoney(n){return '$'+Math.round(Number(n)||0).toLocaleString()}
+function RPdownload(b64,mime,filename){var bin=atob(b64),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([arr],{type:mime}));a.download=filename;document.body.appendChild(a);a.click();a.remove()}
+function RPimportFromRevenueModel(navigate){
+  if(typeof TPinit==='function')TPinit();
+  var s=TPstate(TP),fees=TPfees(s),rates=TPsplitRates(s),today=new Date(),delivery=new Date();delivery.setDate(delivery.getDate()+70);
+  GMdocType('recapture');
+  RPset('rp-client',s.dealName||'');RPset('rp-effective',today.toISOString().slice(0,10));RPset('rp-kickoff',today.toISOString().slice(0,10));RPset('rp-delivery',delivery.toISOString().slice(0,10));
+  for(var i=0;i<3;i++)RPset('rp-year-'+(i+1),i<TPterm(s)?(fees[i]||0):0);
+  RPset('rp-license-pct',Math.round(rates.credit*1000)/10);RPset('rp-client-recap',Math.round(rates.operator*1000)/10);RPset('rp-lucra-recap',Math.round(rates.lucra*1000)/10);
+  RPset('rp-client-post',s.post.operator);RPset('rp-lucra-post',s.post.lucra);GM.term=Math.min(3,TPterm(s));
+  if(s.core.on&&!GM.pkgs.A)GM.pkgs.A=true;if(s.mini.on&&!GM.pkgs.D)GM.pkgs.D=true;
+  var status=$('rp-import-status');if(status)status.textContent='Imported '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+' · proposal fields are now independent.';
+  renderGM();if(navigate)T('gamification');
+}
+function RPvalidate(){
+  var errors=[],term=Math.max(1,Math.min(3,GM.term||1)),feeTotal=0;
+  if(!RPvalue('rp-client'))errors.push('Enter the client legal name.');
+  if(!RPvalue('rp-effective'))errors.push('Enter the effective date.');
+  for(var i=1;i<=term;i++)feeTotal+=RPnumber('rp-year-'+i);
+  if(feeTotal<=0)errors.push('Enter at least one annual licence fee.');
+  var recap=RPnumber('rp-license-pct')+RPnumber('rp-client-recap')+RPnumber('rp-lucra-recap');
+  if(Math.abs(recap-100)>.001)errors.push('The during-payoff split must total 100%; it currently totals '+recap+'%.');
+  var post=RPnumber('rp-client-post')+RPnumber('rp-lucra-post');
+  if(Math.abs(post-100)>.001)errors.push('The post-payoff split must total 100%; it currently totals '+post+'%.');
+  if(!Object.keys(GM.pkgs).some(function(k){return GM.pkgs[k]}))errors.push('Select at least one product or add-on.');
+  return errors;
+}
+function RPgenerate(){
+  var errors=RPvalidate(),validation=$('rp-validation');
+  if(errors.length){validation.hidden=false;validation.innerHTML=errors.join('<br>');return}validation.hidden=true;
+  var client=RPvalue('rp-client'),term=Math.max(1,Math.min(3,GM.term||1)),fees=[RPnumber('rp-year-1'),RPnumber('rp-year-2'),RPnumber('rp-year-3')],total=fees.slice(0,term).reduce(function(a,b){return a+b},0),selectedImpl=GM.impl==='waived'?'I':GM.impl,implName=GM.impl==='waived'?'Waived':(selectedImpl==='G'?'Strategic':selectedImpl==='H'?'Growth':selectedImpl==='I'?'Launch':'None');
+  var tokens={'{{CLIENT_LEGAL_NAME}}':client,'{{EFFECTIVE_DATE}}':agFmtDate(RPvalue('rp-effective')),'{{LICENSE_TERM}}':String(term),'{{DELIVERY_DATE}}':agFmtDate(RPvalue('rp-delivery'))||'____________','{{TOTAL_LICENSE_COMMITMENT}}':RPmoney(total),'{{CLIENT_RECAP_PCT}}':String(RPnumber('rp-client-recap')),'{{LUCRA_RECAP_PCT}}':String(RPnumber('rp-lucra-recap')),'{{LICENSE_PCT}}':String(RPnumber('rp-license-pct')),'{{CLIENT_POST_PCT}}':String(RPnumber('rp-client-post')),'{{LUCRA_POST_PCT}}':String(RPnumber('rp-lucra-post')),'{{RENEWAL_ESCALATOR_PCT}}':String(RPnumber('rp-renewal')),'{{KICKOFF_DATE}}':agFmtDate(RPvalue('rp-kickoff'))||'____________','{{GTM_DOLLARS}}':RPmoney(RPnumber('rp-gtm')),'{{IMPLEMENTATION_PACKAGE}}':implName,'{{STRATEGIC_FEE}}':RPmoney(GM_IMPL.G),'{{GROWTH_FEE}}':RPmoney(GM_IMPL.H),'{{LAUNCH_FEE}}':GM.impl==='waived'?'Waived':RPmoney(GM_IMPL.I)};
+  ['A','B','C','D','E','F'].forEach(function(k){tokens['{{CHK_'+k+'}}']=GM.pkgs[k]?'X':'';tokens['{{'+k+'_MONTHLY}}']=GMpriceToken(k)});
+  ['G','H','I'].forEach(function(k){tokens['{{CHK_'+k+'}}']=selectedImpl===k?(GM.impl==='waived'?'Waived':'X'):''});
+  for(var y=1;y<=3;y++){var active=y<=term;tokens['{{YEAR_'+y+'_LICENSE_FEE}}']=active?RPmoney(fees[y-1]):'N/A';tokens['{{YEAR_'+y+'_MINIMUM_DUE}}']=active?RPmoney(fees[y-1]):'N/A';tokens['{{YEAR_'+y+'_NOTES}}']=active?(RPvalue('rp-notes-'+y)||'—'):'Not included in term'}
+  var btn=$('rp-go'),res=$('rp-result');btn.disabled=true;btn.textContent='Generating…';res.innerHTML='';
+  fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template:'recapture',clientName:client,tokens:tokens})}).then(function(r){return r.json()}).then(function(j){btn.disabled=false;btn.textContent='Generate recapture agreement';if(!j.ok){res.innerHTML='<div class="warn">Error: '+(j.error||'failed')+'</div>';return}var safe=(j.name||'recapture-agreement').replace(/[^a-z0-9]+/gi,'-');res.innerHTML='<div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:12px;font-size:13px"><div style="color:var(--green);font-weight:600;margin-bottom:8px">✓ Multi-year recapture agreement generated for '+TPesc(client)+'</div><a href="'+j.docUrl+'" target="_blank" style="color:var(--green);font-weight:500">Open shared Google Doc (Lucra team) ↗</a><div class="sn" style="margin-top:7px">Editable by lucrasports.com and playlucra.com; not public by link.</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="preset" id="rp-pdf">Download PDF</button><button class="preset" id="rp-docx">Download DOCX</button></div>';$('rp-pdf').onclick=function(){RPdownload(j.pdf,'application/pdf',safe+'.pdf')};$('rp-docx').onclick=function(){RPdownload(j.docx,'application/vnd.openxmlformats-officedocument.wordprocessingml.document',safe+'.docx')}}).catch(function(e){btn.disabled=false;btn.textContent='Generate recapture agreement';res.innerHTML='<div class="warn">Request failed: '+TPesc(e)+'</div>'});
+}
+function OPinit(){
+  if(typeof TPinit==='function')TPinit();var r=TPcalculate(TP,typeof MG==='object'?MG:null),metrics=$('op-metrics'),summary=$('op-summary');if(!metrics||!summary)return;
+  if(r.errors&&r.errors.length){metrics.innerHTML='';summary.textContent='Complete the Revenue Model before generating: '+r.errors.join(' ');return}
+  var payoff=r.payoffMonth?('Month '+(Math.round(r.payoffMonth*10)/10)):'Not retired',cards=[['Contract value',TPmoney(r.totalContract)],['Revenue generated',TPmoney(r.totalSplitBase)],['Operator earns',TPmoney(r.totalOperator)],['Licence payoff',payoff]];
+  metrics.innerHTML=cards.map(function(x){return'<div class="stat"><div class="label">'+x[0]+'</div><div class="val">'+x[1]+'</div></div>'}).join('');summary.textContent=(TP.dealName||'Untitled deal')+' · '+r.termYears+'-year model · changes made in Revenue Model flow through automatically.';
+}
 function C(vis,arpu,fee,optPct,liftPct){var opt=optPct/100,lift=liftPct/100,al=arpu*lift,la=arpu+al,du=Math.round(vis*opt),mu=du*30,mr=du*al*30,nm=mr-fee,ar=nm*12,bu=al>0?Math.ceil(fee/(al*30)):Infinity,bv=opt>0?Math.ceil(bu/opt):Infinity,rx=fee>0?(mr/fee).toFixed(1):'0',pb=mr>0?Math.round(fee/(mr/30)*10)/10:Infinity;return{arpu:arpu,lucraARPU:la,arpuLift:al,dailyUsers:du,moUsers:mu,moRev:mr,netMo:nm,annROI:ar,brkUsers:bu,brkVis:bv,roiX:rx,paybackDays:pb}}
 function CP(id){var el=$(id);if(!el)return;var txt=el.innerText.replace(/^Copy\n?/,'').replace(/Copied!\n?/,'');navigator.clipboard.writeText(txt);var btn=el.querySelector('.cp-btn');if(btn){btn.textContent='Copied!';btn.classList.add('done');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('done')},2000)}}
 /* Glowing slider fill (matches the other calculator) — paints all range inputs without touching their handlers */

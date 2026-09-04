@@ -66,15 +66,16 @@ describe('/api/generate contract tests', () => {
     expect(res.body.error).toContain('No tokens');
   });
 
-  it('accepts valid template names: trackman, core, minigames', async () => {
+  it('accepts valid template names: trackman, core, minigames, recapture', async () => {
     // These will fail at Google API call, but should pass validation.
     // Use valid token keys per template to pass the allowlist.
     const validTokens = {
       trackman: { '[CLIENT NAME]': 'Test' },
       core: { '{{CLIENT_NAME}}': 'Test' },
       minigames: { '{{CLIENT_NAME}}': 'Test' },
+      recapture: { '{{CLIENT_LEGAL_NAME}}': 'Test' },
     };
-    for (const t of ['trackman', 'core', 'minigames']) {
+    for (const t of ['trackman', 'core', 'minigames', 'recapture']) {
       const req = mockReq({ template: t, tokens: validTokens[t], clientName: 'Test' });
       const res = mockRes();
       try {
@@ -184,6 +185,29 @@ describe('/api/generate contract tests', () => {
     }
   });
 
+  it('accepts the complete recapture template token contract', async () => {
+    const tokens = {};
+    [
+      '{{CLIENT_LEGAL_NAME}}', '{{EFFECTIVE_DATE}}',
+      '{{CHK_A}}', '{{A_MONTHLY}}', '{{CHK_B}}', '{{B_MONTHLY}}',
+      '{{CHK_C}}', '{{C_MONTHLY}}', '{{CHK_D}}', '{{D_MONTHLY}}',
+      '{{CHK_E}}', '{{E_MONTHLY}}', '{{CHK_F}}', '{{F_MONTHLY}}',
+      '{{CHK_G}}', '{{STRATEGIC_FEE}}', '{{CHK_H}}', '{{GROWTH_FEE}}',
+      '{{CHK_I}}', '{{LAUNCH_FEE}}', '{{YEAR_1_LICENSE_FEE}}',
+      '{{IMPLEMENTATION_PACKAGE}}', '{{YEAR_1_NOTES}}', '{{YEAR_1_MINIMUM_DUE}}',
+      '{{YEAR_2_LICENSE_FEE}}', '{{YEAR_2_NOTES}}', '{{YEAR_2_MINIMUM_DUE}}',
+      '{{YEAR_3_LICENSE_FEE}}', '{{YEAR_3_NOTES}}', '{{YEAR_3_MINIMUM_DUE}}',
+      '{{LICENSE_TERM}}', '{{DELIVERY_DATE}}', '{{TOTAL_LICENSE_COMMITMENT}}',
+      '{{CLIENT_RECAP_PCT}}', '{{LUCRA_RECAP_PCT}}', '{{LICENSE_PCT}}',
+      '{{CLIENT_POST_PCT}}', '{{LUCRA_POST_PCT}}', '{{RENEWAL_ESCALATOR_PCT}}',
+      '{{KICKOFF_DATE}}', '{{GTM_DOLLARS}}',
+    ].forEach((key) => { tokens[key] = 'value'; });
+    const req = mockReq({ template: 'recapture', tokens, clientName: 'Test' });
+    const res = mockRes();
+    try { await handler(req, res); } catch (e) { /* Google API */ }
+    expect(res.statusCode).not.toBe(400);
+  });
+
   it('sanitizes client name in generated filename', async () => {
     // We can't test the full flow without Google APIs, but we verify
     // the handler doesn't error on names with special characters
@@ -249,6 +273,33 @@ describe('/api/generate contract tests', () => {
       expect(res.statusCode).toBe(200);
       expect(permissionBodies).toEqual([
         { type: 'anyone', role: 'reader', allowFileDiscovery: false },
+      ]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('shares recapture agreements as undiscoverable editors with both Lucra domains', async () => {
+    const originalFetch = globalThis.fetch;
+    const permissionBodies = [];
+    globalThis.fetch = vi.fn(async (url, options = {}) => {
+      const target = String(url);
+      if (target.includes('oauth2.googleapis.com/token')) return new Response(JSON.stringify({ access_token: 'test-access-token' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (target.includes('/copy?')) return new Response(JSON.stringify({ id: 'doc-456', webViewLink: 'https://docs.google.com/document/d/doc-456/edit' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (target.includes('/permissions?')) { permissionBodies.push(JSON.parse(options.body)); return new Response(JSON.stringify({ id: 'permission' }), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+      if (target.includes(':batchUpdate')) return new Response('{}', { status: 200 });
+      if (target.includes('/export?')) return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
+      throw new Error(`Unexpected fetch: ${target}`);
+    });
+    try {
+      const req = mockReq({ template: 'recapture', tokens: { '{{CLIENT_LEGAL_NAME}}': 'Internal Agreement' }, clientName: 'Internal Agreement' });
+      req.headers['x-forwarded-for'] = '203.0.113.99';
+      const res = mockRes();
+      await handler(req, res);
+      expect(res.statusCode).toBe(200);
+      expect(permissionBodies).toEqual([
+        { type: 'domain', domain: 'lucrasports.com', role: 'writer', allowFileDiscovery: false },
+        { type: 'domain', domain: 'playlucra.com', role: 'writer', allowFileDiscovery: false },
       ]);
     } finally {
       globalThis.fetch = originalFetch;
