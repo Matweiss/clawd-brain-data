@@ -7984,6 +7984,15 @@ function TPCprint() {
 var TP_DEAL_URL_CHECKED = false;
 function TPinit() {
   if (!TP_READY) { TPload(); TP_READY = true; }
+  else {
+    // Revenue Model is now the default tab, so it may initialize before an
+    // older saved deal is restored by a link, test fixture, or another browser
+    // tab. Re-read only when storage actually differs from the in-memory deal.
+    try {
+      var stored = localStorage.getItem(TP_KEY);
+      if (stored && stored !== JSON.stringify(TP)) TPmigrateLoaded(JSON.parse(stored));
+    } catch (e) {}
+  }
   if (!TP_DEAL_URL_CHECKED) { TP_DEAL_URL_CHECKED = true; TPloadDealFromUrl(); }
   TPrenderControls();
   TPrenderTournaments();
