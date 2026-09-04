@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { fileURLToPath } from 'node:url';
 import { extractFromApp, extractFromMirror, normalise } from './tp-extract.js';
 
 // Closes the standing risk that tests/calc-functions.js is a hand-copy of the
@@ -11,7 +12,7 @@ describe('Tournament Payoff formula drift guard', () => {
   });
 
   it('the server engine in lib/revenue-engine.js matches the code shipped in app.html', () => {
-    expect(normalise(extractFromMirror(new URL('../lib/revenue-engine.js', import.meta.url).pathname))).toBe(normalise(extractFromApp()));
+    expect(normalise(extractFromMirror(fileURLToPath(new URL('../lib/revenue-engine.js', import.meta.url))))).toBe(normalise(extractFromApp()));
   });
 
   it('both markers are present on both sides', () => {

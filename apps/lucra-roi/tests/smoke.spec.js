@@ -9,9 +9,10 @@ import { test, expect } from '@playwright/test';
 // We locate by text to stay compatible with both.
 
 const TAB_NAMES = [
-  'Core ROI',
-  'Gamification',
   'Revenue Model',
+  'ROI One-Pager',
+  'Proposal Builder',
+  'Core ROI',
   'Mini Game ROI',
   'Beyond Revenue',
   'Investment Plans',
@@ -19,9 +20,10 @@ const TAB_NAMES = [
 ];
 
 const TAB_PANEL_IDS = [
-  'roi',
-  'gamification',
   'tournaments',
+  'onepager',
+  'gamification',
+  'roi',
   'minigame',
   'beyond',
   'analytics',
@@ -45,8 +47,8 @@ test('every tab loads without console errors', async ({ page }) => {
 
   await page.goto('/');
 
-  // The first tab (Core ROI) should already be visible
-  await expect(page.locator('#roi')).toBeVisible();
+  // The first tab (Revenue Model) should already be visible
+  await expect(page.locator('#tournaments')).toBeVisible();
 
   // Click through each tab and verify the panel becomes visible
   for (let i = 0; i < TAB_NAMES.length; i++) {
@@ -83,7 +85,7 @@ test('keyboard arrow-key navigation cycles through tabs', async ({ page }) => {
   }
 
   // Canonical copy with WAI-ARIA tablist — full keyboard test
-  const firstTab = tabButton(page, 'Core ROI');
+  const firstTab = tabButton(page, 'Revenue Model');
   await firstTab.focus();
   await expect(firstTab).toBeFocused();
 
@@ -121,6 +123,7 @@ test('Core ROI tab has visible inputs and computes values', async ({ page }) => 
   page.on('pageerror', err => errors.push(err.message));
 
   await page.goto('/');
+  await tabButton(page, 'Core ROI').click();
 
   // Verify key input elements are present
   await expect(page.locator('#i-vis')).toBeVisible();
@@ -142,6 +145,7 @@ test('guided archetypes prefill Core ROI without hiding assumptions', async ({ p
 
   await page.goto('/');
   await page.getByRole('button', { name: /Golf & simulator/ }).click();
+  await tabButton(page, 'Core ROI').click();
 
   await expect(page.locator('#i-vis')).toHaveValue('120');
   await expect(page.locator('#i-arpu')).toHaveValue('30');
@@ -162,12 +166,12 @@ test('narrow layout has no document-level horizontal overflow', async ({ page })
   expect(sizes.scrollWidth).toBeLessThanOrEqual(sizes.clientWidth + 1);
 });
 
-test('Gamification tab renders deal configuration', async ({ page }) => {
+test('Proposal Builder tab renders deal configuration', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
 
   await page.goto('/');
-  await tabButton(page, 'Gamification').click();
+  await tabButton(page, 'Proposal Builder').click();
 
   // Package selection buttons should be present
   await expect(page.locator('#gm-A')).toBeVisible();

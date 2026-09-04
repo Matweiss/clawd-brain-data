@@ -11,6 +11,7 @@ export default defineConfig({
       '**/forecast-v2.spec.js',
       '**/free-to-play.e2e.spec.js',
       '**/tournament-payoff.e2e.spec.js',
+      '**/proposal-recapture.e2e.spec.js',
       '**/node_modules/**',
     ],
   },
