@@ -1516,6 +1516,9 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <label><span class="input-label">Footprint</span><input class="pf-input" id="op-prospect-footprint" type="text" placeholder="Optional: locations, markets or digital reach" oninput="OPselectionChanged()"></label>
       <label><span class="input-label">Observed user behavior</span><input class="pf-input" id="op-prospect-behavior" type="text" placeholder="Optional: scores, visits, workouts, purchases…" oninput="OPselectionChanged()"></label>
       <label><span class="input-label">Likely business goal</span><input class="pf-input" id="op-prospect-objective" type="text" placeholder="Optional: repeat visits, retention, sponsorship…" oninput="OPselectionChanged()"></label>
+      <label><span class="input-label">Contact name</span><input class="pf-input" id="op-prospect-contact" type="text" placeholder="Optional: first and last name" oninput="OPselectionChanged()"></label>
+      <label><span class="input-label">Contact role/title</span><input class="pf-input" id="op-prospect-contact-role" type="text" placeholder="Optional: VP Loyalty, COO, Founder…" oninput="OPselectionChanged()"></label>
+      <label><span class="input-label">Contact LinkedIn URL</span><input class="pf-input" id="op-prospect-linkedin" type="url" placeholder="Optional: https://linkedin.com/in/…" oninput="OPselectionChanged()"></label>
     </div>
     <div class="input-label" style="margin:14px 0 8px">Concepts to explore</div>
     <div class="grid grid4">
@@ -2688,6 +2691,9 @@ function OPresearchPrompt(){
     'Known footprint: '+(OPvalue('op-prospect-footprint')||'None supplied'),
     'Observed user behavior: '+(OPvalue('op-prospect-behavior')||'None supplied'),
     'Likely business goal: '+(OPvalue('op-prospect-objective')||'Not supplied'),
+    'Contact name: '+(OPvalue('op-prospect-contact')||'Not supplied'),
+    'Contact role/title: '+(OPvalue('op-prospect-contact-role')||'Not supplied'),
+    'Contact LinkedIn URL: '+(OPvalue('op-prospect-linkedin')||'Not supplied'),
     'Formats to investigate: '+(formats.length?formats.join(', '):'Recommend the best fit'),
     'Creative notes: '+(OPvalue('op-prospect-creative')||'None supplied'),
     '',
@@ -2702,12 +2708,14 @@ function OPresearchPrompt(){
     'Cite the direct URL and publication or access date for every material finding. Label each material statement VERIFIED, INFERRED or UNKNOWN. Keep user-supplied planning assumptions separate from company facts.',
     'Do not invent monthly active users or convert visits, downloads, followers, members or locations into MAU. If MAU is unavailable, report the best transparent audience proxies, their limitations and a defensible range only when the method is explicit.',
     'Do not invent pricing, launch timing, compliance claims, partner results or case-study metrics. Do not offer a pilot or treat revenue share as a default fallback.',
+    'If a contact is supplied, verify the person-company match before using it. Search the supplied public LinkedIn profile plus official team pages, company announcements, interviews, conference appearances and other current professional sources. If LinkedIn is inaccessible, say so and use other public evidence; never imply that a blocked profile was reviewed.',
+    'Limit contact research to professionally relevant information: current role, remit, tenure, public priorities, recent work-related statements, likely buyer lens and credible personalization. Do not collect sensitive personal information, infer protected traits or use personal details unrelated to the business conversation.',
     '',
     'WHAT TO DETERMINE',
     '1. Company profile: product, customer, business model, geographic or digital footprint, app or membership model and recent trigger events.',
     '2. Lucra fit: repeatable measurable user behavior, natural competition, user identity, loyalty/rewards/wallet/commerce, sponsor inventory and the business outcome Lucra could influence.',
     '3. Technical gate: classify AUTO TIER 1, AUTO TIER 2, MANUAL or UNKNOWN. Look for accounts/profiles, automated scores or results, APIs/integrations, POS or redemption systems, and evidence that activity can be tied to a user.',
-    '4. Buyer map: likely economic buyer, operational owner, technical stakeholder and sponsor/marketing stakeholder, including named people only when verified.',
+    '4. Buyer map: likely economic buyer, operational owner, technical stakeholder and sponsor/marketing stakeholder, including named people only when verified. If a contact is supplied, add a contact brief with identity confidence, likely role in the decision, relevant public priorities and a tailored outreach angle.',
     '5. Asset candidates: official logo, strong website hero or venue imagery, visible colors and likely typography. Return source-page URLs; do not download or fabricate assets.',
     '',
     'QUALIFICATION SCORE',
@@ -2721,9 +2729,9 @@ function OPresearchPrompt(){
     'Treat every entry price, prize, reward, participation rate and value estimate as illustrative. Keep tournament entries distinct from head-to-head wagered play; do not apply a rake to a tournament entry pool.',
     '',
     'OUTPUT',
-    'Return: (1) executive readout, (2) evidence table with URLs and dates, (3) qualification score and technical gate, (4) audience/MAU assessment, (5) primary and expansion concepts, (6) buyer map, (7) unknowns and discovery questions, (8) official asset candidates, and (9) a prospecting email under 100 words with one verified observation and a low-friction meeting ask.',
+    'Return: (1) executive readout, (2) evidence table with URLs and dates, (3) qualification score and technical gate, (4) audience/MAU assessment, (5) primary and expansion concepts, (6) buyer map and supplied-contact brief, (7) unknowns and discovery questions, (8) official asset candidates, and (9) a prospecting email under 100 words tailored to the supplied contact when verified, with one verified observation and a low-friction meeting ask.',
     'Finish with ONE-PAGER BUILDER HANDOFF inside one copyable code block. Make it a complete prompt for the separate Lucra ROI One-Pager Builder—not a summary that depends on this conversation.',
-    'The builder handoff must include: company and official website; pre-meeting/illustrative status; verified facts; user-supplied inputs; inferences; unknowns; audience evidence with source limitations; recommended primary and expansion concepts; illustrative tournament/reward mechanics; relevant business outcomes; technical requirements; official logo/image/color/font source URLs; internal source list; prospect-safe claims; prohibited or unsupported claims; recommended executive audience; and the under-100-word email.',
+    'The builder handoff must include: company and official website; supplied contact name, role and LinkedIn URL; verified contact brief and buyer lens; pre-meeting/illustrative status; verified facts; user-supplied inputs; inferences; unknowns; audience evidence with source limitations; recommended primary and expansion concepts; illustrative tournament/reward mechanics; relevant business outcomes; technical requirements; official logo/image/color/font source URLs; internal source list; prospect-safe claims; prohibited or unsupported claims; recommended executive audience; and the under-100-word email.',
     'Tell the builder to browse the official site again to retrieve and visually verify current assets, use any approved Lucra decks I attach as creative references, keep citations and qualification scoring internal, visibly label illustrative economics, and produce the requested CEO, CFO or COO one-pager cut only after I choose the audience.',
     'Fill missing material fields with UNKNOWN and specific discovery questions. Do not leave the builder to redo the account research or guess unsupported facts.'
   ].join('\n');
