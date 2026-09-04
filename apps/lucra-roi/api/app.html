@@ -1528,9 +1528,9 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="sn" style="margin-top:7px">After copying the handoff, attach any approved Lucra decks or game examples in the same ChatGPT or Claude conversation. The builder will use them as creative references, not as evidence that the prospect already approved the concept.</div>
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px;margin-top:14px">
       <div class="ct">Research first</div>
-      <p class="sn" style="margin:7px 0 10px">Use company + website to create a sourced qualification brief before asking for a designed one-pager. The result includes audience evidence, buyer map, technical fit, hypothetical concepts and discovery questions.</p>
+      <p class="sn" style="margin:7px 0 10px">Start a reusable ChatGPT Work research conversation from company + website. It will maintain the account brief as you add context, then give you a complete prompt for the separate ROI one-pager builder.</p>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="preset on" id="op-copy-research" type="button" onclick="OPcopyResearch(this)">Copy prospect research prompt</button>
+        <button class="preset on" id="op-copy-research" type="button" onclick="OPcopyResearch(this)">Copy ChatGPT Work research prompt</button>
         <button class="preset" id="op-preview-research-button" type="button" aria-expanded="false" aria-controls="op-research-preview" onclick="OPtoggleResearch(this)">Preview research prompt</button>
         <span class="sn" id="op-research-readiness">Enter company and website to enable research.</span>
       </div>
@@ -1538,7 +1538,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     </div>
   </div>
   <div class="grid grid4" id="op-metrics"></div>
-  <div class="card-section" style="margin-top:16px">
+  <div class="card-section" id="op-build-panel" style="margin-top:16px">
     <div class="ct">Choose the decision-maker cuts</div>
     <p class="sn" style="margin:8px 0 12px">Select one audience or any combination. Multiple selections become one coordinated C-Suite package using the same Revenue Model data.</p>
     <div class="grid grid3" id="op-cuts" style="margin-bottom:14px">
@@ -2656,7 +2656,7 @@ function OPsetMode(mode){
   OP_MODE=mode==='prospect'?'prospect':'model';
   var prospect=OP_MODE==='prospect';
   ['model','prospect'].forEach(function(k){var b=$('op-mode-'+k),on=k===OP_MODE;if(b){b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))}});
-  if($('op-prospect-panel'))$('op-prospect-panel').hidden=!prospect;if($('op-metrics'))$('op-metrics').hidden=prospect;if($('op-calculator-preview'))$('op-calculator-preview').style.display=prospect?'none':'';
+  if($('op-prospect-panel'))$('op-prospect-panel').hidden=!prospect;if($('op-metrics'))$('op-metrics').hidden=prospect;if($('op-build-panel'))$('op-build-panel').hidden=prospect;if($('op-calculator-preview'))$('op-calculator-preview').style.display=prospect?'none':'';
   if($('op-copy-prompt'))$('op-copy-prompt').textContent=prospect?'Copy ChatGPT one-pager handoff':'Copy ChatGPT handoff';
   if($('op-copy-claude'))$('op-copy-claude').textContent=prospect?'Copy Claude one-pager handoff':'Copy Claude handoff';
   if($('op-download-prompt'))$('op-download-prompt').textContent=prospect?'Download one-pager handoff .md':'Download ChatGPT handoff .md';
@@ -2679,7 +2679,7 @@ function OPselectionChanged(){
 function OPresearchPrompt(){
   var company=OPvalue('op-prospect-company'),site=OPvalue('op-prospect-site'),formats=OPformats();if(!company||!site)return'';
   return [
-    'Research '+company+' for a pre-meeting Lucra prospect qualification. Use live web research now. Do not design the one-pager yet.',
+    'Create and maintain a reusable ChatGPT Work research conversation for '+company+'. Use live web research now. Do not design the one-pager in this conversation.',
     '',
     'STARTING INPUTS',
     'Company: '+company,
@@ -2690,6 +2690,12 @@ function OPresearchPrompt(){
     'Likely business goal: '+(OPvalue('op-prospect-objective')||'Not supplied'),
     'Formats to investigate: '+(formats.length?formats.join(', '):'Recommend the best fit'),
     'Creative notes: '+(OPvalue('op-prospect-creative')||'None supplied'),
+    '',
+    'WORKSPACE BEHAVIOR',
+    'Treat this conversation as the living account-research workspace. Complete the initial research now, then incorporate corrections, private notes and new facts I provide later without discarding verified research.',
+    'Keep one current account brief. Mark my later additions as USER-SUPPLIED until I provide or you find supporting evidence. When facts conflict, show the conflict and ask me which source should govern.',
+    'After the initial report and after every material update, refresh the ready-to-copy ONE-PAGER BUILDER HANDOFF at the bottom. If I say “refresh the handoff,” return the current handoff without repeating the full research report.',
+    'The separate builder will handle visual design and output. Your job here is research, qualification, concept development and a complete factual handoff.',
     '',
     'RESEARCH STANDARD',
     'Start with the official website, app-store listings, company news or filings, job posts and other current primary sources. Use credible third-party sources only when they materially improve the decision.',
@@ -2716,21 +2722,10 @@ function OPresearchPrompt(){
     '',
     'OUTPUT',
     'Return: (1) executive readout, (2) evidence table with URLs and dates, (3) qualification score and technical gate, (4) audience/MAU assessment, (5) primary and expansion concepts, (6) buyer map, (7) unknowns and discovery questions, (8) official asset candidates, and (9) a prospecting email under 100 words with one verified observation and a low-friction meeting ask.',
-    'End with this exact easy-to-paste block, filling unknown fields with Unknown:',
-    '',
-    'CALCULATOR RESEARCH RETURN',
-    'Company: [value]',
-    'Website: [value]',
-    'Audience signal: [value + status + source]',
-    'Footprint: [value + status + source]',
-    'Observed user behavior: [value + status + source]',
-    'Likely business goal: [value + status]',
-    'Recommended formats: [comma-separated]',
-    'Primary concept: [one sentence]',
-    'Creative direction: [one sentence + asset source URLs]',
-    'Technical tier: [AUTO TIER 1 / AUTO TIER 2 / MANUAL / UNKNOWN]',
-    'Qualification: [score / grade / confidence]',
-    'Critical unknowns: [semicolon-separated]'
+    'Finish with ONE-PAGER BUILDER HANDOFF inside one copyable code block. Make it a complete prompt for the separate Lucra ROI One-Pager Builder—not a summary that depends on this conversation.',
+    'The builder handoff must include: company and official website; pre-meeting/illustrative status; verified facts; user-supplied inputs; inferences; unknowns; audience evidence with source limitations; recommended primary and expansion concepts; illustrative tournament/reward mechanics; relevant business outcomes; technical requirements; official logo/image/color/font source URLs; internal source list; prospect-safe claims; prohibited or unsupported claims; recommended executive audience; and the under-100-word email.',
+    'Tell the builder to browse the official site again to retrieve and visually verify current assets, use any approved Lucra decks I attach as creative references, keep citations and qualification scoring internal, visibly label illustrative economics, and produce the requested CEO, CFO or COO one-pager cut only after I choose the audience.',
+    'Fill missing material fields with UNKNOWN and specific discovery questions. Do not leave the builder to redo the account research or guess unsupported facts.'
   ].join('\n');
 }
 function OPmodelPrompt(){
