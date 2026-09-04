@@ -487,15 +487,27 @@ test('ROI One-Pager creates the selected CEO, COO and CFO Artifact handoff', asy
   expect(twoCutPrompt).toContain('one stitched C-Suite package in this order: CEO → CFO');
   expect(twoCutPrompt).toContain('Fairway Social');
   expect(twoCutPrompt).toContain('INTERNAL — DO NOT PRINT');
+  const twoCutClaude = await page.evaluate(() => OPclaudePrompt());
+  expect(twoCutClaude).toContain('--package ceo,cfo');
+  expect(twoCutClaude).toContain('Fairway Social');
+  await expect(page.locator('#op-copy-prompt')).toHaveText('Copy ChatGPT handoff');
+  await expect(page.locator('#op-copy-claude')).toHaveText('Copy Claude handoff');
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.locator('#op-copy-claude').click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('--package ceo,cfo');
+  await page.locator('#op-copy-prompt').click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Lucra ROI One-Pager Builder configured in this ChatGPT workspace');
   await expect(page.locator('#op-selection-summary')).toContainText('CEO + CFO C-Suite package selected');
 
   await page.locator('#op-cut-cfo').uncheck();
   const oneCutPrompt = await page.evaluate(() => OPartifactPrompt());
   expect(oneCutPrompt).toContain('Create one CEO decision-maker cut.');
+  expect(await page.evaluate(() => OPclaudePrompt())).toContain('--cut ceo');
   await expect(page.locator('#op-selection-summary')).toContainText('CEO one-pager selected');
 
   await page.locator('#op-cut-ceo').uncheck();
   await expect(page.locator('#op-copy-prompt')).toBeDisabled();
+  await expect(page.locator('#op-copy-claude')).toBeDisabled();
   await expect(page.locator('#op-selection-warning')).toBeVisible();
   await page.locator('#op-cut-coo').check();
   await expect(page.locator('#op-copy-prompt')).toBeEnabled();

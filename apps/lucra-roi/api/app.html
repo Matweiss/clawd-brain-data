@@ -1497,7 +1497,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:16px;margin-bottom:20px">
     <div class="workspace-eyebrow">Connected deliverable</div>
     <h2 style="font:750 24px var(--display);margin:4px 0 6px">ROI One-Pager</h2>
-    <p style="color:var(--text2);font-size:13px;line-height:1.6;max-width:78ch">Finalize the economics in Revenue Model, choose the decision-maker cuts below, then paste the generated handoff into the configured Lucra One-Pager Artifact in ChatGPT. The handoff carries the live model, partner website and output instructions without re-entering assumptions.</p>
+    <p style="color:var(--text2);font-size:13px;line-height:1.6;max-width:78ch">Finalize the economics in Revenue Model, choose the decision-maker cuts below, then copy the handoff for either ChatGPT or the existing Claude builder. Both carry the same live model and selected outputs without re-entering assumptions.</p>
   </div>
   <div class="grid grid4" id="op-metrics"></div>
   <div class="card-section" style="margin-top:16px">
@@ -1508,13 +1508,14 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <label class="tp-check"><input type="checkbox" id="op-cut-cfo" checked onchange="OPselectionChanged()"><span><strong>CFO</strong><br><small>The ledger: reconciliation, payoff and downside visibility.</small></span></label>
       <label class="tp-check"><input type="checkbox" id="op-cut-coo" checked onchange="OPselectionChanged()"><span><strong>COO</strong><br><small>The operating plan: cadence, ramp and controllable levers.</small></span></label>
     </div>
-    <div class="ct">ChatGPT Artifact handoff</div>
+    <div class="ct">Choose where to build it</div>
     <div id="op-summary" class="sn" style="margin:8px 0 6px"></div>
     <div id="op-selection-summary" class="sn" style="margin:0 0 14px;color:var(--green)"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="preset on" id="op-copy-prompt" type="button" onclick="OPcopyPrompt(this)">Copy Artifact prompt</button>
-      <button class="preset" id="op-download-prompt" type="button" onclick="OPdownloadPrompt(this)">Download handoff .md</button>
-      <button class="preset" id="op-preview-prompt-button" type="button" aria-expanded="false" aria-controls="op-prompt-preview" onclick="OPtogglePrompt(this)">Preview prompt</button>
+      <button class="preset on" id="op-copy-prompt" type="button" onclick="OPcopyPrompt(this)">Copy ChatGPT handoff</button>
+      <button class="preset" id="op-copy-claude" type="button" onclick="OPcopyClaude(this)">Copy Claude handoff</button>
+      <button class="preset" id="op-download-prompt" type="button" onclick="OPdownloadPrompt(this)">Download ChatGPT handoff .md</button>
+      <button class="preset" id="op-preview-prompt-button" type="button" aria-expanded="false" aria-controls="op-prompt-preview" onclick="OPtogglePrompt(this)">Preview ChatGPT handoff</button>
       <button class="preset" type="button" onclick="TPCprint()">Preview calculator summary</button>
       <button class="preset" type="button" onclick="T('tournaments')">Edit Revenue Model</button>
     </div>
@@ -2612,8 +2613,8 @@ var OP_CUT_ORDER=['ceo','cfo','coo'];
 function OPselectedCuts(){return OP_CUT_ORDER.filter(function(k){var el=$('op-cut-'+k);return el&&el.checked})}
 function OPlabel(k){return k==='ceo'?'CEO':k==='cfo'?'CFO':'COO'}
 function OPselectionChanged(){
-  var cuts=OPselectedCuts(),copy=$('op-copy-prompt'),download=$('op-download-prompt'),warning=$('op-selection-warning'),selection=$('op-selection-summary'),preview=$('op-prompt-preview');
-  if(copy)copy.disabled=!cuts.length;if(download)download.disabled=!cuts.length;if(warning)warning.hidden=!!cuts.length;
+  var cuts=OPselectedCuts(),copy=$('op-copy-prompt'),claude=$('op-copy-claude'),download=$('op-download-prompt'),warning=$('op-selection-warning'),selection=$('op-selection-summary'),preview=$('op-prompt-preview');
+  if(copy)copy.disabled=!cuts.length;if(claude)claude.disabled=!cuts.length;if(download)download.disabled=!cuts.length;if(warning)warning.hidden=!!cuts.length;
   if(selection)selection.textContent=cuts.length?(cuts.length===1?OPlabel(cuts[0])+' one-pager selected':cuts.map(OPlabel).join(' + ')+' C-Suite package selected'):'No audience cut selected.';
   if(preview&&!preview.hidden)preview.textContent=cuts.length?OPartifactPrompt():'';
 }
@@ -2621,7 +2622,7 @@ function OPartifactPrompt(){
   var cuts=OPselectedCuts();if(!cuts.length)return'';
   var labels=cuts.map(OPlabel),mode=cuts.length===1?'one '+labels[0]+' decision-maker cut':'one stitched C-Suite package in this order: '+labels.join(' → ');
   return [
-    'Build a Lucra ROI One-Pager artifact from the calculator brief below.',
+    'Use the Lucra ROI One-Pager Builder configured in this ChatGPT workspace to build from the calculator handoff below.',
     '',
     'OUTPUT REQUEST',
     'Create '+mode+'.',
@@ -2649,9 +2650,28 @@ function OPartifactPrompt(){
     TPbrief()
   ].join('\n');
 }
+function OPclaudePrompt(){
+  var cuts=OPselectedCuts();if(!cuts.length)return'';
+  var mode=cuts.length===1?'--cut '+cuts[0]:'--package '+cuts.join(',');
+  return [
+    'Use the existing Lucra one-pager builder to create this deliverable.',
+    '',
+    'OUTPUT MODE',
+    mode,
+    'Use one shared dataset for every requested cut and preserve the selected order.',
+    '',
+    'CALCULATOR BRIEF',
+    '================',
+    TPbrief()
+  ].join('\n');
+}
 function OPcopyPrompt(btn){
   var text=OPartifactPrompt();if(!text){OPselectionChanged();return}
-  navigator.clipboard.writeText(text).then(function(){setButtonState(btn,'Artifact prompt copied ✓',2200,true)}).catch(function(){setButtonState(btn,'Copy failed',2200)});
+  navigator.clipboard.writeText(text).then(function(){setButtonState(btn,'ChatGPT handoff copied ✓',2200,true)}).catch(function(){setButtonState(btn,'Copy failed',2200)});
+}
+function OPcopyClaude(btn){
+  var text=OPclaudePrompt();if(!text){OPselectionChanged();return}
+  navigator.clipboard.writeText(text).then(function(){setButtonState(btn,'Claude handoff copied ✓',2200,true)}).catch(function(){setButtonState(btn,'Copy failed',2200)});
 }
 function OPdownloadPrompt(btn){
   var text=OPartifactPrompt();if(!text){OPselectionChanged();return}
@@ -2659,7 +2679,7 @@ function OPdownloadPrompt(btn){
   a.href=url;a.download=slug+'-one-pager-handoff.md';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},300);setButtonState(btn,'Handoff downloaded ✓',1800,true);
 }
 function OPtogglePrompt(btn){
-  var preview=$('op-prompt-preview'),show=preview.hidden;if(show)preview.textContent=OPartifactPrompt();preview.hidden=!show;btn.setAttribute('aria-expanded',String(show));btn.textContent=show?'Hide prompt':'Preview prompt';
+  var preview=$('op-prompt-preview'),show=preview.hidden;if(show)preview.textContent=OPartifactPrompt();preview.hidden=!show;btn.setAttribute('aria-expanded',String(show));btn.textContent=show?'Hide ChatGPT handoff':'Preview ChatGPT handoff';
 }
 function OPinit(){
   if(typeof TPinit==='function')TPinit();var r=TPcalculate(TP,typeof MG==='object'?MG:null),metrics=$('op-metrics'),summary=$('op-summary');if(!metrics||!summary)return;
