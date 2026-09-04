@@ -551,6 +551,39 @@ test('ROI One-Pager creates a sourced pre-meeting prospecting handoff without cl
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
+test('prospect research prompt needs only company and website and remains independent of audience cuts', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, {});
+  await page.locator('.tabs button', { hasText: 'ROI One-Pager' }).click();
+  await page.locator('#op-mode-prospect').click();
+  await expect(page.locator('#op-copy-research')).toBeDisabled();
+
+  await page.locator('#op-prospect-site').fill('https://fairwaysocial.example');
+  await page.locator('#op-cut-ceo').uncheck();
+  await page.locator('#op-cut-cfo').uncheck();
+  await page.locator('#op-cut-coo').uncheck();
+  await expect(page.locator('#op-copy-prompt')).toBeDisabled();
+  await expect(page.locator('#op-copy-research')).toBeEnabled();
+  await expect(page.locator('#op-research-readiness')).toContainText('Ready to research Fairway Social');
+
+  const prompt = await page.evaluate(() => OPresearchPrompt());
+  expect(prompt).toContain('Do not design the one-pager yet');
+  expect(prompt).toContain('Do not invent monthly active users');
+  expect(prompt).toContain('measurable activity 20');
+  expect(prompt).toContain('AUTO TIER 1, AUTO TIER 2, MANUAL or UNKNOWN');
+  expect(prompt).toContain('CALCULATOR RESEARCH RETURN');
+
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.locator('#op-copy-research').click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Official website: https://fairwaysocial.example');
+  await expect(page.locator('#op-copy-research')).toContainText('copied');
+  await page.locator('#op-preview-research-button').click();
+  await expect(page.locator('#op-research-preview')).toBeVisible();
+  await expect(page.locator('#op-research-preview')).toContainText('QUALIFICATION SCORE');
+  await page.locator('#op-prospect-audience').fill('25 venues; MAU unknown');
+  await expect(page.locator('#op-research-preview')).toContainText('Known audience signal: 25 venues; MAU unknown');
+});
+
 test('tournaments duplicate, take preset prices and frequencies, and cost a percentage or nothing when sponsored', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page, { fee: 40000 });

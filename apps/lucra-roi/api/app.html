@@ -1512,20 +1512,30 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <div class="pg">
       <label><span class="input-label">Company name *</span><input class="pf-input" id="op-prospect-company" type="text" placeholder="Prospect name" oninput="OPselectionChanged()"></label>
       <label><span class="input-label">Official website *</span><input class="pf-input" id="op-prospect-site" type="url" placeholder="https://company.com" oninput="OPselectionChanged()"></label>
-      <label><span class="input-label">Known audience signal</span><input class="pf-input" id="op-prospect-audience" type="text" placeholder="Optional: 200K members, 25 locations, app rank…"></label>
-      <label><span class="input-label">Footprint</span><input class="pf-input" id="op-prospect-footprint" type="text" placeholder="Optional: locations, markets or digital reach"></label>
-      <label><span class="input-label">Observed user behavior</span><input class="pf-input" id="op-prospect-behavior" type="text" placeholder="Optional: scores, visits, workouts, purchases…"></label>
-      <label><span class="input-label">Likely business goal</span><input class="pf-input" id="op-prospect-objective" type="text" placeholder="Optional: repeat visits, retention, sponsorship…"></label>
+      <label><span class="input-label">Known audience signal</span><input class="pf-input" id="op-prospect-audience" type="text" placeholder="Optional: 200K members, 25 locations, app rank…" oninput="OPselectionChanged()"></label>
+      <label><span class="input-label">Footprint</span><input class="pf-input" id="op-prospect-footprint" type="text" placeholder="Optional: locations, markets or digital reach" oninput="OPselectionChanged()"></label>
+      <label><span class="input-label">Observed user behavior</span><input class="pf-input" id="op-prospect-behavior" type="text" placeholder="Optional: scores, visits, workouts, purchases…" oninput="OPselectionChanged()"></label>
+      <label><span class="input-label">Likely business goal</span><input class="pf-input" id="op-prospect-objective" type="text" placeholder="Optional: repeat visits, retention, sponsorship…" oninput="OPselectionChanged()"></label>
     </div>
     <div class="input-label" style="margin:14px 0 8px">Concepts to explore</div>
     <div class="grid grid4">
-      <label class="tp-check"><input type="checkbox" id="op-format-free" checked><span>Free-to-play rewards</span></label>
-      <label class="tp-check"><input type="checkbox" id="op-format-tournaments" checked><span>Paid tournaments</span></label>
-      <label class="tp-check"><input type="checkbox" id="op-format-h2h"><span>Head-to-head</span></label>
-      <label class="tp-check"><input type="checkbox" id="op-format-sponsor" checked><span>Sponsor-funded</span></label>
+      <label class="tp-check"><input type="checkbox" id="op-format-free" checked onchange="OPselectionChanged()"><span>Free-to-play rewards</span></label>
+      <label class="tp-check"><input type="checkbox" id="op-format-tournaments" checked onchange="OPselectionChanged()"><span>Paid tournaments</span></label>
+      <label class="tp-check"><input type="checkbox" id="op-format-h2h" onchange="OPselectionChanged()"><span>Head-to-head</span></label>
+      <label class="tp-check"><input type="checkbox" id="op-format-sponsor" checked onchange="OPselectionChanged()"><span>Sponsor-funded</span></label>
     </div>
-    <label style="display:block;margin-top:14px"><span class="input-label">Creative references or notes</span><textarea class="pf-input" id="op-prospect-creative" rows="3" placeholder="Optional: deck examples to attach in ChatGPT, campaign themes, seasonal ideas, approved partner examples…"></textarea></label>
+    <label style="display:block;margin-top:14px"><span class="input-label">Creative references or notes</span><textarea class="pf-input" id="op-prospect-creative" rows="3" placeholder="Optional: deck examples to attach in ChatGPT, campaign themes, seasonal ideas, approved partner examples…" oninput="OPselectionChanged()"></textarea></label>
     <div class="sn" style="margin-top:7px">After copying the handoff, attach any approved Lucra decks or game examples in the same ChatGPT or Claude conversation. The builder will use them as creative references, not as evidence that the prospect already approved the concept.</div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px;margin-top:14px">
+      <div class="ct">Research first</div>
+      <p class="sn" style="margin:7px 0 10px">Use company + website to create a sourced qualification brief before asking for a designed one-pager. The result includes audience evidence, buyer map, technical fit, hypothetical concepts and discovery questions.</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="preset on" id="op-copy-research" type="button" onclick="OPcopyResearch(this)">Copy prospect research prompt</button>
+        <button class="preset" id="op-preview-research-button" type="button" aria-expanded="false" aria-controls="op-research-preview" onclick="OPtoggleResearch(this)">Preview research prompt</button>
+        <span class="sn" id="op-research-readiness">Enter company and website to enable research.</span>
+      </div>
+      <pre id="op-research-preview" hidden style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;font-family:var(--mono);color:var(--text2);max-height:360px;overflow:auto;white-space:pre-wrap;line-height:1.5;margin-top:12px"></pre>
+    </div>
   </div>
   <div class="grid grid4" id="op-metrics"></div>
   <div class="card-section" style="margin-top:16px">
@@ -2647,22 +2657,81 @@ function OPsetMode(mode){
   var prospect=OP_MODE==='prospect';
   ['model','prospect'].forEach(function(k){var b=$('op-mode-'+k),on=k===OP_MODE;if(b){b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))}});
   if($('op-prospect-panel'))$('op-prospect-panel').hidden=!prospect;if($('op-metrics'))$('op-metrics').hidden=prospect;if($('op-calculator-preview'))$('op-calculator-preview').style.display=prospect?'none':'';
-  if($('op-copy-prompt'))$('op-copy-prompt').textContent=prospect?'Copy ChatGPT research handoff':'Copy ChatGPT handoff';
-  if($('op-copy-claude'))$('op-copy-claude').textContent=prospect?'Copy Claude research handoff':'Copy Claude handoff';
-  if($('op-download-prompt'))$('op-download-prompt').textContent=prospect?'Download research handoff .md':'Download ChatGPT handoff .md';
-  if($('op-preview-prompt-button'))$('op-preview-prompt-button').textContent=prospect?'Preview research handoff':'Preview ChatGPT handoff';
+  if($('op-copy-prompt'))$('op-copy-prompt').textContent=prospect?'Copy ChatGPT one-pager handoff':'Copy ChatGPT handoff';
+  if($('op-copy-claude'))$('op-copy-claude').textContent=prospect?'Copy Claude one-pager handoff':'Copy Claude handoff';
+  if($('op-download-prompt'))$('op-download-prompt').textContent=prospect?'Download one-pager handoff .md':'Download ChatGPT handoff .md';
+  if($('op-preview-prompt-button'))$('op-preview-prompt-button').textContent=prospect?'Preview one-pager handoff':'Preview ChatGPT handoff';
   if(prospect){if(!OPvalue('op-prospect-company')&&TP.dealName)$('op-prospect-company').value=TP.dealName;if(!OPvalue('op-prospect-site')&&TP.partnerSite)$('op-prospect-site').value=TP.partnerSite}
   OPinit();
 }
 function OPselectionChanged(){
-  var cuts=OPselectedCuts(),copy=$('op-copy-prompt'),claude=$('op-copy-claude'),download=$('op-download-prompt'),warning=$('op-selection-warning'),selection=$('op-selection-summary'),summary=$('op-summary'),preview=$('op-prompt-preview'),issue='';
+  var cuts=OPselectedCuts(),copy=$('op-copy-prompt'),claude=$('op-copy-claude'),download=$('op-download-prompt'),warning=$('op-selection-warning'),selection=$('op-selection-summary'),summary=$('op-summary'),preview=$('op-prompt-preview'),researchCopy=$('op-copy-research'),researchPreviewButton=$('op-preview-research-button'),researchStatus=$('op-research-readiness'),researchPreview=$('op-research-preview'),company=OPvalue('op-prospect-company'),site=OPvalue('op-prospect-site'),researchReady=!!(company&&site),issue='';
   if(!cuts.length)issue='Select at least one audience cut before creating the handoff.';
   else if(OP_MODE==='prospect'&&!OPvalue('op-prospect-company'))issue='Enter the prospect company name.';
   else if(OP_MODE==='prospect'&&!OPvalue('op-prospect-site'))issue='Enter the prospect\'s official website.';
   if(copy)copy.disabled=!!issue;if(claude)claude.disabled=!!issue;if(download)download.disabled=!!issue;if(warning){warning.hidden=!issue;warning.textContent=issue}
+  if(researchCopy)researchCopy.disabled=!researchReady;if(researchPreviewButton)researchPreviewButton.disabled=!researchReady;if(researchStatus)researchStatus.textContent=researchReady?'Ready to research '+company+'.':'Enter company and website to enable research.';
   if(OP_MODE==='prospect'&&summary)summary.textContent=(OPvalue('op-prospect-company')||'Prospect')+' · pre-meeting opportunity concept · public facts and assumptions will be kept separate.';
   if(selection)selection.textContent=cuts.length?(cuts.length===1?OPlabel(cuts[0])+' one-pager selected':cuts.map(OPlabel).join(' + ')+' C-Suite package selected'):'No audience cut selected.';
-  if(preview&&!preview.hidden)preview.textContent=issue?'':OPcurrentPrompt('chatgpt');
+  if(preview&&!preview.hidden)preview.textContent=issue?'':OPartifactPrompt();
+  if(researchPreview&&!researchPreview.hidden)researchPreview.textContent=researchReady?OPresearchPrompt():'';
+}
+function OPresearchPrompt(){
+  var company=OPvalue('op-prospect-company'),site=OPvalue('op-prospect-site'),formats=OPformats();if(!company||!site)return'';
+  return [
+    'Research '+company+' for a pre-meeting Lucra prospect qualification. Use live web research now. Do not design the one-pager yet.',
+    '',
+    'STARTING INPUTS',
+    'Company: '+company,
+    'Official website: '+site,
+    'Known audience signal: '+(OPvalue('op-prospect-audience')||'None supplied'),
+    'Known footprint: '+(OPvalue('op-prospect-footprint')||'None supplied'),
+    'Observed user behavior: '+(OPvalue('op-prospect-behavior')||'None supplied'),
+    'Likely business goal: '+(OPvalue('op-prospect-objective')||'Not supplied'),
+    'Formats to investigate: '+(formats.length?formats.join(', '):'Recommend the best fit'),
+    'Creative notes: '+(OPvalue('op-prospect-creative')||'None supplied'),
+    '',
+    'RESEARCH STANDARD',
+    'Start with the official website, app-store listings, company news or filings, job posts and other current primary sources. Use credible third-party sources only when they materially improve the decision.',
+    'Cite the direct URL and publication or access date for every material finding. Label each material statement VERIFIED, INFERRED or UNKNOWN. Keep user-supplied planning assumptions separate from company facts.',
+    'Do not invent monthly active users or convert visits, downloads, followers, members or locations into MAU. If MAU is unavailable, report the best transparent audience proxies, their limitations and a defensible range only when the method is explicit.',
+    'Do not invent pricing, launch timing, compliance claims, partner results or case-study metrics. Do not offer a pilot or treat revenue share as a default fallback.',
+    '',
+    'WHAT TO DETERMINE',
+    '1. Company profile: product, customer, business model, geographic or digital footprint, app or membership model and recent trigger events.',
+    '2. Lucra fit: repeatable measurable user behavior, natural competition, user identity, loyalty/rewards/wallet/commerce, sponsor inventory and the business outcome Lucra could influence.',
+    '3. Technical gate: classify AUTO TIER 1, AUTO TIER 2, MANUAL or UNKNOWN. Look for accounts/profiles, automated scores or results, APIs/integrations, POS or redemption systems, and evidence that activity can be tied to a user.',
+    '4. Buyer map: likely economic buyer, operational owner, technical stakeholder and sponsor/marketing stakeholder, including named people only when verified.',
+    '5. Asset candidates: official logo, strong website hero or venue imagery, visible colors and likely typography. Return source-page URLs; do not download or fabricate assets.',
+    '',
+    'QUALIFICATION SCORE',
+    'Score 100 points using: measurable activity 20; natural competition 20; reward or wallet gap 15; audience or locations 15; technical fit and identity 15; urgency 10; strategic or channel value 5.',
+    'Grade A = 80–100, B = 65–79, Watchlist = 45–64, Low = below 45. Show the evidence and confidence behind every category; UNKNOWN earns no unverified points.',
+    'Map the best opportunity as: existing behavior → measurable event → competition → reward → reason to return → business outcome → useful first-party data.',
+    '',
+    'HYPOTHETICAL CONCEPTS',
+    'Recommend one primary concept and up to two expansion concepts grounded in behaviors the company already supports. Lead with free-to-play unless evidence supports a regulated paid format.',
+    'For each concept include: working name, audience behavior, free-to-play/paid/sponsor-funded format, cadence, illustrative entry and reward, business outcome, measurable event, data needed and confidence.',
+    'Treat every entry price, prize, reward, participation rate and value estimate as illustrative. Keep tournament entries distinct from head-to-head wagered play; do not apply a rake to a tournament entry pool.',
+    '',
+    'OUTPUT',
+    'Return: (1) executive readout, (2) evidence table with URLs and dates, (3) qualification score and technical gate, (4) audience/MAU assessment, (5) primary and expansion concepts, (6) buyer map, (7) unknowns and discovery questions, (8) official asset candidates, and (9) a prospecting email under 100 words with one verified observation and a low-friction meeting ask.',
+    'End with this exact easy-to-paste block, filling unknown fields with Unknown:',
+    '',
+    'CALCULATOR RESEARCH RETURN',
+    'Company: [value]',
+    'Website: [value]',
+    'Audience signal: [value + status + source]',
+    'Footprint: [value + status + source]',
+    'Observed user behavior: [value + status + source]',
+    'Likely business goal: [value + status]',
+    'Recommended formats: [comma-separated]',
+    'Primary concept: [one sentence]',
+    'Creative direction: [one sentence + asset source URLs]',
+    'Technical tier: [AUTO TIER 1 / AUTO TIER 2 / MANUAL / UNKNOWN]',
+    'Qualification: [score / grade / confidence]',
+    'Critical unknowns: [semicolon-separated]'
+  ].join('\n');
 }
 function OPmodelPrompt(){
   var cuts=OPselectedCuts();if(!cuts.length)return'';
@@ -2767,6 +2836,10 @@ function OPcopyPrompt(btn){
   var text=OPartifactPrompt();if(!text){OPselectionChanged();return}
   navigator.clipboard.writeText(text).then(function(){setButtonState(btn,'ChatGPT handoff copied ✓',2200,true)}).catch(function(){setButtonState(btn,'Copy failed',2200)});
 }
+function OPcopyResearch(btn){
+  var text=OPresearchPrompt();if(!text){OPselectionChanged();return}
+  navigator.clipboard.writeText(text).then(function(){setButtonState(btn,'Research prompt copied ✓',2200,true)}).catch(function(){setButtonState(btn,'Copy failed',2200)});
+}
 function OPcopyClaude(btn){
   var text=OPclaudePrompt();if(!text){OPselectionChanged();return}
   navigator.clipboard.writeText(text).then(function(){setButtonState(btn,'Claude handoff copied ✓',2200,true)}).catch(function(){setButtonState(btn,'Copy failed',2200)});
@@ -2777,7 +2850,10 @@ function OPdownloadPrompt(btn){
   a.href=url;a.download=slug+(OP_MODE==='prospect'?'-prospecting-one-pager-handoff.md':'-one-pager-handoff.md');document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},300);setButtonState(btn,'Handoff downloaded ✓',1800,true);
 }
 function OPtogglePrompt(btn){
-  var preview=$('op-prompt-preview'),show=preview.hidden;if(show)preview.textContent=OPartifactPrompt();preview.hidden=!show;btn.setAttribute('aria-expanded',String(show));btn.textContent=show?'Hide handoff':(OP_MODE==='prospect'?'Preview research handoff':'Preview ChatGPT handoff');
+  var preview=$('op-prompt-preview'),show=preview.hidden;if(show)preview.textContent=OPartifactPrompt();preview.hidden=!show;btn.setAttribute('aria-expanded',String(show));btn.textContent=show?'Hide handoff':(OP_MODE==='prospect'?'Preview one-pager handoff':'Preview ChatGPT handoff');
+}
+function OPtoggleResearch(btn){
+  var preview=$('op-research-preview'),show=preview.hidden;if(show)preview.textContent=OPresearchPrompt();preview.hidden=!show;btn.setAttribute('aria-expanded',String(show));btn.textContent=show?'Hide research prompt':'Preview research prompt';
 }
 function OPinit(){
   if(typeof TPinit==='function')TPinit();var r=TPcalculate(TP,typeof MG==='object'?MG:null),metrics=$('op-metrics'),summary=$('op-summary');if(!metrics||!summary)return;
