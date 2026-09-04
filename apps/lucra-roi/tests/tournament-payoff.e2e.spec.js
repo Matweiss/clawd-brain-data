@@ -451,7 +451,9 @@ test('the presenter is picked from the roster and fills the email, with a way to
   await expect(sel).toBeVisible();
   await expect(page.locator('#tp-presenter-other')).toBeHidden();
   const names = await sel.locator('option').allInnerTexts();
-  expect(names).toEqual(['Choose…', 'Mat Weiss', 'Phil Probert', 'Brian Fagan', 'Jack Meyer', 'Nick Johnson', 'Dylan Robbins', 'Other…']);
+  expect(names).toEqual(['Choose…', 'Mat Weiss', 'Phil Probert', 'Dante Williams', 'Brian Fagan', 'Jack Meyer', 'Nick Johnson', 'Dylan Robbins', 'Other…']);
+  await sel.selectOption({ label: 'Dante Williams' });
+  expect(await page.evaluate(() => [TP.presenter, TP.presenterEmail])).toEqual(['Dante Williams', 'Dante@playlucra.com']);
   await sel.selectOption({ label: 'Phil Probert' });
   expect(await page.evaluate(() => [TP.presenter, TP.presenterEmail])).toEqual(['Phil Probert', 'Phil@playlucra.com']);
   await sel.selectOption({ label: 'Mat Weiss' });
@@ -468,8 +470,39 @@ test('the presenter is picked from the roster and fills the email, with a way to
   await expect(sel).toHaveValue('other');
   // A saved deal that names a roster member comes back on the roster, email in step.
   await page.evaluate(() => { TP.presenter = 'Jack Meyer'; TP.presenterEmail = 'old@example.com'; TPsave(); TPrenderControls(); });
-  await expect(sel).toHaveValue('3');
+  await expect(sel).toHaveValue('4');
   expect(await page.evaluate(() => TP.presenterEmail)).toBe('Jack@playlucra.com');
+});
+
+test('ROI One-Pager creates the selected CEO, COO and CFO Artifact handoff', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, {});
+  await page.locator('.tabs button', { hasText: 'ROI One-Pager' }).click();
+  await expect(page.locator('#onepager')).toBeVisible();
+  await expect(page.locator('#op-selection-summary')).toContainText('CEO + CFO + COO C-Suite package selected');
+
+  await page.locator('#op-cut-coo').uncheck();
+  const twoCutPrompt = await page.evaluate(() => OPartifactPrompt());
+  expect(twoCutPrompt).toContain('Selected cuts: CEO, CFO.');
+  expect(twoCutPrompt).toContain('one stitched C-Suite package in this order: CEO → CFO');
+  expect(twoCutPrompt).toContain('Fairway Social');
+  expect(twoCutPrompt).toContain('INTERNAL — DO NOT PRINT');
+  await expect(page.locator('#op-selection-summary')).toContainText('CEO + CFO C-Suite package selected');
+
+  await page.locator('#op-cut-cfo').uncheck();
+  const oneCutPrompt = await page.evaluate(() => OPartifactPrompt());
+  expect(oneCutPrompt).toContain('Create one CEO decision-maker cut.');
+  await expect(page.locator('#op-selection-summary')).toContainText('CEO one-pager selected');
+
+  await page.locator('#op-cut-ceo').uncheck();
+  await expect(page.locator('#op-copy-prompt')).toBeDisabled();
+  await expect(page.locator('#op-selection-warning')).toBeVisible();
+  await page.locator('#op-cut-coo').check();
+  await expect(page.locator('#op-copy-prompt')).toBeEnabled();
+
+  await page.locator('#op-preview-prompt-button').click();
+  await expect(page.locator('#op-prompt-preview')).toBeVisible();
+  await expect(page.locator('#op-prompt-preview')).toContainText('Selected cuts: COO.');
 });
 
 test('tournaments duplicate, take preset prices and frequencies, and cost a percentage or nothing when sponsored', async ({ page }) => {
