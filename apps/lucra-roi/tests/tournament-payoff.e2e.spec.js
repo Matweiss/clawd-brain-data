@@ -517,6 +517,40 @@ test('ROI One-Pager creates the selected CEO, COO and CFO Artifact handoff', asy
   await expect(page.locator('#op-prompt-preview')).toContainText('Selected cuts: COO.');
 });
 
+test('ROI One-Pager creates a sourced pre-meeting prospecting handoff without claiming validated ROI', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page, {});
+  await page.locator('.tabs button', { hasText: 'ROI One-Pager' }).click();
+  await page.locator('#op-mode-prospect').click();
+  await expect(page.locator('#op-prospect-panel')).toBeVisible();
+  await expect(page.locator('#op-metrics')).toBeHidden();
+  await expect(page.locator('#op-calculator-preview')).toBeHidden();
+  await expect(page.locator('#op-copy-prompt')).toBeDisabled();
+
+  await page.locator('#op-prospect-site').fill('https://fairwaysocial.example');
+  await page.locator('#op-prospect-audience').fill('25 locations; MAU unknown');
+  await page.locator('#op-prospect-behavior').fill('Guests play scored simulator rounds');
+  await page.locator('#op-format-h2h').check();
+  const prompt = await page.evaluate(() => OPartifactPrompt());
+  expect(prompt).toContain('Pre-meeting prospecting concept');
+  expect(prompt).toContain('Company: Fairway Social');
+  expect(prompt).toContain('Do not invent monthly active users');
+  expect(prompt).toContain('VERIFIED, INFERRED, ASSUMED or UNKNOWN');
+  expect(prompt).toContain('Paid tournaments');
+  expect(prompt).toContain('Head-to-head');
+  expect(prompt).toContain('It is not a validated ROI forecast');
+  expect(prompt).toContain('draft one prospecting email under 100 words');
+  expect(await page.evaluate(() => OPclaudePrompt())).toContain('existing Lucra one-pager builder in prospecting mode');
+
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.locator('#op-copy-prompt').click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('https://fairwaysocial.example');
+  await expect(page.locator('#op-copy-prompt')).toContainText('copied');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
 test('tournaments duplicate, take preset prices and frequencies, and cost a percentage or nothing when sponsored', async ({ page }) => {
   await openTab(page);
   await setBaseDeal(page, { fee: 40000 });

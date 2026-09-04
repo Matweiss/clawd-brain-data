@@ -1497,7 +1497,35 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
   <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:16px;margin-bottom:20px">
     <div class="workspace-eyebrow">Connected deliverable</div>
     <h2 style="font:750 24px var(--display);margin:4px 0 6px">ROI One-Pager</h2>
-    <p style="color:var(--text2);font-size:13px;line-height:1.6;max-width:78ch">Finalize the economics in Revenue Model, choose the decision-maker cuts below, then copy the handoff for either ChatGPT or the existing Claude builder. Both carry the same live model and selected outputs without re-entering assumptions.</p>
+    <p style="color:var(--text2);font-size:13px;line-height:1.6;max-width:78ch">Build from validated deal economics after discovery, or create a clearly labelled prospecting concept from public information before the first meeting.</p>
+  </div>
+  <div class="card-section" style="margin-bottom:16px">
+    <div class="ct">What stage are you in?</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="preset on" id="op-mode-model" type="button" aria-pressed="true" onclick="OPsetMode('model')">After discovery · validated model</button>
+      <button class="preset" id="op-mode-prospect" type="button" aria-pressed="false" onclick="OPsetMode('prospect')">Before meeting · create interest</button>
+    </div>
+  </div>
+  <div class="card-section" id="op-prospect-panel" hidden style="margin-bottom:16px;border-color:var(--green-border)">
+    <div class="ct">Prospecting inputs</div>
+    <p class="sn" style="margin:8px 0 12px">Only the company and website are required. ChatGPT researches the rest, separates facts from assumptions, and creates a conversation starter—not a promised ROI forecast.</p>
+    <div class="pg">
+      <label><span class="input-label">Company name *</span><input class="pf-input" id="op-prospect-company" type="text" placeholder="Prospect name" oninput="OPselectionChanged()"></label>
+      <label><span class="input-label">Official website *</span><input class="pf-input" id="op-prospect-site" type="url" placeholder="https://company.com" oninput="OPselectionChanged()"></label>
+      <label><span class="input-label">Known audience signal</span><input class="pf-input" id="op-prospect-audience" type="text" placeholder="Optional: 200K members, 25 locations, app rank…"></label>
+      <label><span class="input-label">Footprint</span><input class="pf-input" id="op-prospect-footprint" type="text" placeholder="Optional: locations, markets or digital reach"></label>
+      <label><span class="input-label">Observed user behavior</span><input class="pf-input" id="op-prospect-behavior" type="text" placeholder="Optional: scores, visits, workouts, purchases…"></label>
+      <label><span class="input-label">Likely business goal</span><input class="pf-input" id="op-prospect-objective" type="text" placeholder="Optional: repeat visits, retention, sponsorship…"></label>
+    </div>
+    <div class="input-label" style="margin:14px 0 8px">Concepts to explore</div>
+    <div class="grid grid4">
+      <label class="tp-check"><input type="checkbox" id="op-format-free" checked><span>Free-to-play rewards</span></label>
+      <label class="tp-check"><input type="checkbox" id="op-format-tournaments" checked><span>Paid tournaments</span></label>
+      <label class="tp-check"><input type="checkbox" id="op-format-h2h"><span>Head-to-head</span></label>
+      <label class="tp-check"><input type="checkbox" id="op-format-sponsor" checked><span>Sponsor-funded</span></label>
+    </div>
+    <label style="display:block;margin-top:14px"><span class="input-label">Creative references or notes</span><textarea class="pf-input" id="op-prospect-creative" rows="3" placeholder="Optional: deck examples to attach in ChatGPT, campaign themes, seasonal ideas, approved partner examples…"></textarea></label>
+    <div class="sn" style="margin-top:7px">After copying the handoff, attach any approved Lucra decks or game examples in the same ChatGPT or Claude conversation. The builder will use them as creative references, not as evidence that the prospect already approved the concept.</div>
   </div>
   <div class="grid grid4" id="op-metrics"></div>
   <div class="card-section" style="margin-top:16px">
@@ -1516,7 +1544,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <button class="preset" id="op-copy-claude" type="button" onclick="OPcopyClaude(this)">Copy Claude handoff</button>
       <button class="preset" id="op-download-prompt" type="button" onclick="OPdownloadPrompt(this)">Download ChatGPT handoff .md</button>
       <button class="preset" id="op-preview-prompt-button" type="button" aria-expanded="false" aria-controls="op-prompt-preview" onclick="OPtogglePrompt(this)">Preview ChatGPT handoff</button>
-      <button class="preset" type="button" onclick="TPCprint()">Preview calculator summary</button>
+      <button class="preset" id="op-calculator-preview" type="button" onclick="TPCprint()">Preview calculator summary</button>
       <button class="preset" type="button" onclick="T('tournaments')">Edit Revenue Model</button>
     </div>
     <div id="op-selection-warning" class="warn" hidden style="margin-top:12px">Select at least one audience cut before creating the handoff.</div>
@@ -2609,16 +2637,34 @@ function RPgenerate(){
   var btn=$('rp-go'),res=$('rp-result');btn.disabled=true;btn.textContent='Generating…';res.innerHTML='';
   fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template:'recapture',clientName:client,tokens:tokens})}).then(function(r){return r.json()}).then(function(j){btn.disabled=false;btn.textContent='Generate recapture agreement';if(!j.ok){res.innerHTML='<div class="warn">Error: '+(j.error||'failed')+'</div>';return}var safe=(j.name||'recapture-agreement').replace(/[^a-z0-9]+/gi,'-');res.innerHTML='<div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:12px;font-size:13px"><div style="color:var(--green);font-weight:600;margin-bottom:8px">✓ Multi-year recapture agreement generated for '+TPesc(client)+'</div><a href="'+j.docUrl+'" target="_blank" style="color:var(--green);font-weight:500">Open shared Google Doc (Lucra team) ↗</a><div class="sn" style="margin-top:7px">Editable by lucrasports.com and playlucra.com; not public by link.</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="preset" id="rp-pdf">Download PDF</button><button class="preset" id="rp-docx">Download DOCX</button></div>';$('rp-pdf').onclick=function(){RPdownload(j.pdf,'application/pdf',safe+'.pdf')};$('rp-docx').onclick=function(){RPdownload(j.docx,'application/vnd.openxmlformats-officedocument.wordprocessingml.document',safe+'.docx')}}).catch(function(e){btn.disabled=false;btn.textContent='Generate recapture agreement';res.innerHTML='<div class="warn">Request failed: '+TPesc(e)+'</div>'});
 }
-var OP_CUT_ORDER=['ceo','cfo','coo'];
+var OP_CUT_ORDER=['ceo','cfo','coo'],OP_MODE='model';
 function OPselectedCuts(){return OP_CUT_ORDER.filter(function(k){var el=$('op-cut-'+k);return el&&el.checked})}
 function OPlabel(k){return k==='ceo'?'CEO':k==='cfo'?'CFO':'COO'}
-function OPselectionChanged(){
-  var cuts=OPselectedCuts(),copy=$('op-copy-prompt'),claude=$('op-copy-claude'),download=$('op-download-prompt'),warning=$('op-selection-warning'),selection=$('op-selection-summary'),preview=$('op-prompt-preview');
-  if(copy)copy.disabled=!cuts.length;if(claude)claude.disabled=!cuts.length;if(download)download.disabled=!cuts.length;if(warning)warning.hidden=!!cuts.length;
-  if(selection)selection.textContent=cuts.length?(cuts.length===1?OPlabel(cuts[0])+' one-pager selected':cuts.map(OPlabel).join(' + ')+' C-Suite package selected'):'No audience cut selected.';
-  if(preview&&!preview.hidden)preview.textContent=cuts.length?OPartifactPrompt():'';
+function OPvalue(id){var el=$(id);return el?String(el.value||'').trim():''}
+function OPformats(){return[['free','Free-to-play rewards'],['tournaments','Paid tournaments'],['h2h','Head-to-head'],['sponsor','Sponsor-funded concepts']].filter(function(x){var el=$('op-format-'+x[0]);return el&&el.checked}).map(function(x){return x[1]})}
+function OPsetMode(mode){
+  OP_MODE=mode==='prospect'?'prospect':'model';
+  var prospect=OP_MODE==='prospect';
+  ['model','prospect'].forEach(function(k){var b=$('op-mode-'+k),on=k===OP_MODE;if(b){b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))}});
+  if($('op-prospect-panel'))$('op-prospect-panel').hidden=!prospect;if($('op-metrics'))$('op-metrics').hidden=prospect;if($('op-calculator-preview'))$('op-calculator-preview').style.display=prospect?'none':'';
+  if($('op-copy-prompt'))$('op-copy-prompt').textContent=prospect?'Copy ChatGPT research handoff':'Copy ChatGPT handoff';
+  if($('op-copy-claude'))$('op-copy-claude').textContent=prospect?'Copy Claude research handoff':'Copy Claude handoff';
+  if($('op-download-prompt'))$('op-download-prompt').textContent=prospect?'Download research handoff .md':'Download ChatGPT handoff .md';
+  if($('op-preview-prompt-button'))$('op-preview-prompt-button').textContent=prospect?'Preview research handoff':'Preview ChatGPT handoff';
+  if(prospect){if(!OPvalue('op-prospect-company')&&TP.dealName)$('op-prospect-company').value=TP.dealName;if(!OPvalue('op-prospect-site')&&TP.partnerSite)$('op-prospect-site').value=TP.partnerSite}
+  OPinit();
 }
-function OPartifactPrompt(){
+function OPselectionChanged(){
+  var cuts=OPselectedCuts(),copy=$('op-copy-prompt'),claude=$('op-copy-claude'),download=$('op-download-prompt'),warning=$('op-selection-warning'),selection=$('op-selection-summary'),summary=$('op-summary'),preview=$('op-prompt-preview'),issue='';
+  if(!cuts.length)issue='Select at least one audience cut before creating the handoff.';
+  else if(OP_MODE==='prospect'&&!OPvalue('op-prospect-company'))issue='Enter the prospect company name.';
+  else if(OP_MODE==='prospect'&&!OPvalue('op-prospect-site'))issue='Enter the prospect\'s official website.';
+  if(copy)copy.disabled=!!issue;if(claude)claude.disabled=!!issue;if(download)download.disabled=!!issue;if(warning){warning.hidden=!issue;warning.textContent=issue}
+  if(OP_MODE==='prospect'&&summary)summary.textContent=(OPvalue('op-prospect-company')||'Prospect')+' · pre-meeting opportunity concept · public facts and assumptions will be kept separate.';
+  if(selection)selection.textContent=cuts.length?(cuts.length===1?OPlabel(cuts[0])+' one-pager selected':cuts.map(OPlabel).join(' + ')+' C-Suite package selected'):'No audience cut selected.';
+  if(preview&&!preview.hidden)preview.textContent=issue?'':OPcurrentPrompt('chatgpt');
+}
+function OPmodelPrompt(){
   var cuts=OPselectedCuts();if(!cuts.length)return'';
   var labels=cuts.map(OPlabel),mode=cuts.length===1?'one '+labels[0]+' decision-maker cut':'one stitched C-Suite package in this order: '+labels.join(' → ');
   return [
@@ -2650,7 +2696,59 @@ function OPartifactPrompt(){
     TPbrief()
   ].join('\n');
 }
+function OPprospectPrompt(target){
+  var cuts=OPselectedCuts(),labels=cuts.map(OPlabel),formats=OPformats(),company=OPvalue('op-prospect-company'),site=OPvalue('op-prospect-site');if(!cuts.length||!company||!site)return'';
+  return [
+    target==='claude'?'Use the existing Lucra one-pager builder in prospecting mode.':'Use the Lucra ROI One-Pager Builder configured in this ChatGPT workspace.',
+    '',
+    'MODE',
+    'Pre-meeting prospecting concept. This is designed to create interest and earn a discovery meeting. It is not a validated ROI forecast or commercial proposal.',
+    '',
+    'PROSPECT',
+    'Company: '+company,
+    'Official website: '+site,
+    'Known audience signal: '+(OPvalue('op-prospect-audience')||'Unknown — research without inventing MAU'),
+    'Footprint: '+(OPvalue('op-prospect-footprint')||'Unknown — research'),
+    'Observed user behavior: '+(OPvalue('op-prospect-behavior')||'Unknown — infer only from sourced public evidence'),
+    'Likely business goal: '+(OPvalue('op-prospect-objective')||'Recommend from public evidence'),
+    'Concepts to explore: '+(formats.length?formats.join(', '):'Recommend the best-fit Lucra format'),
+    'Creative references or notes: '+(OPvalue('op-prospect-creative')||'None supplied. Ask for deck examples only if they would materially improve the output.'),
+    'Presenter: '+(TP.presenter||'Not supplied')+(TP.presenterEmail?' · '+TP.presenterEmail:''),
+    '',
+    'OUTPUT REQUEST',
+    'Selected cuts: '+labels.join(', ')+'.',
+    cuts.length===1?'Create one '+labels[0]+' prospecting one-pager.':'Create one coordinated prospecting package in this order: '+labels.join(' → ')+'. Use one shared evidence set and scenario model.',
+    '',
+    'RESEARCH AND EVIDENCE',
+    'Browse the official website first, then current authoritative public sources only where they change the recommendation.',
+    'Research the company, footprint, app or membership model, repeatable user behavior, measurable activity, identity signals, rewards or loyalty, sponsor inventory, likely buyer and recent trigger events.',
+    'Find and visually inspect the official logo, a strong website photograph, visible colors and typography. Record asset source URLs internally. Do not use stock or generated partner imagery.',
+    'Classify every material input as VERIFIED, INFERRED, ASSUMED or UNKNOWN. Never present an inference as a company fact.',
+    'Do not invent monthly active users. If no defensible MAU exists, use the public audience signal as a proxy, explain its limitations internally, and model a transparent range instead of a single claimed figure.',
+    '',
+    'CONCEPT AND SCENARIO',
+    'Design up to three prospect-specific Lucra concepts grounded in behavior users already perform. Include a free-to-play entry point unless the evidence clearly supports another lead format.',
+    'For each concept specify the user action, competition mechanic, cadence, illustrative entry or reward, reason to return, business outcome, measurable event and data required.',
+    'Use downside, base and upside scenarios. Every participation rate, entry price, reward, redemption, acquisition value or media value without a customer source must be visibly labelled as an illustrative assumption.',
+    'Keep tournament entry pools distinct from head-to-head paid-game volume. Tournament entries use the full entry pool; head-to-head revenue uses paid-game volume times the platform fee. Keep prizes and rewards as separate customer costs.',
+    'Do not claim the programme pays for itself, quote a licence fee, or call anything ROI unless both the cost and net customer benefit are supported. Use opportunity, scenario or illustrative economics instead.',
+    '',
+    'DECISION-MAKER EMPHASIS',
+    cuts.indexOf('ceo')>=0?'CEO: why this prospect is a credible fit, the strategic growth idea, and the meeting-worthy opportunity.':'CEO: not requested.',
+    cuts.indexOf('cfo')>=0?'CFO: sourced inputs, scenario range, cost/value categories still unknown, and exactly what discovery must validate.':'CFO: not requested.',
+    cuts.indexOf('coo')>=0?'COO: sample tournament or reward calendar, user flow, operating requirements, measurable events and launch dependencies.':'COO: not requested.',
+    '',
+    'DELIVERABLES',
+    'Create polished co-branded HTML and screenshot-verified PDF outputs using official partner imagery and Lucra brand rules.',
+    'Include a small, clear customer-facing line: Illustrative concept based on public information and planning assumptions; subject to discovery and validation.',
+    'Also draft one prospecting email under 100 words. Open with a specific verified observation, connect one existing behavior to one Lucra concept, and ask for one low-friction meeting. Do not use “I was walking across your website,” generic praise, or an unsupported similar-partner claim.',
+    'Keep source citations and the evidence table in an internal appendix, not on the customer-facing one-pager unless requested.',
+    'Before delivery, reconcile the scenario math, inspect the final images and PDFs, and report assumptions, unknowns and claims intentionally omitted.'
+  ].join('\n');
+}
+function OPartifactPrompt(){return OP_MODE==='prospect'?OPprospectPrompt('chatgpt'):OPmodelPrompt()}
 function OPclaudePrompt(){
+  if(OP_MODE==='prospect')return OPprospectPrompt('claude');
   var cuts=OPselectedCuts();if(!cuts.length)return'';
   var mode=cuts.length===1?'--cut '+cuts[0]:'--package '+cuts.join(',');
   return [
@@ -2675,14 +2773,15 @@ function OPcopyClaude(btn){
 }
 function OPdownloadPrompt(btn){
   var text=OPartifactPrompt();if(!text){OPselectionChanged();return}
-  var slug=String(TP.dealName||'lucra-roi').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'lucra-roi',blob=new Blob([text],{type:'text/markdown'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download=slug+'-one-pager-handoff.md';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},300);setButtonState(btn,'Handoff downloaded ✓',1800,true);
+  var name=OP_MODE==='prospect'?OPvalue('op-prospect-company'):TP.dealName,slug=String(name||'lucra-roi').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'lucra-roi',blob=new Blob([text],{type:'text/markdown'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=slug+(OP_MODE==='prospect'?'-prospecting-one-pager-handoff.md':'-one-pager-handoff.md');document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},300);setButtonState(btn,'Handoff downloaded ✓',1800,true);
 }
 function OPtogglePrompt(btn){
-  var preview=$('op-prompt-preview'),show=preview.hidden;if(show)preview.textContent=OPartifactPrompt();preview.hidden=!show;btn.setAttribute('aria-expanded',String(show));btn.textContent=show?'Hide ChatGPT handoff':'Preview ChatGPT handoff';
+  var preview=$('op-prompt-preview'),show=preview.hidden;if(show)preview.textContent=OPartifactPrompt();preview.hidden=!show;btn.setAttribute('aria-expanded',String(show));btn.textContent=show?'Hide handoff':(OP_MODE==='prospect'?'Preview research handoff':'Preview ChatGPT handoff');
 }
 function OPinit(){
   if(typeof TPinit==='function')TPinit();var r=TPcalculate(TP,typeof MG==='object'?MG:null),metrics=$('op-metrics'),summary=$('op-summary');if(!metrics||!summary)return;
+  if(OP_MODE==='prospect'){metrics.innerHTML='';summary.textContent=(OPvalue('op-prospect-company')||'Prospect')+' · pre-meeting opportunity concept · public facts and assumptions will be kept separate.';OPselectionChanged();return}
   if(r.errors&&r.errors.length){metrics.innerHTML='';summary.textContent='Complete the Revenue Model before creating the Artifact handoff: '+r.errors.join(' ');OPselectionChanged();return}
   var payoff=r.payoffMonth?('Month '+(Math.round(r.payoffMonth*10)/10)):'Not retired',cards=[['Contract value',TPmoney(r.totalContract)],['Revenue generated',TPmoney(r.totalSplitBase)],['Operator earns',TPmoney(r.totalOperator)],['Licence payoff',payoff]];
   metrics.innerHTML=cards.map(function(x){return'<div class="stat"><div class="label">'+x[0]+'</div><div class="val">'+x[1]+'</div></div>'}).join('');summary.textContent=(TP.dealName||'Untitled deal')+' · '+r.termYears+'-year model · changes made in Revenue Model flow through automatically.';OPselectionChanged();
