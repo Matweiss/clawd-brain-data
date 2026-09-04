@@ -84,7 +84,7 @@ describe('The site password', () => {
     const made = res();
     await play({ method: 'POST', body: { action: 'link', deal: { tp: tp() }, pass: 'bear-1234' }, headers: sellerHeaders }, made);
     expect(made.statusCode).toBe(200);
-    const tok = new URL(made.body.url).searchParams.get('deal');
+    const tok = new URL(made.body.longUrl || made.body.url).searchParams.get('deal');
     // The customer, with no site credentials at all.
     const pageR = res();
     await play({ method: 'GET', query: { deal: tok }, headers: HOST }, pageR);

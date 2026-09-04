@@ -6778,7 +6778,7 @@ async function TPsandboxLink(btn) {
     if (box) {
       box.hidden = false; box.querySelector('input').value = data.url;
       $('tp-sandbox-note').textContent = 'Open for ' + data.expiresInDays + ' day' + (data.expiresInDays === 1 ? '' : 's') + (data.passcode ? ' · passcode required' : ' · no passcode') + '. This is the customer link: send this one. They see their inputs and customer-safe results only.' +
-        (data.tracked ? ' Opens and edits are recorded on the links dashboard.' : ' No link registry is attached, so this one is not tracked; it simply expires.');
+        (data.tracked ? ' Short link; opens and edits are recorded on the links dashboard, where you can copy it again or extend it.' : ' No link registry is attached, so this one is not tracked and has no short form; it simply expires.');
     }
     try { await navigator.clipboard.writeText(data.url); setButtonState(btn, 'Link copied ✓', 2600, true); }
     catch (e) { setButtonState(btn, 'Link ready ✓', 2600, true); }

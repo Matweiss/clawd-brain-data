@@ -40,7 +40,8 @@ const contentTypes = {
 
 http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`), urlPath = url.pathname;
-  if (urlPath === '/play' || urlPath === '/api/play' || urlPath === '/links' || urlPath === '/api/links' || urlPath === '/api/deal') {
+  const short = urlPath.match(/^\/p\/([a-z0-9]+)$/i);
+  if (short || urlPath === '/play' || urlPath === '/api/play' || urlPath === '/links' || urlPath === '/api/links' || urlPath === '/api/deal') {
     const handler = urlPath.endsWith('links') ? linksHandler : urlPath === '/api/deal' ? dealHandler : playHandler;
     let raw = '';
     req.on('data', (c) => { raw += c; });
@@ -48,6 +49,7 @@ http.createServer((req, res) => {
       let body = {};
       try { body = raw ? JSON.parse(raw) : {}; } catch { body = {}; }
       const query = Object.fromEntries(url.searchParams.entries());
+      if (short) query.slug = short[1];
       const s = shim(req, res, body, query);
       Promise.resolve(handler(s.req, s.res)).catch((e) => { res.statusCode = 500; res.end(String(e)); });
     });

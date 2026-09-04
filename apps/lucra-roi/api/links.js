@@ -43,7 +43,10 @@ function keyMatches(given) {
 /* What the dashboard shows of a link: the registry row plus a status. */
 function view(link, now) {
   const status = link.revoked ? 'closed' : link.exp <= now ? 'expired' : 'open';
-  return Object.assign({}, link, { status });
+  // The raw token stays in the registry; the dashboard gets the links built from it.
+  const out = Object.assign({}, link, { status });
+  delete out.token;
+  return out;
 }
 
 function page() {
@@ -122,16 +125,16 @@ function render(d){
   links.forEach(function(l){
     h+='<tr><td><strong>'+esc(l.dealName||'Untitled deal')+'</strong><span class="sub">'+esc(l.presenter||'')+(l.customerType?' · '+esc(l.customerType):'')+(l.term?' · '+l.term+'-yr':'')+'</span></td>'+
       '<td><span class="pill '+l.status+'">'+l.status+'</span>'+(l.revokedAt?'<span class="sub">closed '+when(l.revokedAt)+'</span>':'')+'</td>'+
-      '<td style="white-space:nowrap">'+(l.url?'<button type="button" class="mini" data-act="copy" data-url="'+esc(l.url)+'" title="Copy the customer link to share it again">Copy link</button> <a href="'+esc(l.url)+'" target="_blank" rel="noopener" class="mini-link" title="Open the customer page in a new tab">Open</a>'+(l.status!=='open'?'<span class="sub">'+(l.status==='closed'?'closed: reopen to use it':'expired: make a new one')+'</span>':''):'<span class="sub">not kept for this link</span>')+'</td>'+
+      '<td style="white-space:nowrap">'+((l.shortUrl||l.url)?'<code class="code">'+esc((l.shortUrl||l.url).split('://').pop().split('?deal=')[0]+((l.shortUrl||l.url).indexOf('?deal=')>0?'?deal=…':''))+'</code><br><button type="button" class="mini" data-act="copy" data-url="'+esc(l.shortUrl||l.url)+'" title="Copy the customer link to share it again">Copy link</button> <button type="button" class="mini" data-act="message" data-url="'+esc(l.shortUrl||l.url)+'" data-pass="'+esc(l.passcode||'')+'" data-exp="'+(l.exp||0)+'" data-name="'+esc(l.dealName||'')+'" title="Copy a ready-to-send note: link, passcode and how long it is open">Copy message</button> <a href="'+esc(l.shortUrl||l.url)+'" target="_blank" rel="noopener" class="mini-link" title="Open the customer page in a new tab">Open</a>'+(l.status!=='open'?'<span class="sub">'+(l.status==='closed'?'closed: reopen to use it':'expired: extend it to use it again')+'</span>':''):'<span class="sub">not kept for this link</span>')+'</td>'+
       '<td>'+when(l.createdAt)+'<span class="sub">'+ago(l.createdAt)+'</span></td>'+
-      '<td>'+when(l.exp)+'<span class="sub">'+left(l.exp)+'</span></td>'+
+      '<td>'+when(l.exp)+'<span class="sub">'+left(l.exp)+'</span>'+(l.status!=='closed'?'<button type="button" class="mini" data-act="extend" data-id="'+esc(l.id)+'" title="Push the expiry out 14 days; the customer keeps the same link and their edits">Extend 14 days</button>':'')+(l.extendedAt?'<span class="sub">extended '+ago(l.extendedAt)+'</span>':'')+'</td>'+
       '<td>'+(l.passcode?'<code class="code">'+esc(l.passcode)+'</code>':(l.pass?'set when created':'none'))+' <button type="button" class="mini" data-act="passcode" data-id="'+esc(l.id)+'" title="Change the passcode; their link keeps working">Change</button>'+(l.passcodeAt?'<span class="sub">changed '+ago(l.passcodeAt)+'</span>':'')+(l.badPass?'<span class="sub" style="color:var(--amber)">'+l.badPass+' wrong attempt'+(l.badPass===1?'':'s')+'</span>':'')+'</td>'+
       '<td class="num">'+(l.opens||0)+(l.opens?'<span class="sub">first '+when(l.firstOpen)+'<br>last '+ago(l.lastOpen)+'</span>':'<span class="sub">not yet</span>')+(l.notifiedAt?'<span class="sub">emailed you</span>':'')+'</td>'+
       '<td class="num">'+(l.edits||0)+(l.edits?'<span class="sub">last '+ago(l.lastEdit)+'</span>':'')+(l.sellerUpdates?'<span class="sub" style="color:var(--green)">you saved '+l.sellerUpdates+'× · '+ago(l.lastSellerUpdate)+'</span>':'')+'</td>'+
       '<td>'+(l.lastInputs?'<details><summary>'+money(l.lastInputs.revenueYear)+' / yr · they earn '+money(l.lastInputs.operatorYear)+'</summary><pre class="scenario">'+esc(scenario(l.lastInputs))+'</pre></details>':'<span class="sub">nothing changed yet</span>')+'</td>'+
       '<td style="white-space:nowrap"><button type="button" class="primary" data-act="edit" data-id="'+esc(l.id)+'" title="Open their current model in the calculator; Save changes there writes it back to this link">Edit their model</button> '+(l.status==='open'?'<button type="button" class="danger" data-act="revoke" data-id="'+esc(l.id)+'">Close now</button>':l.status==='closed'&&l.exp>now?'<button type="button" data-act="reopen" data-id="'+esc(l.id)+'">Reopen</button>':'')+' <button type="button" data-act="remove" data-id="'+esc(l.id)+'" title="Remove from this list">Remove</button></td></tr>';
   });
-  h+='</tbody></table></div><div class="foot"><strong>Copy link</strong> gives you the customer\\'s own link again, the same one they have; send it with the passcode shown beside it. <strong>Change</strong> beside a passcode sets a new one on the spot; the customer keeps the same link. <strong>Edit their model</strong> opens what the customer currently sees in the calculator, in a new tab; <em>Save changes to their link</em> there writes it back, and they see it on their next visit or refresh. Closing a link stops it immediately, before its expiry. Removing only takes it off this list; a removed link that has not expired still opens. Records are kept for 90 days after a link expires.</div>';
+  h+='</tbody></table></div><div class="foot"><strong>Copy link</strong> gives you the customer\\'s own short link again, the same one they have; <strong>Copy message</strong> gives you the link, the passcode and the open-until date as one note to paste. <strong>Extend 14 days</strong> pushes the expiry out on the same link, keeping the customer\\'s edits and anything you saved to it. <strong>Change</strong> beside a passcode sets a new one on the spot; the customer keeps the same link. <strong>Edit their model</strong> opens what the customer currently sees in the calculator, in a new tab; <em>Save changes to their link</em> there writes it back, and they see it on their next visit or refresh. Closing a link stops it immediately, before its expiry. Removing only takes it off this list; a removed link that has not expired still opens. Records are kept for 90 days after a link expires.</div>';
   $('main').innerHTML=h;
 }
 function load(){
@@ -146,6 +149,12 @@ $('main').addEventListener('click',function(e){
   var b=e.target.closest('button[data-act]'); if(!b) return;
   if(b.dataset.act==='remove'&&!window.confirm('Remove this link from the list? It keeps working until it expires unless you close it first.')) return;
   b.disabled=true;
+  if(b.dataset.act==='message'){
+    var exp=Number(b.dataset.exp)||0, msg='Here is your revenue model'+(b.dataset.name?' for '+b.dataset.name:'')+': '+b.dataset.url+(b.dataset.pass?'\\nPasscode: '+b.dataset.pass:'')+(exp?'\\nOpen until '+new Date(exp).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'})+'.':'')+'\\nChange your own numbers and the model updates as you go.';
+    var fin=function(){ b.disabled=false; var t=b.textContent; b.textContent='Copied ✓'; setTimeout(function(){ b.textContent=t; },1800); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).then(fin,function(){ window.prompt('Copy the message:',msg); fin(); }); } else { window.prompt('Copy the message:',msg); fin(); }
+    return;
+  }
   if(b.dataset.act==='copy'){
     var url=b.dataset.url, done=function(ok){ b.disabled=false; var t=b.textContent; b.textContent=ok?'Copied ✓':'Copy failed'; setTimeout(function(){ b.textContent=t; },1800); };
     if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(function(){done(true)},function(){ window.prompt('Copy the customer link:',url); done(true); }); }
@@ -219,6 +228,15 @@ module.exports = async function handler(req, res) {
       const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
       const proto = (req.headers && req.headers['x-forwarded-proto']) || (/^(127\.0\.0\.1|localhost)(:|$)/.test(host) ? 'http' : 'https');
       return res.status(200).json({ ok: true, url: `${proto}://${host}/?deal=${encodeURIComponent(token)}`, version: cur.version || 1, customerEdited: !!cur.inputs });
+    }
+    if (body.action === 'extend') {
+      const days = [7, 14, 30].indexOf(Number(body.days)) >= 0 ? Number(body.days) : 14;
+      const cur = await store.get(id);
+      if (!cur) return res.status(404).json({ error: 'Link not found' });
+      // From today when it has already expired, from its current date otherwise.
+      const from = Math.max(Number(cur.exp) || 0, Date.now());
+      const rec = await store.extend(id, from + days * 24 * 3600 * 1000);
+      return res.status(200).json({ ok: !!rec, exp: rec ? rec.exp : null });
     }
     if (body.action === 'passcode') {
       const passcode = String(body.passcode || '').trim().slice(0, 40);

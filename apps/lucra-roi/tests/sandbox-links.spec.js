@@ -45,7 +45,8 @@ async function dash(body) {
   await links({ method: 'POST', body: Object.assign({ key: KEY }, body), headers: HEADERS }, r);
   return r;
 }
-const tokenOf = (r) => new URL(r.body.url).searchParams.get('deal');
+// With a registry the link handed out is the short one; the sealed token sits behind it in longUrl.
+const tokenOf = (r) => new URL(r.body.longUrl || r.body.url).searchParams.get('deal');
 
 beforeEach(() => {
   process.env.SCENARIO_SECRET = SECRET;
@@ -82,9 +83,52 @@ describe('The sandbox link registry', () => {
     ['78000', 'credit', '"custom"', 'annualFees', 'lucra'].forEach((k) => expect(json).not.toContain(k));
     expect(bear.days).toBe(7);
     expect(bear.term).toBe(3);
-    // The customer's link itself is kept (the sealed token, never the deal), so it can be shared again.
-    expect(bear.url).toBe(a.body.url);
-    expect(bear.url).toMatch(/^https:\/\/roi\.test\/play\?deal=v1\./);
+    // The customer's link itself is kept (the sealed token, never the deal), so it can be shared again;
+    // the one handed out is the short form, which only resolves through the registry.
+    expect(a.body.url).toMatch(/^https:\/\/roi\.test\/p\/[a-z0-9]{8}$/);
+    expect(a.body.shortUrl).toBe(a.body.url);
+    expect(a.body.longUrl).toMatch(/^https:\/\/roi\.test\/play\?deal=v1\./);
+    expect(bear.shortUrl).toBe(a.body.url);
+    expect(bear.url).toBe(a.body.longUrl);
+    expect(bear.slug).toMatch(/^[a-z0-9]{8}$/);
+    expect(bear.token).toBeUndefined();
+  });
+
+  it('serves the page from the short link with the token embedded, and extends a link past its token', async () => {
+    const made = await link({ deal: { tp: deal() }, days: 1, pass: 'bear' });
+    const slug = made.body.url.split('/p/')[1];
+    const page = res();
+    await play({ method: 'GET', query: { slug }, headers: HEADERS, url: '/p/' + slug }, page);
+    expect(page.statusCode).toBe(200);
+    expect(page.body).toContain('needsPass = true');
+    expect(page.body).toContain("var TOKEN = '" + tokenOf(made) + "'");
+    expect(page.body).not.toContain('Loco Bear');
+    const gone = res();
+    await play({ method: 'GET', query: { slug: 'nothere1' }, headers: HEADERS, url: '/p/nothere1' }, gone);
+    expect(gone.statusCode).toBe(400);
+    // The token expires in a day; the registry can push the link out, and the same token keeps working.
+    const tok = tokenOf(made), id = made.body.id;
+    const later = Date.now() + 3 * 24 * 3600 * 1000;
+    const realNow = Date.now;
+    try {
+      Date.now = () => later;
+      expect((await compute(tok, 'bear', null)).statusCode).toBe(400);
+      Date.now = realNow;
+      const ext = await dash({ action: 'extend', id, days: 14 });
+      expect(ext.statusCode).toBe(200);
+      expect(ext.body.exp).toBeGreaterThan(later);
+      Date.now = () => later;
+      const again = await compute(tok, 'bear', null);
+      expect(again.statusCode).toBe(200);
+      expect(again.body.facts.dealName).toBe('Loco Bear');
+      const viaSlug = res();
+      await play({ method: 'GET', query: { slug }, headers: HEADERS, url: '/p/' + slug }, viaSlug);
+      expect(viaSlug.statusCode).toBe(200);
+    } finally { Date.now = realNow; }
+    const list = await dash({ action: 'list' });
+    const row = list.body.links.find((l) => l.id === id);
+    expect(row.extendedAt).toBeGreaterThan(0);
+    expect(row.exp).toBeGreaterThan(later);
   });
 
   it('counts opens, edits and wrong passcodes, and keeps the last scenario', async () => {

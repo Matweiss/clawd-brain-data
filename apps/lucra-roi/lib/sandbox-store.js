@@ -8,6 +8,8 @@
 // Keys
 //   sbx:link:<id>   hash, one per link (see fields below)
 //   sbx:links       sorted set, id scored by creation time, for listing
+//   sbx:slug:<slug> string, the short link's slug -> id
+//   sbx:deal:<id>   string, the live model behind a link (JSON)
 //
 // Every write is fire-and-forget from the caller's point of view: a store
 // failure must never break a customer's page.
@@ -48,7 +50,7 @@ function redisClient(creds) {
 }
 
 /* Flat [k, v, k, v] to an object, numbers restored where they matter. */
-const NUMERIC = ['createdAt', 'exp', 'days', 'term', 'opens', 'edits', 'badPass', 'firstOpen', 'lastOpen', 'lastEdit', 'lastBadPass', 'revokedAt', 'notifiedAt', 'sellerUpdates', 'lastSellerUpdate', 'passcodeAt'];
+const NUMERIC = ['createdAt', 'exp', 'days', 'term', 'opens', 'edits', 'badPass', 'firstOpen', 'lastOpen', 'lastEdit', 'lastBadPass', 'revokedAt', 'notifiedAt', 'sellerUpdates', 'lastSellerUpdate', 'passcodeAt', 'extendedAt'];
 function unflatten(flat) {
   if (!flat || !flat.length) return null;
   const out = {};
@@ -75,25 +77,53 @@ function makeId() {
   const { randomBytes } = require('node:crypto');
   return randomBytes(8).toString('hex');
 }
+/* A short slug for the customer's link: 8 characters from an alphabet with
+   no look-alikes, so it survives being read out or retyped. */
+const SLUG_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+function makeSlug() {
+  const { randomBytes } = require('node:crypto');
+  const bytes = randomBytes(8);
+  let out = '';
+  for (let i = 0; i < 8; i++) out += SLUG_ALPHABET[bytes[i] % SLUG_ALPHABET.length];
+  return out;
+}
 
 /* The store API. `redis` is anything with command/pipeline; tests pass a
    memory implementation. */
 function createStore(redis, opts) {
   const now = (opts && opts.now) || (() => Date.now());
-  const key = (id) => 'sbx:link:' + id, dealKey = (id) => 'sbx:deal:' + id;
+  const key = (id) => 'sbx:link:' + id, dealKey = (id) => 'sbx:deal:' + id, slugKey = (slug) => 'sbx:slug:' + slug;
   const ttlFor = (exp) => Math.max(60, Math.round((exp + KEEP_AFTER_EXPIRY_MS - now()) / 1000));
 
   return {
     enabled: true,
-    makeId,
+    makeId, makeSlug,
     async create(link) {
       const rec = Object.assign({ opens: 0, edits: 0, badPass: 0, revoked: false }, link);
-      await redis.pipeline([
+      const cmds = [
         ['HSET', key(link.id)].concat(flatten(rec)),
         ['EXPIRE', key(link.id), ttlFor(link.exp)],
         ['ZADD', 'sbx:links', link.createdAt, link.id],
-      ]);
+      ];
+      if (link.slug) cmds.push(['SET', slugKey(link.slug), link.id, 'EX', ttlFor(link.exp)]);
+      await redis.pipeline(cmds);
       return rec;
+    },
+    /* The link behind a short slug, or null. */
+    async bySlug(slug) {
+      if (!slug || !/^[a-z0-9]{4,16}$/.test(String(slug))) return null;
+      const id = await redis.command(['GET', slugKey(slug)]);
+      return id ? this.get(id) : null;
+    },
+    /* Push a link's expiry out. Every key that carries the link moves with it
+       so the record, the short slug and the live model outlive the old date. */
+    async extend(id, exp) {
+      const rec = await this.get(id);
+      if (!rec) return null;
+      const ttl = ttlFor(exp), cmds = [['HSET', key(id), 'exp', exp, 'extendedAt', now()], ['EXPIRE', key(id), ttl], ['EXPIRE', dealKey(id), ttl]];
+      if (rec.slug) cmds.push(['EXPIRE', slugKey(rec.slug), ttl]);
+      await redis.pipeline(cmds);
+      return Object.assign(rec, { exp, extendedAt: now() });
     },
     async get(id) {
       if (!id) return null;
@@ -144,7 +174,10 @@ function createStore(redis, opts) {
       return true;
     },
     async remove(id) {
-      await redis.pipeline([['DEL', key(id)], ['DEL', dealKey(id)], ['ZREM', 'sbx:links', id]]);
+      const rec = await this.get(id);
+      const cmds = [['DEL', key(id)], ['DEL', dealKey(id)], ['ZREM', 'sbx:links', id]];
+      if (rec && rec.slug) cmds.push(['DEL', slugKey(rec.slug)]);
+      await redis.pipeline(cmds);
       return true;
     },
     /* The live model behind a link: the seller's deal as last saved, and the
@@ -202,7 +235,7 @@ function createMemoryRedis() {
 }
 
 const DISABLED = {
-  enabled: false, makeId,
+  enabled: false, makeId, makeSlug, async bySlug() { return null; }, async extend() { return null; },
   async create() { return null; }, async get() { return null; }, async list() { return []; },
   async touch() { return null; }, async revoke() { return false; }, async remove() { return false; },
   async saveDeal() { return null; }, async getDeal() { return null; }, async saveInputs() { return null; }, async setPasscode() { return false; },
@@ -221,4 +254,4 @@ function getStore() {
   return DISABLED;
 }
 
-module.exports = { getStore, createStore, createMemoryRedis, redisClient, credentials, makeId, KEEP_AFTER_EXPIRY_MS, _resetMemory() { memorySingleton = null; } };
+module.exports = { getStore, createStore, createMemoryRedis, redisClient, credentials, makeId, makeSlug, KEEP_AFTER_EXPIRY_MS, _resetMemory() { memorySingleton = null; } };

@@ -42,7 +42,10 @@ function parseScenarioToken(token, secret, options = {}) {
   decipher.setAuthTag(decode(parts[2]));
   const body = JSON.parse(Buffer.concat([decipher.update(decode(parts[3])), decipher.final()]).toString('utf8'));
   const now = Number.isFinite(options.now) ? options.now : Date.now();
-  if (!Number.isFinite(body.exp) || body.exp < now) throw new Error('Scenario link expired');
+  if (!Number.isFinite(body.exp)) throw new Error('Scenario link expired');
+  // ignoreExpiry: the caller holds a later expiry of its own (the sandbox
+  // registry can extend a link) and checks it itself.
+  if (body.exp < now && !options.ignoreExpiry) throw new Error('Scenario link expired');
   return body;
 }
 

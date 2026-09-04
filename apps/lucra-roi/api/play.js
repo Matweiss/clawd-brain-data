@@ -315,7 +315,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 8px;b
 footer{margin-top:26px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
 </style></head><body><main class="wrap" id="app"><div class="gate" id="gate"><div class="brand">LUCRA · REVENUE MODEL</div><h1>Your model</h1><p class="sub" style="margin:auto">Enter the passcode you were given to open it.</p><form onsubmit="return openIt(event)"><p><input id="pass" type="password" autocomplete="off" placeholder="Passcode"></p><p><button class="primary" type="submit">Open</button></p><div class="err" id="gate-err" hidden></div></form></div><div id="model" hidden></div></main>
 <script>
-var TOKEN = new URLSearchParams(location.search).get('deal') || '', PASS = '', FACTS = null, OUT = null, INPUTS = null, timer = null, needsPass = __NEEDS_PASS__, VERSION = null, REBASED = false;
+var TOKEN = '__TOKEN__' || new URLSearchParams(location.search).get('deal') || '', PASS = '', FACTS = null, OUT = null, INPUTS = null, timer = null, needsPass = __NEEDS_PASS__, VERSION = null, REBASED = false;
 function $(id){return document.getElementById(id)}
 function money(n){var v=Math.round(Number(n)||0);return (v<0?'-$':'$')+Math.abs(v).toLocaleString()}
 function num(n){return Math.round(Number(n)||0).toLocaleString()}
@@ -623,13 +623,31 @@ function logActivity(id, event, data, req) {
 function passcodeFor(data, link) {
   return link && link.passcode ? String(link.passcode) : String(data.pass || '');
 }
+/* When the link is on record, its expiry there is the one that counts: the
+   seller can extend a link from the dashboard without minting a new token. */
+function effectiveExp(parsed, link) { return link && Number(link.exp) > 0 ? Math.max(Number(parsed.exp) || 0, Number(link.exp)) : Number(parsed.exp) || 0; }
 function verify(token, pass, link) {
-  const parsed = parseScenarioToken(token, process.env.SCENARIO_SECRET);
+  const parsed = parseScenarioToken(token, process.env.SCENARIO_SECRET, { ignoreExpiry: true });
   const data = parsed.data || {};
   if (data.kind !== 'revenue-sandbox') throw new Error('Not a sandbox link');
+  const exp = effectiveExp(parsed, link);
+  if (exp < Date.now()) throw new Error('Scenario link expired');
   const want = passcodeFor(data, link);
   if (want && String(pass || '') !== want) throw new Error('That passcode is not right');
-  return { data, exp: parsed.exp };
+  return { data, exp };
+}
+/* The token behind a request: from ?deal=, or looked up from a short slug. */
+async function tokenFor(req) {
+  const q = req.query || {};
+  let slug = q.slug;
+  if (!slug && req.url) { const m = String(req.url).match(/^\/p\/([a-z0-9]+)/i); if (m) slug = m[1]; }
+  if (slug) {
+    const store = getStore();
+    const link = store.enabled ? await store.bySlug(String(slug).toLowerCase()).catch(() => null) : null;
+    if (!link || !link.token) throw new Error('This short link is not on record');
+    return { token: link.token, link, short: true };
+  }
+  return { token: q.deal, link: null, short: false };
 }
 /* The registry row for a link, or null when there is none or the store is down. */
 async function linkRecord(id) {
@@ -650,15 +668,18 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    let needsPass = false;
+    let needsPass = false, embed = '';
     try {
-      const parsed = parseScenarioToken(req.query && req.query.deal, process.env.SCENARIO_SECRET);
-      const link = await linkRecord(parsed.data && parsed.data.id);
+      const t = await tokenFor(req);
+      const parsed = parseScenarioToken(t.token, process.env.SCENARIO_SECRET, { ignoreExpiry: true });
+      const link = t.link || await linkRecord(parsed.data && parsed.data.id);
+      if (effectiveExp(parsed, link) < Date.now()) throw new Error('Scenario link expired');
       needsPass = !!passcodeFor(parsed.data || {}, link);
       if (link && link.revoked) throw new Error('The link was closed by the person who sent it');
+      if (t.short) embed = String(t.token).replace(/[^A-Za-z0-9._~-]/g, '');
     }
     catch (error) { return res.status(400).end(`<!doctype html><title>Link unavailable</title><style>body{font:15px system-ui;background:#071a33;color:#eff6fb;padding:40px}</style><h1>This link is no longer open</h1><p>${esc(error && error.message || 'Link unavailable')}. Ask the person who sent it for a new one.</p>`); }
-    return res.status(200).end(page().replace('__NEEDS_PASS__', needsPass ? 'true' : 'false'));
+    return res.status(200).end(page().replace('__NEEDS_PASS__', needsPass ? 'true' : 'false').replace('__TOKEN__', embed));
   }
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'GET or POST only' });
@@ -687,23 +708,25 @@ module.exports = async function handler(req, res) {
       const token = createScenarioToken(payload, process.env.SCENARIO_SECRET, { ttlSeconds: days * DAY });
       const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
       const proto = (req.headers && req.headers['x-forwarded-proto']) || (/^(127\.0\.0\.1|localhost)(:|$)/.test(host) ? 'http' : 'https');
-      const url = `${proto}://${host}/play?deal=${encodeURIComponent(token)}`;
+      const longUrl = `${proto}://${host}/play?deal=${encodeURIComponent(token)}`, slug = store.makeSlug(), shortUrl = `${proto}://${host}/p/${slug}`;
       // The registry is what the dashboard reads. Its failure never blocks a link.
-      // The link itself is kept there too, so the seller can share it again;
-      // it is the sealed token, never the deal in the clear.
+      // The link itself is kept there too, so the seller can share it again and
+      // the short link can resolve; it is the sealed token, never the deal in
+      // the clear.
       let tracked = false;
       if (store.enabled) {
         try {
-          await store.create({ id, dealName: String(sealed.dealName || '').slice(0, 120), presenter: String(sealed.presenter || '').slice(0, 120),
+          await store.create({ id, slug, token, url: longUrl, shortUrl, dealName: String(sealed.dealName || '').slice(0, 120), presenter: String(sealed.presenter || '').slice(0, 120),
             presenterEmail: String(sealed.presenterEmail || '').slice(0, 200), createdAt, exp, days, pass: !!pass, passcode: pass, unlockAdd: !!unlock.addTournaments,
-            customerType: sealed.customerType, term: E.TPterm(sealed), url });
+            customerType: sealed.customerType, term: E.TPterm(sealed) });
           // The live model: the seller can change it later from the dashboard,
           // and the customer's own inputs are kept beside it.
           await store.saveDeal(id, { tp: sealed, inputs: null, version: 1, updatedBy: 'seller', updatedAt: createdAt }, exp);
           tracked = true;
         } catch (error) { console.error('sandbox store', error && error.message); }
       }
-      return res.status(200).json({ ok: true, id, url, expiresInDays: days, passcode: !!pass, tracked, dashboard: `${proto}://${host}/links` });
+      // The short link only resolves through the registry; without one the long link is the link.
+      return res.status(200).json({ ok: true, id, url: tracked ? shortUrl : longUrl, longUrl, shortUrl: tracked ? shortUrl : null, expiresInDays: days, passcode: !!pass, tracked, dashboard: `${proto}://${host}/links` });
     } catch (error) {
       return res.status(400).json({ error: String(error && error.message || error) });
     }
@@ -713,7 +736,7 @@ module.exports = async function handler(req, res) {
     let linkId = null;
     try {
       // The passcode check happens inside verify; a wrong one is still logged.
-      try { const peek = parseScenarioToken(body.deal, process.env.SCENARIO_SECRET); linkId = (peek.data && peek.data.id) || null; } catch { linkId = null; }
+      try { const peek = parseScenarioToken(body.deal, process.env.SCENARIO_SECRET, { ignoreExpiry: true }); linkId = (peek.data && peek.data.id) || null; } catch { linkId = null; }
       const link = await linkRecord(linkId);
       if (link && link.revoked) return res.status(410).json({ error: 'The link was closed by the person who sent it' });
       const v = verify(body.deal, body.pass, link);

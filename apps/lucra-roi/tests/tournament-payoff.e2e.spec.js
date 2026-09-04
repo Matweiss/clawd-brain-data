@@ -1720,7 +1720,8 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await page.locator('#tp-sandbox-btn').click();
   await expect(page.locator('#tp-sandbox-btn')).toContainText(/Link (copied|ready)/);
   const url = await page.locator('#tp-sandbox-out input').inputValue();
-  expect(url).toMatch(/\/play\?deal=v1\./);
+  // With the registry attached the link handed out is the short one.
+  expect(url).toMatch(/\/p\/[a-z0-9]{8}$/);
   await expect(page.locator('#tp-sandbox-note')).toContainText('7 days · passcode required');
   // The sandbox is internal: customer view hides the control.
   await page.locator('#tp-customer-mode').check();
@@ -1861,6 +1862,19 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await row.locator('button[data-act="copy"]').click();
   await expect(row.locator('button[data-act="copy"]')).toHaveText('Copied ✓');
   expect(await dp.evaluate(() => navigator.clipboard.readText())).toBe(url);
+  // Copy message: link, passcode and the open-until date, ready to paste.
+  await row.locator('button[data-act="message"]').click();
+  await expect(row.locator('button[data-act="message"]')).toHaveText('Copied ✓');
+  const msg = await dp.evaluate(() => navigator.clipboard.readText());
+  expect(msg).toContain('Here is your revenue model for Fairway Social: ' + url);
+  expect(msg).toContain('Passcode: bear');
+  expect(msg).toMatch(/Open until \w+ \d{1,2}, \d{4}|Open until \d{1,2} \w+ \d{4}/);
+  // Extend 14 days: the same link, a later date, the customer's page still open.
+  const expBefore = await row.locator('td').nth(4).innerText();
+  await row.locator('button[data-act="extend"]').click();
+  await expect(dp.locator('#main tbody tr').filter({ hasText: 'Fairway Social' }).first().locator('td').nth(4)).toContainText('extended');
+  const expAfter = await dp.locator('#main tbody tr').filter({ hasText: 'Fairway Social' }).first().locator('td').nth(4).innerText();
+  expect(expAfter).not.toBe(expBefore);
   // Change the passcode from the dashboard: the customer's page, still open, needs the new one from now on.
   dp.once('dialog', (d) => d.accept('otter-9001'));
   await row.locator('button[data-act="passcode"]').click();

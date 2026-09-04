@@ -27,6 +27,7 @@
     { "src": "/api/scenario", "dest": "/api/scenario.js" },
     { "src": "/api/deal", "dest": "/api/deal.js" },
     { "src": "/play", "dest": "/api/play.js" },
+    { "src": "/p/([a-z0-9]+)", "dest": "/api/play.js?slug=$1" },
     { "src": "/api/play", "dest": "/api/play.js" },
     { "src": "/links", "dest": "/api/links.js" },
     { "src": "/api/links", "dest": "/api/links.js" },
