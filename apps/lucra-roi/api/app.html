@@ -1535,15 +1535,29 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <label><span class="input-label">Delivery date</span><input class="pf-input" id="rp-delivery" type="date"></label>
       <label><span class="input-label">Kickoff date</span><input class="pf-input" id="rp-kickoff" type="date"></label>
     </div>
-    <div class="section-label" style="margin-top:14px"><span class="dot" style="background:var(--green)"></span>Annual licence schedule</div>
-    <div class="grid grid3">
-      <label><span class="input-label">Year 1 fee / minimum due</span><input class="pf-input" id="rp-year-1" type="number" min="0" step="1000"></label>
-      <label><span class="input-label">Year 2 fee / minimum due</span><input class="pf-input" id="rp-year-2" type="number" min="0" step="1000"></label>
-      <label><span class="input-label">Year 3 fee / minimum due</span><input class="pf-input" id="rp-year-3" type="number" min="0" step="1000"></label>
-      <label><span class="input-label">Year 1 notes</span><input class="pf-input" id="rp-notes-1" type="text" placeholder="Optional"></label>
-      <label><span class="input-label">Year 2 notes</span><input class="pf-input" id="rp-notes-2" type="text" placeholder="Optional"></label>
-      <label><span class="input-label">Year 3 notes</span><input class="pf-input" id="rp-notes-3" type="text" placeholder="Optional"></label>
+    <div class="section-label" style="margin-top:14px"><span class="dot" style="background:var(--green)"></span>Contract term &amp; annual licence schedule</div>
+    <p class="sn" style="margin:0 0 10px">Enter the final contracted fee for each active year. Year 1, Year 2, and Year 3 can all have different amounts.</p>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:12px" role="group" aria-label="Recapture contract term">
+      <span class="input-label" style="margin-right:4px">Contract term</span>
+      <button class="preset" type="button" id="rp-term-1" onclick="RPterm(1)">1 year</button>
+      <button class="preset" type="button" id="rp-term-2" onclick="RPterm(2)">2 years</button>
+      <button class="preset on" type="button" id="rp-term-3" onclick="RPterm(3)">3 years</button>
     </div>
+    <div class="grid grid3">
+      <div class="card-section" id="rp-year-card-1" style="padding:12px">
+        <label><span class="input-label">Year 1 fee / minimum due</span><input class="pf-input" id="rp-year-1" type="number" min="0" step="1000" oninput="RPrenderSchedule()"></label>
+        <label style="display:block;margin-top:8px"><span class="input-label">Year 1 notes</span><input class="pf-input" id="rp-notes-1" type="text" placeholder="Optional"></label>
+      </div>
+      <div class="card-section" id="rp-year-card-2" style="padding:12px">
+        <label><span class="input-label">Year 2 fee / minimum due</span><input class="pf-input" id="rp-year-2" type="number" min="0" step="1000" oninput="RPrenderSchedule()"></label>
+        <label style="display:block;margin-top:8px"><span class="input-label">Year 2 notes</span><input class="pf-input" id="rp-notes-2" type="text" placeholder="Optional"></label>
+      </div>
+      <div class="card-section" id="rp-year-card-3" style="padding:12px">
+        <label><span class="input-label">Year 3 fee / minimum due</span><input class="pf-input" id="rp-year-3" type="number" min="0" step="1000" oninput="RPrenderSchedule()"></label>
+        <label style="display:block;margin-top:8px"><span class="input-label">Year 3 notes</span><input class="pf-input" id="rp-notes-3" type="text" placeholder="Optional"></label>
+      </div>
+    </div>
+    <div id="rp-schedule-total" style="margin-top:10px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;padding:10px 12px;color:var(--text2);font-size:13px"></div>
     <div class="section-label" style="margin-top:14px"><span class="dot" style="background:var(--purple)"></span>Contracted revenue split</div>
     <div class="grid grid3">
       <label><span class="input-label">To licence during payoff %</span><input class="pf-input" id="rp-license-pct" type="number" min="0" max="100"></label>
@@ -1626,6 +1640,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <button class="preset" id="gm-idm-flat" onclick="GMimplMode('flat',this)">$</button>
   </div>
 
+  <div id="gm-standard-output">
   <div class="section-label"><span class="dot" style="background:var(--cyan)"></span>Discount &amp; term</div>
   <div class="pg" style="margin-bottom:16px">
     <div><div class="input-head" style="margin-bottom:6px"><span class="input-label">Discount (% or flat $)</span></div>
@@ -1660,6 +1675,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     </div>
     <div style="margin-top:14px"><button id="gm-go" onclick="GMgenerate()" style="padding:11px 18px;border-radius:8px;border:none;background:var(--green);color:#0a0a0b;font-weight:600;font-family:var(--font);cursor:pointer;min-height:44px">Generate agreement</button></div>
     <div id="gm-result" style="margin-top:14px"></div>
+  </div>
   </div>
 </div>
 
@@ -2498,8 +2514,8 @@ function TMagreement(){
   .catch(function(e){btn.disabled=false;btn.textContent='Generate agreement';res.innerHTML='<div class="warn">Request failed: '+e+'</div>';});
 }
 /* ════════ GAMIFICATION (Core / Mini Games) ════════ */
-var GM={docType:'standard',tpl:'core',pkgs:{A:false,B:false,C:false,D:false,E:false,F:false},waived:{A:false,B:false,C:false,D:false,E:false,F:false},prices:{},impl:'',disc:0,discMode:'pct',implDisc:0,implDiscMode:'pct',term:2,notesTouched:false,lastAutoNotes:''};
-function GMdocType(type,b){GM.docType=type==='recapture'?'recapture':'standard';['gm-doc-standard','gm-doc-recapture'].forEach(function(id){var el=$(id);if(el)el.classList.toggle('on',id==='gm-doc-'+GM.docType)});var p=$('gm-recapture-panel');if(p)p.hidden=GM.docType!=='recapture';if(GM.docType==='recapture'&&b&&$('rp-client')&&!$('rp-client').value)RPimportFromRevenueModel(false)}
+var GM={docType:'standard',tpl:'core',pkgs:{A:false,B:false,C:false,D:false,E:false,F:false},waived:{A:false,B:false,C:false,D:false,E:false,F:false},prices:{},impl:'',disc:0,discMode:'pct',implDisc:0,implDiscMode:'pct',term:2,recapTerm:3,notesTouched:false,lastAutoNotes:''};
+function GMdocType(type,b){GM.docType=type==='recapture'?'recapture':'standard';['gm-doc-standard','gm-doc-recapture'].forEach(function(id){var el=$(id);if(el)el.classList.toggle('on',id==='gm-doc-'+GM.docType)});var p=$('gm-recapture-panel'),standard=$('gm-standard-output');if(p)p.hidden=GM.docType!=='recapture';if(standard)standard.hidden=GM.docType==='recapture';if(GM.docType==='recapture'){RPrenderSchedule();if(b&&$('rp-client')&&!$('rp-client').value)RPimportFromRevenueModel(false)}}
 var GM_PRICE={A:10000,B:10000,C:15000,D:5000,E:5000,F:5000};
 var GM_IMPL={G:30000,H:15000,I:10000};
 var GM_NAMES={A:'Recreational games + client-hosted tournaments',B:'User-generated competitions',C:'Gaming compliant wallet infrastructure',D:'Play-for-Rewards + loyalty',E:'Convert winnings to gift cards',F:'Marketing analytics / data insights'};
@@ -2531,6 +2547,18 @@ function RPvalue(id){var el=$(id);return el?String(el.value||'').trim():''}
 function RPnumber(id){var n=Number(RPvalue(id));return isFinite(n)?n:0}
 function RPset(id,value){var el=$(id);if(el)el.value=value==null?'':value}
 function RPmoney(n){return '$'+Math.round(Number(n)||0).toLocaleString()}
+function RPterm(years){GM.recapTerm=Math.max(1,Math.min(3,Number(years)||1));RPrenderSchedule()}
+function RPrenderSchedule(){
+  var term=Math.max(1,Math.min(3,GM.recapTerm||1)),parts=[],total=0;
+  for(var y=1;y<=3;y++){
+    var active=y<=term,button=$('rp-term-'+y),card=$('rp-year-card-'+y),fee=$('rp-year-'+y),notes=$('rp-notes-'+y);
+    if(button)button.classList.toggle('on',y===term);
+    if(card){card.style.opacity=active?'1':'.45';card.setAttribute('aria-disabled',active?'false':'true')}
+    if(fee)fee.disabled=!active;if(notes)notes.disabled=!active;
+    if(active){var amount=RPnumber('rp-year-'+y);total+=amount;parts.push('Year '+y+' '+RPmoney(amount))}
+  }
+  var out=$('rp-schedule-total');if(out)out.innerHTML='<strong style="color:var(--green)">'+term+'-year commitment: '+RPmoney(total)+'</strong><span class="sn" style="display:block;margin-top:3px">'+parts.join(' + ')+'</span>';
+}
 function RPdownload(b64,mime,filename){var bin=atob(b64),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([arr],{type:mime}));a.download=filename;document.body.appendChild(a);a.click();a.remove()}
 function RPimportFromRevenueModel(navigate){
   if(typeof TPinit==='function')TPinit();
@@ -2539,16 +2567,16 @@ function RPimportFromRevenueModel(navigate){
   RPset('rp-client',s.dealName||'');RPset('rp-effective',today.toISOString().slice(0,10));RPset('rp-kickoff',today.toISOString().slice(0,10));RPset('rp-delivery',delivery.toISOString().slice(0,10));
   for(var i=0;i<3;i++)RPset('rp-year-'+(i+1),i<TPterm(s)?(fees[i]||0):0);
   RPset('rp-license-pct',Math.round(rates.credit*1000)/10);RPset('rp-client-recap',Math.round(rates.operator*1000)/10);RPset('rp-lucra-recap',Math.round(rates.lucra*1000)/10);
-  RPset('rp-client-post',s.post.operator);RPset('rp-lucra-post',s.post.lucra);GM.term=Math.min(3,TPterm(s));
+  RPset('rp-client-post',s.post.operator);RPset('rp-lucra-post',s.post.lucra);GM.recapTerm=Math.min(3,TPterm(s));RPterm(GM.recapTerm);
   if(s.core.on&&!GM.pkgs.A)GM.pkgs.A=true;if(s.mini.on&&!GM.pkgs.D)GM.pkgs.D=true;
   var status=$('rp-import-status');if(status)status.textContent='Imported '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+' · proposal fields are now independent.';
   renderGM();if(navigate)T('gamification');
 }
 function RPvalidate(){
-  var errors=[],term=Math.max(1,Math.min(3,GM.term||1)),feeTotal=0;
+  var errors=[],term=Math.max(1,Math.min(3,GM.recapTerm||1)),feeTotal=0;
   if(!RPvalue('rp-client'))errors.push('Enter the client legal name.');
   if(!RPvalue('rp-effective'))errors.push('Enter the effective date.');
-  for(var i=1;i<=term;i++)feeTotal+=RPnumber('rp-year-'+i);
+  for(var i=1;i<=term;i++){if(RPvalue('rp-year-'+i)==='')errors.push('Enter the Year '+i+' licence fee.');feeTotal+=RPnumber('rp-year-'+i)}
   if(feeTotal<=0)errors.push('Enter at least one annual licence fee.');
   var recap=RPnumber('rp-license-pct')+RPnumber('rp-client-recap')+RPnumber('rp-lucra-recap');
   if(Math.abs(recap-100)>.001)errors.push('The during-payoff split must total 100%; it currently totals '+recap+'%.');
@@ -2560,7 +2588,7 @@ function RPvalidate(){
 function RPgenerate(){
   var errors=RPvalidate(),validation=$('rp-validation');
   if(errors.length){validation.hidden=false;validation.innerHTML=errors.join('<br>');return}validation.hidden=true;
-  var client=RPvalue('rp-client'),term=Math.max(1,Math.min(3,GM.term||1)),fees=[RPnumber('rp-year-1'),RPnumber('rp-year-2'),RPnumber('rp-year-3')],total=fees.slice(0,term).reduce(function(a,b){return a+b},0),selectedImpl=GM.impl==='waived'?'I':GM.impl,implName=GM.impl==='waived'?'Waived':(selectedImpl==='G'?'Strategic':selectedImpl==='H'?'Growth':selectedImpl==='I'?'Launch':'None');
+  var client=RPvalue('rp-client'),term=Math.max(1,Math.min(3,GM.recapTerm||1)),fees=[RPnumber('rp-year-1'),RPnumber('rp-year-2'),RPnumber('rp-year-3')],total=fees.slice(0,term).reduce(function(a,b){return a+b},0),selectedImpl=GM.impl==='waived'?'I':GM.impl,implName=GM.impl==='waived'?'Waived':(selectedImpl==='G'?'Strategic':selectedImpl==='H'?'Growth':selectedImpl==='I'?'Launch':'None');
   var tokens={'{{CLIENT_LEGAL_NAME}}':client,'{{EFFECTIVE_DATE}}':agFmtDate(RPvalue('rp-effective')),'{{LICENSE_TERM}}':String(term),'{{DELIVERY_DATE}}':agFmtDate(RPvalue('rp-delivery'))||'____________','{{TOTAL_LICENSE_COMMITMENT}}':RPmoney(total),'{{CLIENT_RECAP_PCT}}':String(RPnumber('rp-client-recap')),'{{LUCRA_RECAP_PCT}}':String(RPnumber('rp-lucra-recap')),'{{LICENSE_PCT}}':String(RPnumber('rp-license-pct')),'{{CLIENT_POST_PCT}}':String(RPnumber('rp-client-post')),'{{LUCRA_POST_PCT}}':String(RPnumber('rp-lucra-post')),'{{RENEWAL_ESCALATOR_PCT}}':String(RPnumber('rp-renewal')),'{{KICKOFF_DATE}}':agFmtDate(RPvalue('rp-kickoff'))||'____________','{{GTM_DOLLARS}}':RPmoney(RPnumber('rp-gtm')),'{{IMPLEMENTATION_PACKAGE}}':implName,'{{STRATEGIC_FEE}}':RPmoney(GM_IMPL.G),'{{GROWTH_FEE}}':RPmoney(GM_IMPL.H),'{{LAUNCH_FEE}}':GM.impl==='waived'?'Waived':RPmoney(GM_IMPL.I)};
   ['A','B','C','D','E','F'].forEach(function(k){tokens['{{CHK_'+k+'}}']=GM.pkgs[k]?'X':'';tokens['{{'+k+'_MONTHLY}}']=GMpriceToken(k)});
   ['G','H','I'].forEach(function(k){tokens['{{CHK_'+k+'}}']=selectedImpl===k?(GM.impl==='waived'?'Waived':'X'):''});
