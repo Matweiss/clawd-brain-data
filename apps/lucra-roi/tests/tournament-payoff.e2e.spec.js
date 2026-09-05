@@ -528,6 +528,7 @@ test('prospect research prompt needs only company and website and creates a reus
   await page.locator('#op-prospect-site').fill('https://fairwaysocial.example');
   await page.locator('#op-prospect-contact').fill('Jordan Lee');
   await page.locator('#op-prospect-contact-role').fill('VP of Marketing');
+  await page.locator('#op-prospect-contact-email').fill('jordan@fairwaysocial.example');
   await page.locator('#op-prospect-linkedin').fill('https://www.linkedin.com/in/jordan-lee-example');
   await expect(page.locator('#op-copy-research')).toBeEnabled();
   await expect(page.locator('#op-research-readiness')).toContainText('Ready to research Fairway Social');
@@ -542,6 +543,7 @@ test('prospect research prompt needs only company and website and creates a reus
   expect(prompt).toContain('after every material update');
   expect(prompt).toContain('Contact name: Jordan Lee');
   expect(prompt).toContain('Contact role/title: VP of Marketing');
+  expect(prompt).toContain('Contact email: jordan@fairwaysocial.example');
   expect(prompt).toContain('Contact LinkedIn URL: https://www.linkedin.com/in/jordan-lee-example');
   expect(prompt).toContain('verify the person-company match');
   expect(prompt).toContain('Do not collect sensitive personal information');

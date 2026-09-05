@@ -1518,6 +1518,7 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <label><span class="input-label">Likely business goal</span><input class="pf-input" id="op-prospect-objective" type="text" placeholder="Optional: repeat visits, retention, sponsorship…" oninput="OPselectionChanged()"></label>
       <label><span class="input-label">Contact name</span><input class="pf-input" id="op-prospect-contact" type="text" placeholder="Optional: first and last name" oninput="OPselectionChanged()"></label>
       <label><span class="input-label">Contact role/title</span><input class="pf-input" id="op-prospect-contact-role" type="text" placeholder="Optional: VP Loyalty, COO, Founder…" oninput="OPselectionChanged()"></label>
+      <label><span class="input-label">Contact email</span><input class="pf-input" id="op-prospect-contact-email" type="email" placeholder="Optional: name@company.com" oninput="OPselectionChanged()"></label>
       <label><span class="input-label">Contact LinkedIn URL</span><input class="pf-input" id="op-prospect-linkedin" type="url" placeholder="Optional: https://linkedin.com/in/…" oninput="OPselectionChanged()"></label>
     </div>
     <div class="input-label" style="margin:14px 0 8px">Concepts to explore</div>
@@ -2693,6 +2694,7 @@ function OPresearchPrompt(){
     'Likely business goal: '+(OPvalue('op-prospect-objective')||'Not supplied'),
     'Contact name: '+(OPvalue('op-prospect-contact')||'Not supplied'),
     'Contact role/title: '+(OPvalue('op-prospect-contact-role')||'Not supplied'),
+    'Contact email: '+(OPvalue('op-prospect-contact-email')||'Not supplied'),
     'Contact LinkedIn URL: '+(OPvalue('op-prospect-linkedin')||'Not supplied'),
     'Formats to investigate: '+(formats.length?formats.join(', '):'Recommend the best fit'),
     'Creative notes: '+(OPvalue('op-prospect-creative')||'None supplied'),
@@ -2729,9 +2731,9 @@ function OPresearchPrompt(){
     'Treat every entry price, prize, reward, participation rate and value estimate as illustrative. Keep tournament entries distinct from head-to-head wagered play; do not apply a rake to a tournament entry pool.',
     '',
     'OUTPUT',
-    'Return: (1) executive readout, (2) evidence table with URLs and dates, (3) qualification score and technical gate, (4) audience/MAU assessment, (5) primary and expansion concepts, (6) buyer map and supplied-contact brief, (7) unknowns and discovery questions, (8) official asset candidates, and (9) a prospecting email under 100 words tailored to the supplied contact when verified, with one verified observation and a low-friction meeting ask.',
+    'Return: (1) executive readout, (2) evidence table with URLs and dates, (3) qualification score and technical gate, (4) audience/MAU assessment, (5) primary and expansion concepts, (6) buyer map and supplied-contact brief, (7) unknowns and discovery questions, (8) official asset candidates, and (9) a recommended first-touch angle and low-friction meeting CTA for the separate email writer.',
     'Finish with ONE-PAGER BUILDER HANDOFF inside one copyable code block. Make it a complete prompt for the separate Lucra ROI One-Pager Builder—not a summary that depends on this conversation.',
-    'The builder handoff must include: company and official website; supplied contact name, role and LinkedIn URL; verified contact brief and buyer lens; pre-meeting/illustrative status; verified facts; user-supplied inputs; inferences; unknowns; audience evidence with source limitations; recommended primary and expansion concepts; illustrative tournament/reward mechanics; relevant business outcomes; technical requirements; official logo/image/color/font source URLs; internal source list; prospect-safe claims; prohibited or unsupported claims; recommended executive audience; and the under-100-word email.',
+    'The builder handoff must include: company and official website; supplied contact name, role, email and LinkedIn URL; verified contact brief and buyer lens; pre-meeting/illustrative status; verified facts; user-supplied inputs; inferences; unknowns; audience evidence with source limitations; recommended primary and expansion concepts; illustrative tournament/reward mechanics; relevant business outcomes; technical requirements; official logo/image/color/font source URLs; internal source list; prospect-safe claims; prohibited or unsupported claims; recommended executive audience; and the recommended outreach angle and CTA.',
     'Tell the builder to browse the official site again to retrieve and visually verify current assets, use any approved Lucra decks I attach as creative references, keep citations and qualification scoring internal, visibly label illustrative economics, and produce the requested CEO, CFO or COO one-pager cut only after I choose the audience.',
     'Fill missing material fields with UNKNOWN and specific discovery questions. Do not leave the builder to redo the account research or guess unsupported facts.'
   ].join('\n');
