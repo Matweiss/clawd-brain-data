@@ -50,6 +50,33 @@ async function openH2H(page) {
 
 // A mini-games head-to-head deal: the Mini Game tab's inputs, the original ids.
 const MINI_H2H = { includeH2H: false, mini: { on: true, tournamentsOn: false, h2hOn: true } };
+
+test('tournament readout and prize warning follow ramp, entries and prize edits', async ({ page }) => {
+  await openTab(page);
+  await setBaseDeal(page);
+  await page.evaluate(() => {
+    TP.rampOn = true; TP.rampStartPct = 25; TP.rampMonths = 6;
+    Object.assign(TP.core.tournaments[0], { participants: 500, entryPrice: 20, eventsPerMonth: 1, isCash: true, cashPrizeAmount: 5000 });
+    TPsave(); TPrenderControls(); TPrenderTournaments(); TPrender();
+  });
+  const card = page.locator('.tp-tour[data-product="core"][data-tour="0"]');
+  const readout = card.locator('.tp-tour-readout');
+  const warning = card.locator('.tp-tour-warn');
+  await expect(readout).toContainText('125 participants, 125 entries per event, $2,500');
+  await expect(warning).toBeVisible();
+  await page.locator('#tp-ramp-on').uncheck();
+  await expect(readout).toContainText('500 participants, 500 entries per event, $10,000');
+  await expect(warning).toHaveCount(0);
+  await page.locator('#tp-part-0').fill('100');
+  await expect(readout).toContainText('100 participants, 100 entries per event, $2,000');
+  await expect(warning).toBeVisible();
+  await expect(page.locator('#tp-part-0')).toBeFocused();
+  await page.locator('#tp-cashprize-0').fill('1000');
+  await expect(warning).toHaveCount(0);
+  await page.locator('#tp-ramp-on').check();
+  await expect(readout).toContainText('25 participants, 25 entries per event, $500');
+  await expect(warning).toBeVisible();
+});
 // An app-only mini-games deal with both halves, the product the recommender's ladder describes.
 const MINI = { includeTournaments: false, includeH2H: false, customerType: 'app', mini: { on: true, tournamentsOn: true, h2hOn: true } };
 
@@ -1991,7 +2018,8 @@ test('the customer sandbox: a passcoded page that plays with their numbers and n
   await expect(row.locator('.scenario')).toContainText('Users per location: 16,000');
   await expect(row.locator('.scenario')).toContainText('(months given)');
   const dashText = await dp.locator('#main').innerText();
-  expect(dashText).not.toMatch(/55|\$60,000|credit/);
+  // Match the confidential percentage, not incidental digits in timestamps or link IDs.
+  expect(dashText).not.toMatch(/55\s*%|\$60,000|credit/);
   // Close it: the customer's next recompute is refused and the page will not open again.
   dp.once('dialog', (d) => d.accept());
   await row.locator('button[data-act="revoke"]').click();

@@ -6031,6 +6031,14 @@ function TPtourReadout(key, i) {
   el.textContent = 'Month 1: ' + Math.round(TPtypeParticipants(st, t, 1, key)).toLocaleString() + ' participants, ' +
     Math.round(entries).toLocaleString() + ' entries per event, ' + TPmoney(handle) + ' of entries' +
     (TP.customerMode ? '' : (TPsponsored(t) ? ' · prizes sponsored' + (t.sponsorName ? ' by ' + t.sponsorName : '') + ', no prize funding' : ' against ' + TPmoney(prize) + ' of prize funding' + (mult > 1 ? ' across ' + mult + ' locations' : ''))) + '.';
+  var warning = row.querySelector('.tp-tour-warn');
+  if (prize > handle && !warning) {
+    warning = document.createElement('div');
+    warning.className = 'tp-tour-warn';
+    warning.setAttribute('role', 'status');
+    warning.textContent = "Prize funding exceeds this tournament's entries in month 1. Entries are still split in full; the operator carries the shortfall out of their own share.";
+    el.insertAdjacentElement('afterend', warning);
+  } else if (prize <= handle && warning) warning.remove();
 }
 /* Preset chips beside a field. The chip whose value the field holds is lit;
    anything else reads as custom. */
@@ -6895,6 +6903,9 @@ function TPsetEstimatesOnly(on) {
 }
 
 function TPrender() {
+  // Every model change must refresh card facts and warnings, not only the pitch.
+  // Update in place so typing does not replace the focused tournament input.
+  TPrefreshReadouts();
   var r = TPcalculate(TP, TPCconfig());
   TPapplyProvenance();
   TPrenderStrip(r);
