@@ -125,6 +125,102 @@ function sanitizeName(raw) {
     .slice(0, 80) || 'Client';
 }
 
+function normalizeAnnualSchedule(raw, template) {
+  if (raw == null) return [];
+  if (!['core', 'minigames'].includes(template)) throw new Error('Annual schedule is only supported for standard package agreements');
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > 3) throw new Error('Annual schedule must contain 1 to 3 years');
+  return raw.map((item, index) => {
+    const year = Number(item && item.year);
+    const licenseFee = Number(item && item.licenseFee);
+    const amountDue = Number(item && item.amountDue);
+    const discountMode = item && item.discountMode === 'flat' ? 'flat' : 'pct';
+    const discountValue = Number(item && item.discountValue);
+    if (year !== index + 1) throw new Error('Annual schedule years must be consecutive');
+    if (![licenseFee, amountDue, discountValue].every(Number.isFinite)) throw new Error(`Annual schedule Year ${year} contains an invalid amount`);
+    if (licenseFee < 0 || amountDue < 0 || discountValue < 0 || licenseFee > 100000000 || amountDue > 100000000) throw new Error(`Annual schedule Year ${year} is outside the supported range`);
+    if (discountMode === 'pct' && discountValue > 100) throw new Error(`Annual schedule Year ${year} discount cannot exceed 100%`);
+    if (discountMode === 'flat' && discountValue > licenseFee) throw new Error(`Annual schedule Year ${year} discount cannot exceed its license fee`);
+    const expectedAmountDue = discountMode === 'flat'
+      ? Math.max(0, licenseFee - discountValue)
+      : Math.max(0, licenseFee * (1 - discountValue / 100));
+    if (Math.abs(expectedAmountDue - amountDue) > 1) throw new Error(`Annual schedule Year ${year} totals do not reconcile`);
+    return { year, licenseFee, amountDue, monthlyEquivalent: amountDue / 12, discountMode, discountValue };
+  });
+}
+
+function cellText(cell) {
+  return ((cell && cell.content) || []).map((block) => ((block.paragraph && block.paragraph.elements) || []).map((element) => (element.textRun && element.textRun.content) || '').join('')).join('').trim();
+}
+
+function findStandardFeeTable(doc) {
+  const content = doc && doc.body && Array.isArray(doc.body.content) ? doc.body.content : [];
+  for (const block of content) {
+    const table = block.table;
+    if (!table || !Array.isArray(table.tableRows) || !table.tableRows.length) continue;
+    const header = (table.tableRows[0].tableCells || []).map(cellText);
+    if (header.includes('License Fee') && header.includes('Discount') && header.includes('Amount Due')) return { startIndex: block.startIndex, table };
+  }
+  return null;
+}
+
+function moneyText(value) {
+  const rounded = Math.round(Number(value) * 100) / 100;
+  return rounded.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(rounded) ? 0 : 2, maximumFractionDigits: 2 });
+}
+
+function additionalYearTextRequests(table, schedule) {
+  const requests = [];
+  for (let index = 1; index < schedule.length; index++) {
+    const row = table.tableRows[index + 1];
+    if (!row || !Array.isArray(row.tableCells) || row.tableCells.length < 5) throw new Error(`Generated fee table is missing Year ${index + 1}`);
+    const year = schedule[index];
+    const discount = year.discountMode === 'flat' ? `USD ${moneyText(year.discountValue)}` : `${moneyText(year.discountValue)}%`;
+    const values = [
+      `USD ${moneyText(year.licenseFee)}/year`,
+      discount,
+      '—',
+      `Monthly equivalent: USD ${moneyText(year.monthlyEquivalent)}/month`,
+      `USD ${moneyText(year.amountDue)}/year ${year.year}`,
+    ];
+    row.tableCells.slice(0, 5).forEach((cell, column) => {
+      const paragraph = (cell.content || []).find((block) => block.paragraph);
+      if (!paragraph || typeof paragraph.startIndex !== 'number') throw new Error(`Generated fee table Year ${year.year} column ${column + 1} is not editable`);
+      requests.push({ insertText: { location: { index: paragraph.startIndex }, text: values[column] } });
+    });
+  }
+  return requests;
+}
+
+async function expandStandardFeeTable(docId, accessToken, schedule) {
+  if (schedule.length < 2) return;
+  const headers = { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' };
+  const readDocument = async () => {
+    const response = await fetch(`https://docs.googleapis.com/v1/documents/${docId}`, { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!response.ok) throw new Error('Fee table read failed: ' + response.status);
+    return response.json();
+  };
+  let doc = await readDocument();
+  let match = findStandardFeeTable(doc);
+  if (!match) throw new Error('Standard agreement fee table was not found');
+  const insertRequests = [];
+  for (let index = 1; index < schedule.length; index++) {
+    insertRequests.push({
+      insertTableRow: {
+        tableCellLocation: { tableStartLocation: { index: match.startIndex }, rowIndex: 1, columnIndex: 0 },
+        insertBelow: true,
+      },
+    });
+  }
+  const inserted = await fetch(`https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`, { method: 'POST', headers, body: JSON.stringify({ requests: insertRequests }) });
+  if (!inserted.ok) throw new Error('Fee table expansion failed: ' + (await inserted.text()).slice(0, 200));
+  doc = await readDocument();
+  match = findStandardFeeTable(doc);
+  if (!match) throw new Error('Expanded standard agreement fee table was not found');
+  const textRequests = additionalYearTextRequests(match.table, schedule);
+  const filled = await fetch(`https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`, { method: 'POST', headers, body: JSON.stringify({ requests: textRequests }) });
+  if (!filled.ok) throw new Error('Fee schedule fill failed: ' + (await filled.text()).slice(0, 200));
+}
+
 // Customer review links are view-only. Editing remains limited to explicitly
 // authorized Google accounts rather than anyone who receives the URL.
 async function shareViewerByLink(docId, token) {
@@ -202,6 +298,12 @@ module.exports = async (req, res) => {
     const d = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const templateId = ALLOWED_TEMPLATES[d.template];
     if (!templateId) return res.status(400).json({ error: 'Unknown template: ' + d.template });
+    let annualSchedule;
+    try {
+      annualSchedule = normalizeAnnualSchedule(d.annualSchedule, d.template);
+    } catch (scheduleError) {
+      return res.status(400).json({ error: scheduleError.message });
+    }
     const tokens = d.tokens && typeof d.tokens === 'object' ? d.tokens : {};
     if (!Object.keys(tokens).length) return res.status(400).json({ error: 'No tokens provided' });
 
@@ -244,6 +346,7 @@ module.exports = async (req, res) => {
       method: 'POST', headers: H, body: JSON.stringify({ requests }),
     });
     if (!bu.ok) throw new Error('Fill failed: ' + (await bu.text()).slice(0, 200));
+    await expandStandardFeeTable(docId, token, annualSchedule);
 
     // 3. Export PDF + DOCX
     async function exportAs(mime) {
@@ -259,3 +362,5 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: String((e && e.message) || e) });
   }
 };
+
+module.exports._test = { normalizeAnnualSchedule, findStandardFeeTable, additionalYearTextRequests, moneyText };

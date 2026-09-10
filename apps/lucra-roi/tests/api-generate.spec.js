@@ -11,6 +11,21 @@ beforeEach(() => {
 // We test the handler's input validation without hitting Google APIs.
 // The module is CommonJS so we can require it directly.
 const handler = require('../api/generate.js');
+const {
+  normalizeAnnualSchedule,
+  findStandardFeeTable,
+  additionalYearTextRequests,
+  moneyText,
+} = handler._test;
+
+function mockCell(startIndex, text = '') {
+  return {
+    content: [{
+      startIndex,
+      paragraph: { elements: [{ textRun: { content: text } }] },
+    }],
+  };
+}
 
 function mockReq(body, method = 'POST') {
   return {
@@ -35,6 +50,52 @@ function mockRes() {
 }
 
 describe('/api/generate contract tests', () => {
+  it('normalizes a reconciled three-year standard agreement schedule', () => {
+    expect(normalizeAnnualSchedule([
+      { year: 1, licenseFee: 180000, amountDue: 162000, discountMode: 'pct', discountValue: 10 },
+      { year: 2, licenseFee: 180000, amountDue: 150000, discountMode: 'flat', discountValue: 30000 },
+      { year: 3, licenseFee: 195000, amountDue: 195000, discountMode: 'pct', discountValue: 0 },
+    ], 'core')).toEqual([
+      { year: 1, licenseFee: 180000, amountDue: 162000, monthlyEquivalent: 13500, discountMode: 'pct', discountValue: 10 },
+      { year: 2, licenseFee: 180000, amountDue: 150000, monthlyEquivalent: 12500, discountMode: 'flat', discountValue: 30000 },
+      { year: 3, licenseFee: 195000, amountDue: 195000, monthlyEquivalent: 16250, discountMode: 'pct', discountValue: 0 },
+    ]);
+  });
+
+  it('rejects annual schedules whose discount and amount due do not reconcile', () => {
+    expect(() => normalizeAnnualSchedule([
+      { year: 1, licenseFee: 180000, amountDue: 170000, discountMode: 'pct', discountValue: 10 },
+    ], 'core')).toThrow('totals do not reconcile');
+  });
+
+  it('finds the standard pricing table by its header row', () => {
+    const table = {
+      tableRows: [{
+        tableCells: ['License Fee', 'Discount', 'Implementation', 'Notes', 'Amount Due']
+          .map((text, index) => mockCell(20 + index, text)),
+      }],
+    };
+    expect(findStandardFeeTable({ body: { content: [{ startIndex: 7, table }] } })).toEqual({ startIndex: 7, table });
+  });
+
+  it('builds cell inserts for every additional agreement year', () => {
+    const blankRow = (offset) => ({ tableCells: Array.from({ length: 5 }, (_, index) => mockCell(offset + index * 10)) });
+    const table = { tableRows: [{ tableCells: [] }, blankRow(100), blankRow(200), blankRow(300)] };
+    const schedule = normalizeAnnualSchedule([
+      { year: 1, licenseFee: 180000, amountDue: 162000, discountMode: 'pct', discountValue: 10 },
+      { year: 2, licenseFee: 180000, amountDue: 150000, discountMode: 'flat', discountValue: 30000 },
+      { year: 3, licenseFee: 195000, amountDue: 195000, discountMode: 'pct', discountValue: 0 },
+    ], 'core');
+    const requests = additionalYearTextRequests(table, schedule);
+    expect(requests).toHaveLength(10);
+    expect(requests.map((request) => request.insertText.text)).toEqual([
+      'USD 180,000/year', 'USD 30,000', '—', 'Monthly equivalent: USD 12,500/month', 'USD 150,000/year 2',
+      'USD 195,000/year', '0%', '—', 'Monthly equivalent: USD 16,250/month', 'USD 195,000/year 3',
+    ]);
+    expect(requests[0].insertText.location.index).toBe(200);
+    expect(moneyText(12500.5)).toBe('12,500.50');
+  });
+
   it('rejects GET requests with 405', async () => {
     const req = mockReq(null, 'GET');
     const res = mockRes();
@@ -274,6 +335,66 @@ describe('/api/generate contract tests', () => {
       expect(permissionBodies).toEqual([
         { type: 'anyone', role: 'reader', allowFileDiscovery: false },
       ]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('expands and fills the copied standard agreement for a three-year schedule', async () => {
+    const originalFetch = globalThis.fetch;
+    const batchBodies = [];
+    const headerRow = {
+      tableCells: ['License Fee', 'Discount', 'Implementation', 'Notes', 'Amount Due']
+        .map((text, index) => mockCell(20 + index, text)),
+    };
+    const dataRow = (offset) => ({ tableCells: Array.from({ length: 5 }, (_, index) => mockCell(offset + index * 10)) });
+    const documentWithRows = (rows) => ({
+      body: { content: [{ startIndex: 10, table: { tableRows: [headerRow, dataRow(100), ...rows] } }] },
+    });
+    let documentReads = 0;
+
+    globalThis.fetch = vi.fn(async (url, options = {}) => {
+      const target = String(url);
+      if (target.includes('oauth2.googleapis.com/token')) return new Response(JSON.stringify({ access_token: 'test-access-token' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (target.includes('/copy?')) return new Response(JSON.stringify({ id: 'doc-schedule', webViewLink: 'https://docs.google.com/document/d/doc-schedule/edit' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (target.includes('/permissions?')) return new Response(JSON.stringify({ id: 'permission' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (target === 'https://docs.googleapis.com/v1/documents/doc-schedule') {
+        documentReads += 1;
+        const doc = documentReads === 1 ? documentWithRows([]) : documentWithRows([dataRow(200), dataRow(300)]);
+        return new Response(JSON.stringify(doc), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (target.includes(':batchUpdate')) {
+        batchBodies.push(JSON.parse(options.body));
+        return new Response('{}', { status: 200 });
+      }
+      if (target.includes('/export?')) return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
+      throw new Error(`Unexpected fetch: ${target}`);
+    });
+
+    try {
+      const req = mockReq({
+        template: 'core',
+        clientName: 'Multi-Year QA',
+        tokens: { '{{CLIENT_NAME}}': 'Multi-Year QA' },
+        annualSchedule: [
+          { year: 1, licenseFee: 180000, amountDue: 162000, discountMode: 'pct', discountValue: 10 },
+          { year: 2, licenseFee: 180000, amountDue: 150000, discountMode: 'flat', discountValue: 30000 },
+          { year: 3, licenseFee: 195000, amountDue: 195000, discountMode: 'pct', discountValue: 0 },
+        ],
+      });
+      req.headers['x-forwarded-for'] = '203.0.113.212';
+      const res = mockRes();
+      await handler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(documentReads).toBe(2);
+      expect(batchBodies).toHaveLength(3);
+      expect(batchBodies[1].requests).toHaveLength(2);
+      expect(batchBodies[1].requests[0].insertTableRow.tableCellLocation).toEqual({
+        tableStartLocation: { index: 10 }, rowIndex: 1, columnIndex: 0,
+      });
+      expect(batchBodies[2].requests).toHaveLength(10);
+      expect(batchBodies[2].requests.at(-1).insertText.text).toBe('USD 195,000/year 3');
     } finally {
       globalThis.fetch = originalFetch;
     }

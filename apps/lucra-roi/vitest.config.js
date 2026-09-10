@@ -12,6 +12,7 @@ export default defineConfig({
       '**/free-to-play.e2e.spec.js',
       '**/tournament-payoff.e2e.spec.js',
       '**/proposal-recapture.e2e.spec.js',
+      '**/proposal-standard-multiyear.e2e.spec.js',
       '**/node_modules/**',
     ],
   },
