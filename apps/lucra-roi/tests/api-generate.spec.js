@@ -71,11 +71,33 @@ describe('/api/generate contract tests', () => {
   it('finds the standard pricing table by its header row', () => {
     const table = {
       tableRows: [{
-        tableCells: ['License Fee', 'Discount', 'Implementation', 'Notes', 'Amount Due']
+        tableCells: ['License \n Fee', 'Discount', 'Implementation', 'Notes', 'Amount Due']
           .map((text, index) => mockCell(20 + index, text)),
       }],
     };
     expect(findStandardFeeTable({ body: { content: [{ startIndex: 7, table }] } })).toEqual({ startIndex: 7, table });
+  });
+
+  it('finds the standard pricing table in a tab-aware Google Docs response', () => {
+    const table = {
+      tableRows: [{
+        tableCells: ['License Fee', 'Discount', 'Implementation', 'Notes', 'Amount Due']
+          .map((text, index) => mockCell(20 + index, text)),
+      }],
+    };
+    const outerTable = {
+      tableRows: [{
+        tableCells: [{ content: [{ startIndex: 6, table }] }],
+      }],
+    };
+    const document = {
+      tabs: [{
+        tabProperties: { tabId: 't.0', title: 'Tab 1' },
+        documentTab: { body: { content: [{ startIndex: 5, table: outerTable }] } },
+      }],
+    };
+
+    expect(findStandardFeeTable(document)).toEqual({ startIndex: 6, table, tabId: 't.0' });
   });
 
   it('builds cell inserts for every additional agreement year', () => {
@@ -360,7 +382,23 @@ describe('/api/generate contract tests', () => {
     };
     const dataRow = (offset) => ({ tableCells: Array.from({ length: 5 }, (_, index) => mockCell(offset + index * 10)) });
     const documentWithRows = (rows) => ({
-      body: { content: [{ startIndex: 10, table: { tableRows: [headerRow, dataRow(100), ...rows] } }] },
+      tabs: [{
+        tabProperties: { tabId: 't.0', title: 'Tab 1' },
+        documentTab: {
+          body: {
+            content: [{
+              startIndex: 5,
+              table: {
+                tableRows: [{
+                  tableCells: [{
+                    content: [{ startIndex: 10, table: { tableRows: [headerRow, dataRow(100), ...rows] } }],
+                  }],
+                }],
+              },
+            }],
+          },
+        },
+      }],
     });
     let documentReads = 0;
 
@@ -369,7 +407,7 @@ describe('/api/generate contract tests', () => {
       if (target.includes('oauth2.googleapis.com/token')) return new Response(JSON.stringify({ access_token: 'test-access-token' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       if (target.includes('/copy?')) return new Response(JSON.stringify({ id: 'doc-schedule', webViewLink: 'https://docs.google.com/document/d/doc-schedule/edit' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       if (target.includes('/permissions?')) return new Response(JSON.stringify({ id: 'permission' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      if (target === 'https://docs.googleapis.com/v1/documents/doc-schedule') {
+      if (target === 'https://docs.googleapis.com/v1/documents/doc-schedule?includeTabsContent=true') {
         documentReads += 1;
         const doc = documentReads === 1 ? documentWithRows([]) : documentWithRows([dataRow(200), dataRow(300)]);
         return new Response(JSON.stringify(doc), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -402,10 +440,11 @@ describe('/api/generate contract tests', () => {
       expect(batchBodies).toHaveLength(3);
       expect(batchBodies[1].requests).toHaveLength(2);
       expect(batchBodies[1].requests[0].insertTableRow.tableCellLocation).toEqual({
-        tableStartLocation: { index: 10 }, rowIndex: 1, columnIndex: 0,
+        tableStartLocation: { index: 10, tabId: 't.0' }, rowIndex: 1, columnIndex: 0,
       });
       expect(batchBodies[2].requests).toHaveLength(10);
       expect(batchBodies[2].requests.at(-1).insertText.text).toBe('USD 195,000/year 3');
+      expect(batchBodies[2].requests.every((request) => request.insertText.location.tabId === 't.0')).toBe(true);
     } finally {
       globalThis.fetch = originalFetch;
     }

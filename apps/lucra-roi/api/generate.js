@@ -157,15 +157,48 @@ function cellText(cell) {
   return ((cell && cell.content) || []).map((block) => ((block.paragraph && block.paragraph.elements) || []).map((element) => (element.textRun && element.textRun.content) || '').join('')).join('').trim();
 }
 
-function findStandardFeeTable(doc) {
-  const content = doc && doc.body && Array.isArray(doc.body.content) ? doc.body.content : [];
-  for (const block of content) {
+function normalizedCellText(cell) {
+  return cellText(cell).replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function location(index, tabId) {
+  return tabId ? { index, tabId } : { index };
+}
+
+function findStandardFeeTableInContent(content, tabId) {
+  for (const block of Array.isArray(content) ? content : []) {
     const table = block.table;
     if (!table || !Array.isArray(table.tableRows) || !table.tableRows.length) continue;
-    const header = (table.tableRows[0].tableCells || []).map(cellText);
-    if (header.includes('License Fee') && header.includes('Discount') && header.includes('Amount Due')) return { startIndex: block.startIndex, table };
+    const header = (table.tableRows[0].tableCells || []).map(normalizedCellText);
+    if (header.includes('license fee') && header.includes('discount') && header.includes('amount due')) {
+      return { startIndex: block.startIndex, table, ...(tabId ? { tabId } : {}) };
+    }
+    for (const row of table.tableRows) {
+      for (const cell of row.tableCells || []) {
+        const nested = findStandardFeeTableInContent(cell.content, tabId);
+        if (nested) return nested;
+      }
+    }
   }
   return null;
+}
+
+function findStandardFeeTable(doc) {
+  const legacyMatch = findStandardFeeTableInContent(doc && doc.body && doc.body.content);
+  if (legacyMatch) return legacyMatch;
+
+  const searchTabs = (tabs) => {
+    for (const tab of Array.isArray(tabs) ? tabs : []) {
+      const tabId = tab && tab.tabProperties && tab.tabProperties.tabId;
+      const match = findStandardFeeTableInContent(tab && tab.documentTab && tab.documentTab.body && tab.documentTab.body.content, tabId);
+      if (match) return match;
+      const childMatch = searchTabs(tab && tab.childTabs);
+      if (childMatch) return childMatch;
+    }
+    return null;
+  };
+
+  return searchTabs(doc && doc.tabs);
 }
 
 function moneyText(value) {
@@ -173,7 +206,7 @@ function moneyText(value) {
   return rounded.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(rounded) ? 0 : 2, maximumFractionDigits: 2 });
 }
 
-function additionalYearTextRequests(table, schedule) {
+function additionalYearTextRequests(table, schedule, tabId) {
   const requests = [];
   for (let index = 1; index < schedule.length; index++) {
     const row = table.tableRows[index + 1];
@@ -190,7 +223,7 @@ function additionalYearTextRequests(table, schedule) {
     row.tableCells.slice(0, 5).forEach((cell, column) => {
       const paragraph = (cell.content || []).find((block) => block.paragraph);
       if (!paragraph || typeof paragraph.startIndex !== 'number') throw new Error(`Generated fee table Year ${year.year} column ${column + 1} is not editable`);
-      requests.push({ insertText: { location: { index: paragraph.startIndex }, text: values[column] } });
+      requests.push({ insertText: { location: location(paragraph.startIndex, tabId), text: values[column] } });
     });
   }
   return requests;
@@ -200,7 +233,7 @@ async function expandStandardFeeTable(docId, accessToken, schedule) {
   if (schedule.length < 2) return;
   const headers = { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' };
   const readDocument = async () => {
-    const response = await fetch(`https://docs.googleapis.com/v1/documents/${docId}`, { headers: { Authorization: 'Bearer ' + accessToken } });
+    const response = await fetch(`https://docs.googleapis.com/v1/documents/${docId}?includeTabsContent=true`, { headers: { Authorization: 'Bearer ' + accessToken } });
     if (!response.ok) throw new Error('Fee table read failed: ' + response.status);
     return response.json();
   };
@@ -211,7 +244,7 @@ async function expandStandardFeeTable(docId, accessToken, schedule) {
   for (let index = 1; index < schedule.length; index++) {
     insertRequests.push({
       insertTableRow: {
-        tableCellLocation: { tableStartLocation: { index: match.startIndex }, rowIndex: 1, columnIndex: 0 },
+        tableCellLocation: { tableStartLocation: location(match.startIndex, match.tabId), rowIndex: 1, columnIndex: 0 },
         insertBelow: true,
       },
     });
@@ -221,7 +254,7 @@ async function expandStandardFeeTable(docId, accessToken, schedule) {
   doc = await readDocument();
   match = findStandardFeeTable(doc);
   if (!match) throw new Error('Expanded standard agreement fee table was not found');
-  const textRequests = additionalYearTextRequests(match.table, schedule);
+  const textRequests = additionalYearTextRequests(match.table, schedule, match.tabId);
   const filled = await fetch(`https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`, { method: 'POST', headers, body: JSON.stringify({ requests: textRequests }) });
   if (!filled.ok) throw new Error('Fee schedule fill failed: ' + (await filled.text()).slice(0, 200));
 }
