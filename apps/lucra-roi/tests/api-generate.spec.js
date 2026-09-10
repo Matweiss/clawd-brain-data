@@ -172,6 +172,17 @@ describe('/api/generate contract tests', () => {
     expect(res.body.error).toContain('Origin not allowed');
   });
 
+  it('allows this project\'s protected Vercel preview origins', async () => {
+    const req = mockReq({ template: 'core', tokens: {}, clientName: 'Preview' });
+    req.headers.origin = 'https://lucra-roi-calculator-abc123-mats-projects-bc1a3570.vercel.app';
+    req.headers['x-forwarded-for'] = '203.0.113.213';
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toContain('No tokens');
+    expect(res.headers['Access-Control-Allow-Origin']).toBe(req.headers.origin);
+  });
+
   it('allows requests with no origin header (same-origin)', async () => {
     const req = {
       method: 'POST',

@@ -98,10 +98,15 @@ const ALLOWED_ORIGINS = [
   'http://localhost:8765',
   'http://127.0.0.1:8765',
 ];
+const VERCEL_PREVIEW_ORIGIN = /^https:\/\/lucra-roi-calculator-[a-z0-9-]+-mats-projects-bc1a3570\.vercel\.app$/;
+
+function isAllowedOrigin(origin) {
+  return ALLOWED_ORIGINS.includes(origin) || VERCEL_PREVIEW_ORIGIN.test(origin);
+}
 
 function corsOrigin(req) {
   const origin = (req.headers && req.headers.origin) || '';
-  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  if (isAllowedOrigin(origin)) return origin;
   // Same-origin requests (e.g. from the Vercel-served app) may not send Origin.
   // In that case, allow the request but don't reflect an origin.
   return '';
@@ -274,7 +279,7 @@ module.exports = async (req, res) => {
   // Reject cross-origin requests from disallowed origins.
   // Same-origin requests omit the Origin header entirely — those are allowed.
   const reqOrigin = (req.headers && req.headers.origin) || '';
-  if (reqOrigin && !ALLOWED_ORIGINS.includes(reqOrigin)) {
+  if (reqOrigin && !isAllowedOrigin(reqOrigin)) {
     return res.status(403).json({ error: 'Origin not allowed' });
   }
 
