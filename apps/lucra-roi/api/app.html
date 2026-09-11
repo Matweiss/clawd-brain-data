@@ -1624,9 +1624,6 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
       <label><span class="input-label">Renewal escalator %</span><input class="pf-input" id="rp-renewal" type="number" min="0" max="100" value="0"></label>
       <label><span class="input-label">GTM dollars</span><input class="pf-input" id="rp-gtm" type="number" min="0" step="1000" value="0"></label>
     </div>
-    <div id="rp-validation" class="warn" hidden style="margin-top:12px"></div>
-    <div style="margin-top:14px"><button id="rp-go" onclick="RPgenerate()" style="padding:11px 18px;border-radius:8px;border:none;background:var(--green);color:#0a0a0b;font-weight:600;font-family:var(--font);cursor:pointer;min-height:44px">Generate recapture agreement</button></div>
-    <div id="rp-result" style="margin-top:14px"></div>
   </div>
 
   <div class="section-label"><span class="dot" style="background:var(--green)"></span>Agreement type</div>
@@ -1694,6 +1691,16 @@ table.tp-months tr.crossover td{background:var(--green-bg)}
     <input id="gm-impl-disc" type="number" min="0" value="0" oninput="GMimplDisc()" style="width:90px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none">
     <button class="preset on" id="gm-idm-pct" onclick="GMimplMode('pct',this)">%</button>
     <button class="preset" id="gm-idm-flat" onclick="GMimplMode('flat',this)">$</button>
+  </div>
+
+  <div id="gm-recapture-action" hidden>
+    <div class="section-label"><span class="dot" style="background:var(--green)"></span>Generate proposal</div>
+    <div class="card-section" style="border-color:var(--green-border)">
+      <p class="sn" style="margin:0 0 12px">Review the imported terms, selected products, annual licence schedule, revenue split, and implementation details before generating the agreement.</p>
+      <div id="rp-validation" class="warn" hidden style="margin-bottom:12px"></div>
+      <button id="rp-go" onclick="RPgenerate()" style="padding:11px 18px;border-radius:8px;border:none;background:var(--green);color:#0a0a0b;font-weight:600;font-family:var(--font);cursor:pointer;min-height:44px">Generate recapture agreement</button>
+      <div id="rp-result" style="margin-top:14px"></div>
+    </div>
   </div>
 
   <div id="gm-standard-output">
@@ -2593,7 +2600,7 @@ function TMagreement(){
 }
 /* ════════ GAMIFICATION (Core / Mini Games) ════════ */
 var GM={docType:'standard',tpl:'core',pkgs:{A:false,B:false,C:false,D:false,E:false,F:false},waived:{A:false,B:false,C:false,D:false,E:false,F:false},prices:{},impl:'',disc:0,discMode:'pct',yearTerms:[],implDisc:0,implDiscMode:'pct',term:2,recapTerm:3,notesTouched:false,lastAutoNotes:''};
-function GMdocType(type,b){GM.docType=type==='recapture'?'recapture':'standard';['gm-doc-standard','gm-doc-recapture'].forEach(function(id){var el=$(id);if(el)el.classList.toggle('on',id==='gm-doc-'+GM.docType)});var p=$('gm-recapture-panel'),standard=$('gm-standard-output');if(p)p.hidden=GM.docType!=='recapture';if(standard)standard.hidden=GM.docType==='recapture';if(GM.docType==='recapture'){RPrenderSchedule();if(b&&$('rp-client')&&!$('rp-client').value)RPimportFromRevenueModel(false)}}
+function GMdocType(type,b){GM.docType=type==='recapture'?'recapture':'standard';['gm-doc-standard','gm-doc-recapture'].forEach(function(id){var el=$(id);if(el)el.classList.toggle('on',id==='gm-doc-'+GM.docType)});var p=$('gm-recapture-panel'),action=$('gm-recapture-action'),standard=$('gm-standard-output');if(p)p.hidden=GM.docType!=='recapture';if(action)action.hidden=GM.docType!=='recapture';if(standard)standard.hidden=GM.docType==='recapture';if(GM.docType==='recapture'){RPrenderSchedule();if(b&&$('rp-client')&&!$('rp-client').value)RPimportFromRevenueModel(false)}}
 var GM_PRICE={A:10000,B:10000,C:15000,D:5000,E:5000,F:5000};
 var GM_IMPL={G:30000,H:15000,I:10000};
 var GM_NAMES={A:'Recreational games + client-hosted tournaments',B:'User-generated competitions',C:'Gaming compliant wallet infrastructure',D:'Play-for-Rewards + loyalty',E:'Convert winnings to gift cards',F:'Marketing analytics / data insights'};

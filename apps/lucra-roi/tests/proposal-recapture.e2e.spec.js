@@ -38,6 +38,14 @@ test('imports Revenue Model terms and generates the recapture template', async (
   await expect(page.locator('#rp-client-recap')).toHaveValue('40');
   await expect(page.locator('#rp-lucra-recap')).toHaveValue('10');
   await expect(page.locator('#rp-client-post')).toHaveValue('90');
+  await expect(page.locator('#gm-recapture-action')).toBeVisible();
+  await expect(page.locator('#gm-recapture-action #rp-go')).toHaveCount(1);
+  const generateFollowsImplementation = await page.evaluate(() => {
+    const implementation = document.querySelector('#gm-impl-disc');
+    const generate = document.querySelector('#rp-go');
+    return Boolean(implementation.compareDocumentPosition(generate) & Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+  expect(generateFollowsImplementation).toBe(true);
 
   await page.locator('#rp-go').click();
   await expect(page.locator('#rp-result')).toContainText('Multi-year recapture agreement generated');
